@@ -44,6 +44,8 @@ def validate_record(r: ReviewRecord) -> list[str]:
         errors.append("counterevidence is empty")
     if r.record_kind == "actual_review":
         errors.append("record_kind must be 'worked_example' in this tutorial (SA-7)")
+    if r.kind == "asserted_inference" and not r.premises:
+        errors.append("asserted_inference requires at least one premise (Hawkins §3.1)")
     return errors
 
 
