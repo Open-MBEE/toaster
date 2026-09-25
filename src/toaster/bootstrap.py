@@ -13,7 +13,6 @@ def check_tool_versions() -> None:
     """Assert required CLI tools are present and print their versions."""
     tools = {
         "dot": ["-V"],
-        "java": ["-version"],
     }
     missing = []
     for tool, args in tools.items():

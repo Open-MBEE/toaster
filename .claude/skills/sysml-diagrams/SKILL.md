@@ -57,7 +57,13 @@ Use white backgrounds, readable typography, restrained color, and consistent nam
 - **Matplotlib** — quantitative figures only
 - **Mermaid** — NOT used anywhere in this tutorial
 
-**Sequence fallback (probe at WP-1):** Test whether `opensysml -render-form dot` is available for `#sequence:` renders. If supported, use it directly. If not, fall back to PlantUML. Document the outcome here and in the sequence recipe. Never use Mermaid as a fallback.
+**WP-1 probe result (2026-09-25): opensysml v0.9.0 has no native DOT or render-form CLI.** `sysml-grpc` is a gRPC server with no render flags; the Python API has `model.render_document()` for document queries only. There is no `-render-form dot` or equivalent.
+
+**Confirmed approach:** DOT is generated directly from `model.query()` output in Python (via `src/toaster/render.py::model_to_dot()`). The function queries all elements, emits PartDefinition nodes and PartUsage composition/typing edges, then passes the DOT string to `render_dot()` → Graphviz `dot -Tsvg`.
+
+For action flow: PlantUML remains the target (WP-4 implementation).
+For interconnection: SysMLD intent dict built from `model.query()` + `model.to_api_json()` (WP-4).
+Never use Mermaid as a fallback for anything.
 
 ## Check meaning and appearance
 
