@@ -33,6 +33,24 @@ Minor findings (do not fix without Z's direction):
 
 ACE grounded self-test: ch02-nb01 all cells execute clean. Fresh observation: Tall seam abbreviations (A-F/O-S/E) read naturally once you know them but the template uses them without a first-definition footnote — supports MF-1 as an A4/docs-glossary item, not a structural defect.
 
+## DL-005 | 2026-09-25 | WP-4 | Checkpoint PASS — Ch5-6 user-test synthesis
+
+Path: Handled by ACE
+Decision: CHECKPOINT PASS. Proceed to WP-5.
+Rationale: Three A9 agents ran (L7 Novice/Ch5, L8 SE Practitioner/Ch5+Ch6, L9 Returning Learner/Ch6) plus ACE grounded self-test of ch06-nb03. One blocking issue found and fixed inline. Zero remaining blocking issues. All six notebooks execute without error; all negative controls fire correctly (bad.ok=False or validate_record fails as expected); all Tall seams name three worlds; all concept statements are one sentence.
+
+Fix applied (corroborated by L8 + L9 — blocking):
+
+- MF-9 (L8/L9/corroborated): `validate_record()` in `evidence.py` had no check for empty `premises` on `asserted_inference` records. Ch6/nb03 cell 3 negative control relied on `assert len(errors) > 0` but the empty-premises record passed validation, causing an `AssertionError` at runtime. Fixed: added `if r.kind == "asserted_inference" and not r.premises: errors.append("asserted_inference requires at least one premise (Hawkins §3.1)")`. ACE self-test confirmed cell 3 now prints the expected error and the assert passes.
+
+Non-blocking findings (do not fix without Z's direction):
+
+- MF-10 (L7): Ch5/nb01 cell 6 exercise pointer forward-references a second-level element "you will add in Chapter 6" — a linear reader cannot complete the exercise until Ch6 is done. Non-blocking; wording could say "you will add later" but doesn't prevent Ch5 progress.
+- MF-11 (L7): Ch5/nb03 cell 4 emits ~28 gRPC fork-detection lines ("FD from fork parent still in poll list") to stderr during `render_sysmld()`. Execution completes correctly; a novice may mistake the output for errors. Non-blocking; a comment noting the noise is benign would help.
+- MF-12 (L9): Ch6/index.md Expected Result section uses "kind matching a requirement" rather than the exact string `'requirementDef'`. Non-blocking; the index is a navigation aid, not a specification.
+
+ACE grounded self-test: ch06/nb03 cells 2–4 all execute cleanly after the fix. Fresh observation: the two-phase structure of cell 3 (bad record fails, assert passes) followed by cell 4 (good record passes, premises printed) is an unusually clear demonstration of the Hawkins schema enforcement pattern — the negative control and positive case are directly adjacent.
+
 ## DL-004 | 2026-09-25 | WP-3 | Checkpoint PASS — Ch3-4 user-test synthesis
 
 Path: Handled by ACE
