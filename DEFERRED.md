@@ -46,7 +46,7 @@ gRPC authoring allowlist only. Affects Ch1/nb01.
 **Workaround:** Load `abstract part def` via `conn.load_from_content(source, strict=False)`.
 **Resolution:** Add `abstract` modifier support to `Editor.add_part_def()` or `add_member()`.
 **Upstream issue:** Open-MBEE/OpenSysML#595
-**Toaster issue:** (none — workaround is load-from-content; tracked here for awareness)
+**Toaster issue:** Open-MBEE/toaster#9
 
 ## D-005: Editor API does not support anonymous attribute redefinition (`:>>`)
 
@@ -58,7 +58,7 @@ Affects Ch2/nb02.
 **Workaround:** Load `:>>` redefinitions via `conn.load_from_content(source, strict=False)`.
 **Resolution:** Add anonymous redefinition path to the authoring API.
 **Upstream issue:** Open-MBEE/OpenSysML#596
-**Toaster issue:** (tracked here for awareness)
+**Toaster issue:** Open-MBEE/toaster#10
 
 ## D-006: Editor API does not support `require constraint` (RequirementConstraintMembership)
 
@@ -69,7 +69,7 @@ Affects Ch2/nb01.
 **Workaround:** Load requirement defs including constraint bodies via `conn.load_from_content()`.
 **Resolution:** Add `"require constraint"` or `add_require_constraint()` to the authoring API.
 **Upstream issue:** Open-MBEE/OpenSysML#597
-**Toaster issue:** (tracked here for awareness)
+**Toaster issue:** Open-MBEE/toaster#11
 
 ## D-007: Editor API does not support `assert satisfy` (SatisfyRequirementUsage authoring)
 
@@ -81,7 +81,7 @@ and it is not correctly returned by the OMG API query endpoint. Affects Ch3/nb01
 **Workaround:** Load `assert satisfy` declarations via `conn.load_from_content()`.
 **Resolution:** Add `"satisfy"` / `"assert satisfy"` to the authoring allowlist.
 **Upstream issue:** Open-MBEE/OpenSysML#598
-**Toaster issue:** (tracked here for awareness)
+**Toaster issue:** Open-MBEE/toaster#12
 
 ## D-008: Editor API does not support `allocate` (AllocationUsage authoring)
 
@@ -93,4 +93,4 @@ Affects Ch5/nb02.
 **Workaround:** Load `allocate X to Y` declarations via `conn.load_from_content()`.
 **Resolution:** Add `"allocate"` to the authoring allowlist and `add_allocate()` helper.
 **Upstream issue:** Open-MBEE/OpenSysML#599
-**Toaster issue:** (tracked here for awareness)
+**Toaster issue:** Open-MBEE/toaster#13
