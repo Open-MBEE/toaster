@@ -34,5 +34,5 @@ The comment `// D-003` on the import line in each model file marks the workaroun
 - Remove `private import MeasurementReferences::*;` from ch03–ch08 models.
 - Change `in efficiency : DimensionOneValue;` → `in efficiency : ISQ::DimensionOneValue;`.
 - Update `sysml-v2-toaster-model` skill ISQ section.
-**Upstream issue:** Open-MBEE/OpenSysML#TBD
-**Toaster issue:** Open-MBEE/toaster#TBD
+**Upstream issue:** Open-MBEE/OpenSysML#594
+**Toaster issue:** Open-MBEE/toaster#8
