@@ -11,4 +11,4 @@ def sweep_1d(fn: Callable, axis: np.ndarray, **fixed) -> np.ndarray:
     axis is the values for the swept parameter (first positional arg of fn).
     fixed keyword args are passed as remaining positional args in definition order.
     """
-    return fn(axis, *fixed.values())
+    return fn(axis, **fixed)

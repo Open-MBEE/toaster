@@ -1,5 +1,32 @@
 # Decision log
 
+## DL-007 | 2026-09-25 | WP-5 | Checkpoint PASS — Ch7-8 user-test synthesis
+
+Path: Handled by ACE
+Decision: CHECKPOINT PASS. Proceed to WP-6.
+Rationale: Three A9 simulated learner agents ran (L10 Novice/Ch7, L11 SE Practitioner/Ch7+Ch8, L12 Returning Learner/Ch8) plus ACE grounded self-test of Ch8/nb03. One blocking issue found and fixed inline. Zero remaining blocking issues. All six notebooks have 7-cell m,m,c,c,c,m,m structure; all negative controls fire correctly; all Tall seams name three worlds; all concept statements are one sentence starting with "This notebook introduces".
+
+Fixes applied (corroborated — pre-approved by Z):
+
+- (L11+L10 / blocking): Ch7/nb03 cell 2 had `conn.close()` before cells 3-4, causing the negative control (cell 3) to fail at runtime on a closed connection. Fixed: `conn.close()` moved to end of cell 4, consistent with all other notebooks.
+- (L11/L12): Ch8/nb02 and Ch8/nb03 concept statements used "produces" and "demonstrates" instead of the required "introduces". Fixed: rewrote both cell 0 statements to conform to the template.
+- (L11): Ch7/nb03 cell 3 comment hedged about whether `bad.ok` would be False, contradicting the `assert not bad.ok` on the next line. Fixed: replaced with a clean "Expected failure: Real is undefined without ScalarValues::* import" comment.
+- (L11+L10): All Ch7-8 notebooks with the cumulative model had `BreadEjector { ... }    state Cycle {` on a single line. Fixed: added newline before `state Cycle {` in all five affected notebooks.
+
+Non-blocking findings (do not fix without Z's direction):
+
+- MF-13 (L10): Ch7/nb01 cell 4 uses `sp.symbols(...)` and `sp.lambdify(...)` without bridging prose. A learner unfamiliar with sympy has no context for why these exist. Non-blocking per skill criteria; cell 5 Tall seam correctly labels the operation.
+- MF-14 (L10): Ch7/nb01 cell 4 contains two cross-checks: lambdify evaluation and `model.eval()`. The template says one key operation per demo cell; having two makes the cell longer and potentially confusing for a novice.
+- MF-15 (L10): `model.eval()` is called in Ch7/nb01 cell 4 without any prior introduction in cells 0-3. Non-blocking; the probe confirmed the API works and the Tall seam correctly frames it as O-S.
+
+ACE grounded self-test: Ch8/nb03 stale round-trip logic verified: `hash_content(source)` matches current source; `source.replace(...)` changes the constraint threshold; `check_stale(record, revised_source)` returns True. All three assertions present.
+
+## DL-006 | 2026-09-25 | WP-5 | SA-6 adaptation: use verify_satisfaction() in Ch8; verify_constraint(engine="check") unusable
+
+Path: Handled by ACE
+Decision: Ch8 uses `model.verify_satisfaction()` instead of `model.verify_constraint(name, subject, engine="check")` as specified in SA-6 and the Chapter plan.
+Rationale: WP-5 probe confirmed `verify_constraint(engine="check")` returns "not covered" for any constraint — it does not evaluate attribute overrides and cannot discriminate nominal (holds=True) from slow (holds=False). `verify_satisfaction()` evaluates `assert satisfy` declarations correctly and returns `Verdict(holds=True/False, element=...)` for each. This is the right API for Ch8's learning outcome (SA-6 specifies "bounded model checking: opensysml `check` engine only" — the spirit is "no external model checkers," which `verify_satisfaction()` satisfies). Ch9 previously planned to introduce `verify_satisfaction()`; Ch9 is not yet built, so the introduction point moves to Ch8 with no impact on prior chapters. SA-6 skill entry to be updated to note this probe result. Z pre-approved minor corroborated fixes.
+
 ## DL-000 | 2026-09-25 | WP-0 | Plan approved; build begins
 
 Path: Escalated to Z (plan approval)
