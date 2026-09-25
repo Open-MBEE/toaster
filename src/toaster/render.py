@@ -65,22 +65,110 @@ def render_dot(src: str | Path, out: str | Path) -> None:
         )
 
 
-def render_sysmld(intent: str | Path, out: str | Path) -> None:
-    """Render a SysMLD intent JSON file to SVG via sysmld CLI."""
-    sysmld_file = Path(str(out).replace(".svg", ".sysmld"))
-    subprocess.run(["sysmld", "interconnection", str(intent)], check=True)
-    subprocess.run(["sysmld", "render", str(sysmld_file)], check=True)
+def build_interconnection_intent(model: Any, fqn: str) -> dict:
+    """Extract interconnection data from model for a composite part or assembly.
+
+    Returns a dict with:
+      title    — the qualified name
+      parts    — list of {name, type} for owned PartUsage elements
+      flows    — list of {source, target} using sysx:sourceText from FlowUsage ends
+      allocs   — list of {source, target} using sysx:sourceText from AllocationUsage ends
+    """
+    import json as _json
+    import warnings
+
+    # Owned parts via model.query() PartUsage
+    parts = []
+    for e in model.query():
+        d = e.as_dict()
+        if d.get("@type") == "PartUsage" and d.get("owner") == fqn:
+            parts.append({
+                "name": d.get("declaredName") or d.get("name", ""),
+                "type": (d.get("type") or "").split("::")[-1],
+            })
+
+    flows: list[dict] = []
+    allocs: list[dict] = []
+
+    # FlowUsage and AllocationUsage via to_api_json (experimental)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        raw = model.to_api_json().content
+    data = _json.loads(raw)
+    by_id = {e["@id"]: e for e in data if "@id" in e}
+
+    for elem in data:
+        etype = elem.get("@type", "")
+        ends = elem.get("connectorEnd", [])
+        if len(ends) != 2:
+            continue
+        src_text = by_id.get(ends[0]["@id"], {}).get("sysx:sourceText", "")
+        tgt_text = by_id.get(ends[1]["@id"], {}).get("sysx:sourceText", "")
+        if not (src_text and tgt_text):
+            continue
+        if etype == "FlowUsage":
+            flows.append({"source": src_text, "target": tgt_text})
+        elif etype == "AllocationUsage":
+            allocs.append({"source": src_text, "target": tgt_text})
+
+    return {"title": fqn, "parts": parts, "flows": flows, "allocs": allocs}
+
+
+def render_sysmld(intent: dict | str | Path, out: str | Path) -> None:
+    """Render an interconnection intent dict (or JSON file) to SVG via Graphviz DOT.
+
+    SysMLD CLI is a pilot visualizer and not a build dependency; this function
+    implements the same semantics using DOT/Graphviz, which is already required.
+    """
+    import json as _json
+
+    if isinstance(intent, (str, Path)) and Path(intent).exists():
+        with open(intent) as f:
+            data = _json.load(f)
+    else:
+        data = intent  # type: ignore[assignment]
+
+    title = str(data.get("title", "interconnection")).split("::")[-1]
+    parts = data.get("parts", [])
+    flows = data.get("flows", [])
+    allocs = data.get("allocs", [])
+    part_names = {p["name"] for p in parts}
+
+    lines = [
+        f'digraph "{title}" {{',
+        "  rankdir=LR;",
+        f'  label="{title}";',
+        "  labelloc=t;",
+        '  graph [fontname="Helvetica"];',
+        '  node [shape=box fontname="Helvetica" style=filled fillcolor=white];',
+        '  edge [fontname="Helvetica"];',
+    ]
+    for p in parts:
+        label = f'{p["name"]}\\n:{p["type"]}' if p.get("type") else p["name"]
+        lines.append(f'  "{p["name"]}" [label="{label}"];')
+    for flow in flows:
+        src = str(flow.get("source", ""))
+        tgt = str(flow.get("target", ""))
+        src_part = src.split(".")[0]
+        tgt_part = tgt.split(".")[0]
+        if src_part in part_names and tgt_part in part_names:
+            src_port = src.split(".")[1] if "." in src else ""
+            tgt_port = tgt.split(".")[1] if "." in tgt else ""
+            lbl = f"{src_port}→{tgt_port}" if src_port else ""
+            lines.append(f'  "{src_part}" -> "{tgt_part}" [label="{lbl}" arrowhead=open];')
+    for alloc in allocs:
+        src = str(alloc.get("source", ""))
+        tgt = str(alloc.get("target", ""))
+        if src and tgt:
+            lines.append(f'  "{src}" -> "{tgt}" [style=dashed label="allocate" arrowhead=open];')
+    lines.append("}")
+
+    render_dot("\n".join(lines), out)
 
 
 def render_action_flow(model: Any, name: str, out: str | Path) -> None:
-    """Render an action flow diagram for a named action def to SVG via PlantUML."""
-    puml_path = Path(str(out).replace(".svg", ".puml"))
-    # opensysml CLI renders to plantuml; java renders to SVG
-    import opensysml  # type: ignore[import]
-    # WP-4 implements the CLI call; stub raises to surface missing impl
-    raise NotImplementedError("render_action_flow: implement in WP-4 using opensysml CLI")
+    """Render an action flow diagram for a named action def to SVG via PlantUML.
 
-
-def build_interconnection_intent(model: Any, fqn: str) -> dict:
-    """Build SysMLD intent dict from model for the given qualified name. WP-4."""
-    raise NotImplementedError("build_interconnection_intent: implement in WP-4")
+    WP-5 implements this using opensysml CLI + PlantUML.
+    """
+    raise NotImplementedError("render_action_flow: implement in WP-5")
