@@ -9,7 +9,7 @@ Chapter 1 asks: how do we describe a system in SysML v2 before we know how to bu
 | Notebook | Construct | Concept |
 |---|---|---|
 | [01 — abstract part def](01-abstract-def.ipynb) | `abstract part def` + `doc` | A system concept no part may directly instantiate |
-| [02 — part def and attributes](02-part-def.ipynb) | `part def` + `attribute : Real default` | Named component types with numeric parameters |
+| [02 — part def and attributes](02-part-def.ipynb) | `part def` + `attribute : Real default` | Heater with numeric attribute; HeatingSystem and ControlSystem added as bare stubs |
 | [03 — specialization](03-specialization.ipynb) | `:>` specialization | Declaring that one type is a kind of another |
 | [04 — composition](04-composition.ipynb) | `part` usage | A system that owns named instances of its subsystem types |
 

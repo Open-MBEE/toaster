@@ -2,7 +2,7 @@
 
 ## What we built
 
-The Chapter 1 model contains five part definitions and one composed system. `ToastingSystem` is abstract and documents the system purpose. `Heater` carries a `power` attribute. `HeatingSystem` and `ControlSystem` specialize `ToastingSystem`, establishing them as kinds of toasting-system components. `Toaster` composes those two subsystems and carries a `cycleTime` attribute. After notebook 04, `model.find("ToasterDemo::Toaster").parts()` returns two symbols: `heating` and `control`.
+The Chapter 1 model contains four component type definitions and one composed system. `ToastingSystem` is abstract and documents the system purpose. `Heater` carries a `power` attribute. `HeatingSystem` and `ControlSystem` specialize `ToastingSystem`, establishing them as kinds of toasting-system components. `Toaster` composes those two subsystems and carries a `cycleTime` attribute. After notebook 04, `model.find("ToasterDemo::Toaster").parts()` returns two symbols: `heating` and `control`.
 
 ## What this establishes
 
