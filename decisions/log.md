@@ -32,3 +32,22 @@ Minor findings (do not fix without Z's direction):
 - MF-4 (L2): ch02-nb03 negative control reuses the `nonExistentAttr` pattern from nb01. Expected limitation — opensysml's permissive parser makes reliable failures hard to vary. Non-blocking.
 
 ACE grounded self-test: ch02-nb01 all cells execute clean. Fresh observation: Tall seam abbreviations (A-F/O-S/E) read naturally once you know them but the template uses them without a first-definition footnote — supports MF-1 as an A4/docs-glossary item, not a structural defect.
+
+## DL-004 | 2026-09-25 | WP-3 | Checkpoint PASS — Ch3-4 user-test synthesis
+
+Path: Handled by ACE
+Decision: CHECKPOINT PASS. Proceed to WP-4.
+Rationale: Three A9 agents ran (L4 Novice/Ch3, L5 SE Practitioner/Ch3+Ch4, L6 Returning Learner/Ch4) plus ACE grounded self-test of ch03-nb02. Zero blocking issues. All six notebooks execute without error; all negative controls fire correctly; all Tall seams name three worlds; all concept statements are one sentence. Three corroborated minor findings fixed inline; two non-blocking findings logged below.
+
+Fixes applied (corroborated minor findings):
+
+- MF-3a (L4/corroborated): A-F label in judgment notebook Tall seams was ambiguous — A-F labeled the Python ReviewRecord object, inconsistent with A-F = SysML source text in non-judgment notebooks. Fixed: Tall seams in ch02-nb03, ch03-nb03, and ch04-nb03 now read "The Hawkins §N.N schema specifies what the record must contain (A-F); filling and validating in Python enacts that schema (O-S); validate_record() returning [] confirms all fields present (E)." — A-F now consistently refers to the formal argument specification (Hawkins schema), not the Python object.
+- MF-5b (L5): ch04-nb01 cell 0 promised "an assignment that wires a calculation into the flow" but cell 4 only verified action.kind and action.id. Fixed: trimmed cell 0 to what the demo actually establishes.
+- MF-6b (L6): ch04-nb01 cell 6 exercise pointer said "EjectToast" (toaster domain) while the actual exercise and other cell 6 pointers used the coffee maker domain. Fixed: updated to reference the Brew action for coffee maker.
+
+Non-blocking findings (do not fix without Z's direction):
+
+- MF-7 (L4/L6): Hawkins §N.N citations in concept statements have no link or glossary pointer. Non-blocking; docs/glossary.md (WP-9) is the right location.
+- MF-8 (L5): ch03-nb03 negative control exercises the model side (undefined requirement type ref) rather than the Python record side. Defensible — the model is the precondition for the record. Non-blocking.
+
+ACE grounded self-test: ch03-nb02 executes clean. Fresh observation: the η=0.7 reference value check (67200 J) in cell 4 is well-chosen — it validates the calc def against the probe fixture value and makes the demonstration self-verifying.
