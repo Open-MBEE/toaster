@@ -49,20 +49,27 @@ def model_to_dot(model: Any, title: str = "model") -> str:
 
 
 def render_dot(src: str | Path, out: str | Path) -> None:
-    """Render a DOT source file or string to SVG via Graphviz."""
+    """Render a DOT source file or string to SVG via Graphviz.
+
+    capture_output=True routes stderr through a pipe, preventing gRPC's
+    fork-detection messages from reaching the notebook's stderr stream.
+    Real graphviz errors are still surfaced via CalledProcessError.
+    """
     src_path = Path(src) if isinstance(src, Path) else None
     if src_path and src_path.exists():
-        subprocess.run(
+        r = subprocess.run(
             ["dot", "-Tsvg", str(src_path), "-o", str(out)],
-            check=True,
+            capture_output=True,
         )
     else:
-        subprocess.run(
+        r = subprocess.run(
             ["dot", "-Tsvg", "-o", str(out)],
             input=str(src),
             text=True,
-            check=True,
+            capture_output=True,
         )
+    if r.returncode != 0:
+        raise subprocess.CalledProcessError(r.returncode, "dot", stderr=r.stderr)
 
 
 def build_interconnection_intent(model: Any, fqn: str) -> dict:

@@ -24,7 +24,7 @@ The chapter demonstrates self-similarity: the same three-notebook structure (req
 
 ## Expected result
 
-After running all three notebooks, `model.query()` returns `HeatingElement`, `ResistanceCoil`, `PowerWire`, and `HeatingAssembly` as `PartDefinition` elements. `model.find("ToasterDemo::HeatingReq")` returns a symbol with `kind` matching a requirement. `validate_record(stopping_judgment)` returns `[]`, and `stopping_judgment.premises` is `["AS-C03", "AI-C04"]`.
+After running all three notebooks, `model.query()` returns `HeatingElement`, `ResistanceCoil`, `PowerWire`, and `HeatingAssembly` as `PartDefinition` elements. `model.find("ToasterDemo::HeatingReq")` returns a symbol with `kind='requirementDef'`. `validate_record(stopping_judgment)` returns `[]`, and `stopping_judgment.premises` is `["AS-C03", "AI-C04"]`.
 
 ## Experiment
 
