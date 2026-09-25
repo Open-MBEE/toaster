@@ -15,3 +15,4 @@ Skills (.claude/skills/ directory):
 - tutorial-supporting-pages — docs/ pages structure and authoring rules (A4)
 - skill-editor              — pre-edit gate, minimal-change rule, revert protocol (A8 only)
 - tutorial-style-guide      — prose style, diagram aesthetics, code style (A3, A4, A6, A7)
+- user-testing              — simulated learner protocol, personas, report format, ACE synthesis (A8, A9)

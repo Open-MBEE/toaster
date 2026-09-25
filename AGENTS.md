@@ -32,6 +32,7 @@ Every agent on this project knows Brian Douglas's *Systems Engineering Part 3: T
 | A7 Visualization Assessor | `figures/*.svg` (regenerate only when assigned) | All source files |
 | A1 Orchestrator | READ ONLY | All source files |
 | A8 ACE | `decisions/log.md`, `.claude/skills/**/*.md` | All source files (chapters, models, tests, CI, docs) |
+| A9 Simulated Learner | READ ONLY | All source files |
 
 ---
 
