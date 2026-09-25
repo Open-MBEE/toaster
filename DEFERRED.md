@@ -10,8 +10,8 @@ The workaround is encapsulated in `src/toaster/query.py::get_satisfy_relationshi
 Notebook cells call that function; the workaround does not appear in notebook code.
 
 **Resolution:** When upstream fix ships, update `get_satisfy_relationships()` and the opensysml-api skill.
-**Upstream issue:** Open-MBEE/OpenSysML#TBD (update after filing)
-**Toaster issue:** Open-MBEE/toaster#TBD (update after filing)
+**Upstream issue:** Open-MBEE/OpenSysML#590
+**Toaster issue:** Open-MBEE/toaster#1
 
 ## D-002: Custom theme / CSS for site
 
@@ -20,4 +20,4 @@ Custom theming improves aesthetics and brand alignment but is deferred to avoid
 maintenance burden unrelated to learning outcomes in v0.1.
 
 **Resolution:** After v0.1 ships, design a MyST theme extension or custom CSS override.
-**Toaster issue:** Open-MBEE/toaster#TBD (update after filing)
+**Toaster issue:** Open-MBEE/toaster#2
