@@ -1,0 +1,5 @@
+# OpenSysML v0.9.0 binary digests
+# macOS arm64
+d2c0a5eeca4ffb8309712ae0f6da29e1a15dfdc3b2a201fa30920a76e863b166  sysml-grpc-darwin-arm64
+1113b045cea8bb3e6bcb6f9d8683ee910c847a6eac73f47480a26a6b2bbcf77d  opensysml-darwin-arm64.tar.gz
+# Linux amd64: fetch SHA256SUMS.txt from the v0.9.0 release at build time

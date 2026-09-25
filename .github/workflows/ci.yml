@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Step 1: Provision environment and verify tools
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.x"
+
+      - name: Install Python dependencies
+        run: uv sync --locked
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Check tool versions
+        run: uv run python scripts/check-tools.py
+
+      # Step 2: Run pytest (unit + smoke)
+      - name: Run tests
+        run: uv run pytest tests/ -v --tb=short
+
+      # Steps 3-7 (notebook execution, MyST build, Pages deploy) — WP-8
+      # Placeholder: these steps are scaffolded but not active until WP-8
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        # WP-8: wire up the actual Pages deployment action here
+        run: echo "Pages deployment placeholder — implement in WP-8"

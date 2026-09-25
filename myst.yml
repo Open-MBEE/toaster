@@ -1,0 +1,92 @@
+version: 1
+project:
+  title: Toaster
+  github: https://github.com/Open-MBEE/toaster
+  license: Apache-2.0
+  authors:
+    - name: Open-MBEE Contributors
+  exclude:
+    - exercises/**
+  toc:
+    - file: docs/index
+    - file: docs/setup
+    - title: Chapter 1 — System and Purpose
+      children:
+        - file: chapters/ch01-system-purpose/index
+        - file: chapters/ch01-system-purpose/01-abstract-def
+        - file: chapters/ch01-system-purpose/02-part-def
+        - file: chapters/ch01-system-purpose/03-specialization
+        - file: chapters/ch01-system-purpose/04-composition
+        - file: chapters/ch01-system-purpose/conclusion
+    - title: Chapter 2 — Requirements and Assumptions
+      children:
+        - file: chapters/ch02-requirements/index
+        - file: chapters/ch02-requirements/01-requirement-def
+        - file: chapters/ch02-requirements/02-assumptions
+        - file: chapters/ch02-requirements/03-judgment-context
+        - file: chapters/ch02-requirements/conclusion
+    - title: Chapter 3 — Measures of Success
+      children:
+        - file: chapters/ch03-measures/index
+        - file: chapters/ch03-measures/01-moe-definition
+        - file: chapters/ch03-measures/02-mop-candidate-eval
+        - file: chapters/ch03-measures/03-threshold-judgment
+        - file: chapters/ch03-measures/conclusion
+    - title: Chapter 4 — Functional Decomposition
+      children:
+        - file: chapters/ch04-functional-decomp/index
+        - file: chapters/ch04-functional-decomp/01-action-def-ffbd
+        - file: chapters/ch04-functional-decomp/02-heating-refinement
+        - file: chapters/ch04-functional-decomp/03-completeness-check
+        - file: chapters/ch04-functional-decomp/conclusion
+    - title: Chapter 5 — Architecture and Allocation
+      children:
+        - file: chapters/ch05-architecture/index
+        - file: chapters/ch05-architecture/01-concept-selection
+        - file: chapters/ch05-architecture/02-allocate
+        - file: chapters/ch05-architecture/03-interfaces
+        - file: chapters/ch05-architecture/conclusion
+    - title: Chapter 6 — Recursive Decomposition
+      children:
+        - file: chapters/ch06-recursive-decomp/index
+        - file: chapters/ch06-recursive-decomp/01-subsystem-requirements
+        - file: chapters/ch06-recursive-decomp/02-second-level
+        - file: chapters/ch06-recursive-decomp/03-stopping-judgment
+        - file: chapters/ch06-recursive-decomp/conclusion
+    - title: Chapter 7 — Execution and Experiments
+      children:
+        - file: chapters/ch07-execution/index
+        - file: chapters/ch07-execution/01-calc-energy
+        - file: chapters/ch07-execution/02-state-traces
+        - file: chapters/ch07-execution/03-param-sweep
+        - file: chapters/ch07-execution/conclusion
+    - title: Chapter 8 — Checking and Revision
+      children:
+        - file: chapters/ch08-checking/index
+        - file: chapters/ch08-checking/01-invariant-def
+        - file: chapters/ch08-checking/02-violation-witness
+        - file: chapters/ch08-checking/03-revision-flow
+        - file: chapters/ch08-checking/conclusion
+    - title: Chapter 9 — Coverage and Sufficiency
+      children:
+        - file: chapters/ch09-coverage-sufficiency/index
+        - file: chapters/ch09-coverage-sufficiency/01-requirement-coverage
+        - file: chapters/ch09-coverage-sufficiency/02-evidence-completeness
+        - file: chapters/ch09-coverage-sufficiency/03-stale-detection
+        - file: chapters/ch09-coverage-sufficiency/conclusion
+    - title: Chapter 10 — Traceability and Sign-off
+      children:
+        - file: chapters/ch10-traceability-signoff/index
+        - file: chapters/ch10-traceability-signoff/01-traceability-graph
+        - file: chapters/ch10-traceability-signoff/02-judgment-synthesis
+        - file: chapters/ch10-traceability-signoff/03-engineering-signoff
+        - file: chapters/ch10-traceability-signoff/conclusion
+    - file: docs/reproducibility
+    - file: docs/glossary
+    - file: docs/references
+    - file: docs/contributor
+
+site:
+  template: book-theme
+  options:
+    logo_text: Toaster

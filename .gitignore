@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# Node
+node_modules/
+
+# MyST build
+_build/
+
+# OpenSysML binaries (downloaded by bootstrap)
+.opensysml/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Figures (generated)
+build/figures/
+
+# Models (generated snapshots — keep .sysml stubs, not outputs)
+models/*.json
+
+# macOS
+.DS_Store
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor
+.vscode/
+.idea/
