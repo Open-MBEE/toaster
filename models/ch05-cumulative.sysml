@@ -1,22 +1,24 @@
 package ToasterDemo {
     private import ScalarValues::*;
+    private import SI::*;
+    private import ISQ::*;
 
     abstract part def ToastingSystem {
         doc /* Transform bread into toast acceptable to its user. */
     }
-    part def Heater { attribute power : Real default = 800.0; }
+    part def Heater { attribute power : ISQ::PowerValue default = 800.0 [SI::W]; }
     part def HeatingSystem :> ToastingSystem;
     part def ControlSystem :> ToastingSystem;
     part def Toaster {
-        attribute cycleTime : Real default = 120.0;
+        attribute cycleTime : ISQ::DurationValue default = 120.0 [SI::s];
         part heating : HeatingSystem;
         part control : ControlSystem;
     }
     part nominal : Toaster;
-    part slow : Toaster { attribute :>> cycleTime = 200.0; }
+    part slow : Toaster { attribute :>> cycleTime = 200.0 [SI::s]; }
     requirement def TimelyToast {
         subject toaster : Toaster;
-        require constraint { toaster.cycleTime <= 180.0 }
+        require constraint { toaster.cycleTime <= 180.0 [SI::s] }
     }
     requirement timely : TimelyToast;
     part evidence {
@@ -24,16 +26,16 @@ package ToasterDemo {
         assert satisfy timely by slow;
     }
     calc def DeliveredEnergy {
-        in power : Real;
-        in duration : Real;
+        in power : ISQ::PowerValue;
+        in duration : ISQ::DurationValue;
         in efficiency : Real;
-        return : Real = power * duration * efficiency;
+        return : ISQ::EnergyValue = power * duration * efficiency;
     }
     action def ApplyHeat {
-        in power : Real;
-        in duration : Real;
+        in power : ISQ::PowerValue;
+        in duration : ISQ::DurationValue;
         in efficiency : Real;
-        out energy : Real;
+        out energy : ISQ::EnergyValue;
         first start;
         then action calculate {
             assign energy := DeliveredEnergy(power, duration, efficiency);

@@ -71,3 +71,55 @@ Each chapter has a corresponding cumulative model file in `models/`:
 - **Fallback rule:** If a construct fails to parse, try the simplest legal alternative first. If none exists, escalate to the orchestrator — do not add complexity.
 
 **Ground truth:** `tests/fixtures/probe.sysml` — all confirmed constructs present and verified.
+
+## ISQ/SI unit typing — confirmed in opensysml v0.9.0
+
+All model files (ch01–ch08) use ISQ physical types for the two primary measurement attributes and the `DeliveredEnergy` calc def parameters. Probe date: 2026-09-25.
+
+### Confirmed working syntax
+
+```sysml
+private import ScalarValues::*;
+private import SI::*;
+private import ISQ::*;
+
+// Attribute with default (overridable): use `default =` form
+attribute power     : ISQ::PowerValue    default = 800.0 [SI::W];
+attribute cycleTime : ISQ::DurationValue default = 120.0 [SI::s];
+
+// Attribute override in a usage
+attribute :>> cycleTime = 200.0 [SI::s];
+
+// Constraint with unit-annotated threshold
+require constraint { toaster.cycleTime <= 180.0 [SI::s] }
+
+// calc def with mixed ISQ + Real (efficiency is dimensionless — must stay Real)
+calc def DeliveredEnergy {
+    in power    : ISQ::PowerValue;
+    in duration : ISQ::DurationValue;
+    in efficiency : Real;
+    return : ISQ::EnergyValue = power * duration * efficiency;
+}
+```
+
+### Critical: `=` vs `default =`
+
+- `attribute x : ISQ::DurationValue = 120.0 [SI::s]` — creates a **fixed** binding; cannot override in a usage. **Do not use this form.**
+- `attribute x : ISQ::DurationValue default = 120.0 [SI::s]` — creates a default; can override with `:>>`. **Use this form.**
+
+### model.eval() with ISQ types
+
+When `calc def` parameters are ISQ-typed, `model.eval()` requires unit-annotated literals:
+
+```python
+result = model.eval("ToasterDemo::DeliveredEnergy(800.0 [SI::W], 120.0 [SI::s], 0.7)")
+# Returns Quantity, not float
+result.magnitude   # → 67200.0  (numeric value in SI base units)
+result.unit.text   # → 'SI::J'
+```
+
+`float(result)` fails — always use `.magnitude` to extract the numeric value.
+
+### Attributes left as Real
+
+`resistance` (ohms, in ResistanceCoil) and `gauge` (AWG, in PowerWire) remain `Real`. These are structural placeholders in the ch06 second-level decomposition; they are not physical quantities in the simulation scope.
