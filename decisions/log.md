@@ -1,5 +1,25 @@
 # Decision log
 
+## DL-009 | 2026-09-25 | Cross-WP | Checkpoint PASS — notebook strategy revision user-test synthesis
+
+Path: Handled by ACE
+
+Decision: CHECKPOINT PASS. Strategy revision (file-based model loading, narration cells) is sound. Proceed to WP-6.
+
+Agents: L13 Novice/Ch1-2, L14 SE Practitioner/Ch4-6, L15 Returning Learner/Ch7-8. ACE grounded self-test on Ch3/nb02.
+
+Fixes applied (corroborated — pre-approved by Z):
+
+- (L13 / blocking): `ch01/04-composition.ipynb` cell 5 called `model_to_dot` without importing it (NameError on every run). Pre-dates the strategy revision. Removed the broken call and its stale comment; `toaster.parts()` + `conn.close()` remain.
+- (L14 / blocking): Ch4 narration (all three notebooks) said `item def Start/Finish/Cancel` "represent items flowing between action steps" — factually wrong. Inside `ApplyHeat`, `first start;` and `then done;` are sequence control keywords, not type references. The item defs are standalone declarations used as part types in `BreadHandling` (Ch5). Fixed: "declare typed items for structural use; they appear as part types in `BreadHandling` in Chapter 5, not as references inside `ApplyHeat` itself."
+
+Non-blocking findings (do not fix without Z's direction):
+
+- MF-16 (L15): Ch7/nb01 narration leads with `state Cycle` content even though nb01's demo exercises `DeliveredEnergy` via sympy. The narration is accurate for the ch07-cumulative.sysml file but orients the learner toward the state machine introduced in nb02. Concept statement is correct, model loads, seam is correct. Non-blocking.
+- MF-17 (L14): Ch6/03 negative control uses `ReviewRecord(premises=[]) + validate_record()` rather than the `bad_source + assert not bad.ok` SysML parser pattern. Defensible — ch6/03 tests Hawkins schema enforcement, not the parser. A brief inline comment explaining the switch would reduce confusion for learners expecting the parser pattern.
+
+ACE grounded self-test (Ch3/nb02): all 8 cells structurally correct. File-load pattern present. Narration accurately describes satisfy-assertion pattern and calc def. Tall seam labels A-F as the calc def construct (pre-existing phrasing — does not say "model file" explicitly, but names all three worlds). PASS.
+
 ## DL-008 | 2026-09-25 | Cross-WP | Notebook construction strategy revision + SA-2 update
 
 Path: Handled by ACE — implementing Z's explicit direction; SA-2 update logged
