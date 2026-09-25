@@ -21,3 +21,18 @@ maintenance burden unrelated to learning outcomes in v0.1.
 
 **Resolution:** After v0.1 ships, design a MyST theme extension or custom CSS override.
 **Toaster issue:** Open-MBEE/toaster#2
+
+## D-003: efficiency typed via MeasurementReferences::DimensionOneValue, not ISQ::DimensionOneValue
+
+`ISQ::DimensionOneValue` is not defined in opensysml v0.9.0 (Open-MBEE/OpenSysML#TBD).
+`MeasurementReferences::DimensionOneValue` exists and is functionally correct, so ch03–ch08 models
+import `MeasurementReferences::*` and use `DimensionOneValue` directly. `SI::one` is also absent.
+
+The comment `// D-003` on the import line in each model file marks the workaround sites.
+
+**Resolution:** When `ISQ::DimensionOneValue` and `SI::one` ship in opensysml:
+- Remove `private import MeasurementReferences::*;` from ch03–ch08 models.
+- Change `in efficiency : DimensionOneValue;` → `in efficiency : ISQ::DimensionOneValue;`.
+- Update `sysml-v2-toaster-model` skill ISQ section.
+**Upstream issue:** Open-MBEE/OpenSysML#TBD
+**Toaster issue:** Open-MBEE/toaster#TBD

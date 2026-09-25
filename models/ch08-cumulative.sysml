@@ -2,6 +2,7 @@ package ToasterDemo {
     private import ScalarValues::*;
     private import SI::*;
     private import ISQ::*;
+    private import MeasurementReferences::*;  // DimensionOneValue (dim 1); D-003: move to ISQ::* when opensysml ships it
 
     abstract part def ToastingSystem {
         doc /* Transform bread into toast acceptable to its user. */
@@ -28,13 +29,13 @@ package ToasterDemo {
     calc def DeliveredEnergy {
         in power : ISQ::PowerValue;
         in duration : ISQ::DurationValue;
-        in efficiency : Real;
+        in efficiency : DimensionOneValue;
         return : ISQ::EnergyValue = power * duration * efficiency;
     }
     action def ApplyHeat {
         in power : ISQ::PowerValue;
         in duration : ISQ::DurationValue;
-        in efficiency : Real;
+        in efficiency : DimensionOneValue;
         out energy : ISQ::EnergyValue;
         first start;
         then action calculate {
