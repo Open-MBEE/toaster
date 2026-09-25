@@ -40,6 +40,15 @@ Route to A8 when:
 - Spec tension detected
 - Any SA (SA-1 through SA-9) is challenged by a developer
 
+## Chapter build dependency (file-based model strategy)
+
+When building chapter notebooks:
+1. A3 delivers `models/chXX-cumulative.sysml` first — this is the dependency for all notebooks in that chapter.
+2. A4 may begin prose cells concurrently but cannot finalize the model-load cell until the model file path is confirmed.
+3. A2 does not need to wait — Python infrastructure is independent of model file content.
+
+Route the chapter to A3 first. Open A4 work in parallel only for cells that do not depend on the model file (index.md, conclusion.md, exercise stubs, context cells).
+
 ## What A1 must never do
 
 - Edit files

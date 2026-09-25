@@ -17,6 +17,23 @@ model = conn.load_from_content(source, strict=False)   # CORRECT — not conn.lo
 conn.close()
 ```
 
+### Notebook loading pattern (required for all chapter notebooks)
+
+Model source lives in `models/chXX-cumulative.sysml`, not in inline notebook strings. The canonical cell 2 pattern:
+
+```python
+from pathlib import Path
+conn = opensysml.connect(version="v0.9.0")
+source = Path("../../models/ch07-cumulative.sysml").read_text()
+print(source)
+model = conn.load_from_content(source, strict=False)
+assert model.ok
+```
+
+- Path is relative from the notebook to the repo root `models/` directory (two levels up from `chapters/chXX-*/`).
+- `print(source)` makes the model visible in cell output without embedding it in the cell source.
+- Negative-control `bad_source` strings are short inline strings and remain inline — exempt from this pattern.
+
 `model.ok` → bool. `model.diagnostics` → list of objects with `.severity`, `.message`, `.start_line`, `.start_column`, `.end_line`, `.end_column`.
 
 ## Evaluation and execution

@@ -1,5 +1,28 @@
 # Decision log
 
+## DL-008 | 2026-09-25 | Cross-WP | Notebook construction strategy revision + SA-2 update
+
+Path: Handled by ACE — implementing Z's explicit direction; SA-2 update logged
+
+Decision: Move all SysML model source from inline notebook strings to `models/chXX-cumulative.sysml` files. Notebooks load and display the model via `Path("../../models/chXX-cumulative.sysml").read_text()` + `print(source)` + `conn.load_from_content(source, strict=False)`. The 7-cell template becomes a minimum skeleton; additional markdown+code pairs between cells 2–4 are expected for narration. Five skills updated.
+
+SA-2 update: SA-2 previously read "self-contained notebooks" meaning a standalone .ipynb could execute anywhere. The revised reading is "self-contained given the cloned repo structure" — `models/` is always co-located when a reader follows `docs/setup.md` (clone the repo). The standalone .sysml download benefit is enhanced, not diminished: the model files ARE the downloads. Fresh-kernel execution criterion is met because `models/` is always present in CI and in the cloned repo.
+
+ACE review findings addressed:
+- ACE-R1: SA-2 wording updated (this entry)
+- ACE-R2: toaster-recipe A6 checklist changed to content-typed (not position-typed)
+- ACE-R3: `print(source)` accepted; syntax highlighting is D-003 (deferred)
+- ACE-R4: orchestrator-protocol updated with A3-before-A4 dependency note
+- ACE-R5: bad_source exemption made explicit in tutorial-style-guide
+- ACE-R6: execution order established: skills → generator scripts → notebooks → commit
+
+Skill modifications (all permitted without escalation — tightening, clarifying, adding patterns):
+- toaster-recipe: file-load cell 2 pattern; content-typed A6 checklist; ~10-line inline limit; bad_source exemption
+- tutorial-style-guide: narration density rule; inline-SysML prohibition with bad_source exemption; A-F definition updated
+- sysml-v2-toaster-model: model file structure section added; A3-authors-first rule
+- opensysml-api: file-loading pattern added under Connection section
+- orchestrator-protocol: A3-before-A4 dependency note added
+
 ## DL-007 | 2026-09-25 | WP-5 | Checkpoint PASS — Ch7-8 user-test synthesis
 
 Path: Handled by ACE

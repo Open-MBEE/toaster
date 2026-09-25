@@ -39,6 +39,19 @@ Load this skill alongside domain skills. It does not replace them.
 - Variable names mirror model element names: `nominal_model`, `slow_model`, not `m1`, `m2`.
 - No inline comments that explain what the code obviously does. A comment is warranted only when the code is non-obvious or deliberately contra-idiomatic.
 - `print()` for notebook output: one line per concept, short. No multi-line formatted output in tutorial notebooks.
+- **Never embed a SysML model string longer than ~10 lines in a notebook cell.** The full cumulative model belongs in `models/chXX-cumulative.sysml`. The negative-control `bad_source` is exempt — it is deliberately short and self-contained by design.
+- One code cell = one conceptual action. If a cell defines something AND checks it, split into two cells.
+
+## Narration density (A4, A6)
+
+Every major operation gets its own dedicated markdown cell. This is not optional — it is the primary teaching mechanism.
+
+- A code cell that loads the model is followed or preceded by a markdown cell explaining what the model contains at this chapter stage.
+- A code cell that calls an API operation (`model.eval()`, `model.execute_state()`, `model.verify_satisfaction()`) is preceded by a markdown cell explaining what the call does and why it is meaningful at this point in the tutorial.
+- A code cell whose output needs interpretation is followed by a markdown cell interpreting it. Do not leave output to speak for itself.
+- If a demo involves two distinct steps (e.g., define a sympy expression, then lambdify it), those are two code cells each with its own narration — not one cell with a comment.
+
+**A6 test:** scan each code cell. If it does more than one conceptual thing OR if its output has no adjacent markdown explanation, flag it.
 
 ## Structural consistency (A4, A6)
 
@@ -51,8 +64,11 @@ Load this skill alongside domain skills. It does not replace them.
 ## What every agent loading this skill must never do
 
 - Write a Tall seam that names only two worlds.
+- Write a Tall seam that says "the source string in cell 2" — A-F is the model file `models/chXX-cumulative.sysml`, not the inline string.
 - Use Mermaid for any diagram.
 - Use em-dashes in prose.
 - Write a figure caption longer than two sentences.
 - Write a concept statement longer than one sentence.
 - Write a conclusion.md without the exercise reference.
+- Embed a SysML model string longer than ~10 lines in a notebook cell.
+- Leave a code cell with no adjacent markdown narration (before or after, as appropriate).
