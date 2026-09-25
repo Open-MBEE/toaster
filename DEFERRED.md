@@ -36,3 +36,61 @@ The comment `// D-003` on the import line in each model file marks the workaroun
 - Update `sysml-v2-toaster-model` skill ISQ section.
 **Upstream issue:** Open-MBEE/OpenSysML#594
 **Toaster issue:** Open-MBEE/toaster#8
+
+## D-004: Editor API does not support `abstract part def` authoring
+
+`Editor.add_member()` has no way to set the `abstract` modifier on a newly created `PartDefinition`.
+The construct is defined in the SysML v2 spec and accepted by the parser; the gap is in the
+gRPC authoring allowlist only. Affects Ch1/nb01.
+
+**Workaround:** Load `abstract part def` via `conn.load_from_content(source, strict=False)`.
+**Resolution:** Add `abstract` modifier support to `Editor.add_part_def()` or `add_member()`.
+**Upstream issue:** Open-MBEE/OpenSysML#595
+**Toaster issue:** (none — workaround is load-from-content; tracked here for awareness)
+
+## D-005: Editor API does not support anonymous attribute redefinition (`:>>`)
+
+`Editor.add_member()` cannot produce an anonymous `:>>` attribute redefinition.
+The construct is defined in KerML spec §8.3.7 and accepted by the parser; the gap is in the
+gRPC authoring allowlist. `attribute :>> cycleTime = 200.0 [SI::s]` must be loaded as notation.
+Affects Ch2/nb02.
+
+**Workaround:** Load `:>>` redefinitions via `conn.load_from_content(source, strict=False)`.
+**Resolution:** Add anonymous redefinition path to the authoring API.
+**Upstream issue:** Open-MBEE/OpenSysML#596
+**Toaster issue:** (tracked here for awareness)
+
+## D-006: Editor API does not support `require constraint` (RequirementConstraintMembership)
+
+`Editor.add_member()` rejects `"require constraint"` as an illegal kind.
+The construct is defined in SysML v2 spec formal/2026-03-02 §7.19 and accepted by the parser.
+Affects Ch2/nb01.
+
+**Workaround:** Load requirement defs including constraint bodies via `conn.load_from_content()`.
+**Resolution:** Add `"require constraint"` or `add_require_constraint()` to the authoring API.
+**Upstream issue:** Open-MBEE/OpenSysML#597
+**Toaster issue:** (tracked here for awareness)
+
+## D-007: Editor API does not support `assert satisfy` (SatisfyRequirementUsage authoring)
+
+`Editor.add_member()` rejects `"assert satisfy"` as an illegal kind.
+The construct is defined in SysML v2 spec formal/2026-03-02 §7.19 and accepted by the parser.
+Note: combined with D-001, this construct has two distinct gaps: it cannot be added via authoring,
+and it is not correctly returned by the OMG API query endpoint. Affects Ch3/nb01.
+
+**Workaround:** Load `assert satisfy` declarations via `conn.load_from_content()`.
+**Resolution:** Add `"satisfy"` / `"assert satisfy"` to the authoring allowlist.
+**Upstream issue:** Open-MBEE/OpenSysML#598
+**Toaster issue:** (tracked here for awareness)
+
+## D-008: Editor API does not support `allocate` (AllocationUsage authoring)
+
+`Editor.add_member()` rejects `"allocate"` as an illegal kind.
+The construct is defined in SysML v2 spec formal/2026-03-02 §7.21 and accepted by the parser.
+`generate.py` explicitly lists `allocation` as a "known skipped behavioral kind".
+Affects Ch5/nb02.
+
+**Workaround:** Load `allocate X to Y` declarations via `conn.load_from_content()`.
+**Resolution:** Add `"allocate"` to the authoring allowlist and `add_allocate()` helper.
+**Upstream issue:** Open-MBEE/OpenSysML#599
+**Toaster issue:** (tracked here for awareness)

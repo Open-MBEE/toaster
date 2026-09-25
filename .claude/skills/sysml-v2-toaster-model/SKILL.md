@@ -123,3 +123,26 @@ result.unit.text   # → 'SI::J'
 ### Attributes left as Real
 
 `resistance` (ohms, in ResistanceCoil) and `gauge` (AWG, in PowerWire) remain `Real`. These are structural placeholders in the ch06 second-level decomposition; they are not physical quantities in the simulation scope.
+
+## Editor API authoring gaps (confirmed impl gaps, not spec gaps)
+
+Verified 2026-09-25 against SysML v2 spec (formal/2026-03-02), OMG API (formal/2026-03-04),
+and opensysml edit.py. All five constructs parse correctly; the gap is in `Editor.add_member()`'s
+gRPC authoring allowlist only.
+
+| # | Construct | Chapter | Upstream issue | Workaround |
+|---|---|---|---|---|
+| D-004 | `abstract part def` | Ch1 | OpenSysML#595 | `conn.load_from_content()` |
+| D-005 | `attribute :>>` redefinition | Ch2 | OpenSysML#596 | `conn.load_from_content()` |
+| D-006 | `require constraint { ... }` | Ch2 | OpenSysML#597 | `conn.load_from_content()` |
+| D-007 | `assert satisfy R by P` | Ch3 | OpenSysML#598 | `conn.load_from_content()` |
+| D-008 | `allocate X to Y` | Ch5 | OpenSysML#599 | `conn.load_from_content()` |
+
+**Rule for notebook cells with gap constructs:** Use `conn.load_from_content(source, strict=False)`
+to load a cumulative model string containing the gap construct. The parse/eval/execute paths work
+correctly. Do not attempt `editor.add_member()` for these kinds — it will raise `IllegalMemberKindError`.
+
+**Implication for declarative notebook architecture:** The 5 gap constructs must be added to the
+cumulative SysML string and loaded as text rather than constructed via the Editor API. The Editor
+API is used for the constructs it supports (~8 kinds); the remaining 5 are demonstrated via the
+`conn.load_from_content()` round-trip, which still shows the A-F → O-S → E Tall seam clearly.
