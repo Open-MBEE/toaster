@@ -22,7 +22,9 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 ---
 
-## Draft 2 (OpenSysML, feature request): connecting ports of unrelated types is accepted without a diagnostic (G4, D-014)
+## Draft 2 (INTERNAL ONLY, not to be filed): no diagnostic when a connection joins ports whose types do not conform (G4, D-014)
+
+> Z ruled 2026-09-26: this draft is an internal clarification for us and needs no upstream issue. Kept as the record of what the spec does and does not say. We never want a connection between unrelated ports in a model; the mismatched example is a deliberately faulty model used as a negative control.
 
 **Version:** OpenSysML v0.9.0. sysml-toolkit v0.9.1 `check` and `lint` (default rules) also accept it.
 

@@ -199,8 +199,8 @@ Probe record: `decisions/probes.md`. Affects the interface chapters (the chapter
 **Workaround:** `toaster.query.port_type_mismatches(model)` (tested; recipe 5 in `opensysml-query`), applied from the
 chapter and section where the connection is declared complete, with a negative control; reported open before then.
 **Resolution:** SysML 7.12.1 defines when connected ports *conform* but no rule found requires a tool to reject a non-conforming connection; file only a feature request (see `decisions/gap-issue-drafts.md`).
-**Upstream issue:** not filed (draft awaiting Z's review)
-**Toaster issue:** not filed
+**Upstream issue:** none; Z ruled this an internal clarification, no issue to file (2026-09-26)
+**Toaster issue:** none
 
 ## D-015: `model.query()` does not see unnamed connectors, `satisfy`, or metadata (gap G1; extends D-001)
 
