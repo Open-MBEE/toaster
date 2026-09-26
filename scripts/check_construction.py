@@ -136,7 +136,12 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     7: [
         {
             "path": "chapters/ch07-execution/02-state-traces.ipynb",
-            "context_stubs": [],
+            # transitions accept Start/Finish/Cancel item defs (defined in Ch4)
+            "context_stubs": [
+                "item def Start;",
+                "item def Finish;",
+                "item def Cancel;",
+            ],
         },
     ],
 }
