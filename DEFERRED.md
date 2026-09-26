@@ -211,6 +211,8 @@ members are not expanded. The API spec's `getElements` returns "all the elements
 7.2.2). The repository workaround is one module, `src/toaster/query.py` (`ApiIndex`), tested in `tests/test_query.py`.
 Convention adopted: name allocations, connections and flows in the model.
 
+Related: OpenSysML#590 (closed 2026-09-26). A maintainer said anonymous elements (satisfy, connect, bind, allocate) are currently skipped and that a fix would ship in the next nightly (`nightly-20260926`). Not verified against the nightly; v0.9.0 still shows the behavior. No new issue is to be filed for this (draft 1 held).
+
 **Workaround:** `toaster.query` helpers; JSON route for satisfy, metadata and unnamed connectors.
 **Resolution:** When `model.query()` exposes all elements, change `ApiIndex` only.
 **Upstream issue:** not filed (draft awaiting Z's review)
