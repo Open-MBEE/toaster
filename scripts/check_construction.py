@@ -105,7 +105,10 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     4: [
         {
             "path": "chapters/ch04-functional-decomp/01-action-def-ffbd.ipynb",
-            "context_stubs": [],
+            # ApplyHeat calls DeliveredEnergy (defined in Ch3)
+            "context_stubs": [
+                "calc def DeliveredEnergy { in power : ISQ::PowerValue; in duration : ISQ::DurationValue; in efficiency : DimensionOneValue; return : ISQ::EnergyValue = power * duration * efficiency; }",
+            ],
         },
         {
             "path": "chapters/ch04-functional-decomp/02-heating-refinement.ipynb",
