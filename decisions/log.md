@@ -40,6 +40,16 @@ Determined: yes, after F7.
 Extension: no.
 Provenance: AGENTS.md 1.5 (logical-to-physical test, Numbers, allocation is not realization); z-model Z-3, Z-8, Z-1; audit report OQ-3, F-2, F-4.
 
+## DL-024 | 2026-09-26 | PASS2-002 | Project checks report open, with reason, when the model fails language conformance
+
+Path: Handled by ACE (extension flagged for Z's skim)
+Decision: A project conformance check is not applied to a model that fails language conformance. `report()` checks language conformance first; when `model.ok` is false every project result is `open` with the reason "not applied: language conformance failed", never `passed` or `failed`. `Result` carries a `reason` so "stage not reached", "unscheduled" and "model did not load" are distinguishable. No fourth status is added.
+Principles applied: F6 (two tiers), heuristic 8 (tier of the check), P1 (a check is not proof; no verdict from absence of evidence), P5 (record the reason), P4 (a new status must earn its place).
+Reasoning: language conformance is tier one and breaks the load, so a model that fails it is not a loaded model and no project check has been applied to it. The report rule for an unapplied project check is open, not passed. Reporting "passed" from no findings on an incomplete model is a verdict that would hold whatever the model's state, so it is not a verdict. The module already refuses to count findings on a non-ok model in `prove_negative_control`; the same rule applies to the absence of findings. The reason is recorded so nothing is silently absorbed. A fourth status ("blocked") would add vocabulary without making anything easier to read, since the language block and the reason field already carry the cause.
+Determined: yes for "not passed, reason recorded"; the choice of `open` over a new status rests on P4 and on reading "applied" as "run against a loaded model". The alternative, a "blocked" status, remains if Z prefers the status field to carry the distinction.
+Extension: yes. "Open until applied" was framed for staging (the check's chapter has not come); this applies it to a precondition failure (the chapter has come, the model did not load).
+Provenance: AGENTS.md 1.9; DL-017 (conformance), DL-023 (a check is analysis, classified by tier); evidence: `part def A :> Missing;` with `strict=False` gave `model.ok == False` and a scheduled check returned "passed" with no findings; implemented in commit `3bb58df`'s successor by contract PASS2-003.
+
 ## DL-023 | 2026-09-26 | Dry run 3 | A verification case is not a layer element
 
 Path: Escalated to Z; Z ruled option A
