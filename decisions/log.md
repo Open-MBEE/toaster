@@ -1,5 +1,26 @@
 # Decision log
 
+## DL-015 | 2026-09-26 | Pass 1 | Z-directed alignment pass: Foundations, glossary, layer and query skills, ACE definition, handoff
+
+Status: PENDING
+
+Path: Escalated to Z — this pass was specified interactively by Z (plan approved 2026-09-26, `/Users/z/.claude/plans/now-we-re-starting-to-merry-music.md`). Because Z directed it, the skill-editor escalate-to-Z gates (multi-archetype change, >20% of a skill, new capability, learning-outcome effect) are satisfied by this entry; this is a one-off Z override, not a change to file authority.
+
+Decision (intended change, one sentence): align AGENTS.md (new Part 1 Foundations, existing roster kept as legacy Part 2), CLAUDE.md, `ace-protocol`, `skill-editor`, and three new skills (`architecture-layers`, `opensysml-query`, `tutorial-glossary`) with Z's what/how/where intent, backed by a new local glossary knowledge graph (`glossary/`), a query-helper fix in `src/toaster/query.py`, gap records G1-G7, and a handoff file `decisions/next-passes.md`.
+
+Overrides recorded (Z): (1) one-logical-change-per-session (AGENTS.md section 3, rule 1) is suspended for this pass; commits remain one logical change each. (2) A2-owned files (`pyproject.toml`, `uv.lock`, `.gitignore`, `.github/workflows/ci.yml`, `src/toaster/query.py`, `tests/`, AGENTS.md, CLAUDE.md) and A8-owned files are edited in this pass by Z direction. Gates: M1 (glossary confirmed by Z), M2 (documents and skills, dry runs), M3 (query fix, gap records, handoff).
+
+Revert record: the verbatim pre-edit text of every file this pass changes is the tree at commit `8b52280` (branch point of `pass1/harness-alignment`). To revert any edit: `git show 8b52280:<path>`. The one paragraph replaced in AGENTS.md section 3b (the "Functional-first framing rule") is preserved here verbatim:
+
+> **Functional-first framing rule:** A10 ensures that the three-layer architecture is narrated explicitly in order: functional (what the system does, via verb-noun `action def` and abstract functional role definitions) -> logical (how functions are partitioned into implementation-agnostic components with defined interfaces, via `abstract part def` + `flow`/ports) -> physical (concrete part selections that fulfill logical roles, via `part def` with physical attributes). `abstract part def ToastingSystem` and its specializations are the **logical** layer — they define component boundaries and interfaces without committing to a physical solution. Narrative cells must use verb-noun convention (e.g., "transform bread into toast," "apply thermal energy") when describing functions, and must distinguish logical structure (with interfaces) from physical implementation (concrete part selection).
+
+Recorded here for the pass (each is detailed in the plan and in `decisions/next-passes.md` once written):
+- Approved departure (Z): the tutorial's "logical" `differsFrom` SEBoK's "logical architecture" (which contains the functional view). Z's approval was given in planning 2026-09-26 and is quoted when the glossary edge is written.
+- Tall's three worlds is a builder-facing lens: learner content never names it. `toaster-recipe` still requires a named per-notebook "Tall seam" cell, which contradicts this rule; the recipe rewrite is a later pass.
+- SA-2 (full stage model per chapter): Z ruled that the assembled model, made legible through diagrams, satisfies it (recorded for read-back at M2).
+- SA-3 (energy model Q = eta P t) and SA-8 (one construct per notebook) will collide with the content pass; SA-7 stays.
+- What comes next: see `decisions/next-passes.md` (to be written at M3).
+
 ## DL-014 | 2026-09-25 | Ch2+Ch3 | User-test checkpoint: A10 reframe + verification def
 
 Path: Handled by ACE — four A9 agents (L19 Novice, L20 SE Practitioner, L21 Returning Learner, L22 Systems Architect) + one ACE self-test. Two fixes applied inline; three open questions logged.
