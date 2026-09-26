@@ -2,7 +2,7 @@
 
 ## DL-016 | 2026-09-26 | Pass 1 (M1) | Glossary confirmation triage: 11 tutorial edges, 35 tutorialDefinition proposals
 
-Status: PENDING (awaiting Z's `gl:confirmed`)
+Status: COMPLETE (Z confirmed the batch, 2026-09-26)
 
 Path: Handled by ACE (Fable 5.1, cold session, from Z's recorded statements) for 43 items / Escalated to Z for 4 (physical architecture, allocation, dynamical system, specialization). Z ruled all four; ACE rulings are recommendations Z skims, since only Z sets `gl:confirmed`.
 
@@ -17,9 +17,10 @@ Decision:
 
 Rationale: Z-recorded positions (canonical first, refinements only, no invention, judgment never eliminated, lens vocabulary allowed only when it earns its place). `glossary check` and `verify-sources` pass; 0 confirmed, 82 proposed.
 
-Open preconditions before Z confirms: Douglas quotes are unverified (children refining Douglas edges cannot be confirmed until they are); tutorial-edge locators still say "Foundations (AGENTS.md Part 1...)" and are fixed at M2.
+Remaining: tutorial-edge locators still say "Foundations (AGENTS.md Part 1...)" and are fixed at M2.
 
-Z's decision: PENDING
+Z's decision: confirm the batch as Z's own after the Douglas quotes were verified ("confirm the batch as mine but verify the Douglas quotes first"). Applied by Claude on Z's instruction: all 82 edges set `gl:confirmed`, `gl:confirmedBy "Z"`.
+Douglas verification: all 9 quotes re-checked against fresh YouTube transcripts (Part 3 `UTm1ORuZ1dg`, Part 4 `Iblo2Il-pOA`, read in Z's Chrome, 2026-09-26). Seven matched their locators exactly; two locators were corrected (requirement 1:41 -> 1:43, traceability 9:45 -> 9:43). No quote failed. Every other quote was already machine-verified on its PDF page (`verify-sources` ok).
 
 ## DL-015 | 2026-09-26 | Pass 1 | Z-directed alignment pass: Foundations, glossary, layer and query skills, ACE definition, handoff
 

@@ -5,34 +5,37 @@
 
 glid:def-tutorial--allocation
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "Assigning functions to logical components, and components to parts: SEBoK's idea, SysML v2's allocate, Douglas's grouping." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--allocation,
         glid:def-sebok--allocation,
         glid:def-sysml--allocation ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-allocation ;
     gl:text "Assigning one element of the model to another so that the target takes responsibility for it: functions to logical components, and logical components to parts. SEBoK gives the idea (requirements assigned to the next level down), SysML v2 gives the checkable form (the allocate relationship between usages, which is what the model uses), and Douglas gives the story (functions grouped into components). They describe the same assigning from different angles." .
 
 glid:def-tutorial--behavior
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "The emergent outcome of a system in use; not prescribed but derived by analysis or simulation and judged against intent." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-sebok--behavior-2 ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-behavior ;
     gl:text "The emergent outcome of a system operating in its environment. A design prescribes elements, relationships and principles; behavior is not prescribed: it is derived by analysis or simulation and judged against intent." .
 
 glid:def-tutorial--functional-architecture
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "Intended behavior, stated solution-independently: functions with typed flows, the phenomena relations among them, and the MoEs." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--functional-architecture,
         glid:def-sebok--functional-architecture ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-functional-architecture ;
     gl:text "The layer that states intents: the functions a system must perform, as transformations of typed flows with the phenomena and relations among them (for example an energy-balance inequality), together with the measures of effectiveness that say what is good and good enough. Solution-independent: it holds for a pop-up toaster and for tongs and a blowtorch." .
 
@@ -40,100 +43,109 @@ glid:def-tutorial--logical-architecture
     a gl:Definition ;
     gl:approvalNote "DL-015, 2026-09-26: approved in planning ('differsFrom, approved')" ;
     gl:approvedBy "Z" ;
+    gl:confirmedBy "Z" ;
     gl:differsFrom glid:def-sebok--logical-architecture ;
     gl:gloss "Prescribed mechanisms and policies carried by logical components, plus the interfaces between them; MoP thresholds are derived here." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--logical-architecture ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-logical-architecture ;
     gl:text "The layer that states prescriptions and the intents derived from them: the mechanisms chosen to achieve the functions, the policies designed over them, the logical components that carry them, and the interfaces between components, with measures of performance as derived thresholds. Narrower than SEBoK's logical architecture, which also contains the functional view. Douglas calls this layer \"who\"; reading it as \"how\" is this tutorial's sharpening." .
 
 glid:def-tutorial--logical-component
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "The prescribed carrier of a mechanism, with its interfaces; modeled here as an abstract part definition that performs an action." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--logical-component,
         glid:def-sebok--logical-component,
         glid:def-sysml--logical-component ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-logical-component ;
     gl:text "The prescribed carrier of a mechanism, with its interfaces; this tutorial models it in SysML v2 as an abstract part definition that performs an action. It names who is responsible without committing to a physical solution." .
 
 glid:def-tutorial--mechanism
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "A prescribed, comparatively deterministic input-to-output relation: an open-loop declaration of how something works; not a behavior." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-astrom--dynamical-system,
         glid:def-astrom--dynamical-system-2,
         glid:def-sutton--dynamical-system ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-mechanism ;
     gl:text "A prescribed input-to-output relation with comparatively high determinism: an open-loop declaration of how something will work. A mechanism is designed, not observed, and is not a behavior: behavior is the emergent outcome of mechanisms operating together in context. The word and the emphasis on determinism are ours; the underlying idea is the input/output dynamics of a system." .
 
 glid:def-tutorial--moe
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "Acceptance at the functional layer: was the outcome what the stakeholder wanted?" ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-sebok--moe ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-moe ;
     gl:text "The measure of whether the intended outcome was achieved as the stakeholder wants it (for the toaster, whether the bread was toasted to the user's liking). Stated at the functional layer; typically explored by simulation or scenarios rather than computed." .
 
 glid:def-tutorial--mop
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "A performance measure (timeliness, efficiency) that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-sebok--mop,
         glid:def-sysml--mop,
         glid:def-sysml--requirement ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-mop ;
     gl:text "A performance measure: a quantity in the model, such as timeliness or efficiency, that characterizes how well a design performs. A MoP characterizes a requirement but does not make one; the requirement also needs a threshold (a constraint the valid solution must satisfy) and a means of checking it. Typically stated at the logical layer, with thresholds derived from what the MoEs need; a performance figure is not effectiveness." .
 
 glid:def-tutorial--physical-architecture
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "Concrete parts that realize the logical components and confer values; each must fit the logical interfaces and meet the derived thresholds." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--physical-architecture,
         glid:def-sebok--physical-architecture ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-physical-architecture ;
     gl:text "The layer of concrete parts that realize the logical components and confer values (sizes, ratings, part numbers): where the logical \"how\" is implemented and the functional \"what\" realized. Each part must fit the logical interfaces and meet the derived thresholds; values assessed on the parts are the technical performance measures." .
 
 glid:def-tutorial--policy
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "Decision guidance that selects inputs given the state, typically to close the loop under uncertainty; designed given the available mechanisms." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-astrom--control-law,
         glid:def-sutton--policy ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-policy ;
     gl:text "Decision-making guidance that selects inputs given the state, typically to produce closed-loop behavior in an uncertain setting. Policies are designed given the mechanisms available." .
 
 glid:def-tutorial--selection-among-alternatives
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "Choosing among alternative mechanisms by trade study against the derived measures." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--selection-among-alternatives,
         glid:def-sebok--selection-among-alternatives ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-selection-among-alternatives ;
     gl:text "Choosing among alternative mechanisms (and later alternative parts) by trade study against the derived measures. The tutorial avoids the phrase 'concept selection' because SEBoK uses 'concept' for the problem-space stage." .
 
 glid:def-tutorial--tpm
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:gloss "The value assessed on a design element by analysis or simulation: the evidence against a MoP threshold." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-sebok--tpm ;
     gl:source glid:src-tutorial ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-tpm ;
     gl:text "The value of an attribute of a design element as assessed by analysis or simulation, most often the physical candidate. It is the evidence that a MoP threshold is or is not met." .

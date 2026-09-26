@@ -5,10 +5,11 @@
 
 glid:def-api--query
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:locator "Query resource: scope, select, where, orderBy (PDF 39)" ;
     gl:pdfPage "39"^^xsd:integer ;
     gl:quote "where is a Constraint that represents the conditions that Data objects in the query response must satisfy" ;
     gl:source glid:src-api ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-query ;
     gl:text "A query selects Data objects from a project by scope, the properties to return, a constraint (where) and an ordering; it is the standard's way to interrogate a model." .

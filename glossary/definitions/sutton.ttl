@@ -5,31 +5,34 @@
 
 glid:def-sutton--dynamical-system
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:locator "Sec. 3.1 (PDF 70)" ;
     gl:pdfPage "70"^^xsd:integer ;
     gl:quote "The function p defines the dynamics of the MDP" ;
     gl:source glid:src-sutton ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-dynamical-system ;
     gl:text "The function p(s', r | s, a) defines the dynamics of the environment: the probability of each next state and reward given state and action." .
 
 glid:def-sutton--policy
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:locator "Sec. 1.3 (PDF 28)" ;
     gl:pdfPage "28"^^xsd:integer ;
     gl:preferred "true"^^xsd:boolean ;
     gl:quote "A policy defines the learning agent's way of behaving at a given time" ;
     gl:source glid:src-sutton ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-policy ;
     gl:text "A mapping from perceived states of the environment to actions to be taken; may be a lookup table or extensive computation; may be stochastic." .
 
 glid:def-sutton--policy-2
     a gl:Definition ;
+    gl:confirmedBy "Z" ;
     gl:locator "Sec. 3.5 (PDF 80)" ;
     gl:pdfPage "80"^^xsd:integer ;
     gl:quote "Formally, a policy is a mapping from states to probabilities of selecting each possible action" ;
     gl:source glid:src-sutton ;
-    gl:status gl:proposed ;
+    gl:status gl:confirmed ;
     gl:term glid:term-policy ;
     gl:text "Formally, a mapping from states to probabilities of selecting each possible action." .
