@@ -13,6 +13,8 @@ Notebook cells call that function; the workaround does not appear in notebook co
 **Upstream issue:** Open-MBEE/OpenSysML#590
 **Toaster issue:** Open-MBEE/toaster#1
 
+**Update (Pass 1, 2026-09-26):** `get_satisfy_relationships()` now reads `.content` and is tested (`tests/test_query.py`); the wider visibility gap, including unnamed connectors and metadata, is D-015.
+
 ## D-002: Custom theme / CSS for site
 
 SA-5 sets default book-theme, no custom CSS, for the first release.
