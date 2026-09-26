@@ -1,3 +1,7 @@
+// GENERATED FIXTURE — do not edit directly.
+// Run: python scripts/check_construction.py --check   (to verify)
+// Source: notebook cell-02 TOASTER_INCREMENT in chapter 3's construct-introducing notebooks.
+
 package ToasterDemo {
     private import ScalarValues::*;
     private import SI::*;

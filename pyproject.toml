@@ -25,5 +25,11 @@ dev = [
   "ruff>=0.4",
 ]
 
+[tool.pytest.ini_options]
+markers = [
+  "checkpoint: verify notebook construction cells are consistent with committed fixtures",
+]
+addopts = "-m 'not checkpoint'"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/toaster"]
