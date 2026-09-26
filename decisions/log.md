@@ -40,7 +40,7 @@ Douglas verification: all 9 quotes re-checked against fresh YouTube transcripts 
 
 ## DL-015 | 2026-09-26 | Pass 1 | Z-directed alignment pass: Foundations, glossary, layer and query skills, ACE definition, handoff
 
-Status: COMPLETE (2026-09-26). Outstanding for Z: read back the AGENTS.md Part 1 Foundations and `decisions/next-passes.md`, and review the drafted gap issues before anything is filed.
+Status: COMPLETE (2026-09-26). Z read back and approved AGENTS.md Part 1 (as is) and `decisions/next-passes.md` (all four clusters as written), 2026-09-26. Gap drafts 1 and 2 approved for filing subject to Z's go on the final text; drafts 3 to 5 held for Z's review; nothing is filed.
 
 Path: Escalated to Z — this pass was specified interactively by Z (plan approved 2026-09-26, `/Users/z/.claude/plans/now-we-re-starting-to-merry-music.md`). Because Z directed it, the skill-editor escalate-to-Z gates (multi-archetype change, >20% of a skill, new capability, learning-outcome effect) are satisfied by this entry; this is a one-off Z override, not a change to file authority.
 
