@@ -1,5 +1,27 @@
 # Decision log
 
+## DL-014 | 2026-09-25 | Ch2+Ch3 | User-test checkpoint: A10 reframe + verification def
+
+Path: Handled by ACE — four A9 agents (L19 Novice, L20 SE Practitioner, L21 Returning Learner, L22 Systems Architect) + one ACE self-test. Two fixes applied inline; three open questions logged.
+
+Decision: Two blocking/NEEDS-FIX issues resolved; CHECKPOINT PASS for Ch2-03 and Ch3-04 after fixes. Three open questions escalated to Z.
+
+**Fixes applied (ACE inline):**
+1. **ch03/nb03 missing import** — `from toaster.evidence import ReviewRecord, validate_record, hash_content` was absent from the model-load cell; cell-05 raised NameError at runtime. Added import to cell-02. Fix verified: `validate_record()` returns `[]`. (L20 NEEDS-FIX, confirmed blocking.)
+2. **ch02/nb01 API-comment explanation** — cell-01 context now ends with: "Each code cell contains a commented-out `editor.add_*()` call showing the future Editor API equivalent; these are informational — run the cell as written." Addresses L19 NEEDS-FIX: novice saw the comment and didn't know whether to act on it.
+
+**Passing verdicts:**
+- L21 Returning Learner Ch1+Ch4: PASS — physical-layer label in ch01 present, verb-noun scope note in ch04 present, WHAT-not-HOW in nb01 cell-01 correct.
+- L22 Systems Architect Ch2+Ch3: PASS — six execution cells green, three-part anatomy correctly stated and demonstrated, def/usage distinction present in ch03-nb04, gap note cites both toaster#19 and OpenSysML#608.
+
+**Open questions for Z (do not fix without direction):**
+
+OQ-1 — **req def/usage template distinction absent from ch02-nb01 for novice readers.** L19: cell-03 says "TimelyToast is a requirement definition" without clarifying that "definition" means a reusable template (classifier), not just "a defined requirement." The def/usage distinction is not explained until Ch3-nb01 where `timely : TimelyToast` appears. Question: add a one-sentence forward-reference in cell-03? ("A requirement _definition_ is a template — Chapter 3 shows how to apply it to a named design candidate.") Or keep the scoped-reveal pattern as-is?
+
+OQ-2 — **Logical architecture layer unnamed in ch01/ch04 index.md.** L21: ch01 correctly labels the structural model as "physical architecture layer" (forward ref from the A10 framing). But the logical layer (abstract part def specializations + interface contracts) is never named by name in either index. The tutorial implies functional→physical but the middle layer appears unnamed. Question: add one sentence to ch01/index.md and ch04/index.md naming the logical layer explicitly and saying Ch5 is where it gets its interfaces? Or is the silence correct because logical architecture is Ch5's business?
+
+OQ-3 — **"Inspired by" hedge on the three-part anatomy.** L22 (Systems Architect): cell-01 of ch02-nb01 says "(inspired by Brian Douglas, Part 4)" around the three-part anatomy. An architect reads this as a hedge around what Part 4 presents as a firm convention. The "inspired by" framing was Z's explicit directive (to relieve perfect-match pressure with the video), but L22 flags it. No change proposed — logging for awareness.
+
 ## DL-013 | 2026-09-25 | Phase 4 | User-test checkpoint: Phase 4 construction zones pass
 
 Path: Handled by ACE — three A9 reports + ACE self-test; zero blocking issues; checkpoint passed
