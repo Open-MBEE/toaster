@@ -20,16 +20,15 @@ FILE_SHA = hashlib.sha256(FILE_BYTES).hexdigest()
 
 SOURCES = PREFIX + f"""
 glid:src-canon a gl:Source ; gl:label "Canon" ; gl:edition "1" ; gl:sourceKind gl:File ;
-    gl:sha256 "{FILE_SHA}" ; gl:localPath "canon.txt" .
+    gl:rank 1 ; gl:sha256 "{FILE_SHA}" ; gl:localPath "canon.txt" .
 glid:src-video a gl:Source ; gl:label "Video" ; gl:edition "P3" ; gl:sourceKind gl:Video ;
-    gl:url "https://example.org/v" ; gl:retrievedOn "2026-09-26"^^xsd:date .
+    gl:rank 8 ; gl:url "https://example.org/v" ; gl:retrievedOn "2026-09-26"^^xsd:date .
 glid:src-tutorial a gl:Source ; gl:label "This tutorial" ; gl:edition "test" ; gl:sourceKind gl:Repository ;
-    gl:commit "abc123" .
+    gl:rank 0 ; gl:commit "abc123" .
 """
 
 TERMS = PREFIX + """
-glid:term-logical a gl:Term ; gl:label "logical" ; gl:loadBearing true ;
-    gl:tutorialDefinition glid:def-tutorial--logical .
+glid:term-logical a gl:Term ; gl:label "logical" ; gl:loadBearing true .
 glid:term-function a gl:Term ; gl:label "function" ; gl:loadBearing true .
 """
 

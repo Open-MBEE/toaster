@@ -1,0 +1,31 @@
+# The tutorial-definition view: one edge per term, chosen by citation order.
+# ?includeProposed (bound by the caller) false = confirmed edges only; true = preview including proposed.
+# Rule: lowest key wins, key = 2 * source rank - (1 if gl:preferred else 0). A preferred edge beats siblings from
+# the same source, never a better-ranked source. More than one row for a term is an ambiguity `check` reports.
+# Explicit ORDER BY: same graph, same output, byte for byte. Never remove it.
+
+PREFIX gl: <https://w3id.org/toaster/glossary#>
+
+SELECT ?term ?def ?source ?status ?key
+WHERE {
+  ?def a gl:Definition ;
+       gl:term ?term ;
+       gl:source ?source ;
+       gl:status ?status .
+  ?source gl:rank ?rank .
+  FILTER(?status = gl:confirmed || ?includeProposed)
+  OPTIONAL { ?def gl:preferred ?pref }
+  BIND(2 * ?rank - IF(COALESCE(?pref, false), 1, 0) AS ?key)
+  FILTER NOT EXISTS {
+    ?other a gl:Definition ;
+           gl:term ?term ;
+           gl:source ?otherSource ;
+           gl:status ?otherStatus .
+    ?otherSource gl:rank ?otherRank .
+    FILTER(?otherStatus = gl:confirmed || ?includeProposed)
+    OPTIONAL { ?other gl:preferred ?otherPref }
+    BIND(2 * ?otherRank - IF(COALESCE(?otherPref, false), 1, 0) AS ?otherKey)
+    FILTER(?otherKey < ?key)
+  }
+}
+ORDER BY ?term ?key ?def

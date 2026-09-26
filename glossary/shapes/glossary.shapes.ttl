@@ -18,6 +18,8 @@ gl:SourceShape a sh:NodeShape ;
         [ sh:path gl:sourceKind ; sh:minCount 1 ; sh:maxCount 1 ;
           sh:in ( gl:File gl:Video gl:Repository ) ;
           sh:message "a Source has exactly one gl:sourceKind: gl:File, gl:Video or gl:Repository" ] ,
+        [ sh:path gl:rank ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+          sh:message "a Source has exactly one integer gl:rank (citation order, lower wins)" ] ,
         [ sh:path gl:sha256 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[0-9a-f]{64}$" ;
           sh:message "gl:sha256 must be lowercase hex, 64 characters" ] ,
         [ sh:path gl:localPath ; sh:maxCount 1 ; sh:datatype xsd:string ] ,
@@ -30,9 +32,7 @@ gl:TermShape a sh:NodeShape ;
     sh:property
         [ sh:path gl:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
           sh:message "a Term has exactly one gl:label" ] ,
-        [ sh:path gl:loadBearing ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ,
-        [ sh:path gl:tutorialDefinition ; sh:maxCount 1 ; sh:class gl:Definition ;
-          sh:message "a Term names at most one gl:tutorialDefinition, and it must be a gl:Definition" ] .
+        [ sh:path gl:loadBearing ; sh:maxCount 1 ; sh:datatype xsd:boolean ] .
 
 gl:DefinitionShape a sh:NodeShape ;
     sh:targetClass gl:Definition ;
@@ -45,6 +45,7 @@ gl:DefinitionShape a sh:NodeShape ;
           sh:message "a Definition has exactly one gl:text (paraphrase)" ] ,
         [ sh:path gl:locator ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
           sh:message "a Definition has exactly one gl:locator" ] ,
+        [ sh:path gl:preferred ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ,
         [ sh:path gl:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( gl:proposed gl:confirmed ) ;
           sh:message "a Definition has exactly one gl:status: gl:proposed or gl:confirmed" ] ,
         [ sh:path gl:quote ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:maxLength 300 ;

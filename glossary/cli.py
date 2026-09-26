@@ -10,16 +10,18 @@ import json
 from pathlib import Path
 
 import typer
-from rdflib import URIRef
+from rdflib import RDF, URIRef
 
 from .check import run_check, verify_sources
 from .graph import (
+    gloss_of,
     load_graph,
     local_status,
     resolve_source,
     resolve_term,
     run_query,
     short_id,
+    tutorial_definitions,
 )
 from .namespaces import GL, PACKAGE_DIR, REPO_DIR
 from .render import render as render_files
@@ -48,7 +50,7 @@ def _term_or_die(graph, key: str) -> URIRef:
     return term
 
 
-def _def_view(row: dict) -> dict:
+def _def_view(row: dict, selected: str | None = None) -> dict:
     out = {
         "id": short_id(row["def"]),
         "source": row["sourceLabel"],
@@ -56,16 +58,37 @@ def _def_view(row: dict) -> dict:
         "status": local_status(row["status"]),
         "locator": row["locator"],
         "text": row["text"],
-        "tutorialDefinition": row.get("isTutorialDefinition") is True,
     }
+    if selected:
+        out["tutorialDefinition"] = selected
     for key in ("quote", "gloss", "confirmedBy", "approvedBy"):
         if key in row:
             out[key] = row[key]
     if "refines" in row:
-        out["refines"] = short_id(row["refines"])
+        out["refines"] = sorted(short_id(x) for x in row["refines"])
     if "differsFrom" in row:
-        out["differsFrom"] = short_id(row["differsFrom"])
+        out["differsFrom"] = sorted(short_id(x) for x in row["differsFrom"])
     return out
+
+
+def _marked_rows(g, root: Path, t: URIRef) -> list[dict]:
+    """Definition rows for a term, marking the edge the tutorial-definition view selects."""
+    sure = {short_id(r["def"]) for r in tutorial_definitions(g, root).get(t, [])}
+    maybe = {short_id(r["def"]) for r in tutorial_definitions(g, root, include_proposed=True).get(t, [])}
+    merged: dict[str, dict] = {}
+    for r in run_query(g, root, "lookup", term=t):  # one row per refines/differsFrom target: merge them
+        m = merged.setdefault(r["def"], {**r, "refines": set(), "differsFrom": set()})
+        for k in ("refines", "differsFrom"):
+            if k in r:
+                m[k].add(r[k])
+    rows = []
+    for r in merged.values():
+        i = short_id(r["def"])
+        for k in ("refines", "differsFrom"):
+            if not r[k]:
+                del r[k]
+        rows.append(_def_view(r, "confirmed" if i in sure else "preview" if i in maybe else None))
+    return rows
 
 
 @app.command()
@@ -73,22 +96,23 @@ def lookup(term: str, as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
     """All definitions of TERM across sources, with locators and status."""
     g = load_graph(root)
     t = _term_or_die(g, term)
-    rows = [_def_view(r) for r in run_query(g, root, "lookup", term=t)]
+    rows = _marked_rows(g, root, t)
     label = str(g.value(t, GL.label))
     if as_json:
         _emit({"term": short_id(t), "label": label, "definitions": rows})
         return
     typer.echo(f"{label}  ({short_id(t)})  {len(rows)} definition(s)")
     for r in rows:
-        mark = "  <- tutorial definition" if r["tutorialDefinition"] else ""
+        mark = {"confirmed": "  <- tutorial definition",
+                "preview": "  <- tutorial definition if confirmed"}.get(r.get("tutorialDefinition"), "")
         typer.echo(f"\n[{r['status']}] {r['source']} ({r['edition']}), {r['locator']}{mark}")
         typer.echo(f"  {r['text']}")
         if "quote" in r:
             typer.echo(f"  quote: \"{r['quote']}\"")
         if "refines" in r:
-            typer.echo(f"  refines {r['refines']}")
+            typer.echo(f"  refines {', '.join(r['refines'])}")
         if "differsFrom" in r:
-            typer.echo(f"  differsFrom {r['differsFrom']} (approved by {r.get('approvedBy', 'nobody')})")
+            typer.echo(f"  differsFrom {', '.join(r['differsFrom'])} (approved by {r.get('approvedBy', 'nobody')})")
 
 
 @app.command()
@@ -96,7 +120,7 @@ def compare(term: str, as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
     """Definitions of TERM side by side, one block per source, showing refines and differsFrom."""
     g = load_graph(root)
     t = _term_or_die(g, term)
-    rows = [_def_view(r) for r in run_query(g, root, "lookup", term=t)]
+    rows = _marked_rows(g, root, t)
     by_source: dict[str, list[dict]] = {}
     for r in rows:
         by_source.setdefault(r["source"], []).append(r)
@@ -108,9 +132,9 @@ def compare(term: str, as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
         for r in defs:
             rel = ""
             if "refines" in r:
-                rel = f" [refines {r['refines']}]"
+                rel = f" [refines {', '.join(r['refines'])}]"
             if "differsFrom" in r:
-                rel = f" [differsFrom {r['differsFrom']}]"
+                rel = f" [differsFrom {', '.join(r['differsFrom'])}]"
             typer.echo(f"  {r['locator']}: {r['text']}{rel}")
 
 
@@ -119,9 +143,10 @@ def terms(as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
     """Every term, with its definition count."""
     g = load_graph(root)
     rows = run_query(g, root, "terms")
+    sure = tutorial_definitions(g, root)
     view = [{"id": short_id(r["term"]), "label": r["label"], "definitions": int(r["definitions"]),
              "loadBearing": r.get("loadBearing") is True,
-             "tutorialDefinition": short_id(r["tutorialDefinition"]) if "tutorialDefinition" in r else None}
+             "tutorialDefinition": short_id(sure[URIRef(r["term"])][0]["def"]) if len(sure.get(URIRef(r["term"]), [])) == 1 else None}
             for r in rows]
     if as_json:
         _emit(view)
@@ -130,6 +155,36 @@ def terms(as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
         flag = "*" if r["loadBearing"] else " "
         td = "T" if r["tutorialDefinition"] else " "
         typer.echo(f"{flag}{td} {r['definitions']:>2}  {r['label']}  ({r['id']})")
+
+
+@app.command()
+def tutorial(term: str = typer.Argument(None, help="One term, or omit for every term."),
+             proposed: bool = typer.Option(False, "--proposed", help="Preview: include proposed edges, as if all were confirmed."),
+             as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
+    """The tutorial-definition view: the one edge per term chosen by citation order (confirmed only unless --proposed)."""
+    g = load_graph(root)
+    view = tutorial_definitions(g, root, include_proposed=proposed)
+    keys = [_term_or_die(g, term)] if term else sorted(g.subjects(RDF.type, GL.Term), key=lambda x: str(g.value(x, GL.label)).lower())
+    out = []
+    for t in keys:
+        rows = view.get(t, [])
+        entry = {"term": short_id(t), "label": str(g.value(t, GL.label)),
+                 "definitions": [{"id": short_id(r["def"]), "source": str(g.value(r["source"], GL.label)),
+                                  "status": local_status(r["status"]),
+                                  "text": str(g.value(r["def"], GL.text)),
+                                  "gloss": gloss_of(g, r["def"])} for r in rows]}
+        out.append(entry)
+    if as_json:
+        _emit(out)
+        return
+    for e in out:
+        if not e["definitions"]:
+            typer.echo(f"{e['label']}  ({e['term']}): none confirmed")
+            continue
+        for d in e["definitions"]:
+            flag = "" if d["status"] == "confirmed" else "  [proposed]"
+            typer.echo(f"{e['label']}  ({e['term']}): {d['id']}  <- {d['source']}{flag}")
+            typer.echo(f"    {d['gloss'] or d['text']}")
 
 
 @app.command()
@@ -236,7 +291,7 @@ def verify_sources_cmd(as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
 def render_cmd(dry_run: bool = typer.Option(False, "--dry-run", help="List files that would change; exit 1 if any."),
                root: Path = RootOpt, repo: Path = RepoOpt) -> None:
     """Write tutorial glosses between <!-- gloss:ID --> markers in AGENTS.md, CLAUDE.md and skills."""
-    changed = render_files(load_graph(root), repo, write=not dry_run)
+    changed = render_files(load_graph(root), repo, root, write=not dry_run)
     for f in changed:
         typer.echo(("would change " if dry_run else "updated ") + str(f.relative_to(repo)))
     if not changed:

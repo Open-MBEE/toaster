@@ -20,9 +20,17 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pyshacl import validate
-from rdflib import RDF, Graph, URIRef
+from rdflib import RDF, Graph, Literal, URIRef
 
-from .graph import load_graph, load_shapes, load_vocabulary, short_id
+from .graph import (
+    MAX_GLOSS,
+    gloss_of,
+    load_graph,
+    load_shapes,
+    load_vocabulary,
+    short_id,
+    tutorial_definitions,
+)
 from .namespaces import GL, PACKAGE_DIR, REPO_DIR, TUTORIAL_SOURCE
 from .render import GLOSS_RE, expected_gloss, target_files
 
@@ -110,19 +118,27 @@ def _confirmation(graph: Graph) -> list[Finding]:
                 out.append(_err("confirmed-by", f"{short_id(d)} confirmedBy {who!s}: only a human confirms"))
         elif who is not None:
             out.append(_err("confirmed-by", f"{short_id(d)} has gl:confirmedBy but is not confirmed"))
-    for t in graph.subjects(RDF.type, GL.Term):
-        td = graph.value(t, GL.tutorialDefinition)
-        if td is None:
-            continue
-        if (td, RDF.type, GL.Definition) not in graph:
-            out.append(_err("tutorial-definition", f"{short_id(t)} names {short_id(td)}, which is not a definition"))
-            continue
-        if graph.value(td, GL["term"]) != t:
-            out.append(_err("tutorial-definition", f"{short_id(t)}'s tutorialDefinition {short_id(td)} defines another term"))
-        if graph.value(td, GL.status) != GL.confirmed:
-            out.append(_err("tutorial-definition", f"{short_id(t)}'s tutorialDefinition {short_id(td)} is not confirmed"))
-        if graph.value(td, GL.gloss) is None:
-            out.append(_err("tutorial-definition", f"{short_id(t)}'s tutorialDefinition {short_id(td)} has no gl:gloss"))
+    return out
+
+
+def _tutorial_view(graph: Graph, root: Path) -> list[Finding]:
+    out = []
+    unresolved = []
+    preview = tutorial_definitions(graph, root, include_proposed=True)
+    confirmed = tutorial_definitions(graph, root)
+    for t in sorted(graph.subjects(RDF.type, GL.Term)):
+        rows = preview.get(t, [])
+        label = short_id(t)
+        if len(rows) > 1:
+            ids = ", ".join(short_id(r["def"]) for r in rows)
+            out.append(_err("tutorial-definition", f"{label}: ambiguous tutorial definition ({ids}); set gl:preferred among same-source edges or adjust gl:rank"))
+        crow = confirmed.get(t, [])
+        if len(crow) == 1 and gloss_of(graph, crow[0]["def"]) is None:
+            out.append(_err("tutorial-definition", f"{label}: {short_id(crow[0]['def'])} has no gl:gloss and its text is over {MAX_GLOSS} characters"))
+        if not crow and graph.value(t, GL.loadBearing) == Literal(True):
+            unresolved.append(label)
+    if unresolved:
+        out.append(_warn("tutorial-definition", f"{len(unresolved)} load-bearing term(s) have no confirmed definition yet"))
     return out
 
 
@@ -231,16 +247,16 @@ def _quotes(graph: Graph, root: Path, *, require: bool) -> list[Finding]:
     return out
 
 
-def _markers(graph: Graph, repo: Path) -> list[Finding]:
+def _markers(graph: Graph, repo: Path, root: Path) -> list[Finding]:
     out = []
     for f in target_files(repo):
         text = f.read_text(encoding="utf-8")
         for m in GLOSS_RE.finditer(text):
             term_key, inner = m.group("id"), m.group("body")
-            want = expected_gloss(graph, term_key)
+            want = expected_gloss(graph, term_key, root)
             rel = f.relative_to(repo)
             if want is None:
-                out.append(_err("gloss-drift", f"{rel}: marker {term_key!r} has no confirmed tutorialDefinition with a gloss"))
+                out.append(_err("gloss-drift", f"{rel}: marker {term_key!r} has no confirmed tutorial definition"))
             elif inner != want:
                 out.append(_err("gloss-drift", f"{rel}: marker {term_key!r} is stale; run `python -m glossary render`"))
     return out
@@ -253,7 +269,8 @@ def run_check(root: Path = PACKAGE_DIR, repo: Path = REPO_DIR) -> list[Finding]:
         findings += fn(graph)
     findings += _hashes(graph, root, require=False)
     findings += _quotes(graph, root, require=False)
-    findings += _markers(graph, repo)
+    findings += _tutorial_view(graph, root)
+    findings += _markers(graph, repo, root)
     return findings
 
 

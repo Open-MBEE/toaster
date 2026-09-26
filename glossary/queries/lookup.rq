@@ -5,7 +5,7 @@ PREFIX gl: <https://w3id.org/toaster/glossary#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?def ?source ?sourceLabel ?edition ?text ?quote ?gloss ?locator ?status ?confirmedBy
-       ?refines ?differsFrom ?approvedBy ?isTutorialDefinition
+       ?refines ?differsFrom ?approvedBy
 WHERE {
   ?def a gl:Definition ;
        gl:term ?term ;
@@ -21,6 +21,5 @@ WHERE {
   OPTIONAL { ?def gl:refines ?refines }
   OPTIONAL { ?def gl:differsFrom ?differsFrom }
   OPTIONAL { ?def gl:approvedBy ?approvedBy }
-  BIND(EXISTS { ?term gl:tutorialDefinition ?def } AS ?isTutorialDefinition)
 }
 ORDER BY ?sourceLabel ?locator ?def

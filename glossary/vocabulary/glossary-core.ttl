@@ -57,8 +57,8 @@ gl:Repository a owl:NamedIndividual .
 
 gl:loadBearing a owl:DatatypeProperty ; rdfs:domain gl:Term ; rdfs:range xsd:boolean ;
     rdfs:comment "True when AGENTS.md Foundations or a skill relies on the term." .
-gl:tutorialDefinition a owl:ObjectProperty ; rdfs:domain gl:Term ; rdfs:range gl:Definition ;
-    rdfs:comment "The edge this repository uses as its local source of truth for the term. Must be confirmed. May be a canonical edge or a tutorial refinement edge." .
+gl:rank a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:integer ;
+    rdfs:comment "Citation-order rank of the source; lower wins. The tutorial-definition view picks, per term, the confirmed edge from the best-ranked source." .
 
 # ---- definition (edge) properties -------------------------------------
 
@@ -73,7 +73,9 @@ gl:locator a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:s
 gl:pdfPage a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:integer ;
     rdfs:comment "1-based PDF page of the source where gl:quote appears. Lets verify-sources check the quote mechanically. File sources only." .
 gl:gloss a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
-    rdfs:comment "One-line form written into AGENTS.md and skills between marker comments. Required on a tutorialDefinition." .
+    rdfs:comment "One-line form written into AGENTS.md and skills between marker comments. Used verbatim by `render` when present; otherwise the text (at most 240 characters) is used." .
+gl:preferred a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:boolean ;
+    rdfs:comment "Tie-break among edges of the SAME source for one term (for example two SEBoK definitions of function). Never overrides source rank." .
 gl:status a owl:ObjectProperty ; rdfs:domain gl:Definition ;
     rdfs:comment "gl:proposed or gl:confirmed. Only Z sets gl:confirmed." .
 gl:proposed a owl:NamedIndividual .

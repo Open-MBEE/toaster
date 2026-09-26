@@ -17,6 +17,7 @@ glid:def-astrom--dynamical-system
     a gl:Definition ;
     gl:locator "Sec. 1.1 (PDF 13)" ;
     gl:pdfPage "13"^^xsd:integer ;
+    gl:preferred "true"^^xsd:boolean ;
     gl:quote "A dynamical system is a system whose behavior changes over time, often in response to external stimulation or forcing" ;
     gl:source glid:src-astrom ;
     gl:status gl:proposed ;

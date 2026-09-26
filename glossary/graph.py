@@ -62,6 +62,31 @@ def run_query(graph: Graph, root: Path, name: str, **bindings: URIRef | Literal)
     return out
 
 
+MAX_GLOSS = 240
+
+
+def tutorial_definitions(graph: Graph, root: Path, *, include_proposed: bool = False) -> dict[URIRef, list[dict]]:
+    """The tutorial-definition view: term -> the edge(s) chosen by citation order.
+
+    One row per term is the norm; more than one is an ambiguity `check` reports. With include_proposed
+    the view previews what it would be if every proposed edge were confirmed.
+    """
+    q = query_text(root, "tutorial_definitions")
+    out: dict[URIRef, list[dict]] = {}
+    for row in graph.query(q, initBindings={"includeProposed": Literal(include_proposed)}):
+        out.setdefault(row.term, []).append({"def": row["def"], "source": row.source, "status": row.status})
+    return out
+
+
+def gloss_of(graph: Graph, definition: URIRef) -> str | None:
+    """The one-line form: gl:gloss, else the text when it fits."""
+    g = graph.value(definition, GL.gloss)
+    if g is not None:
+        return str(g)
+    t = graph.value(definition, GL.text)
+    return str(t) if t is not None and len(str(t)) <= MAX_GLOSS else None
+
+
 def _plain(node: object) -> str | bool:
     if isinstance(node, Literal):
         return node.toPython() if isinstance(node.toPython(), bool) else str(node)

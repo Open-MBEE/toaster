@@ -9,6 +9,7 @@ glid:src-api
     gl:edition "v1.0 formal/2026-03-04" ;
     gl:label "Systems Modeling API and Services" ;
     gl:localPath "sysml-api-services-v1.0-formal-26-03-04.pdf" ;
+    gl:rank "3"^^xsd:integer ;
     gl:sha256 "1a93ffb9214573ec38b00b89f7ce4c7b7ff6559ccbff534a6a97e08e1f145e0a" ;
     gl:sourceKind gl:File .
 
@@ -18,6 +19,7 @@ glid:src-astrom
     gl:edition "2nd ed. v3.1.5 (2020-07-24)" ;
     gl:label "Astrom and Murray, Feedback Systems" ;
     gl:localPath "astrom-murray-fbs-2e-v3.1.5.pdf" ;
+    gl:rank "6"^^xsd:integer ;
     gl:sha256 "e2fa6992fe5a4773e0e8857b90a4d7d1aa10af0a48fb3b8d45e6f7c1d8bad7ec" ;
     gl:sourceKind gl:File .
 
@@ -26,6 +28,7 @@ glid:src-douglas
     gl:citation "B. Douglas. Systems Engineering: Managing System Complexity, MATLAB Tech Talks, Part 3 (The Benefits of Functional Architectures) and Part 4 (An Introduction to Requirements), 2020." ;
     gl:edition "Parts 3 and 4 (2020)" ;
     gl:label "Douglas, Systems Engineering (MathWorks)" ;
+    gl:rank "8"^^xsd:integer ;
     gl:retrievedOn "2026-09-26"^^xsd:date ;
     gl:sourceKind gl:Video ;
     gl:url "https://www.youtube.com/playlist?list=PLn8PRpmsu08owzDpgnQr7vo2O-FUQm_fL" .
@@ -36,6 +39,7 @@ glid:src-hawkins
     gl:edition "SSS 2011, pp. 3-23" ;
     gl:label "Hawkins et al. 2011" ;
     gl:localPath "hawkins-2011.pdf" ;
+    gl:rank "5"^^xsd:integer ;
     gl:sha256 "53af633615db4857b32d723544f2f5c408aa4dfede4055a1109f0c7046673750" ;
     gl:sourceKind gl:File .
 
@@ -45,6 +49,7 @@ glid:src-kerml
     gl:edition "1.1 Beta 2" ;
     gl:label "KerML" ;
     gl:localPath "kerml-1.1-beta2.pdf" ;
+    gl:rank "4"^^xsd:integer ;
     gl:sha256 "e8b7f33d9dac1a3fdd4eaa64b052608a989b92c580de91fdadb7038d33df99af" ;
     gl:sourceKind gl:File .
 
@@ -54,6 +59,7 @@ glid:src-sebok
     gl:edition "v2.14" ;
     gl:label "SEBoK" ;
     gl:localPath "sebok-v2.14.pdf" ;
+    gl:rank "1"^^xsd:integer ;
     gl:sha256 "251668f0ed4eca5a7c36755c6c56a07d663ef8a2bd66addd41e595eabcf0dce2" ;
     gl:sourceKind gl:File .
 
@@ -63,6 +69,7 @@ glid:src-sutton
     gl:edition "2nd ed. (2018)" ;
     gl:label "Sutton and Barto, Reinforcement Learning" ;
     gl:localPath "sutton-barto-rl-2e.pdf" ;
+    gl:rank "7"^^xsd:integer ;
     gl:sha256 "fd1751be1a2f9df4f6cc512cb9054f8131cca46b1eb6d9416426b9cad1802973" ;
     gl:sourceKind gl:File .
 
@@ -72,6 +79,7 @@ glid:src-sysml
     gl:edition "formal/2026-03-02" ;
     gl:label "SysML v2.0 Language Specification" ;
     gl:localPath "sysml-v2.0-language-formal-26-03-02.pdf" ;
+    gl:rank "2"^^xsd:integer ;
     gl:sha256 "46e6c0476a6f1f34f367d57e039d56659bff75e41d2e4b3d37ca4cadea84a83a" ;
     gl:sourceKind gl:File .
 
@@ -81,4 +89,5 @@ glid:src-tutorial
     gl:commit "925136c" ;
     gl:edition "refinements" ;
     gl:label "This tutorial" ;
+    gl:rank "0"^^xsd:integer ;
     gl:sourceKind gl:Repository .

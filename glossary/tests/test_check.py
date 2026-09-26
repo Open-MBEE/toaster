@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from glossary.check import run_check, verify_sources
+from glossary.graph import load_graph, short_id, tutorial_definitions
 
 from .conftest import DEFS, PREFIX, SOURCES, TERMS, make_root
 
@@ -43,16 +44,59 @@ def test_orphan_source_fails(tmp_path: Path, repo: Path) -> None:
     assert "orphan-source" in errors(make_root(tmp_path, sources=sources), repo)
 
 
-def test_tutorial_definition_must_be_confirmed(tmp_path: Path, repo: Path) -> None:
+def selected(root: Path, *, proposed: bool = False) -> dict[str, list[str]]:
+    g = load_graph(root)
+    return {short_id(t): [short_id(r["def"]) for r in rows] for t, rows in tutorial_definitions(g, root, include_proposed=proposed).items()}
+
+
+def test_view_picks_best_ranked_confirmed_edge(root: Path) -> None:
+    assert selected(root) == {"term-logical": ["def-tutorial--logical"]}
+
+
+def test_view_ignores_proposed_edges_until_previewed(tmp_path: Path) -> None:
     bad = dict(DEFS)
     bad["tutorial"] = bad["tutorial"].replace("gl:status gl:confirmed ; gl:confirmedBy \"Z\" ;", "gl:status gl:proposed ;")
+    root = make_root(tmp_path, defs=bad)
+    assert selected(root)["term-logical"] == ["def-canon--logical"]
+    assert selected(root, proposed=True)["term-logical"] == ["def-tutorial--logical"]
+
+
+def test_view_is_empty_for_a_term_with_nothing_confirmed(root: Path) -> None:
+    assert "term-function" not in selected(root)
+    assert selected(root, proposed=True)["term-function"] == ["def-canon--function"]
+
+
+def test_same_source_tie_is_ambiguous_until_preferred(tmp_path: Path, repo: Path) -> None:
+    twin = PREFIX + """
+glid:def-canon--function-2 a gl:Definition ; gl:source glid:src-canon ; gl:term glid:term-function ;
+    gl:text "A second reading." ; gl:locator "p. 10" ; gl:status gl:proposed .
+"""
+    defs = {**DEFS, "canon": DEFS["canon"] + twin.split("\n", 3)[3]}
+    root = make_root(tmp_path, defs=defs)
+    assert "tutorial-definition" in errors(root, repo)
+    fixed = {**defs, "canon": defs["canon"].replace("gl:locator \"p. 9\" ;", "gl:locator \"p. 9\" ; gl:preferred true ;")}
+    root = make_root(tmp_path / "b", defs=fixed)
+    assert "tutorial-definition" not in errors(root, repo)
+    assert selected(root, proposed=True)["term-function"] == ["def-canon--function"]
+
+
+def test_preferred_never_beats_a_better_ranked_source(tmp_path: Path) -> None:
+    video = DEFS["video"].replace("gl:status gl:proposed .", "gl:status gl:proposed ; gl:preferred true .")
+    root = make_root(tmp_path, defs={**DEFS, "video": video})
+    assert selected(root, proposed=True)["term-logical"] == ["def-tutorial--logical"]
+
+
+def test_confirmed_selection_needs_gloss_or_short_text(tmp_path: Path, repo: Path) -> None:
+    bad = dict(DEFS)
+    bad["tutorial"] = bad["tutorial"].replace('gl:gloss "Mechanisms carried by logical components." ;', "").replace(
+        'gl:text "Mechanisms carried by components."', f'gl:text "{"x" * 241}"')
     assert "tutorial-definition" in errors(make_root(tmp_path, defs=bad), repo)
 
 
-def test_tutorial_definition_needs_gloss(tmp_path: Path, repo: Path) -> None:
+def test_short_text_stands_in_for_a_missing_gloss(tmp_path: Path, repo: Path) -> None:
     bad = dict(DEFS)
     bad["tutorial"] = bad["tutorial"].replace('gl:gloss "Mechanisms carried by logical components." ;', "")
-    assert "tutorial-definition" in errors(make_root(tmp_path, defs=bad), repo)
+    assert "tutorial-definition" not in errors(make_root(tmp_path, defs=bad), repo)
 
 
 def test_confirmed_by_agent_rejected(tmp_path: Path, repo: Path) -> None:

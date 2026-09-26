@@ -88,6 +88,7 @@ glid:def-sebok--emergence-2
     a gl:Definition ;
     gl:locator "Emergence and Complexity, 'Emergence in Systems' (PDF 231)" ;
     gl:pdfPage "231"^^xsd:integer ;
+    gl:preferred "true"^^xsd:boolean ;
     gl:quote "Emergence refers to properties or behaviors that arise at the level of the system as a whole and cannot be attributed to any individual component" ;
     gl:source glid:src-sebok ;
     gl:status gl:proposed ;
@@ -98,6 +99,7 @@ glid:def-sebok--function
     a gl:Definition ;
     gl:locator "Glossary: Function, definition 3 (PDF 1510)" ;
     gl:pdfPage "1510"^^xsd:integer ;
+    gl:preferred "true"^^xsd:boolean ;
     gl:quote "A function is defined by the transformation of input flows to output flows, with defined performance" ;
     gl:source glid:src-sebok ;
     gl:status gl:proposed ;
