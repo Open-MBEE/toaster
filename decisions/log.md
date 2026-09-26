@@ -1,5 +1,22 @@
 # Decision log
 
+## DL-013 | 2026-09-25 | Phase 4 | User-test checkpoint: Phase 4 construction zones pass
+
+Path: Handled by ACE — three A9 reports + ACE self-test; zero blocking issues; checkpoint passed
+
+Decision: CHECKPOINT PASS for Phase 4 (all 13 construction zones). Content proceeds to next WP.
+
+Rationale: Three A9 simulated learner agents (Novice/Ch1, SE Practitioner/Ch3-Ch4, Returning Learner/Ch5+Ch7) and one ACE self-test (Ch3/nb02) returned zero blocking issues across all tested notebooks. All model-loading assertions pass, all negative controls return bad.ok=False with legible diagnostics, and all structural template slots (cell-0 concept statement, Tall seam, cell-6 exercise pointer, conclusion.md three paragraphs) are populated correctly.
+
+Seven minor findings logged (do not fix without Z's direction):
+1. Ch1/nb01: "specializations" used before the term is defined (arrives in nb03) — Novice forward-reference friction
+2. Ch1/nb02: `:>>` operator mentioned without definition or cross-reference — Novice forward-reference friction
+3. Ch1/nb02: "ownership relationship" without a plain-English anchor phrase — minor clarity gap
+4. Ch3/nb01 context cell: mentions `calc def DeliveredEnergy` before nb02 introduces it — SE Practitioner forward-reference in narration
+5. Ch4/nb01 context cell: forward-references nb02 constructs and Chapter 5 before learner has reached either — minor cognitive load
+6. Ch3/nb02 narration: cites D-003 without a pointer to DEFERRED.md — minor documentation gap
+7. Ch7/nb02 cell-0: contains an H2 header before the concept sentence, violating one-sentence cell-0 template — structural deviation; understanding not prevented
+
 ## DL-012 | 2026-09-25 | Cross-WP | Phase 2 pilot: all 13 notebooks use Pattern B; multi-fragment convention adopted
 
 Path: Handled by ACE — implementing Z's explicit design directives; architecture revision logged
