@@ -15,6 +15,7 @@ uv run python -m glossary tutorial mechanism    # what the tutorial uses: idea, 
 uv run python -m glossary compare logical-architecture
 uv run python -m glossary terms | sources | where sysml | stats
 uv run python -m glossary sparql lookup_all --json     # named or inline SPARQL, deterministic order
+uv run python -m glossary lint [--baseline FILE]        # vocabulary rules over learner content (rules in glossary/lint_rules.toml)
 ```
 
 Every command takes `--json`. Rule: if a term is in the glossary, use its tutorial definition and cite the term id (`term-mop`). If it is not and the work depends on it, propose an edge (below); do not invent a definition in prose.

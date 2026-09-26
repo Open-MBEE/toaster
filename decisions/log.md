@@ -40,6 +40,26 @@ Determined: yes, after F7.
 Extension: no.
 Provenance: AGENTS.md 1.5 (logical-to-physical test, Numbers, allocation is not realization); z-model Z-3, Z-8, Z-1; audit report OQ-3, F-2, F-4.
 
+## DL-028 | 2026-09-26 | PASS2-007 | `tall-named` lint rule matches any naming of Tall or the three worlds in learner content
+
+Path: Handled by ACE
+Decision: The `tall-named` rule matches any capitalised standalone "Tall" and the phrase "three worlds" (any case, hyphen or whitespace between the words) in learner content, not only possessive, lens-phrase and year forms. Rare false positives are handled by the baseline mechanism, not by narrowing the rule. The six "Tall seam" hits in ch09 and ch10 are real violations already tracked as the recipe-versus-rule contradiction parked for Pass 4 and may be baselined only while that entry stands. Pass 4 inputs, not decided: about 64 seam cells in ch01 to ch08 use the world labels A-F and O-S without the word "Tall" (whether those labels count as naming the lens belongs to the recipe rewrite), and whether docs/ contributor pages that must name the lens need a scope carve-out.
+Principles applied: AGENTS.md 1.10 (binding), P4, P5, F6.
+Reasoning: 1.10 is an absolute ("never names"), so there is no per-case judgment site; the question is only whether the check's match set covers the prohibition. Each phrasing the reviewer listed names Tall, so a check that reports conformance while missing them has not established it (P5) and lacks a working negative control for its own fault (F6). The rule's object is the lens, so naming it without the author is the same violation. The precision cost is remote in this corpus and the baseline already classifies accepted hits.
+Determined: yes.
+Extension: yes (F6 and P5, written for model conformance checks, applied to the design of a prose lint).
+Provenance: AGENTS.md 1.10; ace-protocol key pattern on Tall; decisions/next-passes.md sections 4 and 6; independent review PASS2-007-R; scan of learner content on 2026-09-26.
+
+## DL-029 | 2026-09-26 | PASS2-007 | `stale-partition` stays literal; the ch01 "implementation-agnostic" sentence is a content defect; plural allowed in `stale-physical-layer`
+
+Path: Handled by ACE
+Decision: `stale-partition` stays the literal phrase "partitioned into implementation-agnostic" (zero hits is a passed guard, not a dead rule). It is not widened. The sentence at chapters/ch01-system-purpose/conclusion.md line 9 remains a Pass 4 content input, already recorded (audit F-4, pass2-run-001, next-passes 7.1). `stale-physical-layer` also matches "physical architecture layers".
+Principles applied: F2, heuristics 3 and 4, P2, P5, F6.
+Reasoning: "Implementation-agnostic" is live vocabulary for functions, so "the structure is implementation-agnostic" is not stale phrasing. It is false for Chapter 1 only because that model carries an 800 W value and an arrangement, a per-case layer classification of model elements that a regex cannot evaluate; encoding it as a fixed phrase would be the fixed rule P2 forbids. The defect is already tracked, so P5 holds without the lint. A phrasing rule matches its number variants.
+Determined: yes.
+Extension: yes (P2 applied to lint-rule design; F6 applied to a prose rule).
+Provenance: AGENTS.md 1.5; audit report F-4; the old A10 framing rule quoted in decisions/log.md; glossary tutorial edges for functional, logical and physical architecture.
+
 ## DL-026 | 2026-09-26 | PASS2-006 | Near-verbatim canonical wording on the public glossary page: Z accepts short attributed wording
 
 Path: Escalated to Z (the ACE could not determine it: a licence acceptance and a change to confirmed definitions); Z chose option A
