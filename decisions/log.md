@@ -40,7 +40,7 @@ Douglas verification: all 9 quotes re-checked against fresh YouTube transcripts 
 
 ## DL-015 | 2026-09-26 | Pass 1 | Z-directed alignment pass: Foundations, glossary, layer and query skills, ACE definition, handoff
 
-Status: PENDING
+Status: COMPLETE (2026-09-26). Outstanding for Z: read back the AGENTS.md Part 1 Foundations and `decisions/next-passes.md`, and review the drafted gap issues before anything is filed.
 
 Path: Escalated to Z — this pass was specified interactively by Z (plan approved 2026-09-26, `/Users/z/.claude/plans/now-we-re-starting-to-merry-music.md`). Because Z directed it, the skill-editor escalate-to-Z gates (multi-archetype change, >20% of a skill, new capability, learning-outcome effect) are satisfied by this entry; this is a one-off Z override, not a change to file authority.
 
@@ -64,6 +64,8 @@ Recorded here for the pass (each is detailed in the plan and in `decisions/next-
 - SA-2 (full stage model per chapter): Z ruled that the assembled model, made legible through diagrams, satisfies it (recorded for read-back at M2).
 - SA-3 (energy model Q = eta P t) and SA-8 (one construct per notebook) will collide with the content pass; SA-7 stays.
 - What comes next: see `decisions/next-passes.md` (to be written at M3).
+
+What comes next: `decisions/next-passes.md` (pass sequence with entry and exit criteria, operating model, model-pinning rule, audit findings, parked decisions, content-pass inputs). Records produced in this pass: `decisions/probes.md`, `decisions/ace-dry-run.md`, `decisions/cold-start.md`, `decisions/gap-issue-drafts.md`, DL-016 (glossary triage), DL-017 (Z walk-through), and `DEFERRED.md` D-014 to D-018.
 
 ## DL-014 | 2026-09-25 | Ch2+Ch3 | User-test checkpoint: A10 reframe + verification def
 
