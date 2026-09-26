@@ -1,5 +1,21 @@
 # Decision log
 
+## DL-017 | 2026-09-26 | Pass 1 (M2) | Z walk-through: mechanisms as laws, MoE/MoP as judgment, two-tier conformance
+
+Status: COMPLETE
+
+Path: Escalated to Z. The ACE dry run (DL-101..114 in `decisions/ace-dry-run.md`) ruled three scenarios from Z-statements that were recorded too rigidly; Z corrected them by popup on 2026-09-26.
+
+Decision:
+- **Mechanisms (Z):** physical laws such as Joule heating (I^2 R) are mechanisms: modeling decisions grounded in established engineering practice, the laws we use to reason about behavior. "Sub-behavior" is dropped from prompts, keys and skills. A law that holds for any solution (energy balance) stays functional; the same kind of law as applied to a chosen component is logical. The confirmed tutorial definition of *mechanism* was extended with the modeling-decision framing (Z chose "add the modeling-decision framing").
+- **MoE versus MoP (Z):** contextual modeling judgment, justified for each case; how long toast takes could be either. Tutorial edges for *MoE* and *MoP* now say so and no longer fix examples. The earlier ACE ruling that swapped the two was wrong.
+- **Conformance (Z):** two tiers. Language conformance is always on; project conformance is staged (applied from a declared chapter and section, negative control, open until applied). G4 is reframed accordingly; recipe 5 in `opensysml-query` is the port-type check, tested against a mismatch and a specialization.
+- Wording changes: AGENTS.md 1.5 and 1.9, `architecture-layers`, `opensysml-query`, `ace-protocol`, `z-model.md` (Z-5, Z-6 revised; Z-25 to Z-27 added).
+
+Rationale: Z's corrections; nothing else changed. Confirmed glossary definitions (mechanism, MoE, MoP) were edited at Z's direction in this walk-through and are shown to Z for review; `glossary check` passes.
+
+Z's decision: as above.
+
 ## DL-016 | 2026-09-26 | Pass 1 (M1) | Glossary confirmation triage: 11 tutorial edges, 35 tutorialDefinition proposals
 
 Status: COMPLETE (Z confirmed the batch, 2026-09-26)

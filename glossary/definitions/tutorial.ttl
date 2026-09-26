@@ -69,7 +69,7 @@ glid:def-tutorial--logical-component
 glid:def-tutorial--mechanism
     a gl:Definition ;
     gl:confirmedBy "Z" ;
-    gl:gloss "A prescribed, comparatively deterministic input-to-output relation: an open-loop declaration of how something works; not a behavior." ;
+    gl:gloss "A prescribed, comparatively deterministic input-to-output relation: a modeling decision grounded in engineering practice, a law we use to reason about behavior. Not itself the behavior." ;
     gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-astrom--dynamical-system,
         glid:def-astrom--dynamical-system-2,
@@ -77,23 +77,23 @@ glid:def-tutorial--mechanism
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
     gl:term glid:term-mechanism ;
-    gl:text "A prescribed input-to-output relation with comparatively high determinism: an open-loop declaration of how something will work. A mechanism is designed, not observed, and is not a behavior: behavior is the emergent outcome of mechanisms operating together in context. The word and the emphasis on determinism are ours; the underlying idea is the input/output dynamics of a system." .
+    gl:text "A prescribed input-to-output relation with comparatively high determinism: an open-loop declaration of how something will work. A mechanism is a modeling decision grounded in established engineering practice, a law we use to reason about behavior (Joule heating in a resistive coil, the force of a spring). It is chosen, not observed, and it is not itself the behavior: behavior is the emergent outcome of mechanisms operating together in context. The word and the emphasis on determinism are ours; the underlying idea is the input/output dynamics of a system." .
 
 glid:def-tutorial--moe
     a gl:Definition ;
     gl:confirmedBy "Z" ;
-    gl:gloss "Acceptance at the functional layer: was the outcome what the stakeholder wanted?" ;
+    gl:gloss "Acceptance at the functional layer: was the outcome what the stakeholder wanted? Whether a measure is a MoE or a MoP is a justified modeling judgment." ;
     gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--moe ;
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
     gl:term glid:term-moe ;
-    gl:text "The measure of whether the intended outcome was achieved as the stakeholder wants it (for the toaster, whether the bread was toasted to the user's liking). Stated at the functional layer; typically explored by simulation or scenarios rather than computed." .
+    gl:text "The measure of whether the intended outcome was achieved as the stakeholder wants it (for the toaster, whether the bread was toasted to the user's liking). Stated at the functional layer; typically explored by simulation or scenarios rather than computed. Whether a given measure is a MoE or a MoP is a modeling judgment made for the case at hand and recorded with its justification: how long toast takes could be part of what the user accepts (a MoE) or an engineering figure derived from it (a MoP)." .
 
 glid:def-tutorial--mop
     a gl:Definition ;
     gl:confirmedBy "Z" ;
-    gl:gloss "A performance measure (timeliness, efficiency) that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical." ;
+    gl:gloss "A performance measure that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical. MoP versus MoE is a justified modeling judgment." ;
     gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--mop,
         glid:def-sysml--mop,
@@ -101,7 +101,7 @@ glid:def-tutorial--mop
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
     gl:term glid:term-mop ;
-    gl:text "A performance measure: a quantity in the model, such as timeliness or efficiency, that characterizes how well a design performs. A MoP characterizes a requirement but does not make one; the requirement also needs a threshold (a constraint the valid solution must satisfy) and a means of checking it. Typically stated at the logical layer, with thresholds derived from what the MoEs need; a performance figure is not effectiveness." .
+    gl:text "A performance measure: a quantity in the model that characterizes how well a design performs. A MoP characterizes a requirement but does not make one; the requirement also needs a threshold (a constraint the valid solution must satisfy) and a means of checking it. Typically stated at the logical layer, with thresholds derived from what the MoEs need, and derived by composing relations symbolically. Whether a measure is a MoP or a MoE is a modeling judgment recorded with its justification (see MoE); a performance figure is not, by itself, effectiveness." .
 
 glid:def-tutorial--physical-architecture
     a gl:Definition ;

@@ -126,6 +126,37 @@ assert satisfies()
 
 `satisfy` and `verify` both appear as `SatisfyRequirementUsage`; the declared keyword distinguishes them. Coverage (which requirements have a satisfy, which subjects are verified) is a join of `satisfies()` with the requirement list from Recipe 1.
 
+## Recipe 5: a staged conformance check (port types on connected ends)
+
+OpenSysML accepts a connection between ports of unrelated types with no diagnostic (gap G4, `decisions/probes.md`), and the KerML text searched has no validation constraint for it. So this is a **project conformance check**, not a language one (AGENTS.md 1.9): apply it from the chapter and section where the connection is declared complete, keep a negative control that shows it catching a fault, and report it as *open* before then.
+
+```python
+def feature_type_names(feature_qn):
+    el = byqn.get(feature_qn)
+    return [qn(t) for t in (el or {}).get("type", [])]
+
+def related(a, b):
+    """Equal, or one specializes the other (uses Recipe 2's edges)."""
+    return a == b or a in closure(b, up) or b in closure(a, up)
+
+def port_type_mismatches():
+    out = []
+    for c in connectors("ConnectionUsage", "InterfaceUsage", "FlowUsage"):
+        ends = [p[-1] for p in c["ends"] if p]
+        typed = [(e, feature_type_names(e)) for e in ends if byqn.get(e, {}).get("@type") == "PortUsage"]
+        for i in range(len(typed)):
+            for j in range(i + 1, len(typed)):
+                (ea, ta), (eb, tb) = typed[i], typed[j]
+                if ta and tb and not any(related(x, y) for x in ta for y in tb):
+                    out.append({"connector": c["id"], "ends": [ea, eb], "types": [ta, tb]})
+    return out
+
+byqn = {e["qualifiedName"]: e for e in els if e.get("qualifiedName")}
+assert port_type_mismatches() == []      # ch08 declares no mismatched ports
+```
+
+Limits: it compares the declared port types only. Conjugated ports (`~PowerPort`) and ports reached through interface ends are not handled. It is a starting negative control, not a full interface checker.
+
 ## Ids
 
 The API JSON `@id` uses `__` for `::` and escapes `_` (`named_flow` becomes `named_5fflow`). Never rebuild a qualified name with `id.replace("__", "::")`. Look up `qualifiedName` in the element itself (`qn`), as above. Ids returned by `model.query` and `Symbol` are already qualified names.
@@ -137,7 +168,7 @@ The API JSON `@id` uses `__` for `::` and escapes `_` (`named_flow` becomes `nam
 | `model.query` cannot see unnamed connectors, any `satisfy`, or metadata | Recipe 3 and 4 (JSON). Better: name connectors and allocations. |
 | Named `perform` reports type `ActionUsage`, not `PerformActionUsage` | Query `ActionUsage`, or use Recipe 4. |
 | `perform ToastBread;` where `ToastBread` is an action def | Rejected, and correct per spec 7.17.6. Write `perform action x : ToastBread;` or reference a usage. |
-| Mismatched port types (a power port to a fuel port) are not diagnosed (G4) | Check port types yourself: read the two end features' `type` in the JSON and compare. |
+| Mismatched port types (a power port to a fuel port) are not diagnosed (G4) | Recipe 5, applied as a staged project conformance check. |
 | `import` across separately loaded sources does not resolve (G7) | Assemble by concatenation: join the SysML text yielded by the implicit modules and the chapter's explicit increment into one string and load that. Concatenation loses which source an element came from, so give implicit parts their own package (or a metadata marker) if provenance must stay queryable. |
 | `conn.load(path)` exists but does not resolve imports either | Same workaround. |
 | No `requirement_coverage` in `src/toaster/query.py` yet, and its allocation and satisfy helpers are being corrected in this pass | Use the recipes above until the corrected helpers land, then call those. |

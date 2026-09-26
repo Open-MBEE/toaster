@@ -71,20 +71,20 @@ The engineer's job is to align the model to their intent through **loops of cons
 
 Key terms (glossed from the glossary):
 
-- **Mechanism.** <!-- gloss:mechanism -->A prescribed, comparatively deterministic input-to-output relation: an open-loop declaration of how something works; not a behavior.<!-- /gloss -->
+- **Mechanism.** <!-- gloss:mechanism -->A prescribed, comparatively deterministic input-to-output relation: a modeling decision grounded in engineering practice, a law we use to reason about behavior. Not itself the behavior.<!-- /gloss -->
 - **Policy.** <!-- gloss:policy -->Decision guidance that selects inputs given the state, typically to close the loop under uncertainty; designed given the available mechanisms.<!-- /gloss -->
 - **Logical component.** <!-- gloss:logical-component -->The prescribed carrier of a mechanism, with its interfaces; modeled here as an abstract part definition that performs an action.<!-- /gloss -->
 - **Selection among alternatives.** <!-- gloss:selection-among-alternatives -->Choosing among alternative mechanisms by trade study against the derived measures.<!-- /gloss -->
-- **MoE.** <!-- gloss:moe -->Acceptance at the functional layer: was the outcome what the stakeholder wanted?<!-- /gloss -->
-- **MoP.** <!-- gloss:mop -->A performance measure (timeliness, efficiency) that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical.<!-- /gloss -->
+- **MoE.** <!-- gloss:moe -->Acceptance at the functional layer: was the outcome what the stakeholder wanted? Whether a measure is a MoE or a MoP is a justified modeling judgment.<!-- /gloss -->
+- **MoP.** <!-- gloss:mop -->A performance measure that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical. MoP versus MoE is a justified modeling judgment.<!-- /gloss -->
 - **TPM.** <!-- gloss:tpm -->The value assessed on a design element by analysis or simulation: the evidence against a MoP threshold.<!-- /gloss -->
 - **Allocation.** <!-- gloss:allocation -->Assigning functions to logical components, and components to parts: SEBoK's idea, SysML v2's allocate, Douglas's grouping.<!-- /gloss -->
 
-**MoE → MoP → TPM is a derivation chain.** A MoE says what acceptance looks like; a MoP is a performance measure whose threshold is derived so that the MoE can be satisfied; a TPM is the value actually assessed on a design element. Each can be stated on any element as decomposition proceeds, and reasoned over from parts through interconnections to higher-order parts. In the SysML spec they are only metadata tags on attributes (§9.3.4), and neither SEBoK nor the spec ties them to layers, so the layer emphasis is a tutorial refinement. A MoP characterizes a requirement but does not make one: the requirement needs a threshold and a means of checking it.
+**MoE → MoP → TPM is a derivation chain.** A MoE says what acceptance looks like; a MoP is a performance measure whose threshold is derived so that the MoE can be satisfied; a TPM is the value actually assessed on a design element. Each can be stated on any element as decomposition proceeds, and reasoned over from parts through interconnections to higher-order parts. In the SysML spec they are only metadata tags on attributes (§9.3.4), and neither SEBoK nor the spec ties them to layers, so the layer emphasis is a tutorial refinement. A MoP characterizes a requirement but does not make one: the requirement needs a threshold and a means of checking it. **Whether a measure is a MoE or a MoP is a modeling judgment for the case at hand**, recorded with its justification (who cares, and does it measure acceptance or engineering performance). How long toast takes could be either, and a hard case is a good place to show a judgment call.
 
 **Allocation is not realization.** `allocate` assigns functions (and requirements, budgets) to elements. A concrete part def *specializes* the abstract logical part def to realize it. Usage-level allocation of a logical component to a part is optional.
 
-**Constraints, split by solution-independence.** A constraint that holds for any solution (energy conservation) frames the problem and stays functional. A constraint that exists only because of a chosen mechanism or interface (a coil's resistance relation, outlet-to-plug compatibility, a derived MoP threshold) is logical.
+**Constraints, split by solution-independence.** A constraint that holds for any solution (energy conservation) frames the problem and stays functional. A constraint that exists only because of a chosen mechanism or interface (Joule heating, I^2 R, as applied to a coil; outlet-to-plug compatibility; a derived MoP threshold) is logical. Physical laws such as Joule heating are mechanisms: modeling decisions grounded in established engineering practice, the laws we reason with. Stated for a chosen component, they are logical; a law that holds for any solution stays functional.
 
 **Numbers.** A MoP's definition and threshold are requirements at the layer that states them. What a specific part has, or is estimated to have, is the TPM. Sizing choices (fuel volume, tong length) appear only when a physical part is chosen.
 
@@ -135,6 +135,8 @@ Three surfaces, in order of preference for a chapter notebook (recipes and limit
 3. `Symbol` navigation (`model.find`, `.specializations`, `.children`).
 
 The sysml-toolkit Python binding (`Session.from_files`) is a fourth surface that reads several files at once and sees unnamed elements. It is toolchain, not part of the chapter dependencies.
+
+**Conformance has two tiers.** *Language conformance* (parse, name resolution, typing) is always on: a declaration that violates it breaks the load. *Project conformance checks* (interface compatibility, port types, flows accounted, coverage) are **staged**, because the model emerges iteratively and is not born complete: each check is declared as applied from a chapter and section onward, has a negative control that shows it catching a fault, and is reported as **open**, not passed, until it is applied. Discovering non-conformance early and flagging it to the user is what executable specifications are for. Tools may not diagnose a fault themselves (OpenSysML v0.9.0 accepts a power port connected to a fuel port; the KerML 1.1 spec searched has no validation constraint for it), so the tutorial supplies the check (recipe 5 in `opensysml-query`).
 
 **Gap-tracking rule.** Use the spec-anchored construct. If a tool cannot express it, use a bare SysML fragment or custom Python. Every gap gets (a) a `DEFERRED.md` entry, (b) a toaster issue and, where the tool is at fault, an upstream issue, each citing the exact spec section and asking only for what the spec says, and (c) a comment cell wherever the workaround appears. Never work around a gap silently. Nothing is filed on a public repository until Z has reviewed the text.
 

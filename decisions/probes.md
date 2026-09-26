@@ -11,11 +11,17 @@ Environment: OpenSysML v0.9.0 (`uv run`), sysml-toolkit v0.9.1 built from `~/Doc
 | Gap | Construct | Result | Consequence |
 |---|---|---|---|
 | G3 | `allocation def X { end part logical : A; end part physical : B; allocate logical.component to physical.assembly; }` then `allocation a : X allocate system to device;` (spec 7.15.2) | **Works.** Also `allocate l to p;` and `allocation named_alloc allocate l to p;` | G3 is resolved: the earlier failure was our syntax, not a tool gap. Nothing to file. |
-| G4 | `connect outlet.o to torch.fuelIn` with `PowerPort` to `FuelPort`; an `interface def` with `PowerPort` ends bound to a `FuelPort` | **No diagnostic** (`ok=True`) | Still open. Needs a spec check (SysML/KerML end-type conformance) before filing; until then a tutorial-side port-type check serves as the negative control. |
+| G4 | `connect outlet.o to torch.fuelIn` with `PowerPort` to `FuelPort`; an `interface def` with `PowerPort` ends bound to a `FuelPort` | **No diagnostic** (`ok=True`) | Still open, but reframed (see the conformance note below): the spec text searched does not require the tool to reject it, so it is a **staged project conformance check** the tutorial supplies (recipe 5 in `.claude/skills/opensysml-query`), and at most a feature request upstream. |
 | G2 | bare `perform ToastBread;` | Rejected: "references target must be a usage, found actionDef" | Correct per spec, not a gap. Use `perform action heat : ToastBread;` or `perform heatUse;` (a usage). |
 | G1 | What `model.query()` sees | Named `allocation`, `connection`, `flow` are visible (`AllocationUsage`, `ConnectionUsage`, `FlowUsage`). `satisfy` cannot be named (`satisfy r1 by h;`) and is JSON-only. `MetadataUsage` is JSON-only. Named `perform action heat` appears as type `ActionUsage`, not `PerformActionUsage`. Inherited features are not expanded: a specializing part def or a usage of it shows only its own members. | Convention: name allocations, connections and flows. Chase inheritance through `Symbol.specializations`. Use the JSON helpers for satisfy and metadata. |
 | MoE/MoP | `import ParametersOfInterestMetadata::*;` then `metadata MeasureOfEffectiveness about T::quality;` | Parses (`ok=True`); visible in JSON only | Usable for tagging. `Real` needs `import ScalarValues::*;`. |
 | G7 | `import` across separately loaded sources | (2026-09-26, earlier probe) unresolved; concatenating sources works | Assembly by concatenation remains the OpenSysML pattern. |
+
+### Conformance note (G4, Z's ruling 2026-09-26)
+
+- **Two tiers** (AGENTS.md 1.9, Z-27): language conformance is always on and breaks the load; project conformance checks are staged, applied from a declared chapter and section, carry a negative control, and are reported open until applied.
+- **Spec check (KerML 1.1 Beta 2, searched by constraint names):** `validateConnectorRelatedFeatures` requires only at least two related features of a concrete connector; the `validateSubsetting*` constraints cover constant, uniqueness and featuring-type conformance; `validateRedefinitionEndConformance` covers `isEnd`. No constraint found requiring the types of connected ends to be compatible. The SysML language text was searched for the same and returned nothing. This is a search result, not a proof of absence; before filing anything, read the connector semantics sections again.
+- **Toolkit:** `sysmlv2 check` and `sysmlv2 lint` (default rules) both accept the mismatched connection with no finding (2026-09-26).
 
 ### sysml-toolkit v0.9.1
 

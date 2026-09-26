@@ -53,3 +53,34 @@ def test_opensysml_query_perform_recipe_on_layers_example(monkeypatch) -> None:
     ns["by_id"] = {e["@id"]: e for e in ns["els"]}
     exec(compile(blocks[4].replace("assert satisfies()", ""), "recipe4", "exec"), ns)  # noqa: S102
     assert ns["performs"]() == [{"performer": "ToasterLayers::HeatSource", "action": "ToasterLayers::ApplyHeat"}]
+
+
+MISMATCH = """
+package P {
+  port def PowerPort; port def FuelPort; port def GasPort :> FuelPort;
+  part def Outlet { port o : PowerPort; }
+  part def Torch { port fuelIn : FuelPort; }
+  part def Tank { port f : GasPort; }
+  part outlet : Outlet; part torch : Torch; part tank : Tank;
+  connect outlet.o to torch.fuelIn;
+  connect tank.f to torch.fuelIn;
+}
+"""
+
+
+def test_port_type_conformance_recipe_catches_mismatch_and_accepts_specialization(monkeypatch) -> None:
+    root = Path(__file__).resolve().parents[1]
+    monkeypatch.chdir(root)
+    blocks = python_blocks(SKILLS / "opensysml-query" / "SKILL.md")
+    ns: dict = {}
+    for b in blocks[:3]:  # setup, recipe 1, recipe 2
+        exec(compile(b, "b", "exec"), ns)  # noqa: S102
+    model = ns["conn"].load_from_content(MISMATCH, strict=False)
+    assert model.ok
+    ns["model"], ns["els"] = model, ns["api_elements"](model)
+    ns["by_id"] = {e["@id"]: e for e in ns["els"]}
+    ns["up"], _ = ns["spec_edges"]()
+    exec(compile(blocks[3].split("flows = ")[0], "recipe3", "exec"), ns)  # noqa: S102
+    exec(compile(blocks[5].split("assert port_type_mismatches()")[0], "recipe5", "exec"), ns)  # noqa: S102
+    bad = ns["port_type_mismatches"]()
+    assert len(bad) == 1 and bad[0]["types"] == [["P::PowerPort"], ["P::FuelPort"]]   # tank-to-torch is fine (GasPort specializes FuelPort)

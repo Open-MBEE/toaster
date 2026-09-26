@@ -23,7 +23,9 @@ Ask in this order and stop at the first "yes":
 | "Toasting takes bread and energy in and gives toast and lost energy out; energy to the bread plus loss cannot exceed energy supplied." | Functional | Holds for any solution. The inequality respects conservation without assuming perfect efficiency. |
 | "The toast is browned to the user's liking." | Functional (MoE) | Acceptance. Explored against scenarios, not computed. |
 | "A resistive coil turns electrical power into heat and must be fed from a mains outlet." | Logical | A mechanism plus an interface. A blowtorch would need a fuel port instead. |
-| "Heating efficiency is at least 0.6." | Logical (MoP threshold) | Derived from what the MoE needs; it characterizes a requirement and needs a means of checking. |
+| "Heating efficiency is at least 0.6." | Logical (MoP threshold) | A performance measure with a threshold derived from what the MoE needs; it characterizes a requirement and needs a means of checking. Whether a measure is a MoP or a MoE is a justified modeling judgment (see below). |
+| "Joule heating: heat = I^2 R t in the coil." | Logical (mechanism) | A law we rely on to reason about a chosen component, a modeling decision grounded in engineering practice. A universal law (the energy balance) stays functional. |
+| "Toast is ready within 150 s." | MoE or MoP, by judgment | Time is usually performance, but for toast it may be part of what the user accepts. Either is defensible if the justification is recorded (who cares; acceptance or engineering performance). |
 | "The coil is an 800 W nichrome element." | Physical | A specific part with a value it confers. |
 | "Measured heating efficiency is 0.71." or "Measured browning time on the built candidate is 118 s." | Physical (TPM), and an emergent result | A value assessed on a candidate by analysis or simulation: derived, not chosen, and the evidence against a MoP threshold. Classify it as physical when asked for a layer, and as an emergent result when asked whether it was prescribed. |
 | "Cycle time = 120 s" set as an attribute default, then checked against a 150 s limit | Not a valid check | A prescription tested against a threshold. Derive cycle time from the mechanism and the energy balance, then compare. |
@@ -40,7 +42,7 @@ Toaster stories to lean on (Douglas, Part 3): the system described as functions,
 | Functional | `constraint def` for a phenomena relation (energy balance) | 7.20.2 | Tested |
 | Logical | `abstract part def` | 7.6.2, 7.11 | Tested |
 | Logical | `perform action heat : ToastBread;` inside the abstract part def (the performer is responsible for the action) | 7.17.6 | Tested. A bare `perform ToastBread;` naming an action *def* is rejected; that is correct. `perform usage;` naming an action *usage* is accepted. |
-| Logical | `port def`, `interface def`, `connection`, `flow` | 7.12 to 7.14 | Tested to parse. Mismatched port types are **not diagnosed** (gap G4, `decisions/probes.md`); add an explicit port-type check as the negative control. |
+| Logical | `port def`, `interface def`, `connection`, `flow` | 7.12 to 7.14 | Tested to parse. Mismatched port types are **not diagnosed** by the tool (gap G4, `decisions/probes.md`). Treat port-type compatibility as a staged project conformance check (AGENTS.md 1.9) and use recipe 5 in `opensysml-query`, with a negative control. |
 | Logical | `requirement def` with `require constraint { ... }` for a derived MoP threshold | 7.21.2 | Tested |
 | Any | `metadata MeasureOfPerformance about T::x;` after `import ParametersOfInterestMetadata::*;` | 9.3.4 | Tested to parse. Metadata is not visible to `model.query()` (JSON only). |
 | Allocation | `allocate apply to source;` between usages; `allocation def` with typed ends plus `allocation a : Def allocate x to y;` | 7.15.2 | Both tested (`ok`). Name allocations so `model.query()` sees them. |
@@ -59,12 +61,12 @@ Run it on every element a chapter adds. Any "no" is a finding.
 - Does each action state typed inputs and outputs, and are all flows accounted for at this level?
 - Is every statement solution-independent (substitution test)?
 - Are phenomena relations stated as relations (balance inequality), not as a specific part's behavior?
-- Is there at least one MoE, and is it about acceptance, not speed or efficiency?
+- Is there at least one MoE, about acceptance? If a timing or efficiency figure is filed as a MoE or a MoP, is the split justified for this case and recorded?
 - Reads as an **objective**: what is good and what is good enough.
 
 **Logical**
 - Does each mechanism have a carrier (an abstract part def) and an interface that matches its neighbors?
-- Do the interfaces actually match (an outlet to a power port, a tank to a fuel port)? Check the port types explicitly, since the tool will not.
+- Do the interfaces actually match (an outlet to a power port, a tank to a fuel port)? Apply the port-type conformance check (`opensysml-query` recipe 5) from the point the connection is declared complete; before that it is reported open, not passed. The tool will not diagnose it.
 - Are MoP thresholds derived from a MoE, with a means of checking, not free-standing numbers?
 - Are there no solution values (no watts, no volumes) and no results entered as choices?
 - Reads as a **design space**: typed, unit-bearing slots plus constraints, no solution.

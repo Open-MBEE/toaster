@@ -35,7 +35,7 @@ Frame decisions the way Z thinks: an **objective** (what is good and good enough
 - **Definitions come from the glossary.** Settle a definition dispute with `uv run python -m glossary lookup TERM` and `tutorial TERM`. The ACE may propose a term or edge with a locator, but only Z confirms or changes a confirmed definition.
 - **Canonical sources first, refinements only, no invention.** Sources are complementary kinds of definition (SEBoK the idea, the OMG specs formal checkable semantics, Douglas story), never rivals; our own wording only narrows or clarifies and records what it refines.
 - **SysML v2 is declarative; Python is analysis.** The model is the authority on semantics. A number without model-defined units and relations is not evidence.
-- **Layer rules.** Functional is solution-independent intent; logical is prescribed mechanisms, policies and interfaces plus derived MoP thresholds; physical is concrete parts and values, with TPMs as assessed results. Prescribed is not emergent: results are derived and checked, never entered as choices. Mechanism is a prescribed, comparatively deterministic input-to-output relation, not a "sub-behavior"; a policy selects inputs given state. Say "selection among alternatives", not "concept selection".
+- **Layer rules.** Functional is solution-independent intent; logical is prescribed mechanisms, policies and interfaces plus derived MoP thresholds; physical is concrete parts and values, with TPMs as assessed results. Prescribed is not emergent: results are derived and checked, never entered as choices. A mechanism is a modeling decision grounded in established engineering practice, a law we use to reason about behavior (Joule heating, a spring's force); it is prescribed and comparatively deterministic, and it is not itself the emergent behavior. A policy selects inputs given state. Say "selection among alternatives", not "concept selection".
 - **Probe before asserting.** A construct works only after it has been run; the result goes in `decisions/probes.md`.
 - **Gaps are tracked, not papered over**: `DEFERRED.md` entry, an issue drafted with the exact spec citation (nothing filed until Z reviews), and a comment cell wherever the workaround appears.
 - **Judgment is never eliminated.** Judgment records keep `counterevidence` and `residual_uncertainties`; nothing is called proof or "accepted".
@@ -101,11 +101,11 @@ Rationale: [why; what Z-pattern applied]
 - Request to mark a record `"actual_review"` → "No; SA-7"
 - `|| true` in any shell command → "Reject; ADR-0007 pattern"
 - Loop dispute where one party misread the acceptance criterion → "Clarify and continue"
-- A mechanism inside a functional action, or a mechanism described as a "sub-behavior" → "No; a mechanism is prescribed and logical (Z-6, Z-4)"
+- A mechanism (a physical law such as I^2 R as it applies to a chosen component) stated inside a functional action → "Move it to the logical component that carries it; keep the functional statement solution-independent (Z-4, Z-25)"
 - Physical values on a logical part, or a logical slot given a solution value → "No; values belong to the physical candidate (Z-1, Z-8)"
 - "Logical = how" cited to SEBoK → "SEBoK does not say that; the tutorial's definition is a recorded refinement (Z-13, Z-14)"
-- A MoP filed as a MoE, or a TPM filed as a requirement → "No; MoE is acceptance, MoP a derived performance measure, TPM an assessed value (Z-5)"
-- A workaround for a spec gap with no record → "Track it first; DEFERRED entry, drafted issue, comment cell"
+- A measure filed as MoE or MoP → "The split is a modeling judgment for the case at hand; require a recorded justification (who cares; acceptance or engineering performance). Do not swap on a fixed rule (Z-5, Z-26)"
+- A workaround for a spec gap with no record, or a conformance check silently skipped → "Track it first (DEFERRED entry, drafted issue, comment cell). Decide which tier the check belongs to (Z-27): language conformance is always on; project conformance is staged and reported open until applied"
 - An emergent performance (cycle time, efficiency) set as an attribute default and then "verified" → "No; a prescription checked against a threshold is not emergent behavior; derive it (Z-6)"
 - A proposal to drop `counterevidence` or `residual_uncertainties`, or to call a check a proof → "No (Z-9)"
 - A hand-drawn diagram, or a figure whose presentation carries engineering content or omits parts without saying so → "No; the model is the data and the view is judged and recorded (Z-12)"
