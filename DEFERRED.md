@@ -94,3 +94,29 @@ Affects Ch5/nb02.
 **Resolution:** Add `"allocate"` to the authoring allowlist and `add_allocate()` helper.
 **Upstream issue:** Open-MBEE/OpenSysML#599
 **Toaster issue:** Open-MBEE/toaster#13
+
+## D-009: Editor API does not support `flow` (ConnectionUsage / flow connection authoring)
+
+`Editor.add_member()` rejects `"flow"` as an illegal kind (probed 2026-09-25).
+`flow X.port to Y.port` connections are defined in SysML v2 spec formal/2026-03-02 §7.20
+and accepted by the parser. Affects Ch5/nb03.
+
+Note: `editor.add_member()` signature does not include `source`/`target` parameters either;
+passing them raises a `TypeError`. The kind guard fires first when using just `kind="flow"`.
+
+**Workaround:** Load flow connection declarations via `conn.load_from_content()`.
+**Resolution:** Add `"flow"` / `"flow connection"` to the authoring allowlist and `add_flow()` helper.
+**Upstream issue:** Open-MBEE/OpenSysML#TBD (file after toaster issue created)
+**Toaster issue:** Open-MBEE/toaster#14
+
+## D-010: Editor API does not support `state usage` or `transition usage` authoring
+
+`Editor.add_member()` rejects `"state usage"` and `"transition"` as illegal kinds (probed 2026-09-25).
+A bare `state def Cycle;` can be added via `editor.add_member(kind='state def', name='Cycle')`,
+but adding sub-states (state usages) and transition usages (with accept/then) is not supported.
+Full state machines with sub-states and transitions require Pattern B. Affects Ch7/nb02.
+
+**Workaround:** Load the full state machine declaration via `conn.load_from_content()`.
+**Resolution:** Add `"state usage"` and `"transition"` to the authoring allowlist.
+**Upstream issue:** Open-MBEE/OpenSysML#TBD (file after toaster issue created)
+**Toaster issue:** Open-MBEE/toaster#15

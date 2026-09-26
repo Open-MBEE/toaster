@@ -61,6 +61,17 @@ Every major operation gets its own dedicated markdown cell. This is not optional
 - Chapter `conclusion.md`: exactly four items (three paragraphs + exercise reference). Not three, not five.
 - `index.md` six recipe elements appear in stated order. No reordering.
 
+## Construction cells (cell-02 in construct-introducing notebooks)
+
+- `TOASTER_INCREMENT` is the required variable name in every construct-introducing notebook.
+  - Pattern A (Editor API): `TOASTER_INCREMENT = str(editor.apply())` — the full cumulative model.
+  - Pattern B (gap construct): `TOASTER_INCREMENT = "..."` — the new SysML fragment only.
+- Print `TOASTER_INCREMENT` immediately after assignment — this print IS the reflection. No other output is needed.
+- For Pattern A: load the base model (state before this notebook's declarations) before calling `base.edit()`. Never use the current chapter's full cumulative as the base (it already contains the construct being added).
+- For Pattern B: add a comment naming the gap issue above the string, e.g. `# abstract modifier not yet supported — toaster#9 / OpenSysML#595`.
+- `conn.close()` belongs at the end of the last code cell in the notebook, never inside cell-02.
+- Judgment, depth, navigation, analysis, and param-sweep notebooks do not assign `TOASTER_INCREMENT`.
+
 ## What every agent loading this skill must never do
 
 - Write a Tall seam that names only two worlds.

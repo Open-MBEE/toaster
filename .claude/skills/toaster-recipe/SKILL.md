@@ -13,27 +13,72 @@ The 7 cells below are the **required skeleton**. Additional markdown+code pairs 
 |---|---|---|
 | **Concept** | Markdown | Exactly one sentence: "This notebook introduces X; after running it you can Y." |
 | **Context** | Markdown | One paragraph locating this notebook in the chapter arc. One link to prior notebook if model state carries over. |
-| **Model load** | Code | Reads model from file, displays it, then loads it (see pattern below). `assert model.ok`. |
+| **Model increment** | Code | Two-phase. (1) Declare the increment: Pattern A (Editor API, returns full model) or Pattern B (SysML string fragment for gap constructs). Assign to `TOASTER_INCREMENT`; print immediately as reflection. Only in construct-introducing notebooks — see scope table in `decisions/declarative-construction-plan.md`. (2) Load full chapter cumulative from `models/chXX-cumulative.sysml`; `assert model.ok`. |
 | **Negative control** | Code + Markdown | Short bad_source string. `bad = conn.load_from_content(bad_source, strict=False)`. `assert not bad.ok`. Markdown: one sentence naming the error type and pointing to the diagnostic. |
 | **Demonstration** | Code + Markdown | One key operation per code cell. If two things happen, split into two cells each with its own narration markdown. |
 | **Tall seam** | Markdown | Exactly one sentence naming all three worlds. |
 | **Exercise pointer** | Markdown | One sentence: "Try the chapter exercise in `exercises/ch{N}/exercise.ipynb`: [one-line description]." No embedded code. |
 
-### Cell 2 — model load pattern (required)
+### Cell 2 — model increment pattern (construct-introducing notebooks only)
+
+Two patterns. See `decisions/declarative-construction-plan.md` and `sysml-v2-toaster-model` skill for which notebook uses which.
+
+**Pattern A (Editor API) — TOASTER_INCREMENT = full cumulative model after apply():**
 
 ```python
 from pathlib import Path
+import opensysml
+from toaster.report import format_diagnostics
+
 conn = opensysml.connect(version="v0.9.0")
-source = Path("../../models/ch07-cumulative.sysml").read_text()
-print(source)
+base = conn.load_from_content(
+    Path("../../models/ch02-cumulative.sysml").read_text(), strict=False
+)
+assert base.ok
+editor = base.edit()
+editor.add_calc_def(
+    owner="ToasterDemo", name="DeliveredEnergy",
+    inputs=[("power", "ISQ::PowerValue"), ("duration", "ISQ::DurationValue"),
+            ("efficiency", "MeasurementReferences::DimensionOneValue")],
+    return_type="ISQ::EnergyValue",
+    expression="power * duration * efficiency",
+)
+increment = editor.apply()
+TOASTER_INCREMENT = str(increment)   # full model up to this point
+print(TOASTER_INCREMENT)             # reflection
+
+source = Path("../../models/ch03-cumulative.sysml").read_text()
 model = conn.load_from_content(source, strict=False)
-assert model.ok
+assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
 ```
 
-- Path is relative from the notebook file to the repo `models/` directory.
-- `print(source)` makes the model visible in output without embedding it in the cell.
-- No inline SysML strings longer than ~10 lines. The negative-control `bad_source` is exempt — it is deliberately minimal by design.
-- The model file is authored by A3 and must exist before A4 can finalize this cell.
+**Pattern B (gap construct) — TOASTER_INCREMENT = new SysML fragment only:**
+
+```python
+from pathlib import Path
+import opensysml
+from toaster.report import format_diagnostics
+
+conn = opensysml.connect(version="v0.9.0")
+
+# abstract modifier not yet supported by Editor API — toaster#9 / OpenSysML#595
+TOASTER_INCREMENT = """\
+abstract part def ToastingSystem {
+    doc /* ... */
+}
+"""
+print(TOASTER_INCREMENT)   # reflection: the declaration itself
+
+source = Path("../../models/ch01-cumulative.sysml").read_text()
+model = conn.load_from_content(source, strict=False)
+assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
+```
+
+**Notes:**
+- `TOASTER_INCREMENT` must be assigned and printed in cell-02 of every construct-introducing notebook.
+- Pattern A: TOASTER_INCREMENT is the full model. Pattern B: TOASTER_INCREMENT is the fragment only.
+- 13 notebooks have construction cells; judgment, depth, navigation, analysis, and param-sweep notebooks do not.
+- The model file (loaded at end of cell) is authored by A3 and must exist before A4 can finalize this cell.
 
 ## Tall's three worlds
 
@@ -74,13 +119,23 @@ Identify required cells by content type, not by cell index — additional narrat
 
 - [ ] **Concept statement present:** exactly one sentence starting "This notebook introduces"
 - [ ] **Context cell present:** one paragraph with link to prior notebook (where applicable)
-- [ ] **Model load cell present:** reads from `models/chXX-cumulative.sysml` via `Path(...).read_text()`; no inline SysML string longer than ~10 lines (bad_source exempt); `print(source)` before `load_from_content`; `assert model.ok`
+- [ ] **Model increment cell present (construct-introducing notebooks only):** two-phase — (1) `TOASTER_INCREMENT` assigned and printed as reflection (Pattern A: `str(editor.apply())`; Pattern B: SysML fragment string); (2) full cumulative loaded from `models/chXX-cumulative.sysml`; `assert model.ok`. Judgment/depth/navigation/analysis notebooks: cell-02 loads cumulative only, no TOASTER_INCREMENT.
 - [ ] **Negative control present:** short bad_source inline; `assert not bad.ok`; markdown names the error type
 - [ ] **Demo cell(s) present:** one key operation per code cell; each code cell followed by markdown narration
 - [ ] **Tall seam present:** exactly one sentence naming A-F (model file), O-S (API call), and E (rendered output)
 - [ ] **Exercise pointer present:** markdown only; one sentence pointing to `exercises/ch{N}/exercise.ipynb`
 - [ ] ≤600 words prose; ≤50 lines code
 - [ ] One new construct/operation (or DEPTH annotation for Ch6)
+
+## Tall's three worlds — construction cell update
+
+The A-F → O-S seam is now visible in cell-02 of construct-introducing notebooks:
+
+- **A-F:** the SysML declaration produced by the construction call or written as a string
+- **O-S:** `editor.apply()` (Pattern A) or `conn.load_from_content()` (Pattern B) executes it
+- **E:** `TOASTER_INCREMENT` printed as the reflection — the engineer sees the validated canonical SysML
+
+The Tall seam cell (slot 5) must still name all three worlds. For Pattern A notebooks, the A-F reference is the `editor.add_*()` call in cell-02, not the printed TOASTER_INCREMENT (which is the full model). For Pattern B notebooks, the A-F reference is the TOASTER_INCREMENT string itself.
 
 ## What A4 must never do
 

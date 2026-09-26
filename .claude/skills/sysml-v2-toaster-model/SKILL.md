@@ -146,3 +146,45 @@ correctly. Do not attempt `editor.add_member()` for these kinds — it will rais
 cumulative SysML string and loaded as text rather than constructed via the Editor API. The Editor
 API is used for the constructs it supports (~8 kinds); the remaining 5 are demonstrated via the
 `conn.load_from_content()` round-trip, which still shows the A-F → O-S → E Tall seam clearly.
+
+## Construction cell patterns — which notebook uses which
+
+13 notebooks have construction cells (cell-02 two-phase pattern). 18 notebooks do not.
+
+### Pattern assignment
+
+| Construct | Pattern | Chapter/Notebook |
+|---|---|---|
+| `abstract part def` | B (gap — toaster#9) | Ch1/nb01 |
+| `part def` + `attribute` | A | Ch1/nb02 |
+| `:>` specialization | A | Ch1/nb03 |
+| `part` usage (composition) | A | Ch1/nb04 |
+| `requirement def` + `require constraint` | B (gap — toaster#11) | Ch2/nb01 |
+| `attribute :>>` override | B (gap — toaster#10) | Ch2/nb02 |
+| `requirement` usage + `assert satisfy` | B (gap — toaster#12) | Ch3/nb01 |
+| `calc def` | A | Ch3/nb02 |
+| `action def` | A | Ch4/nb01 |
+| `item def` | A | Ch4/nb02 |
+| `allocate` | B (gap — toaster#13) | Ch5/nb02 |
+| `flow` | B (gap — toaster#14) | Ch5/nb03 |
+| `state def` (full machine w/ sub-states + transitions) | B (gap — toaster#15) | Ch7/nb02 |
+
+### Ch1 base model convention
+
+Ch1 has no ch00-cumulative. Pattern A cells within Ch1 chain on the prior notebook's output:
+
+- **Ch1/nb02** (first Pattern A in Ch1): base = Ch1/nb01's TOASTER_INCREMENT wrapped in the
+  standard package preamble (package ToasterDemo + imports). Constructed programmatically.
+- **Ch1/nb03**: base = Ch1/nb02's `TOASTER_INCREMENT` (full model after nb02's `editor.apply()`).
+- **Ch1/nb04**: base = Ch1/nb03's `TOASTER_INCREMENT`.
+
+### TOASTER_INCREMENT content by pattern
+
+| Pattern | TOASTER_INCREMENT content |
+|---|---|
+| A | Full cumulative model after `editor.apply()` (all prior + new declarations) |
+| B | New SysML fragment only (not full model) |
+
+These are NOT interchangeable. `check_construction.py` handles them differently:
+- Pattern A last-in-chapter: compared against committed `models/chXX-cumulative.sysml`
+- Pattern B: fragment validated to parse in a minimal package; not compared to cumulative

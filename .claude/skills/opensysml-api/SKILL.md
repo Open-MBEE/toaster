@@ -36,6 +36,51 @@ assert model.ok
 
 `model.ok` → bool. `model.diagnostics` → list of objects with `.severity`, `.message`, `.start_line`, `.start_column`, `.end_line`, `.end_column`.
 
+## Editor API (programmatic construction)
+
+```python
+model.edit() → Editor
+
+# Structural
+editor.add_part_def(owner, name, specializes=[], doc=None)
+editor.add_part(owner, name, type=None, specializes=[])
+editor.add_attribute(owner, name, type=None, default=None, multiplicity=None)
+editor.add_member(owner, kind, name, ...)  # for kinds not covered by typed helpers
+
+# Calculation
+editor.add_calc_def(owner, name, inputs=[], return_type=None, expression=None)
+
+# Item / state (confirm Pattern A before using — see Phase 0e gate)
+editor.add_item_def(owner, name, ...)
+editor.add_member(owner, kind="state def", name=...)
+
+increment = editor.apply()   # → EditResult
+str(increment)               # FULL MODEL (all existing + new declarations, not just the new member)
+```
+
+**Critical:** `editor.apply()` returns the **full cumulative model**, not a fragment.
+Probe result (2026-09-25): base = `package P { part def X; }`, after `add_part_def('Y')` →
+`"package P { part def X; \n    part def Y;\n}"`.
+
+**Editor single-use rule:** `editor` is bound to one model hash.
+After `editor.apply()`, call `conn.load_from_content(str(result))` before editing further.
+
+**Gap constructs — do NOT attempt these kinds via `editor.add_member()`.
+They raise `IllegalMemberKindError`. Use Pattern B (SysML string) instead:**
+
+| Construct | Issue |
+|---|---|
+| `abstract part def` | toaster#9 / OpenSysML#595 |
+| `attribute :>>` redefinition | toaster#10 / OpenSysML#596 |
+| `require constraint { ... }` | toaster#11 / OpenSysML#597 |
+| `assert satisfy R by P` | toaster#12 / OpenSysML#598 |
+| `allocate X to Y` | toaster#13 / OpenSysML#599 |
+| `flow X.port to Y.port` | toaster#14 / OpenSysML#TBD |
+| `state usage` (sub-state) + `transition` | toaster#15 / OpenSysML#TBD |
+
+**Partial state def support:** `editor.add_member(owner=..., kind='state def', name='Cycle')` creates a bare
+`state def Cycle;` and works. Sub-states and transitions do not. Full state machines require Pattern B.
+
 ## Evaluation and execution
 
 ```python

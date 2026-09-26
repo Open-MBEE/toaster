@@ -275,23 +275,31 @@ Construction cells (cell-02, construct-introducing notebooks only):
 
 ---
 
-## Phase 0e — Probe `flow` and `state` Editor API support (GATE)
+## Phase 0e — Probe `flow` and `state` Editor API support — COMPLETE (2026-09-25)
 
-**Before starting Phase 1 or any Phase 4 work on Ch5/nb03 or Ch7/nb02:**
+**Results:**
 
-Probe whether the Editor API supports `flow` and `state def`:
-```python
-# probe flow
-editor.add_member(owner="BreadHandling", kind="flow", name="bread_flow",
-                  source="loader.bread", target="ejector.bread")
-# probe state def
-editor.add_member(owner="ToasterDemo", kind="state def", name="Cycle")
-```
+| Construct | Probe result | Pattern | DEFERRED entry |
+|---|---|---|---|
+| `flow X.port to Y.port` | `IllegalMemberKindError kind "flow"` | **B** | D-009 / toaster#14 |
+| `state def Cycle` (bare) | Succeeds — adds `state def Cycle;` | A (bare only) | — |
+| `state usage` (sub-state) | `IllegalMemberKindError kind "state usage"` | **B** | D-010 / toaster#15 |
+| `transition` usage | `IllegalMemberKindError kind "transition"` | **B** | D-010 / toaster#15 |
 
-Document results in DEFERRED.md (new D-009 / D-010 if gaps) **and** update the Phase 0b
-construct table and `sysml-v2-toaster-model` skill with confirmed Pattern A or B for these two.
+**Conclusion:**
+- Ch5/nb03 (`flow`): Pattern B — gap D-009 confirmed.
+- Ch7/nb02 (full state machine): Pattern B — bare `state def` via Pattern A is insufficient; the tutorial
+  construct needs sub-states + transitions, which are both gaps (D-010).
 
-**Do not start Ch5/nb03 or Ch7/nb02 until this probe is complete and the skill is updated.**
+Editor method list (from `dir(editor)`): `add_assoc, add_attribute, add_attribute_def, add_behavior,
+add_calc, add_calc_def, add_class, add_classifier, add_datatype, add_feature, add_function,
+add_interaction, add_item, add_item_def, add_member, add_metaclass, add_package, add_part,
+add_part_def, add_port, add_port_def, add_predicate, add_struct, applied, apply, delete, move,
+operations, rename, set_value`
+
+No `add_state`, `add_flow`, `add_transition` exist. All 7 gap constructs now confirmed.
+
+**Updated: all 13 construct cells now have a confirmed Pattern assignment. Phase 1 may proceed.**
 
 ---
 
@@ -453,9 +461,9 @@ After each chapter batch, run `pytest -m checkpoint --chapter=N` before starting
 | Ch4 | nb02 | item def | A | base = Ch4/nb01 TOASTER_INCREMENT |
 | checkpoint | | | | `pytest -m checkpoint --chapter=4` GREEN |
 | Ch5 | nb02 | allocate | B | — |
-| Ch5 | nb03 | flow | A or B | BLOCKED until Phase 0e probe complete |
+| Ch5 | nb03 | flow | B | D-009 confirmed 2026-09-25 |
 | checkpoint | | | | `pytest -m checkpoint --chapter=5` GREEN |
-| Ch7 | nb02 | state machine | A or B | BLOCKED until Phase 0e probe complete |
+| Ch7 | nb02 | state machine | B | D-010 confirmed 2026-09-25 |
 | checkpoint | | | | `pytest -m checkpoint --chapter=7` GREEN |
 
 **Ch6, Ch8–Ch10:** No construction cells. Do not modify.
