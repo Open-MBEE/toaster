@@ -20,7 +20,7 @@ uv run python -m glossary where sebok             # terms one source defines
 uv run python -m glossary sparql terms            # a named query, a .rq file, or inline SPARQL
 uv run python -m glossary check                   # SHACL + integrity + gloss drift
 uv run python -m glossary verify-sources          # needs the originals in sources/local/
-uv run python -m glossary render                  # write glosses between <!-- gloss:ID --> markers
+uv run python -m glossary render                  # write glosses between <!-- gloss:ID --> markers; regenerate docs/glossary.md
 ```
 
 Every command takes `--json`. `check` passes in a fresh worktree or CI without the source PDFs (hashes and quotes are verified only for files that are present).

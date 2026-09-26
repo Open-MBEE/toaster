@@ -34,7 +34,14 @@ from .graph import (
     tutorial_definitions,
 )
 from .namespaces import GL, PACKAGE_DIR, REPO_DIR, TUTORIAL_SOURCE
-from .render import GLOSS_RE, expected_gloss, target_files
+from .render import (
+    DOCS_PAGE,
+    GLOSS_RE,
+    docs_page_path,
+    expected_gloss,
+    expected_page,
+    target_files,
+)
 
 # A confirmation or approval must come from a human. This is a guard against
 # accidents, not a security control: the rule is enforced by review.
@@ -266,6 +273,17 @@ def _markers(graph: Graph, repo: Path, root: Path) -> list[Finding]:
     return out
 
 
+def _docs_page(graph: Graph, repo: Path, root: Path) -> list[Finding]:
+    page = docs_page_path(repo)
+    if page is None:
+        return []
+    if not page.exists():
+        return [_err("docs-page", f"{DOCS_PAGE} is missing; run `python -m glossary render`")]
+    if page.read_text(encoding="utf-8") != expected_page(graph, root):
+        return [_err("docs-page", f"{DOCS_PAGE} is stale or was edited by hand; run `python -m glossary render`")]
+    return []
+
+
 def run_check(root: Path = PACKAGE_DIR, repo: Path = REPO_DIR) -> list[Finding]:
     graph = load_graph(root)
     findings = _shacl(graph, root)
@@ -275,6 +293,7 @@ def run_check(root: Path = PACKAGE_DIR, repo: Path = REPO_DIR) -> list[Finding]:
     findings += _quotes(graph, root, require=False)
     findings += _tutorial_view(graph, root)
     findings += _markers(graph, repo, root)
+    findings += _docs_page(graph, repo, root)
     return findings
 
 

@@ -295,7 +295,7 @@ def verify_sources_cmd(as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
 @app.command("render")
 def render_cmd(dry_run: bool = typer.Option(False, "--dry-run", help="List files that would change; exit 1 if any."),
                root: Path = RootOpt, repo: Path = RepoOpt) -> None:
-    """Write tutorial glosses between <!-- gloss:ID --> markers in AGENTS.md, CLAUDE.md and skills."""
+    """Write tutorial glosses between <!-- gloss:ID --> markers in AGENTS.md, CLAUDE.md and skills, and regenerate docs/glossary.md."""
     changed = render_files(load_graph(root), repo, root, write=not dry_run)
     for f in changed:
         typer.echo(("would change " if dry_run else "updated ") + str(f.relative_to(repo)))
