@@ -13,9 +13,11 @@ import opensysml.binary
 
 opensysml.binary.ensure_binary(version="v0.9.0")
 conn = opensysml.connect(version="v0.9.0")
-model = conn.load_from_content(source, strict=False)   # CORRECT — not conn.loads() or conn.load()
+model = conn.load_from_content(source, strict=False)   # from text; conn.load(path) also exists (below); not conn.loads()
 conn.close()
 ```
+
+`conn.load(path)` loads a file and exists in v0.9.0. Neither it nor `load_from_content` resolves `import` across separately loaded sources (gap G7, `decisions/probes.md`): assemble multi-part models by concatenating the SysML text and loading the result once.
 
 ### Notebook loading pattern (required for all chapter notebooks)
 
@@ -106,7 +108,7 @@ from toaster.query import get_satisfy_relationships
 satisfies = get_satisfy_relationships(model)    # list of dicts with @type, subsets, subject
 ```
 
-`get_satisfy_relationships()` is the single point of the `to_api_json()` workaround.
+`get_satisfy_relationships()` is the single point of the `to_api_json()` workaround (it must read `.content`; the version in `src/toaster/query.py` is being corrected in Pass 1, and `opensysml-query` has tested recipes meanwhile).
 When D-001 is resolved upstream, only that function changes.
 
 ## Model query (Ch9–10)
@@ -119,14 +121,15 @@ reqs = model.query(where={
     "value": ["RequirementUsage"],
 })
 # QueryElement: .id, .type, .properties, .get(name, default), .as_dict()
-# Also queryable: AllocationUsage, ActionUsage, PartUsage, RequirementDefinition
+# Also queryable: ActionUsage, PartUsage, RequirementDefinition; AllocationUsage, ConnectionUsage and FlowUsage ONLY when named.
+# Unnamed allocate/flow/connect, every satisfy, and metadata are invisible here; see the opensysml-query skill.
 ```
 
 ## Structured export
 
 ```python
 model.to_sysml()      # roundtrip SysML text — safe, not experimental
-model.to_api_json()   # OMG SysML v2 API JSON — experimental (fires warning); use only via get_satisfy_relationships()
+model.to_api_json()   # returns a Conversion: read `.content` (a JSON string), and suppress its experimental warning; use only via the helpers in src/toaster/query.py or the recipes in opensysml-query
 # model.to_turtle()   — do NOT use in tutorial notebooks
 ```
 
@@ -140,7 +143,7 @@ ns  = model.root                           # root namespace Symbol
 
 ## What does NOT exist
 
-- `conn.loads()`, `conn.load()` — these methods do not exist
+- `conn.loads()` — this method does not exist (`conn.load(path)` does)
 - OSLC queries — no OSLC client in v0.9.0; `model.query()` is the SysML v2 API Query protocol
 - `render_document`, `run_document_query` — require model-internal `DocumentQueries::Document` elements; don't use in tutorial notebooks
 

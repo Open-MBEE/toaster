@@ -1,6 +1,6 @@
 # Model of Z's thinking: positions Z has stated (Pass 1 session, 2026-09-26)
 
-Draft input for the `ace-protocol` rewrite (Pass 1 step 9). Until that skill links it, treat it as the ACE's reference for what Z has said. Later rulings supersede: Z-11's citation order was replaced by the kinds-of-definition framing (SEBoK gives the idea, the OMG specs the formal checkable semantics, Douglas the analogy and story; they do not contradict), and Z-14/E-2 no longer say SysML "governs": the definitions complement each other. Z has also said learner-facing lens vocabulary is allowed only if it makes a term easier to learn and is never load-bearing (refines Z-12).
+The ACE's reference for what Z has said (see `ace-protocol`). Z-11 and Z-21 already reflect Z's later kinds-of-definition framing; Z-19 refines Z-12.
 
 Every item below is something Z said or approved in this session. Cite the item number (Z-n) in every ruling. If a question is not covered by an item, you do NOT know what Z would say: escalate.
 
@@ -17,7 +17,7 @@ Every item below is something Z said or approved in this session. Cite the item 
 - Z-10. Choosing among alternative mechanisms: do NOT call it "concept selection" (SEBoK uses "concept" for the problem-space stage). Use "selection among alternatives".
 
 ## Sources and definitions
-- Z-11. Canonical sources take priority; own definitions appear only as contextual refinements where necessary, to make learning easier. Never make things up. Never teach something misaligned with canon. Citation order: SEBoK (definitions), the OMG specs (canon for the language), then Douglas last (didactic approach and the toaster example; align with it as much as possible to lower cognitive cost, but it is not the canonical source of the information).
+- Z-11. Canonical sources take priority; own definitions appear only as contextual refinements where necessary, to make learning easier. Never make things up. Never teach something misaligned with canon. The sources are complementary KINDS of definition, not rivals: SEBoK gives the idea (conceptual, generic), the OMG specs give formal and checkable semantics, Douglas gives analogy and story (didactic, aligned with as far as possible to lower cognitive cost). They are treated as non-contradicting. Our tutorial edge is the bridge. Do not phrase a ruling as one source "governing" another; say which kind of definition is needed.
 - Z-12. OpenSysML and other implementations are toolchain, cited only to flag spec gaps. Tall's three worlds and the optimization/control lens are builder-facing and never named in learner content.
 - Z-13. Douglas says what / who / where; the tutorial's what / how / where is Z's own sharpening and must be presented as such (attribute it plainly).
 - Z-14. SEBoK's "logical architecture" contains the functional view; the tutorial's "logical" is therefore a `differsFrom` edge, and Z APPROVED that departure in planning ("differsFrom, approved"). Learners are told the word is used more narrowly than in SEBoK.
@@ -27,3 +27,6 @@ Every item below is something Z said or approved in this session. Cite the item 
 ## Working style
 - Z-17. The ACE exists so Z is not spammed: rule and log when it knows what Z would say; escalate to Z, concisely and in Z's idiom (objective / design space / candidate, feasibility and utility, MoE and MoP, judgment), when it does not. Every triage is logged.
 - Z-18. Z prefers not to have content injected beyond what is needed; compact and intuitive beats exhaustive.
+- Z-19. Lens vocabulary (candidate, feasibility, utility, objective, design space) is not barred from learner-facing text but may never be load-bearing; use it only where it earns its place by making a term easier to understand. The lenses themselves are never named to learners.
+- Z-20. Record what you learn durably in the repo (probe results, corrections, verified facts), not in scratch files or conversation.
+- Z-21. Allocation: the tutorial's allocation edge follows the SysML v2 form (what we execute) and acknowledges the SEBoK and Douglas senses as the same assigning from other angles.
