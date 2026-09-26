@@ -87,7 +87,23 @@ def test_language_failure_reported_separately(conn) -> None:
     rep = cf.report(bad, (1, 1), [_check([], (1, 1))])
     assert rep["language"]["ok"] is False
     assert rep["language"]["diagnostics"] and all(isinstance(d, str) for d in rep["language"]["diagnostics"])
-    assert [r.status for r in rep["project"]] == ["passed"]
+    assert [r.status for r in rep["project"]] == ["open"]
+    assert [r.reason for r in rep["project"]] == ["not applied: language conformance failed"]
+    assert [r.findings for r in rep["project"]] == [[]]
+
+
+def test_run_not_called_on_language_failed_model(conn) -> None:
+    bad = conn.load_from_content("package P { part def A :> Missing; }", strict=False)
+    calls: list[int] = []
+    rep = cf.report(bad, (9, 9), [_check([{"x": 1}], (1, 1), calls)])
+    assert calls == []
+    assert [(r.status, r.findings) for r in rep["project"]] == [("open", [])]
+
+
+def test_open_reasons_distinguish_stage_and_unscheduled() -> None:
+    assert cf.evaluate(_check([], (2, 3)), None, (2, 2)).reason == "not applied: stage not reached"
+    assert cf.evaluate(_check([], None), None, (9, 9)).reason == "not applied: unscheduled"
+    assert cf.evaluate(_check([], (2, 3)), None, (2, 3)).reason is None
 
 
 def test_language_ok_on_valid_model(ch08) -> None:

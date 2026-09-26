@@ -1,7 +1,8 @@
 """Two-tier conformance (AGENTS.md 1.9).
 
 Language conformance is always on and reported separately. Project conformance checks are staged: a check with no
-`applies_from`, or one whose stage has not been reached, is reported open, never passed.
+`applies_from`, or one whose stage has not been reached, is reported open, never passed. When the model fails language conformance no project check is applied: all are
+reported open with reason "not applied: language conformance failed".
 """
 
 from collections.abc import Callable
@@ -28,11 +29,14 @@ class Result:
     status: str  # "open" | "passed" | "failed"
     findings: list[dict] = field(default_factory=list)
     applies_from: Stage | None = None
+    reason: str | None = None
 
 
 def evaluate(check: ConformanceCheck, model: Any, stage: Stage) -> Result:
-    if check.applies_from is None or stage < check.applies_from:
-        return Result(check.id, "open", [], check.applies_from)
+    if check.applies_from is None:
+        return Result(check.id, "open", [], None, "not applied: unscheduled")
+    if stage < check.applies_from:
+        return Result(check.id, "open", [], check.applies_from, "not applied: stage not reached")
     findings = check.run(model)
     return Result(check.id, "failed" if findings else "passed", findings, check.applies_from)
 
@@ -69,5 +73,13 @@ REGISTRY: list[ConformanceCheck] = [
 
 def report(model: Any, stage: Stage, registry: list[ConformanceCheck] | None = None) -> dict:
     checks = REGISTRY if registry is None else registry
-    return {"language": language_conformance(model), "project": [evaluate(c, model, stage) for c in checks]}
+    language = language_conformance(model)
+    if not language["ok"]:
+        # A check cannot be applied to a model that did not load (DL-024): open, with the reason, never passed.
+        project = [
+            Result(c.id, "open", [], c.applies_from, "not applied: language conformance failed") for c in checks
+        ]
+    else:
+        project = [evaluate(c, model, stage) for c in checks]
+    return {"language": language, "project": project}
 
