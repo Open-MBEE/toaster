@@ -154,7 +154,7 @@ Learner-facing vocabulary from these lenses is allowed only where it makes a ter
 
 ## 1.11 How alignment changes
 
-Alignment passes (changes to this Part 1, the glossary's confirmed definitions, or the ACE skills) are Z-initiated. The ACE triages what needs Z: it rules and logs where Z's recorded positions settle a question, and escalates to Z with a concise request where they do not. Decisions are logged in `decisions/log.md` (§7 below). To reach the ACE, route the question through the orchestrator; if there is no orchestrator in your session, state the question and your recommended default in your report and it will be triaged. Proposals to the glossary (new terms, sources or edges) go to the ACE the same way; only Z confirms.
+Alignment passes (changes to this Part 1, the glossary's confirmed definitions, or the ACE skills) are Z-initiated. The ACE triages what needs Z: it rules and logs where Z's frameworks and principles determine the answer (and shows the reasoning), and escalates to Z with a concise request where they do not. Decisions are logged in `decisions/log.md` (§7 below). To reach the ACE, route the question through the orchestrator; if there is no orchestrator in your session, state the question and your recommended default in your report and it will be triaged. Proposals to the glossary (new terms, sources or edges) go to the ACE the same way; only Z confirms.
 
 ---
 

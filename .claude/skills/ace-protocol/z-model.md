@@ -1,8 +1,8 @@
 # Model of Z's thinking: positions Z has stated (Pass 1 session, 2026-09-26)
 
-The ACE's reference for what Z has said (see `ace-protocol`). Z-11 and Z-21 already reflect Z's later kinds-of-definition framing; Z-19 refines Z-12.
+**Provenance, not authority.** These are statements Z made in conversation. They are where the frameworks and principles in `z-principles.md` were drawn from and evidence of how Z applies them. The ACE decides from the principles; a statement supports a ruling only where it addresses the case. Z-11 and Z-21 reflect Z's later kinds-of-definition framing; Z-19 refines Z-12.
 
-Every item below is something Z said or approved in this session. Cite the item number (Z-n) in every ruling. If a question is not covered by an item, you do NOT know what Z would say: escalate.
+Every item below is something Z said or approved in this session. Cite an item as provenance where it addresses the case. A question no item covers is decided from the principles if they determine it, and escalated if they do not.
 
 ## Layers and vocabulary
 - Z-1. Functional = what (behavioral requirements, intended behavior); logical = how (mechanisms and the interfaces between them); physical = where (concrete parts that confer the values). Physical is not just values: it is real parts, where the logical "how" is implemented and the functional "what" realized.
