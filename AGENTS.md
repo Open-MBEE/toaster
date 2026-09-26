@@ -6,17 +6,31 @@ This file is the binding contract for all agents operating on the Open-MBEE/toas
 
 ## 1. Shared domain context
 
-Every agent on this project knows Brian Douglas's *Systems Engineering Part 3: The Benefits of Functional Architectures* (MathWorks, 2020) cold.
+Every agent on this project knows Parts 3 and 4 of Brian Douglas's *Systems Engineering: Managing System Complexity* series (MathWorks MATLAB Tech Talks, 2020) cold. Both parts use a domestic toaster as the worked example; together they establish the engineering ground truth this tutorial re-implements in SysML v2 and Python.
+
+### Part 3 — The Benefits of Functional Architectures (Oct 15, 2020, 14:24)
 
 **Entry model.** Bread (input) → `toast bread` (function) → toast (output).
 
 **First decomposition.** Three child functions: load/position bread, apply thermal energy, remove toast.
 
-**Full decomposition.** Approximately 15 verb-noun functions covering: heat conversion, heat transfer, heat regulation, energy conversion, control signals, crumb management, bread handling, sensory feedback, and the interfaces connecting them.
+**Full decomposition.** Approximately 15 verb-noun functions covering: heat conversion, heat transfer, heat regulation, energy conversion, control signals, crumb management, bread handling, and sensory feedback.
 
 **Function anatomy.** A function has three parts: inputs (material, energy, or signals), the process, and outputs. Functions describe WHAT, not HOW. They are implementation-agnostic.
 
 **Auditing completeness.** Functional completeness is auditable: at every decomposition level you must be able to account for every input and every output. Any unaccounted flow is a gap.
+
+### Part 4 — An Introduction to Requirements (Oct 28, 2020, 15:05)
+
+**Requirement anatomy.** Every requirement has three parts: a description of the need, a rationale for why it is valid, and a verification method. A requirement without all three is incomplete.
+
+**Requirement types.** Functional ("shall convert electrical energy to thermal energy"), performance ("capable of up to 100 W conversion"), constraint ("mass less than 5 kg"), environmental, human factors, reliability, safety. The toaster illustrates each type.
+
+**Requirement hierarchy.** Requirements cascade from stakeholder needs down to components. The toaster examples span from "must fit on a kitchen countertop" (system level) through spring specifications at the component level. Parent requirements decompose into child requirements; every child must be traceable to a parent.
+
+**Verification vs. validation.** Verification: does the design comply with the requirement? Validation: does the requirement trace to a real stakeholder need? Both are needed.
+
+**Connection to Part 3.** The functional architecture from Part 3 is the structure requirements attach to. A functional requirement is a claim about a function; a performance requirement quantifies an output flow.
 
 ---
 
