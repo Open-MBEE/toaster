@@ -198,8 +198,7 @@ Probe record: `decisions/probes.md`. Affects the interface chapters (the chapter
 
 **Workaround:** `toaster.query.port_type_mismatches(model)` (tested; recipe 5 in `opensysml-query`), applied from the
 chapter and section where the connection is declared complete, with a negative control; reported open before then.
-**Resolution:** Re-read the connector semantics in KerML 8.4 and SysML 7.12 to 7.14 before filing. If nothing in the
-spec requires type conformance, file only a feature request (see `decisions/gap-issue-drafts.md`).
+**Resolution:** SysML 7.12.1 defines when connected ports *conform* but no rule found requires a tool to reject a non-conforming connection; file only a feature request (see `decisions/gap-issue-drafts.md`).
 **Upstream issue:** not filed (draft awaiting Z's review)
 **Toaster issue:** not filed
 
