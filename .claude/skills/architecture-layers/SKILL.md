@@ -25,7 +25,7 @@ Ask in this order and stop at the first "yes":
 | "A resistive coil turns electrical power into heat and must be fed from a mains outlet." | Logical | A mechanism plus an interface. A blowtorch would need a fuel port instead. |
 | "Heating efficiency is at least 0.6." | Logical (MoP threshold) | Derived from what the MoE needs; it characterizes a requirement and needs a means of checking. |
 | "The coil is an 800 W nichrome element." | Physical | A specific part with a value it confers. |
-| "Measured heating efficiency is 0.71." | Physical (TPM) | A value assessed on a candidate, evidence against the MoP threshold. |
+| "Measured heating efficiency is 0.71." or "Measured browning time on the built candidate is 118 s." | Physical (TPM), and an emergent result | A value assessed on a candidate by analysis or simulation: derived, not chosen, and the evidence against a MoP threshold. Classify it as physical when asked for a layer, and as an emergent result when asked whether it was prescribed. |
 | "Cycle time = 120 s" set as an attribute default, then checked against a 150 s limit | Not a valid check | A prescription tested against a threshold. Derive cycle time from the mechanism and the energy balance, then compare. |
 
 Toaster stories to lean on (Douglas, Part 3): the system described as functions, as logical components, or as physical parts (1:16); who or which components are responsible (1:56); where those components are implemented (2:05); a function has three parts (3:12); decomposing functions into finer functions (4:02); functions allocated to components grouped logically (4:12); trade studies with performance measures (13:40). The tongs-and-flamethrower comparison also appears in Part 3; its timestamp has not been re-verified here.
