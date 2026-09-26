@@ -67,7 +67,7 @@ The engineer's job is to align the model to their intent through **loops of cons
 |---|---|---|---|---|
 | Functional | What | *Intents*: required behavior, with typed flows and the relations among phenomena (an energy **balance** inequality, which respects conservation without assuming perfect efficiency) | **MoE** | `action def` with typed in and out flows; calc or constraint for phenomena relations; behavioral `requirement def` |
 | Logical | How | *Prescriptions* (mechanisms, policies, interfaces), plus the derived intents (MoP thresholds) they must meet | **MoP** | `abstract part def` with `perform action x : ActionDef`; `port def`, `interface def`, flows; constraints stating the principle; `allocate`; derived requirements |
-| Physical | Where | *Prescriptions* (parts, values), plus the assessed results | **TPM** | concrete `part def` specializing the abstract logical part def; attribute values; `verification def` |
+| Physical | Where | *Prescriptions* (parts, values), plus the assessed results | **TPM** | concrete `part def` specializing the abstract logical part def; attribute values (assessed values are TPMs) |
 
 Key terms (glossed from the glossary):
 
@@ -83,6 +83,8 @@ Key terms (glossed from the glossary):
 **MoE → MoP → TPM is a derivation chain.** A MoE says what acceptance looks like; a MoP is a performance measure whose threshold is derived so that the MoE can be satisfied; a TPM is the value actually assessed on a design element. Each can be stated on any element as decomposition proceeds, and reasoned over from parts through interconnections to higher-order parts. In the SysML spec they are only metadata tags on attributes (§9.3.4), and neither SEBoK nor the spec ties them to layers, so the layer emphasis is a tutorial refinement. A MoP characterizes a requirement but does not make one: the requirement needs a threshold and a means of checking it. **Whether a measure is a MoE or a MoP is a modeling judgment for the case at hand**, recorded with its justification (who cares, and does it measure acceptance or engineering performance). How long toast takes could be either, and a hard case is a good place to show a judgment call.
 
 **The system of interest is the subject the layers describe, not a layer.** Its purpose statement is functional, its parts and arrangement are logical, its realized parts are physical; a bare top-level part def that only names the whole is the named subject. Classify the pieces.
+
+**A verification case is not itself a layer element.** A `verification def` (and the checks it runs) is the analysis half of the construct-and-analyze loop. Classify it by the layer of what it tests and by its tier (language, or staged project conformance); its verdict is evidence, and TPMs are the values it assesses.
 
 **Allocation is not realization.** `allocate` assigns functions (and requirements, budgets) to elements. A concrete part def *specializes* the abstract logical part def to realize it. Usage-level allocation of a logical component to a part is optional.
 

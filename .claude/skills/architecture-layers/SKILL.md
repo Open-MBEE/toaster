@@ -49,7 +49,7 @@ Toaster stories to lean on (Douglas, Part 3): the system described as functions,
 | Any | `metadata MeasureOfPerformance about T::x;` after `import ParametersOfInterestMetadata::*;` | 9.3.4 | Tested to parse. Metadata is not visible to `model.query()` (JSON only). |
 | Allocation | `allocate apply to source;` between usages; `allocation def` with typed ends plus `allocation a : Def allocate x to y;` | 7.15.2 | Both tested (`ok`). Name allocations so `model.query()` sees them. |
 | Physical | `part def NichromeCoil :> HeatSource { attribute watts : Real = 800.0; }` (concrete specializes abstract) | 7.6.2 | Tested |
-| Physical | `verification def` and `verify` | 7.24 | Existing chapters use it. Not re-probed in this pass. |
+| Analysis (not a layer element) | `verification def` and `verify` | 7.24 | Existing chapters use it. Not re-probed in this pass. Classify by what it tests and by its tier; its verdict is evidence, and the values it assesses are TPMs. |
 
 Allocation assigns; specialization realizes. A concrete part def specializes the abstract logical part def. Usage-level `allocate` of a function usage to a component usage is optional but is what makes the assignment queryable.
 

@@ -12,7 +12,7 @@ Status: confirmed by Z on 2026-09-26 (F1 to F6, P1 to P6, the heuristics; F7 add
 
 **F3. Function, mechanism, policy.** A function is solution-independent (two or more different mechanisms could provide it). A mechanism is a modeling decision grounded in engineering practice, a law we reason with, comparatively deterministic. A policy selects inputs given state, designed given the mechanisms available. *Test:* substitution (would a pop-up toaster and tongs with a blowtorch both satisfy it?).
 
-**F4. Declarative model, procedural analysis, evidence.** The model states intent and semantics; scientific Python analyzes it; simulation and analysis produce the evidence that supports judgments. *Test:* is a number, unit or relation defined in the model, or only in code? Code that defines meaning is a defect.
+**F4. Declarative model, procedural analysis, evidence.** The model states intent and semantics; scientific Python analyzes it; simulation and analysis produce the evidence that supports judgments. *Test:* is a number, unit or relation defined in the model, or only in code? Code that defines meaning is a defect. A verification case is analysis, not a layer element: classify it by what it tests and by its tier (confirmed by Z, 2026-09-26).
 
 **F5. Kinds of definition, not rivals.** SEBoK supplies the idea, the OMG specs the formal and checkable semantics, Douglas the analogy and story. Tutorial definitions refine canonical ones and never contradict or invent. *Test:* does it narrow or clarify a canonical edge, and which kind of definition is being asked for?
 

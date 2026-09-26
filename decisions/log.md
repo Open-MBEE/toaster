@@ -40,6 +40,16 @@ Determined: yes, after F7.
 Extension: no.
 Provenance: AGENTS.md 1.5 (logical-to-physical test, Numbers, allocation is not realization); z-model Z-3, Z-8, Z-1; audit report OQ-3, F-2, F-4.
 
+## DL-023 | 2026-09-26 | Dry run 3 | A verification case is not a layer element
+
+Path: Escalated to Z; Z ruled option A
+Decision: A `verification def` (and the check it runs) is not itself a functional, logical or physical element. It is the analysis half of the construct-and-analyze loop, classified by the layer of what it tests and by its tier (language, or staged project conformance). The AGENTS.md 1.5 layer table no longer lists `verification def` in the physical row; TPMs are the assessed values. For a port-type conformance check: the property tested (interface compatibility) is logical, the check is staged project conformance, and it is applied from the chapter that declares the connection complete.
+Principles applied: F4 (declarative model, procedural analysis, evidence), F6 (tier of the check), F2 (objective, slot, candidate), heuristic 3 (arrangement before sizing), P5 (probe before asserting).
+Reasoning: the property checked is interface compatibility, an arrangement matter, so logical. F6 makes the check staged project conformance. F2 classifies what the design prescribes and intends; a check is none of those, and F4 places it on the analysis side. The principles did not say whether a check is a layer element, so the ACE escalated with options (not a layer element / logical / physical) and recommended "not a layer element"; Z chose that.
+Determined: no, at the step "is a verification case a layer element?"; Z ruled.
+Extension: yes; the ruling was added to framework F4 in `z-principles.md`.
+Provenance: Z's answer 2026-09-26; ACE round 3 request 5 (`decisions/ace-dry-run.md`); AGENTS.md 1.5 and 1.9; recipe 5 in `opensysml-query`.
+
 ## DL-022 | 2026-09-26 | PASS2-001 | OQ-4: cycleTime is not a timer setpoint as declared; F-1 stands
 
 Path: Handled by ACE
