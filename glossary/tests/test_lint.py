@@ -45,6 +45,10 @@ CASES = [
     ("tall-named", "the three-worlds lens", "a three world model"),
     ("tall-named", "the three worlds lens", "the threeworlds lens"),
     ("tall-named", "the Three  Worlds lens", "three-world and threeworlds"),
+    ("tall-named", "the Tall lens", "xTall lens"),
+    ("tall-named", "the three worlds lens", "rethree worlds lens"),
+    ("tall-named", "the three worlds lens", "three worldsy lens"),
+    ("stale-physical-layer", "the physical architecture layers", "the physical architecture layersy"),
     ("concept-selection", "This is Concept Selection.", "concept and selection are separate; selection among alternatives"),
     ("concept-selection", "concept selection here", "concept selections and concept selectional"),
     ("sub-behavior", "each sub-behavior runs", "the behavior of the subsystem"),
@@ -139,6 +143,19 @@ def test_baseline_classification_and_exit_codes(tmp_path: Path) -> None:
     make_repo(repo, {"docs/b.md": "fine\n"})
     j = json.loads(runner.invoke(app, ["lint", "--json", "--repo", str(repo), "--baseline", str(base)]).output)
     assert j["hits"][0]["status"] == "baselined" and j["summary"]["baselined"] == 1
+
+
+def test_baseline_key_includes_file(tmp_path: Path) -> None:
+    base = tmp_path / "base.json"
+    repo = tmp_path / "repo"
+    # baseline is for the file scanned LAST, so a file-blind key would spend it on the wrong hit
+    make_repo(repo, {"docs/b.md": "sub-behavior\n"})
+    lint.write_baseline(base, lint.scan(repo, lint.load_rules()))
+    make_repo(repo, {"docs/a.md": "sub-behavior\n"})
+    cl = lint.classify(lint.scan(repo, lint.load_rules()), lint.read_baseline(base))
+    assert {h.file: s for h, s in cl} == {"docs/a.md": "new", "docs/b.md": "baselined"}
+    j = json.loads(runner.invoke(app, ["lint", "--json", "--repo", str(repo), "--baseline", str(base)]).output)
+    assert {h["file"]: h["status"] for h in j["hits"]} == {"docs/a.md": "new", "docs/b.md": "baselined"}
 
 
 def test_notebook_string_source_is_scanned(tmp_path: Path) -> None:
@@ -243,3 +260,15 @@ def test_rules_file_structural_errors(tmp_path: Path, body: str, needle: str) ->
     p.write_text(body)
     r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(p)])
     assert r.exit_code == 2 and needle in r.output and "Traceback" not in r.output
+
+
+def test_empty_rule_id_is_rejected(tmp_path: Path) -> None:
+    r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(rules_file(tmp_path, id=""))])
+    assert r.exit_code == 2 and "id must not be empty" in r.output and "Traceback" not in r.output
+
+
+def test_non_utf8_rules_file_is_exit_2(tmp_path: Path) -> None:
+    p = tmp_path / "rules.toml"
+    p.write_bytes(b"[[rule]]\nid='r'\nmessage='caf\xe9'\n")
+    r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(p)])
+    assert r.exit_code == 2 and "rules.toml" in r.output and "Traceback" not in r.output

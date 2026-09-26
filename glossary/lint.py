@@ -49,7 +49,7 @@ class Hit:
 def load_rules(path: Path = RULES_FILE) -> list[Rule]:
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError) as e:
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as e:
         raise LintConfigError(f"cannot read rules file {path}: {e}") from e
     unknown = sorted(set(data) - {"rule"})
     if unknown:
