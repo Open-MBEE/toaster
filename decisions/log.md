@@ -1,5 +1,27 @@
 # Decision log
 
+## DL-011 | 2026-09-25 | Cross-WP | Declarative construction architecture: notebooks ARE the build
+
+Path: Handled by ACE
+
+Decision: Adopt declarative construction architecture. Cell-02 in each of 13 construct-introducing notebooks declares the SysML increment (via Editor API or SysML string); the cumulative `.sysml` files become generated checkpoints. The `scripts/check_construction.py --check` script verifies consistency. Full plan in `decisions/declarative-construction-plan.md`.
+
+Rationale: Z's verbatim direction — "ideally someone who pulls this repo constructs the sysml v2 model, they are not pulling an existing one. we're teaching engineering here." The hybrid architecture (Pattern A = Editor API for ~8 construct kinds; Pattern B = SysML string for 5 gap constructs pending OpenSysML#595–599) is the only viable path given current implementation gaps. The scope is 13 notebooks, not all 31.
+
+Key findings from ACE review of the plan (B-ACE-3 critical):
+- `editor.apply()` returns the FULL model (all existing + new members), not just the new member.
+  Probed: base = `package P { part def X; }`, after `add_part_def('Y')` → `"package P { part def X; \n    part def Y;\n}"`.
+  This invalidated the "reconstruct from TOASTER_INCREMENT concatenation" design for the verification script.
+  Fix: `check_construction.py` verifies consistency only (run construction cells, check they parse, compare
+  last Pattern A TOASTER_INCREMENT per chapter to committed fixture). Does NOT reconstruct from scratch.
+- Pattern A TOASTER_INCREMENT = full cumulative model. Pattern B TOASTER_INCREMENT = new SysML fragment only.
+  The two patterns are not interchangeable. The verification script must handle both separately.
+- Ch1 has no ch00-cumulative; Pattern A cells within Ch1 chain on the prior notebook's TOASTER_INCREMENT.
+
+ACE review findings table: 4 blocking + 5 minor, all corrected in `decisions/declarative-construction-plan.md`.
+Gap construct notes already added to 5 affected notebooks; upstream issues filed (OpenSysML#595–599);
+DEFERRED.md entries D-004–D-008 present with cross-references.
+
 ## DL-010 | 2026-09-25 | Cross-WP | ISQ/SI unit typing + B+ hybrid-systems interface contract
 
 Path: Handled by ACE
