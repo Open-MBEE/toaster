@@ -68,7 +68,7 @@ Every agent on this project knows Parts 3 and 4 of Brian Douglas's *Systems Engi
 
 **Purpose:** Authors functional architecture narrative (verb-noun convention throughout), requirement definitions with full 3-part anatomy, and verification case specifications. Makes validation judgments over behavioral requirements.
 
-**Functional-first framing rule:** A10 ensures that `abstract part def` declarations are narrated as named functional roles, not structural types. The abstract definitions ARE the functional architecture layer; physical architecture is the part defs that implement them. Narrative cells must use verb-noun convention (e.g., "transform bread into toast," "apply thermal energy") when describing functions.
+**Functional-first framing rule:** A10 ensures that the three-layer architecture is narrated explicitly in order: functional (what the system does, via verb-noun `action def` and abstract functional role definitions) → logical (how functions are partitioned into implementation-agnostic components with defined interfaces, via `abstract part def` + `flow`/ports) → physical (concrete part selections that fulfill logical roles, via `part def` with physical attributes). `abstract part def ToastingSystem` and its specializations are the **logical** layer — they define component boundaries and interfaces without committing to a physical solution. Narrative cells must use verb-noun convention (e.g., "transform bread into toast," "apply thermal energy") when describing functions, and must distinguish logical structure (with interfaces) from physical implementation (concrete part selection).
 
 **Skills loaded:** `sysml-v2-toaster-model`, `toaster-recipe`, `tutorial-style-guide`, `toaster-review-protocol`
 
