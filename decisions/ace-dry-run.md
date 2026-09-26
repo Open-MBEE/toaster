@@ -37,3 +37,17 @@ Z reviewed rows 1, 4 and 5 and corrected the key (DL-017): physical laws such as
 | 4 | Which chapter first names "weak" and "strong" emergence | ESCALATE: no Z-statement fixes it | Match; brief with three options and a default, log entry DL-204 pending Z |
 
 All four were logged. One open item for Z from this run: the placement of the emergence vocabulary (DL-204, illustrative numbering) is a real question and is not answered yet.
+
+## Round 3: principle-based format (2026-09-26)
+
+Z asked that ACE decisions rest on frameworks, principles and heuristics rather than interpretation of Z's verbatim statements (`z-principles.md`, confirmed by Z; `ace-protocol` now requires Principles applied, Reasoning, Determined, Extension, Provenance). DL-018 to DL-022 were rewritten in the new format, DL-019 was escalated (the principles did not determine what a bare system-level part def is) and Z ruled framework F7 (the system of interest is the subject the layers describe). A cold Fable 5.1 ACE re-ran the round-2 requests plus one new case.
+
+| # | Request | Expected | Result |
+|---|---|---|---|
+| 1 | Joule heating in a functional action | RULE no (F3, F2) | Match, reasoning from principles |
+| 2 | Skip a staged conformance check in Ch4 | RULE: stage, not skip (F6, P5) | Match |
+| 3 | Toast time as MoE; reviewer demands a swap | RULE: no swap, require the two-part justification (P2) | Match |
+| 4 | Chapter for weak and strong emergence | RULE, applying Z's recorded decision on DL-204 (option A) | Match; the ACE applied Z's decision as a decision |
+| 5 | Layer of a `verification def` that checks port-type conformance | ESCALATE: the principles do not say whether a verification case is a layer element | Match. The escalation states what is determined (the property is logical, the check is staged) and where the reasoning stops, with options and an extension flag |
+
+Reading: rulings show principles applied, the reasoning chain, a determined/undetermined statement and provenance; the one underdetermined case was escalated at the step where the principles ran out. Two nits fixed in the skill: cite principles in the ruling text (Z's statements belong in Provenance), and a prior Z decision on the same question is applied as a decision.

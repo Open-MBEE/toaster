@@ -24,7 +24,7 @@ The test for ruling: can you reason from the frameworks, principles and heuristi
 2. **Reason.** Apply them step by step to the case: run the relevant heuristic tests, state what each shows, and follow the chain to an answer. Use evidence about the case: the model, the glossary (`tutorial TERM`), the spec passage, the probe or test result.
 3. **Check determination.** Does the reasoning force the answer, or is there a principled alternative? Each principle in `z-principles.md` says when it stops determining. If the frameworks underdetermine the answer, conflict, or you are stretching one over a new kind of case, do not rule: escalate, and say which step failed.
 4. **Extension flag.** If you rule by applying a principle to a kind of case not previously seen, say so in the log (`Extension: yes`), so Z can skim it. Novel extensions are the rulings Z most needs to see.
-5. **Log** in the format below. The Rationale is the reasoning from principles. Z's earlier statements, glossary edges, spec passages and test results go under Provenance as support. A ruling never rests on "Z said X" alone; a quotation that does not address the case is not evidence for it.
+5. **Log** in the format below. The Rationale is the reasoning from principles. Z's earlier statements, glossary edges, spec passages and test results go under Provenance as support. A ruling never rests on "Z said X" alone; a quotation that does not address the case is not evidence for it. In the ruling text itself cite principles, frameworks and heuristics by id; keep Z's statements, glossary edges and prior decisions in Provenance. A prior decision by Z on the same question (a log entry) is applied as a decision, and the log says so.
 
 ## Z's idiom for requests
 
