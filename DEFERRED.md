@@ -166,3 +166,21 @@ with support for `in`/`out` parameters, nested action usages, and `first`/`then`
 **Spec:** SysML v2 formal/2026-03-02 §7.15 (ActionDefinition), §7.20 (SuccessionAsUsage)
 **Upstream issue:** Open-MBEE/OpenSysML#605
 **Toaster issue:** Open-MBEE/toaster#18
+
+## D-004: VerificationMethodKind metadata not supported
+
+The spec-defined way to annotate the method kind of a verification case is:
+```sysml
+#verificationMethod = VerificationMethodKind::test;
+```
+inside a `verification def` body (SysML v2 formal/2026-03-02 §7.24 Table 22).
+In OpenSysML v0.9.0 this raises "expected a body member" and `ok=False`.
+
+Until fixed, the verification method type is documented as text in the `doc` comment
+of the verification case definition (Ch3/nb04 and `models/ch03-cumulative.sysml`).
+
+**Resolution:** When upstream adds metadata parsing, replace the doc comment workaround
+with the formal `#verificationMethod` annotation and remove the gap comment.
+**Spec:** SysML v2 formal/2026-03-02 §7.24 Table 22 (Verification Methods Compartment)
+**Upstream issue:** Open-MBEE/OpenSysML#608
+**Toaster issue:** Open-MBEE/toaster#19

@@ -101,6 +101,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             "path": "chapters/ch03-measures/02-mop-candidate-eval.ipynb",
             "context_stubs": [],
         },
+        {
+            "path": "chapters/ch03-measures/04-verification-case.ipynb",
+            # verify timely requires timely : TimelyToast (req usage) and Toaster part def in scope
+            "context_stubs": [
+                "requirement def TimelyToast { subject toaster : Toaster; require constraint { toaster.cycleTime <= 180.0; } }",
+                "requirement timely : TimelyToast;",
+                "part def Toaster { attribute cycleTime : Real default = 120.0; }",
+            ],
+        },
     ],
     4: [
         {

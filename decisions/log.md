@@ -235,3 +235,9 @@ Non-blocking findings (do not fix without Z's direction):
 - MF-8 (L5): ch03-nb03 negative control exercises the model side (undefined requirement type ref) rather than the Python record side. Defensible — the model is the precondition for the record. Non-blocking.
 
 ACE grounded self-test: ch03-nb02 executes clean. Fresh observation: the η=0.7 reference value check (67200 J) in cell 4 is well-chosen — it validates the calc def against the probe fixture value and makes the demonstration self-verifying.
+
+## DL-005 | 2026-09-25 | Ch2-Ch3 | Requirement anatomy + verification def
+
+Path: Handled by ACE (Z directed during context compaction)
+Decision: Add (1) `doc` rationale to `TimelyToast` in Ch2; (2) new Ch3-nb04 notebook introducing `verification def TimelyToastTest` (§7.24); log `VerificationMethodKind` metadata gap as D-004 / toaster#19 / OpenSysML#608; add A10 Systems Architect archetype to AGENTS.md.
+Rationale: Brian Douglas Part 4 specifies the 3-part requirement anatomy (description, rationale, verification method). The `doc` comment (§7.21.2) carries informal text in the requirement def; `verification def` (§7.24) is the spec construct for verification cases. `verify` must target a requirement *usage* (not a definition) — confirmed by probe (`ok=False`, error: "satisfy target must be a requirement usage, found requirementDef") — so the verification def is placed in Ch3 where `timely : TimelyToast` is already defined, not Ch2. The `VerificationMethodKind` metadata construct is a gap in OpenSysML v0.9.0.

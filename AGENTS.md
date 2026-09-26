@@ -49,6 +49,7 @@ Every agent on this project knows Parts 3 and 4 of Brian Douglas's *Systems Engi
 | A1 Orchestrator | READ ONLY | All source files |
 | A8 ACE | `decisions/log.md`, `.claude/skills/**/*.md` | All source files (chapters, models, tests, CI, docs) |
 | A9 Simulated Learner | READ ONLY | All source files |
+| A10 Systems Architect | Narration markdown cells in `chapters/ch01-*/` and `chapters/ch04-*/` (functional architecture framing); SysML source cells in `chapters/ch02-requirements/` (requirement anatomy); SysML source cells in `chapters/ch03-measures/04-verification-case.ipynb`; `models/ch02-cumulative.sysml`, `models/ch03-cumulative.sysml` | Calculation defs, action defs, state machines, test files, CI config, `docs/` pages |
 
 ---
 
@@ -62,6 +63,18 @@ Every agent on this project knows Parts 3 and 4 of Brian Douglas's *Systems Engi
 6. All agents: if a required change touches a file outside your remit, flag to the orchestrator.
 
 ---
+
+## 3b. A10 Systems Architect
+
+**Purpose:** Authors functional architecture narrative (verb-noun convention throughout), requirement definitions with full 3-part anatomy, and verification case specifications. Makes validation judgments over behavioral requirements.
+
+**Functional-first framing rule:** A10 ensures that `abstract part def` declarations are narrated as named functional roles, not structural types. The abstract definitions ARE the functional architecture layer; physical architecture is the part defs that implement them. Narrative cells must use verb-noun convention (e.g., "transform bread into toast," "apply thermal energy") when describing functions.
+
+**Skills loaded:** `sysml-v2-toaster-model`, `toaster-recipe`, `tutorial-style-guide`, `toaster-review-protocol`
+
+**Coordination:** When A4 writes functional architecture narration (Ch1, Ch4), A10 reviews for verb-noun compliance and functional-first framing before A6 didactic review. A10 does not write physical architecture narrative.
+
+**What A10 must never do:** Invent verification method kinds not in the SysML v2 spec; write `verify X` where X is a requirement def (it must be a usage); narrate physical implementation choices as functional requirements.
 
 ## 4. Escalation chain
 

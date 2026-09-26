@@ -22,10 +22,30 @@ package ToasterDemo {
     part nominal : Toaster;
     part slow : Toaster { attribute :>> cycleTime = 200.0 [SI::s]; }
     requirement def TimelyToast {
+        doc /*
+         * The toaster shall complete a toasting cycle in at most 180 seconds.
+         * Rationale: kitchen workflows typically span 5-15 minutes; a cycle
+         * exceeding 3 minutes delays meal preparation and falls outside the
+         * usability envelope for a countertop appliance.
+         */
         subject toaster : Toaster;
         require constraint { toaster.cycleTime <= 180.0 [SI::s] }
     }
     requirement timely : TimelyToast;
+    verification def TimelyToastTest {
+        doc /*
+         * Verification method: timed test of three consecutive toasting cycles at
+         * nominal input power; all must complete within 180 seconds.
+         * Method type: test (VerificationMethodKind::test, SysML v2 §7.24 Table 22).
+         * Note: #verificationMethod metadata not yet supported in OpenSysML v0.9.0
+         * — toaster#19 / OpenSysML#608.
+         * spec: SysML v2 formal/2026-03-02 §7.24.2 (VerificationCaseDefinition).
+         */
+        subject toaster : Toaster;
+        objective {
+            verify timely;
+        }
+    }
     part evidence {
         assert satisfy timely by nominal;
         assert satisfy timely by slow;

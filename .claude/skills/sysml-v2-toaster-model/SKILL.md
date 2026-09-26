@@ -22,8 +22,11 @@ description: SysML v2 construct subset for the toaster tutorial — confirmed co
 | 11 | `allocate X to Y` | Ch5 | probed 2026-09-25 |
 | 12 | `flow X.port to Y.port` | Ch5 | probed 2026-09-25 |
 | 13 | `state` + entry/then/sub-states + `transition ... accept ... then ...` | Ch7 | probe.sysml lines 42–51 |
+| 14 | `verification def` + `subject` + `objective { verify ... }` | Ch3 nb4 | probed 2026-09-25: ok=True |
 
 No other constructs. `port def`, `interface def`, `connection def`, parametric diagrams, and `metadata` are out of scope for v0.1.
+
+**Gap — VerificationMethodKind metadata (toaster#19 / OpenSysML#608):** The spec-defined way to annotate the verification method kind is `#verificationMethod = VerificationMethodKind::test` (SysML v2 §7.24 Table 22). This metadata construct does not parse in OpenSysML v0.9.0 (`ok=False`, error: "expected a body member"). Until fixed, document the method kind as text in the `doc` comment of the verification case definition.
 
 ## Ch9–10: analysis operations (not new constructs)
 
@@ -45,7 +48,7 @@ Each chapter has a corresponding cumulative model file in `models/`:
 |---|---|
 | `models/ch01-cumulative.sysml` | Constructs 1–4 (abstract part def, part def, specialization, composition) |
 | `models/ch02-cumulative.sysml` | + constructs 5–6 (attribute override, requirement def) |
-| `models/ch03-cumulative.sysml` | + constructs 7–8 (requirement usage + assert satisfy, calc def) |
+| `models/ch03-cumulative.sysml` | + constructs 7–8, 14 (requirement usage + assert satisfy, calc def, verification def) |
 | `models/ch04-cumulative.sysml` | + constructs 9–10 (action def, item def) |
 | `models/ch05-cumulative.sysml` | + constructs 11–12 (allocate, flow) |
 | `models/ch06-cumulative.sysml` | Same constructs as Ch5, second-level decomposition added |

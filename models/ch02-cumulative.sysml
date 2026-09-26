@@ -25,6 +25,12 @@ package ToasterDemo {
     }
 
     requirement def TimelyToast {
+        doc /*
+         * The toaster shall complete a toasting cycle in at most 180 seconds.
+         * Rationale: kitchen workflows typically span 5-15 minutes; a cycle
+         * exceeding 3 minutes delays meal preparation and falls outside the
+         * usability envelope for a countertop appliance.
+         */
         subject toaster : Toaster;
         require constraint { toaster.cycleTime <= 180.0 [SI::s] }
     }
