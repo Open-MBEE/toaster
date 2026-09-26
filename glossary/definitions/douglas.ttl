@@ -1,0 +1,94 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix glid: <https://w3id.org/toaster/glossary/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+glid:def-douglas--allocation
+    a gl:Definition ;
+    gl:locator "Part 3, 4:12" ;
+    gl:quote "the functions are allocated to components, where they are grouped in some logical way" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-allocation ;
+    gl:text "Functions are allocated to components, grouped because they work together toward a higher-level goal or are related in some other way." .
+
+glid:def-douglas--decomposition
+    a gl:Definition ;
+    gl:locator "Part 3, 4:02" ;
+    gl:quote "we can decompose functions into smaller functions with more and more detail" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-decomposition ;
+    gl:text "Decompose until there is enough detail to allocate functions to components and write requirements." .
+
+glid:def-douglas--function
+    a gl:Definition ;
+    gl:locator "Part 3, 3:12" ;
+    gl:quote "A function has three parts." ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-function ;
+    gl:text "An input (material, energy, signals), the function that processes it, and an output; described as verb-noun pairings." .
+
+glid:def-douglas--functional-architecture
+    a gl:Definition ;
+    gl:locator "Part 3, 1:16" ;
+    gl:quote "we could describe a system as a collection of functions or as a collection of logical components or a collection of physical parts" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-functional-architecture ;
+    gl:text "A system can be described as a collection of functions, logical components or physical parts; a functional architecture describes what the system needs to do and how material, energy and signals flow between functions." .
+
+glid:def-douglas--logical-architecture
+    a gl:Definition ;
+    gl:locator "Part 3, 1:56" ;
+    gl:quote "who or which logical components are responsible for achieving a given set of functions" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-logical-architecture ;
+    gl:text "Logical components are responsible for achieving sets of functions: 'who'." .
+
+glid:def-douglas--logical-component
+    a gl:Definition ;
+    gl:locator "Part 3, 4:12" ;
+    gl:quote "the functions are allocated to components, where they are grouped in some logical way" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-logical-component ;
+    gl:text "A component groups functions that work together toward a higher-level goal or are otherwise related." .
+
+glid:def-douglas--physical-architecture
+    a gl:Definition ;
+    gl:locator "Part 3, 2:05" ;
+    gl:quote "where those components will be physically implemented" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-physical-architecture ;
+    gl:text "Physical parts: 'where' the logical components are physically implemented." .
+
+glid:def-douglas--requirement
+    a gl:Definition ;
+    gl:locator "Part 4, 1:41" ;
+    gl:quote "a description of a particular need, a rationale for why the requirement is valid, and a way to verify that the system meets that requirement" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-requirement ;
+    gl:text "A requirement has three parts: a description of a need, a rationale, and a way to verify it." .
+
+glid:def-douglas--selection-among-alternatives
+    a gl:Definition ;
+    gl:locator "Part 3, 13:40" ;
+    gl:quote "come up with different implementation options, describe the performance measures, build models to estimate those measures, and make a selection" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-selection-among-alternatives ;
+    gl:text "Trade studies: generate implementation options, describe performance measures, model them and select." .
+
+glid:def-douglas--traceability
+    a gl:Definition ;
+    gl:locator "Part 4, 9:45" ;
+    gl:quote "we're left with a traceability map that connects the as-designed system with the requirements" ;
+    gl:source glid:src-douglas ;
+    gl:status gl:proposed ;
+    gl:term glid:term-traceability ;
+    gl:text "Allocated requirements link to the widget they define; the design traces back to the requirements it implements. This audits missed requirements, unjustified widgets, and drives verification tests." .

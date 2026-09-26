@@ -1,0 +1,14 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix glid: <https://w3id.org/toaster/glossary/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+glid:def-kerml--specialization
+    a gl:Definition ;
+    gl:locator "Language overview: specialization (PDF 51)" ;
+    gl:pdfPage "51"^^xsd:integer ;
+    gl:quote "All the things classified by a specialized type are also classified by the general types it is related to via specialization relationships" ;
+    gl:source glid:src-kerml ;
+    gl:status gl:proposed ;
+    gl:term glid:term-specialization ;
+    gl:text "Everything classified by a specialized type is also classified by its general types, so it inherits their features." .

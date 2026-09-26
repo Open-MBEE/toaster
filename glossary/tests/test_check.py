@@ -101,3 +101,65 @@ def test_hash_mismatch_fails(tmp_path: Path, repo: Path) -> None:
 def test_verify_sources_requires_the_files(tmp_path: Path) -> None:
     assert [f.code for f in verify_sources(make_root(tmp_path, with_file=False))] == ["source-absent"]
     assert verify_sources(make_root(tmp_path / "again")) == []
+
+
+def _tiny_pdf(text: str) -> bytes:
+    """A one-page PDF containing `text` (Helvetica), built by hand so no PDF library is needed."""
+    stream = f"BT /F1 12 Tf 72 700 Td ({text}) Tj ET".encode()
+    objs = [b"<< /Type /Catalog /Pages 2 0 R >>",
+            b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+            b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream",
+            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    out, offsets = b"%PDF-1.4\n", []
+    for n, body in enumerate(objs, 1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % n + body + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
+    out += b"".join(b"%010d 00000 n \n" % o for o in offsets)
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, xref)
+    return out
+
+
+def _pdf_root(tmp_path: Path, quote: str, page_text: str) -> Path:
+    import hashlib
+    import shutil
+
+    import pytest
+
+    if shutil.which("pdftotext") is None:
+        pytest.skip("pdftotext not installed")
+    pdf = _tiny_pdf(page_text)
+    sources = SOURCES.replace(FILE_SHA_PLACEHOLDER, hashlib.sha256(pdf).hexdigest())
+    root = make_root(tmp_path, sources=sources)
+    (root / "sources" / "local" / "canon.txt").write_bytes(pdf)
+    defs = root / "definitions" / "canon.ttl"
+    defs.write_text(defs.read_text().replace('gl:locator "p. 5" ;', f'gl:locator "p. 5" ; gl:quote "{quote}" ; gl:pdfPage 1 ;'))
+    return root
+
+
+from .conftest import FILE_SHA as FILE_SHA_PLACEHOLDER  # noqa: E402
+
+
+def test_quote_on_its_page_passes(tmp_path: Path, repo: Path) -> None:
+    root = _pdf_root(tmp_path, "logical includes the functional view", "Canon says logical includes the functional view.")
+    assert errors(root, repo) == []
+
+
+def test_quote_not_on_its_page_fails(tmp_path: Path, repo: Path) -> None:
+    root = _pdf_root(tmp_path, "something the source never says", "Canon says logical includes the functional view.")
+    assert "quote-not-on-page" in errors(root, repo)
+    assert "quote-not-on-page" in [f.code for f in verify_sources(root)]
+
+
+def test_refines_may_narrow_another_terms_definition(tmp_path: Path, repo: Path) -> None:
+    ok = dict(DEFS)
+    ok["tutorial"] = ok["tutorial"].replace("gl:refines glid:def-video--logical", "gl:refines glid:def-canon--function")
+    assert errors(make_root(tmp_path, defs=ok), repo) == []
+
+
+def test_differs_from_must_be_the_same_term(tmp_path: Path, repo: Path) -> None:
+    bad = dict(DEFS)
+    bad["tutorial"] = bad["tutorial"].replace("gl:differsFrom glid:def-canon--logical", "gl:differsFrom glid:def-canon--function")
+    assert "refinement" in errors(make_root(tmp_path, defs=bad), repo)

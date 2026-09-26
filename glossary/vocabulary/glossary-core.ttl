@@ -70,6 +70,8 @@ gl:quote a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:str
     rdfs:comment "Optional short verbatim excerpt (a phrase, not a page)." .
 gl:locator a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
     rdfs:comment "Where in the source: PDF page, printed page, section number, or video timestamp." .
+gl:pdfPage a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:integer ;
+    rdfs:comment "1-based PDF page of the source where gl:quote appears. Lets verify-sources check the quote mechanically. File sources only." .
 gl:gloss a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
     rdfs:comment "One-line form written into AGENTS.md and skills between marker comments. Required on a tutorialDefinition." .
 gl:status a owl:ObjectProperty ; rdfs:domain gl:Definition ;

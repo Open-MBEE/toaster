@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import hashlib
 import re
+import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -135,8 +137,9 @@ def _refinement(graph: Graph) -> list[Finding]:
                     out.append(_err("refinement", f"{short_id(d)} uses gl:{pname} but is not a tutorial definition"))
                 if graph.value(target, GL.source) == TUTORIAL_SOURCE:
                     out.append(_err("refinement", f"{short_id(d)} gl:{pname} another tutorial definition {short_id(target)}"))
-                if graph.value(target, GL["term"]) != graph.value(d, GL["term"]):
-                    out.append(_err("refinement", f"{short_id(d)} gl:{pname} {short_id(target)}, which defines a different term"))
+                if prop == GL.differsFrom and graph.value(target, GL["term"]) != graph.value(d, GL["term"]):
+                    out.append(_err("refinement", f"{short_id(d)} gl:differsFrom {short_id(target)}, which defines a different term; "
+                                    "a departure is from the same term's canonical definition"))
         if (d, GL.differsFrom, None) in graph:
             who, note = graph.value(d, GL.approvedBy), graph.value(d, GL.approvalNote)
             if who is None or note is None:
@@ -186,6 +189,48 @@ def _hashes(graph: Graph, root: Path, *, require: bool) -> list[Finding]:
     return out
 
 
+_WS = re.compile(r"\s+")
+_PUNCT = str.maketrans({"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"', "\u2013": "-", "\u2014": "-",
+                        "\u00ad": "", "\ufb01": "fi", "\ufb02": "fl", "\u00a0": " "})
+
+
+def normalize(text: str) -> str:
+    """Whitespace-, hyphenation- and quote-insensitive form for comparing an excerpt to a page."""
+    t = text.translate(_PUNCT)
+    t = re.sub(r"-\s*\n\s*", "", t)
+    return _WS.sub(" ", t).strip().lower()
+
+
+def pdf_page_text(path: Path, page: int) -> str | None:
+    if shutil.which("pdftotext") is None:
+        return None
+    r = subprocess.run(["pdftotext", "-f", str(page), "-l", str(page), "-layout", str(path), "-"],
+                       capture_output=True, text=True, check=False)
+    return r.stdout if r.returncode == 0 else None
+
+
+def _quotes(graph: Graph, root: Path, *, require: bool) -> list[Finding]:
+    """Verify each gl:quote occurs on its gl:pdfPage, for file sources whose original is present."""
+    out = []
+    for d in graph.subjects(RDF.type, GL.Definition):
+        quote, page = graph.value(d, GL.quote), graph.value(d, GL.pdfPage)
+        if quote is None or page is None:
+            continue
+        src = graph.value(d, GL.source)
+        rel = graph.value(src, GL.localPath)
+        if graph.value(src, GL.sourceKind) != GL.File or rel is None:
+            continue
+        path = root / "sources" / "local" / str(rel)
+        if not path.exists():
+            continue  # absence is reported by _hashes
+        text = pdf_page_text(path, int(page))
+        if text is None:
+            out.append((_err if require else _warn)("quote-unchecked", f"{short_id(d)}: could not read PDF page {page} (pdftotext missing?)"))
+        elif normalize(str(quote)) not in normalize(text):
+            out.append(_err("quote-not-on-page", f"{short_id(d)}: quote not found on PDF page {page} of {rel}"))
+    return out
+
+
 def _markers(graph: Graph, repo: Path) -> list[Finding]:
     out = []
     for f in target_files(repo):
@@ -207,9 +252,11 @@ def run_check(root: Path = PACKAGE_DIR, repo: Path = REPO_DIR) -> list[Finding]:
     for fn in (_bipartite, _orphans, _confirmation, _refinement, _sources):
         findings += fn(graph)
     findings += _hashes(graph, root, require=False)
+    findings += _quotes(graph, root, require=False)
     findings += _markers(graph, repo)
     return findings
 
 
 def verify_sources(root: Path = PACKAGE_DIR) -> list[Finding]:
-    return _hashes(load_graph(root), root, require=True)
+    g = load_graph(root)
+    return _hashes(g, root, require=True) + _quotes(g, root, require=True)

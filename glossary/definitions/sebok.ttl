@@ -1,0 +1,244 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix glid: <https://w3id.org/toaster/glossary/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+glid:def-sebok--allocation
+    a gl:Definition ;
+    gl:locator "System Requirements Definition, 'Allocation' (PDF 562)" ;
+    gl:pdfPage "562"^^xsd:integer ;
+    gl:quote "Allocation is the process by which the requirements at one level of the physical architecture are assigned to those entities at the next lower level" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-allocation ;
+    gl:text "Requirements at one level are assigned to entities at the next lower level that have a role in implementing them; child requirements and budgets follow." .
+
+glid:def-sebok--architecture
+    a gl:Definition ;
+    gl:locator "Glossary: Architecture (PDF 1445)" ;
+    gl:pdfPage "1445"^^xsd:integer ;
+    gl:quote "fundamental concepts or properties of a system in its environment embodied in its elements, relationships, and in the principles of its design and evolution" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-architecture ;
+    gl:text "The fundamental concepts or properties of a system in its environment, embodied in its elements, their relationships, and the principles of its design and evolution." .
+
+glid:def-sebok--behavior
+    a gl:Definition ;
+    gl:locator "Glossary: Behavior, definition 1 (Ackoff) (PDF 1452)" ;
+    gl:pdfPage "1452"^^xsd:integer ;
+    gl:quote "Systems behavior is a change which leads to events in itself or other systems" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-behavior ;
+    gl:text "A change that leads to events in the system itself or in other systems." .
+
+glid:def-sebok--behavior-2
+    a gl:Definition ;
+    gl:locator "Glossary: Behavior, definition 2 (PDF 1452)" ;
+    gl:pdfPage "1452"^^xsd:integer ;
+    gl:quote "The effect produced when an instance of a complex system or organism is used in its operational environment" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-behavior ;
+    gl:text "The effect produced when an instance of a complex system is used in its operational environment: an emergent outcome of the whole (cars have behavior, engines have functions)." .
+
+glid:def-sebok--decomposition
+    a gl:Definition ;
+    gl:locator "Physical Architecture, activities (PDF 601)" ;
+    gl:pdfPage "601"^^xsd:integer ;
+    gl:quote "decompose the function until the identification of implementable system elements is possible" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-decomposition ;
+    gl:text "Decompose a function until implementable system elements can be identified: the stopping criterion for functional decomposition." .
+
+glid:def-sebok--design
+    a gl:Definition ;
+    gl:locator "Glossary: Design (PDF 1481)" ;
+    gl:pdfPage "1481"^^xsd:integer ;
+    gl:quote "design includes activities to create concepts and models" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-design ;
+    gl:text "Activities that create concepts and models to answer an intended purpose; the outcome is a coherent, purposeful set of models or representations." .
+
+glid:def-sebok--emergence
+    a gl:Definition ;
+    gl:locator "Glossary: Emergence (PDF 1491)" ;
+    gl:pdfPage "1491"^^xsd:integer ;
+    gl:quote "The principle that whole entities exhibit properties which are meaningful only when attributed to the whole, not to its parts" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-emergence ;
+    gl:text "Whole entities exhibit properties meaningful only when attributed to the whole, not to its parts." .
+
+glid:def-sebok--emergence-2
+    a gl:Definition ;
+    gl:locator "Emergence and Complexity, 'Emergence in Systems' (PDF 231)" ;
+    gl:pdfPage "231"^^xsd:integer ;
+    gl:quote "Emergence refers to properties or behaviors that arise at the level of the system as a whole and cannot be attributed to any individual component" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-emergence ;
+    gl:text "Properties or behaviors that arise at the level of the whole and cannot be attributed to any one component. SEBoK distinguishes simple, weak and strong emergence." .
+
+glid:def-sebok--function
+    a gl:Definition ;
+    gl:locator "Glossary: Function, definition 3 (PDF 1510)" ;
+    gl:pdfPage "1510"^^xsd:integer ;
+    gl:quote "A function is defined by the transformation of input flows to output flows, with defined performance" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-function ;
+    gl:text "A transformation of input flows to output flows, with defined performance." .
+
+glid:def-sebok--function-2
+    a gl:Definition ;
+    gl:locator "Glossary: Function, definition 1 (Ackoff) (PDF 1510)" ;
+    gl:pdfPage "1510"^^xsd:integer ;
+    gl:quote "To have a function, a system must be able to provide the outcome through two or more different combinations of elemental behavior" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-function ;
+    gl:text "A system has a function only if it can provide the outcome through two or more different combinations of elemental behavior: a function is solution-independent by construction." .
+
+glid:def-sebok--functional-architecture
+    a gl:Definition ;
+    gl:locator "Glossary: Functional Architecture (PDF 1511)" ;
+    gl:pdfPage "1511"^^xsd:integer ;
+    gl:quote "A functional architecture is a set of functions and their sub-functions that defines the transformations of input flows into output flows performed by the system to achieve its mission" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-functional-architecture ;
+    gl:text "A set of functions and sub-functions that define how input flows are transformed into output flows to achieve the mission." .
+
+glid:def-sebok--interface
+    a gl:Definition ;
+    gl:locator "Glossary: Interface, definition 1 (PDF 1541)" ;
+    gl:pdfPage "1541"^^xsd:integer ;
+    gl:quote "A shared boundary between two functional units, defined by various characteristics pertaining to the functions, physical signal exchanges, and other characteristics" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-interface ;
+    gl:text "A shared boundary between two functional units, defined by characteristics of the functions, physical signal exchanges and more." .
+
+glid:def-sebok--logical-architecture
+    a gl:Definition ;
+    gl:locator "Glossary: Logical Architecture (PDF 1554)" ;
+    gl:pdfPage "1554"^^xsd:integer ;
+    gl:quote "The logical architecture of a system is composed of a set of related technical concepts and principles that support the logical operation of the system" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-logical-architecture ;
+    gl:text "A set of related technical concepts and principles supporting the system's logical operation; SEBoK's logical architecture includes the functional, behavioral and temporal architectures." .
+
+glid:def-sebok--logical-component
+    a gl:Definition ;
+    gl:locator "System Architecture Design Definition (platform independent model) (PDF 571)" ;
+    gl:pdfPage "571"^^xsd:integer ;
+    gl:quote "logical configuration items without a specific design implementation" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-logical-component ;
+    gl:text "Logical configuration items with allocated functions, interfaces and functional performance requirements, without a specific design implementation (the platform-independent model)." .
+
+glid:def-sebok--moe
+    a gl:Definition ;
+    gl:locator "Glossary: Measure of Effectiveness (MoE) (PDF 1562)" ;
+    gl:pdfPage "1562"^^xsd:integer ;
+    gl:quote "The metrics by which an acquirer will measure satisfaction with products produced by the technical effort" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-moe ;
+    gl:text "The metrics by which an acquirer measures satisfaction with what the technical effort produced (IEEE 1220-2005)." .
+
+glid:def-sebok--mop
+    a gl:Definition ;
+    gl:locator "Glossary: Measure of Performance (MoP) (PDF 1562)" ;
+    gl:pdfPage "1562"^^xsd:integer ;
+    gl:quote "An engineering performance measure that provides design requirements that are necessary to satisfy an MOE" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-mop ;
+    gl:text "An engineering performance measure that yields design requirements necessary to satisfy a MoE." .
+
+glid:def-sebok--physical-architecture
+    a gl:Definition ;
+    gl:locator "Glossary: Physical Architecture (PDF 1587)" ;
+    gl:pdfPage "1587"^^xsd:integer ;
+    gl:quote "A physical architecture is an arrangement of physical elements (system elements and physical interfaces) which provides the design solution" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-physical-architecture ;
+    gl:text "An arrangement of physical elements and physical interfaces that provides the design solution and is intended to satisfy logical architecture elements and requirements." .
+
+glid:def-sebok--requirement
+    a gl:Definition ;
+    gl:locator "Glossary: Requirement (PDF 1607)" ;
+    gl:pdfPage "1607"^^xsd:integer ;
+    gl:quote "which is unambiguous, testable or measurable, and necessary for product or process acceptability" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-requirement ;
+    gl:text "A statement of an operational, functional or design characteristic or constraint that is unambiguous, testable or measurable, and necessary for acceptability." .
+
+glid:def-sebok--selection-among-alternatives
+    a gl:Definition ;
+    gl:locator "Article: Analysis and Selection between Alternative Solutions (PDF 337)" ;
+    gl:pdfPage "337"^^xsd:integer ;
+    gl:quote "Analysis and Selection between Alternative Solutions" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-selection-among-alternatives ;
+    gl:text "The process of analyzing alternative solutions and selecting among them against effectiveness, cost and risk." .
+
+glid:def-sebok--simulation
+    a gl:Definition ;
+    gl:locator "Glossary: Simulation, definition 1 (PDF 1623)" ;
+    gl:pdfPage "1623"^^xsd:integer ;
+    gl:quote "A model that behaves or operates like a given system when provided a set of controlled inputs" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-simulation ;
+    gl:text "A model that behaves like a given system when given controlled inputs." .
+
+glid:def-sebok--tpm
+    a gl:Definition ;
+    gl:locator "Glossary: Technical Performance Measure (TPM), definition 1 (PDF 1663)" ;
+    gl:pdfPage "1663"^^xsd:integer ;
+    gl:quote "Measures of attributes of a system element within the system to determine how well the system or system element is satisfying specified requirements" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-tpm ;
+    gl:text "Measures of attributes of a system element that determine how well it satisfies specified requirements." .
+
+glid:def-sebok--traceability
+    a gl:Definition ;
+    gl:locator "Glossary: Traceability (PDF 1666)" ;
+    gl:pdfPage "1666"^^xsd:integer ;
+    gl:quote "The degree to which a relationship can be established between two or more products of the development process" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-traceability ;
+    gl:text "The degree to which a relationship can be established between two or more development products." .
+
+glid:def-sebok--validation
+    a gl:Definition ;
+    gl:locator "Glossary: Validation, definition 1a (PDF 1671)" ;
+    gl:pdfPage "1671"^^xsd:integer ;
+    gl:quote "Confirmation, through the provision of objective evidence, that the (stakeholder) requirements for a specific intended use or application have been fulfilled" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-validation ;
+    gl:text "Confirmation, through objective evidence, that stakeholder requirements for an intended use have been fulfilled: the right system was built." .
+
+glid:def-sebok--verification
+    a gl:Definition ;
+    gl:locator "Glossary: Verification, definition 1a (PDF 1674)" ;
+    gl:pdfPage "1674"^^xsd:integer ;
+    gl:quote "Confirmation, through the provision of objective evidence, that specified (system) requirements have been fulfilled" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-verification ;
+    gl:text "Confirmation, through objective evidence, that specified requirements have been fulfilled: the system was built right." .

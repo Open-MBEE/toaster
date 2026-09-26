@@ -49,6 +49,7 @@ gl:DefinitionShape a sh:NodeShape ;
           sh:message "a Definition has exactly one gl:status: gl:proposed or gl:confirmed" ] ,
         [ sh:path gl:quote ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:maxLength 300 ;
           sh:message "gl:quote is a short excerpt, at most 300 characters" ] ,
+        [ sh:path gl:pdfPage ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ] ,
         [ sh:path gl:gloss ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:maxLength 240 ;
           sh:message "gl:gloss is one line, at most 240 characters" ] ,
         [ sh:path gl:confirmedBy ; sh:maxCount 1 ; sh:datatype xsd:string ] ,
