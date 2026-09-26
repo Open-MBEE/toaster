@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from rdflib import RDF, Graph
+from rdflib import RDF, Graph, URIRef
 
 from .graph import gloss_of, primary, resolve_term, short_id, tutorial_definitions
 from .namespaces import GL, PACKAGE_DIR, RENDER_TARGETS, REPO_DIR
@@ -50,6 +50,42 @@ def docs_page_path(repo: Path) -> Path | None:
     return repo / DOCS_PAGE if (repo / "docs").is_dir() else None
 
 
+PDF_RE = re.compile(r"\s*\(PDF \d+\)|(?:^|\s)PDF \d+\b")
+
+
+def display_locator(locator: str) -> str:
+    """The locator as a learner sees it: the PDF page index is dropped, the printed page and section kept."""
+    return PDF_RE.sub("", locator).strip(" ,;")
+
+
+def _and(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def _sources_of(graph: Graph, defs: list) -> str:
+    srcs = {graph.value(d, GL.source) for d in defs}
+    ordered = sorted(srcs, key=lambda s: (int(graph.value(s, GL.rank) or 0), str(graph.value(s, GL.label)).lower()))
+    return "; ".join(str(graph.value(s, GL.label)) for s in ordered)
+
+
+def bridge_attribution(graph: Graph, edge: str) -> str:
+    """The Tutorial entry, derived from the bridge edge's gl:refines targets (its stored locator is not shown)."""
+    d = URIRef(edge)
+    term = graph.value(d, GL["term"])
+    own: list = []
+    other: dict = {}
+    for tgt in graph.objects(d, GL.refines):
+        t = graph.value(tgt, GL["term"])
+        if t == term:
+            own.append(tgt)
+        else:
+            other.setdefault(t, []).append(tgt)
+    parts = ["the sources above"] if own else []
+    for t in sorted(other, key=lambda t: str(graph.value(t, GL.label)).lower()):
+        parts.append(f"{graph.value(t, GL.label)} in {_sources_of(graph, other[t])}")
+    return f"This tutorial's gloss refines {_and(parts)}." if parts else "This tutorial's gloss."
+
+
 def expected_page(graph: Graph, root: Path = PACKAGE_DIR) -> str:
     """The glossary page: per term (sorted by label) the one-line gloss and its confirmed sources by kind."""
     edges: dict = {}
@@ -61,7 +97,7 @@ def expected_page(graph: Graph, root: Path = PACKAGE_DIR) -> str:
         edges.setdefault(graph.value(d, GL["term"]), []).append({
             "kind": str(graph.value(src, GL.kind)).removeprefix(str(GL)),
             "source": str(graph.value(src, GL.label)),
-            "locator": str(graph.value(d, GL.locator)),
+            "locator": display_locator(str(graph.value(d, GL.locator))),
             "rank": int(rank) if rank is not None else 0,
             "def": str(d),
         })
@@ -73,12 +109,22 @@ def expected_page(graph: Graph, root: Path = PACKAGE_DIR) -> str:
         if gloss:
             lines += [gloss, ""]
         lines += ["Sources", ""]
+        departures: list[str] = []
         for kind, heading in PAGE_KINDS:
             rows = sorted((r for r in edges[t] if r["kind"] == kind),
                           key=lambda r: (r["rank"], r["source"].lower(), r["locator"], r["def"]))
-            if rows:
-                lines.append(f"- {heading}")
+            if not rows:
+                continue
+            lines.append(f"- {heading}")
+            if kind == "bridge":
+                lines += [f"  - {bridge_attribution(graph, r['def'])}" for r in rows]
+                for r in rows:
+                    for tgt in graph.objects(URIRef(r["def"]), GL.differsFrom):
+                        departures.append(f"This tutorial uses this term differently from {graph.value(graph.value(tgt, GL.source), GL.label)}.")
+            else:
                 lines += [f"  - {r['source']}, {r['locator']}" for r in rows]
+        if departures:
+            lines += [""] + sorted(set(departures))
     return "\n".join(lines) + "\n"
 
 

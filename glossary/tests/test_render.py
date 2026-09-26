@@ -62,7 +62,8 @@ def test_docs_page_is_rendered_sorted_and_checked(root: Path, repo: Path) -> Non
     assert text.index("## logical") > 0
     assert f"\n{GLOSS}\n" in text
     assert "- Idea\n  - Canon, p. 5\n" in text
-    assert "- Tutorial\n  - This tutorial, AGENTS.md\n" in text
+    assert "- Tutorial\n  - This tutorial's gloss refines the sources above.\n" in text
+    assert "AGENTS.md" not in text
     assert "Video" not in text  # proposed only
     assert render(load_graph(root), repo, root) == []
     assert not [x for x in run_check(root, repo) if x.level == "error"]
@@ -91,3 +92,100 @@ def test_docs_page_terms_sorted_case_insensitively(tmp_path: Path, repo: Path) -
     render(load_graph(r), repo, r)
     heads = [ln for ln in page.read_text().splitlines() if ln.startswith("## ")]
     assert heads == ["## alpha", "## Beta", "## logical"]
+
+
+def make_page_root(tmp_path: Path, extra_defs: str, extra_terms: str = "") -> Path:
+    from .conftest import DEFS, TERMS, make_root
+    defs = dict(DEFS)
+    defs["extra"] = DEFS["canon"].split("glid:def-canon--logical")[0] + extra_defs
+    return make_root(tmp_path, terms=TERMS + extra_terms, defs=defs)
+
+
+def edge(name: str, src: str, term: str, locator: str, extra: str = "") -> str:
+    return (f'glid:def-{name} a gl:Definition ; gl:source glid:src-{src} ; gl:term glid:term-{term} ; '
+            f'gl:text "t" ; gl:locator "{locator}" ; gl:status gl:confirmed ; gl:confirmedBy "Z" {extra}.\n')
+
+
+def test_kind_order_and_within_kind_order(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("tut--zeta", "tutorial", "zeta", "x", "; gl:gloss \"g\" "),
+        edge("video--zeta", "video", "zeta", "2:00"),
+        edge("canon--zeta-b", "canon", "zeta", "p. 20"),
+        edge("canon--zeta-a", "canon", "zeta", "p. 3"),
+    ])
+    r = make_page_root(tmp_path, extra, 'glid:term-zeta a gl:Term ; gl:label "zeta" .\n')
+    page = docs_repo(repo)
+    render(load_graph(r), repo, r)
+    section = page.read_text().split("## zeta")[1]
+    assert section.index("- Idea") < section.index("- Story") < section.index("- Tutorial")
+    # same kind, rank and source: ordered by locator string ("p. 20" before "p. 3")
+    assert section.index("Canon, p. 20") < section.index("Canon, p. 3")
+
+
+def test_render_without_write_and_dry_run_leave_the_page_unchanged(root: Path, repo: Path) -> None:
+    from typer.testing import CliRunner
+
+    from glossary.cli import app
+    page = docs_repo(repo)
+    page.write_text("stale\n")
+    before = page.read_bytes()
+    assert render(load_graph(root), repo, root, write=False) == [page]
+    assert page.read_bytes() == before
+    res = CliRunner().invoke(app, ["render", "--dry-run", "--root", str(root), "--repo", str(repo)])
+    assert res.exit_code == 1 and "would change docs/glossary.md" in res.output
+    assert page.read_bytes() == before
+
+
+def test_page_skipped_without_docs_dir_and_checked_with_it(root: Path, repo: Path) -> None:
+    assert render(load_graph(root), repo, root) == []
+    assert not (repo / "docs").exists()
+    assert not [x for x in run_check(root, repo) if x.code == "docs-page"]
+    (repo / "docs").mkdir()
+    assert any(x.code == "docs-page" for x in run_check(root, repo))
+
+
+def test_locators_lose_pdf_indices_only(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("canon--zeta-a", "canon", "zeta", "Sec. 3.2, p. 9 (PDF 7)"),
+        edge("canon--zeta-b", "canon", "zeta", "PDF 12"),
+        edge("canon--zeta-c", "canon", "zeta", "Part 3, 1:56"),
+    ])
+    r = make_page_root(tmp_path, extra, 'glid:term-zeta a gl:Term ; gl:label "zeta" .\n')
+    page = docs_repo(repo)
+    render(load_graph(r), repo, r)
+    text = page.read_text()
+    assert "PDF" not in text
+    assert "  - Canon, Sec. 3.2, p. 9\n" in text and "  - Canon, Part 3, 1:56\n" in text
+    from glossary.render import display_locator
+    assert display_locator("PDF 12") == "" and display_locator("p. 4 (PDF 2)") == "p. 4"
+    assert "(PDF 7)" in (r / "definitions" / "extra.ttl").read_text()  # the stored graph string is unchanged
+
+
+def test_tutorial_entry_names_refined_sources_and_other_terms(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("canon--zeta", "canon", "zeta", "p. 1"),
+        edge("canon--other", "canon", "other", "p. 2"),
+        edge("video--other", "video", "other", "1:00"),
+        edge("tut--zeta", "tutorial", "zeta", "AGENTS.md Part 1", "; gl:refines glid:def-canon--zeta "),
+        edge("tut--mine", "tutorial", "mine", "AGENTS.md Part 1",
+             "; gl:refines glid:def-canon--other, glid:def-video--other, glid:def-canon--zeta "),
+    ])
+    terms = ('glid:term-zeta a gl:Term ; gl:label "zeta" .\nglid:term-other a gl:Term ; gl:label "other" .\n'
+             'glid:term-mine a gl:Term ; gl:label "mine" .\n')
+    r = make_page_root(tmp_path, extra, terms)
+    page = docs_repo(repo)
+    render(load_graph(r), repo, r)
+    text = page.read_text()
+    zeta = text.split("## zeta")[1].split("\n## ")[0]
+    assert "- Tutorial\n  - This tutorial's gloss refines the sources above.\n" in zeta
+    mine = text.split("## mine")[1].split("\n## ")[0]
+    assert "  - This tutorial's gloss refines other in Canon; Video and zeta in Canon.\n" in mine
+    assert "AGENTS.md" not in text
+
+
+def test_departure_note_derived_from_differs_from(root: Path, repo: Path) -> None:
+    page = docs_repo(repo)
+    render(load_graph(root), repo, root)
+    # in the fixture the tutorial edge differs from the Canon edge; the note names that edge's source
+    assert page.read_text().endswith("This tutorial uses this term differently from Canon.\n")
+    assert page.read_text().count("differently from") == 1
