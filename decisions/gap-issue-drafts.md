@@ -28,13 +28,13 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 **Observed.** `part def Outlet { port o : PowerPort; }`, `part def Torch { port fuelIn : FuelPort; }`, `connect outlet.o to torch.fuelIn;` loads with `ok=True` and no diagnostic. The same holds for an `interface def` with `PowerPort` ends bound to a `FuelPort`.
 
-**What the spec says (as far as we found).** In KerML 1.1 Beta 2, `validateConnectorRelatedFeatures` requires only that a concrete connector have at least two related features; the `validateSubsetting*` constraints cover constant, uniqueness and featuring-type conformance; `validateRedefinitionEndConformance` covers `isEnd`. We did not find a validation constraint that requires the types of connected ends to be compatible. This was a search by constraint name, not a proof of absence. KerML 1.1 Beta 2 does describe compatibility as a matter of meaningfulness: for binding connectors, "to be meaningful, the declared co-domains of the related features ... must at least overlap" (KerML 1.1 Beta 2, 7.4.6 Connectors, PDF p. 73), and each connector end redefines an association end and subsets a related feature; a connection between ports of unrelated types is therefore not meaningful even though nothing rejects it.
+**What the spec says (as far as we found).** In KerML 1.1 Beta 2, `validateConnectorRelatedFeatures` requires only that a concrete connector have at least two related features; the `validateSubsetting*` constraints cover constant, uniqueness and featuring-type conformance; `validateRedefinitionEndConformance` covers `isEnd`. We did not find a validation constraint that requires the types of connected ends to be compatible. This was a search by constraint name, not a proof of absence. KerML 1.1 Beta 2 does describe compatibility as a matter of meaningfulness: for binding connectors, "to be meaningful, the declared co-domains of the related features ... must at least overlap" (KerML 1.1 Beta 2, 7.4.6 Connectors, PDF p. 73), and each connector end redefines an association end and subsets a related feature. That sentence is about binding connectors; applying the same idea to ports of unrelated types on an ordinary connection is our inference, not a statement in the spec.
 
 **Request.** Not a bug report. If the maintainers agree that mismatched end types are worth diagnosing, we would welcome an optional diagnostic (a warning or a lint rule), since this is a fault an executable specification is meant to surface early. Please tell us if a language-level rule already covers this and we have missed it.
 
 **Workaround in place.** A staged project conformance check, `toaster.query.port_type_mismatches`, applied from the chapter that declares the connection complete.
 
-**Before filing:** re-read KerML connector semantics (8.4) and SysML 7.12 to 7.14 once more.
+**Before filing:** KerML 7.4.6 (Connectors) has been re-read; SysML 7.12 to 7.14 (ports, connections, interfaces) have not been re-read for a conformance statement.
 
 ---
 
