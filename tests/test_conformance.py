@@ -203,3 +203,39 @@ def test_wont_do_overrides_fault_and_language_failure(conn, mismatch) -> None:
 def test_wont_do_dataclass_frozen() -> None:
     with pytest.raises(FrozenInstanceError):
         WONT.reason = "x"  # type: ignore[misc]
+
+
+def test_blocked_keeps_applies_from(conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    r = cf.report(bad, (9, 9), [_check([], (1, 1))])["project"][0]
+    assert (r.status, r.applies_from) == ("blocked", (1, 1))
+
+
+def test_wont_do_keeps_applies_from(ch08, conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    for model in (ch08, bad):
+        r = cf.report(model, (1, 1), [_check([], (2, 3), wont_do=WONT)])["project"][0]
+        assert (r.status, r.applies_from) == ("wont-do", (2, 3))
+
+
+def test_blocked_when_stage_not_reached_on_language_failure(conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    calls: list[int] = []
+    r = cf.report(bad, (1, 1), [_check([], (5, 5), calls)])["project"][0]
+    assert (r.status, r.unblock_when, r.applies_from) == ("blocked", UNBLOCK, (5, 5))
+    assert calls == []
+
+
+def test_unscheduled_wont_do_on_language_failure(conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    calls: list[int] = []
+    c = _check([{"x": 1}], None, calls, WONT)
+    r = cf.report(bad, (9, 9), [c])["project"][0]
+    assert (r.status, r.unblock_when, r.applies_from) == ("wont-do", None, None)
+    assert calls == []
+
+
+def test_empty_registry_means_no_checks(ch08, conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    for model in (ch08, bad):
+        assert cf.report(model, (9, 9), [])["project"] == []
