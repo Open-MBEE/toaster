@@ -66,6 +66,7 @@ Use query tools and direct lookups (glossary CLI, `model.query`, known file rang
 - **Where each staged conformance check first applies** (for example port types), and the wording that reports it "open" (Z-27).
 - **Douglas timestamp** for the tongs-and-flamethrower story is unverified.
 - **Backup branch** `backup/pass1-before-trailer-strip` (local; holds the pre-rewrite commits) awaits Z's word to delete.
+- **Pass 2 chain runs 001 to 004** (`decisions/pass2-run-00N.md`) established: roles (`orchestrator`, `layer-auditor`, `builder`, `reviewer`, `ace`), task states, the merge gate and push-back, and independent review on a different model. Open follow-ups from run 004 are listed there.
 - **Filing the gap issues** (`decisions/gap-issue-drafts.md`) awaits Z's review; nothing is filed.
 - **Definitions edited at Z's direction:** mechanism approved as written by Z (2026-09-26). MoE and MoP: Z asked for a clearer, SEBoK-compatible, less overloaded wording that makes the measure measurable (a unit and a means of collecting data); the redraft (toast evenness for MoE, power efficiency for MoP) was applied on Z's answer and is recorded in DL-017.
 
