@@ -50,6 +50,14 @@ Default:     <recommended answer>
 
 `scope-drop` proposes `wont-do`; `unblock-dispute` is a disagreement about whether `unblock_when` is met. The ACE answers RULE or ESCALATE with the log entry (see `ace-protocol`); the orchestrator records the outcome and moves the task.
 
+## Segregation: workspace, context, capability
+
+Three boundaries keep roles independent, and each is controlled by a different mechanism:
+
+- **Workspace** is controlled by **local git worktrees**: each task runs in its own worktree on its own branch, created by the orchestrator from a named base. A subagent writes only inside its worktree and its declared blast zone.
+- **Context** is controlled by **instructions**: the role file and the work contract are everything a cold session receives. No conversation history crosses the boundary.
+- **Capability** is controlled by the **pinned model** in the role file or the launch. Author and reviewer models differ.
+
 ## Independent review
 
 Whoever reviews work runs on a different model than whoever authored it. The contract names the author's model and the reviewer's; the orchestrator confirms they differ before `in-review`, and if they do not, launches the reviewer on another pinned model. No role reviews its own output.
