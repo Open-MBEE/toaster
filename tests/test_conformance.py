@@ -75,7 +75,7 @@ def test_open_when_unscheduled_even_if_fault_exists(mismatch) -> None:
 
 def test_stage_ordering_across_chapters_and_sections() -> None:
     c = _check([], (2, 3))
-    status = lambda s: cf.evaluate(c, None, s).status  # noqa: E731
+    status = lambda s: cf.evaluate(c, None, s).status
     assert status((1, 9)) == "open"
     assert status((2, 2)) == "open"
     assert status((2, 3)) == "passed"
