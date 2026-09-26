@@ -1,0 +1,14 @@
+# The terms one source defines (?source is bound by the caller).
+
+PREFIX gl: <https://w3id.org/toaster/glossary#>
+
+SELECT ?term ?label ?locator ?status
+WHERE {
+  ?def a gl:Definition ;
+       gl:source ?source ;
+       gl:term ?term ;
+       gl:locator ?locator ;
+       gl:status ?status .
+  ?term gl:label ?label .
+}
+ORDER BY ?label ?locator ?def

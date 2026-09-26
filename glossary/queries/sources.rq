@@ -1,0 +1,14 @@
+# Every source with its definition count.
+
+PREFIX gl: <https://w3id.org/toaster/glossary#>
+
+SELECT ?source ?label ?edition ?kind (COUNT(?def) AS ?definitions)
+WHERE {
+  ?source a gl:Source ;
+          gl:label ?label ;
+          gl:edition ?edition ;
+          gl:sourceKind ?kind .
+  OPTIONAL { ?def a gl:Definition ; gl:source ?source }
+}
+GROUP BY ?source ?label ?edition ?kind
+ORDER BY ?label ?source

@@ -35,3 +35,7 @@ htmlcov/
 # Editor
 .vscode/
 .idea/
+
+# glossary: copyrighted source originals (registered by hash in glossary/sources/sources.ttl)
+glossary/sources/local/*
+!glossary/sources/local/.gitkeep

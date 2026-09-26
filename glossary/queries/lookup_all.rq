@@ -1,0 +1,7 @@
+# Every definition edge with its status (used by `stats`).
+
+PREFIX gl: <https://w3id.org/toaster/glossary#>
+
+SELECT ?def ?status
+WHERE { ?def a gl:Definition ; gl:status ?status . }
+ORDER BY ?def

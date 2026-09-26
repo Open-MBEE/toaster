@@ -1,0 +1,58 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Structural shapes: cardinality, datatype and pattern. Cross-graph integrity
+# (bipartite edges, orphans, canonical is confirmed, unapproved differsFrom,
+# file-versus-non-file source rules, marker drift) is checked in
+# glossary/check.py, where SPARQL over the merged graph reads more clearly
+# than SHACL.
+
+gl:SourceShape a sh:NodeShape ;
+    sh:targetClass gl:Source ;
+    sh:property
+        [ sh:path gl:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+          sh:message "a Source has exactly one gl:label" ] ,
+        [ sh:path gl:edition ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+          sh:message "a Source has exactly one gl:edition" ] ,
+        [ sh:path gl:sourceKind ; sh:minCount 1 ; sh:maxCount 1 ;
+          sh:in ( gl:File gl:Video gl:Repository ) ;
+          sh:message "a Source has exactly one gl:sourceKind: gl:File, gl:Video or gl:Repository" ] ,
+        [ sh:path gl:sha256 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[0-9a-f]{64}$" ;
+          sh:message "gl:sha256 must be lowercase hex, 64 characters" ] ,
+        [ sh:path gl:localPath ; sh:maxCount 1 ; sh:datatype xsd:string ] ,
+        [ sh:path gl:url ; sh:maxCount 1 ; sh:datatype xsd:string ] ,
+        [ sh:path gl:retrievedOn ; sh:maxCount 1 ; sh:datatype xsd:date ] ,
+        [ sh:path gl:commit ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+gl:TermShape a sh:NodeShape ;
+    sh:targetClass gl:Term ;
+    sh:property
+        [ sh:path gl:label ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+          sh:message "a Term has exactly one gl:label" ] ,
+        [ sh:path gl:loadBearing ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ,
+        [ sh:path gl:tutorialDefinition ; sh:maxCount 1 ; sh:class gl:Definition ;
+          sh:message "a Term names at most one gl:tutorialDefinition, and it must be a gl:Definition" ] .
+
+gl:DefinitionShape a sh:NodeShape ;
+    sh:targetClass gl:Definition ;
+    sh:property
+        [ sh:path gl:source ; sh:minCount 1 ; sh:maxCount 1 ; sh:class gl:Source ;
+          sh:message "a Definition has exactly one gl:source, and it is a gl:Source" ] ,
+        [ sh:path gl:term ; sh:minCount 1 ; sh:maxCount 1 ; sh:class gl:Term ;
+          sh:message "a Definition has exactly one gl:term, and it is a gl:Term" ] ,
+        [ sh:path gl:text ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+          sh:message "a Definition has exactly one gl:text (paraphrase)" ] ,
+        [ sh:path gl:locator ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+          sh:message "a Definition has exactly one gl:locator" ] ,
+        [ sh:path gl:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( gl:proposed gl:confirmed ) ;
+          sh:message "a Definition has exactly one gl:status: gl:proposed or gl:confirmed" ] ,
+        [ sh:path gl:quote ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:maxLength 300 ;
+          sh:message "gl:quote is a short excerpt, at most 300 characters" ] ,
+        [ sh:path gl:gloss ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:maxLength 240 ;
+          sh:message "gl:gloss is one line, at most 240 characters" ] ,
+        [ sh:path gl:confirmedBy ; sh:maxCount 1 ; sh:datatype xsd:string ] ,
+        [ sh:path gl:approvedBy ; sh:maxCount 1 ; sh:datatype xsd:string ] ,
+        [ sh:path gl:approvalNote ; sh:maxCount 1 ; sh:datatype xsd:string ] ,
+        [ sh:path gl:refines ; sh:class gl:Definition ] ,
+        [ sh:path gl:differsFrom ; sh:class gl:Definition ] .

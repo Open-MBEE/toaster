@@ -1,0 +1,88 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Toaster glossary core vocabulary.
+#
+# A bipartite knowledge graph: two node types (gl:Source, gl:Term) and one
+# kind of edge between them, the definition. A definition is reified as a
+# gl:Definition resource because the same term can be defined slightly
+# differently by different sources; the definitions are the edges, not
+# properties of the term. The node-level graph stays bipartite: no property
+# below relates a Term to a Term or a Source to a Source. Relations between
+# definitions (gl:refines, gl:differsFrom) annotate edges, not nodes.
+
+<https://w3id.org/toaster/glossary#> a owl:Ontology ;
+    rdfs:label "Toaster glossary core vocabulary" ;
+    rdfs:comment "Sources, terms, and the definition edges between them." .
+
+gl:Source a owl:Class ;
+    rdfs:label "Source" ;
+    rdfs:comment "A text or medium that defines terms: a standard, a paper, a video series, or this tutorial." .
+
+gl:Term a owl:Class ;
+    rdfs:label "Term" ;
+    rdfs:comment "A load-bearing word or phrase. Carries no definition of its own; definitions live on gl:Definition edges." .
+
+gl:Definition a owl:Class ;
+    rdfs:label "Definition" ;
+    rdfs:comment "One edge: what one source says a term means, with a locator." .
+
+# ---- source properties -------------------------------------------------
+
+gl:label a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:comment "Display name of a source or term." .
+gl:edition a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:string ;
+    rdfs:comment "Edition, version or issue that was read." .
+gl:citation a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:string ;
+    rdfs:comment "Full bibliographic citation." .
+gl:sha256 a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:string ;
+    rdfs:comment "Lowercase-hex sha256 of the exact file that was read. File sources only." .
+gl:localPath a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:string ;
+    rdfs:comment "Path relative to glossary/sources/local/ where the original is kept (gitignored). File sources only." .
+gl:url a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:string ;
+    rdfs:comment "Where the source can be obtained. Required for non-file sources." .
+gl:retrievedOn a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:date ;
+    rdfs:comment "Date a non-file source (a video, a web page) was read." .
+gl:commit a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:string ;
+    rdfs:comment "Commit of this repository, for the tutorial as a source." .
+gl:sourceKind a owl:ObjectProperty ; rdfs:domain gl:Source ;
+    rdfs:comment "gl:File, gl:Video or gl:Repository." .
+gl:File a owl:NamedIndividual .
+gl:Video a owl:NamedIndividual .
+gl:Repository a owl:NamedIndividual .
+
+# ---- term properties ---------------------------------------------------
+
+gl:loadBearing a owl:DatatypeProperty ; rdfs:domain gl:Term ; rdfs:range xsd:boolean ;
+    rdfs:comment "True when AGENTS.md Foundations or a skill relies on the term." .
+gl:tutorialDefinition a owl:ObjectProperty ; rdfs:domain gl:Term ; rdfs:range gl:Definition ;
+    rdfs:comment "The edge this repository uses as its local source of truth for the term. Must be confirmed. May be a canonical edge or a tutorial refinement edge." .
+
+# ---- definition (edge) properties -------------------------------------
+
+gl:source a owl:ObjectProperty ; rdfs:domain gl:Definition ; rdfs:range gl:Source .
+gl:term a owl:ObjectProperty ; rdfs:domain gl:Definition ; rdfs:range gl:Term .
+gl:text a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
+    rdfs:comment "The definition, paraphrased." .
+gl:quote a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
+    rdfs:comment "Optional short verbatim excerpt (a phrase, not a page)." .
+gl:locator a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
+    rdfs:comment "Where in the source: PDF page, printed page, section number, or video timestamp." .
+gl:gloss a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
+    rdfs:comment "One-line form written into AGENTS.md and skills between marker comments. Required on a tutorialDefinition." .
+gl:status a owl:ObjectProperty ; rdfs:domain gl:Definition ;
+    rdfs:comment "gl:proposed or gl:confirmed. Only Z sets gl:confirmed." .
+gl:proposed a owl:NamedIndividual .
+gl:confirmed a owl:NamedIndividual .
+gl:confirmedBy a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
+    rdfs:comment "Who confirmed the edge. A human, never an agent." .
+gl:refines a owl:ObjectProperty ; rdfs:domain gl:Definition ; rdfs:range gl:Definition ;
+    rdfs:comment "A tutorial definition narrows or clarifies this canonical definition without contradicting it." .
+gl:differsFrom a owl:ObjectProperty ; rdfs:domain gl:Definition ; rdfs:range gl:Definition ;
+    rdfs:comment "A tutorial definition departs from this canonical definition. Fails check unless gl:approvedBy is present." .
+gl:approvedBy a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
+    rdfs:comment "Who approved a departure. Z only." .
+gl:approvalNote a owl:DatatypeProperty ; rdfs:domain gl:Definition ; rdfs:range xsd:string ;
+    rdfs:comment "Where the approval is recorded (a decision-log id and date)." .
