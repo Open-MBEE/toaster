@@ -160,7 +160,7 @@ Alignment passes (changes to this Part 1, the glossary's confirmed definitions, 
 
 # Part 2 — Roster and authority (legacy, pending rebuild)
 
-Everything below is the earlier role and file-authority material, kept unchanged except where Part 1 replaced it. Where it conflicts with Part 1, Part 1 governs. Role ids (A1-A10) belong to this legacy roster only.
+Roles rebuilt in Pass 2 live in `.claude/agents/` (currently `orchestrator`, `layer-auditor`, `ace`); where a role file exists it governs that role's duties, model and authority, and the matching legacy row below is superseded. Everything below is the earlier role and file-authority material, kept unchanged except where Part 1 or a rebuilt role replaced it. Where it conflicts with Part 1, Part 1 governs. Role ids (A1-A10) belong to this legacy roster only.
 
 ## 1. Shared domain context (story source: Douglas)
 
