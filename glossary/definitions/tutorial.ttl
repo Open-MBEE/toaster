@@ -7,7 +7,7 @@ glid:def-tutorial--allocation
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "Assigning functions to logical components, and components to parts: SEBoK's idea, SysML v2's allocate, Douglas's grouping." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-douglas--allocation,
         glid:def-sebok--allocation,
         glid:def-sysml--allocation ;
@@ -20,7 +20,7 @@ glid:def-tutorial--behavior
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "The emergent outcome of a system in use; not prescribed but derived by analysis or simulation and judged against intent." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--behavior-2 ;
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
@@ -31,7 +31,7 @@ glid:def-tutorial--functional-architecture
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "Intended behavior, stated solution-independently: functions with typed flows, the phenomena relations among them, and the MoEs." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-douglas--functional-architecture,
         glid:def-sebok--functional-architecture ;
     gl:source glid:src-tutorial ;
@@ -46,7 +46,7 @@ glid:def-tutorial--logical-architecture
     gl:confirmedBy "Z" ;
     gl:differsFrom glid:def-sebok--logical-architecture ;
     gl:gloss "Prescribed mechanisms and policies carried by logical components, plus the interfaces between them; MoP thresholds are derived here." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-douglas--logical-architecture ;
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
@@ -57,7 +57,7 @@ glid:def-tutorial--logical-component
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "The prescribed carrier of a mechanism, with its interfaces; modeled here as an abstract part definition that performs an action." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-douglas--logical-component,
         glid:def-sebok--logical-component,
         glid:def-sysml--logical-component ;
@@ -70,7 +70,7 @@ glid:def-tutorial--mechanism
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "A prescribed, comparatively deterministic input-to-output relation: an open-loop declaration of how something works; not a behavior." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-astrom--dynamical-system,
         glid:def-astrom--dynamical-system-2,
         glid:def-sutton--dynamical-system ;
@@ -83,7 +83,7 @@ glid:def-tutorial--moe
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "Acceptance at the functional layer: was the outcome what the stakeholder wanted?" ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--moe ;
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
@@ -94,7 +94,7 @@ glid:def-tutorial--mop
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "A performance measure (timeliness, efficiency) that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--mop,
         glid:def-sysml--mop,
         glid:def-sysml--requirement ;
@@ -107,7 +107,7 @@ glid:def-tutorial--physical-architecture
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "Concrete parts that realize the logical components and confer values; each must fit the logical interfaces and meet the derived thresholds." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-douglas--physical-architecture,
         glid:def-sebok--physical-architecture ;
     gl:source glid:src-tutorial ;
@@ -119,7 +119,7 @@ glid:def-tutorial--policy
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "Decision guidance that selects inputs given the state, typically to close the loop under uncertainty; designed given the available mechanisms." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-astrom--control-law,
         glid:def-sutton--policy ;
     gl:source glid:src-tutorial ;
@@ -131,7 +131,7 @@ glid:def-tutorial--selection-among-alternatives
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "Choosing among alternative mechanisms by trade study against the derived measures." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-douglas--selection-among-alternatives,
         glid:def-sebok--selection-among-alternatives ;
     gl:source glid:src-tutorial ;
@@ -143,7 +143,7 @@ glid:def-tutorial--tpm
     a gl:Definition ;
     gl:confirmedBy "Z" ;
     gl:gloss "The value assessed on a design element by analysis or simulation: the evidence against a MoP threshold." ;
-    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--tpm ;
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
