@@ -106,7 +106,7 @@ passing them raises a `TypeError`. The kind guard fires first when using just `k
 
 **Workaround:** Load flow connection declarations via `conn.load_from_content()`.
 **Resolution:** Add `"flow"` / `"flow connection"` to the authoring allowlist and `add_flow()` helper.
-**Upstream issue:** Open-MBEE/OpenSysML#TBD (file after toaster issue created)
+**Upstream issue:** Open-MBEE/OpenSysML#601
 **Toaster issue:** Open-MBEE/toaster#14
 
 ## D-010: Editor API does not support `state usage` or `transition usage` authoring
@@ -118,5 +118,51 @@ Full state machines with sub-states and transitions require Pattern B. Affects C
 
 **Workaround:** Load the full state machine declaration via `conn.load_from_content()`.
 **Resolution:** Add `"state usage"` and `"transition"` to the authoring allowlist.
-**Upstream issue:** Open-MBEE/OpenSysML#TBD (file after toaster issue created)
+**Upstream issue:** Open-MBEE/OpenSysML#602
 **Toaster issue:** Open-MBEE/toaster#15
+
+## D-011: Editor API `add_attribute` produces fixed binding, not `default =` modifier
+
+`editor.add_attribute(owner, name, type=..., value=...)` produces `attribute x : T = v`
+(a fixed binding that cannot be overridden) instead of `attribute x : T default = v`
+(a default value that can be overridden with `:>>`). The `default` keyword is defined in
+KerML formal/2026-03-02 §8.4.1 (FeatureValue) and accepted by the parser. Affects Ch1/nb02
+and all notebooks that introduce attributes with default values.
+
+**Workaround:** Write `attribute x : T default = v;` as a SysML string fragment and load via
+`conn.load_from_content()`.
+**Resolution:** Add a `default` boolean parameter to `add_attribute()` so that `default=True`
+produces the `default =` form.
+**Spec:** KerML formal/2026-03-02 §8.4.1 — FeatureValue (default keyword)
+**Upstream issue:** Open-MBEE/OpenSysML#603
+**Toaster issue:** Open-MBEE/toaster#16
+
+## D-012: Editor API `add_calc_def` produces bare declaration only (no inputs, no return expression)
+
+`editor.add_calc_def(owner, name)` produces `calc def X;` with no `in` parameters and no
+`return` expression. The `add_member` kwargs (`type`, `multiplicity`, `value`, `specializes`)
+do not map onto calc def body constructs; passing unsupported kwargs raises `TypeError`.
+A bare calc def cannot be evaluated with `model.eval()`. Affects Ch3/nb02.
+
+**Workaround:** Write the full calc def body as a SysML string fragment and load via
+`conn.load_from_content()`.
+**Resolution:** Add `inputs` (list of `(name, type)` tuples) and `return_expression` parameters
+to `add_calc_def()`.
+**Spec:** SysML v2 formal/2026-03-02 §7.16 — CalculationDefinition, CalcDefBodyPart
+**Upstream issue:** Open-MBEE/OpenSysML#604
+**Toaster issue:** Open-MBEE/toaster#17
+
+## D-013: Editor API `add_action_def` produces bare declaration only (no params, sequencing, or nested actions)
+
+`editor.add_member(kind='action def', name=...)` produces `action def X;` with no `in`/`out`
+parameters, no `first`/`then` sequencing, and no nested `action` usages. Passing unsupported
+kwargs raises `TypeError`. Both action def body constructs and succession usages are spec-defined.
+Affects Ch4/nb01.
+
+**Workaround:** Write the full action def body as a SysML string fragment and load via
+`conn.load_from_content()`.
+**Resolution:** Add typed helpers `add_action_def()` / `add_action()` (or extend `add_member`)
+with support for `in`/`out` parameters, nested action usages, and `first`/`then` sequencing.
+**Spec:** SysML v2 formal/2026-03-02 §7.15 (ActionDefinition), §7.20 (SuccessionAsUsage)
+**Upstream issue:** Open-MBEE/OpenSysML#605
+**Toaster issue:** Open-MBEE/toaster#18

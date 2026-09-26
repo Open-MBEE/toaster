@@ -61,16 +61,32 @@ Every major operation gets its own dedicated markdown cell. This is not optional
 - Chapter `conclusion.md`: exactly four items (three paragraphs + exercise reference). Not three, not five.
 - `index.md` six recipe elements appear in stated order. No reordering.
 
-## Construction cells (cell-02 in construct-introducing notebooks)
+## Construction cells (construct-introducing notebooks only)
 
-- `TOASTER_INCREMENT` is the required variable name in every construct-introducing notebook.
-  - Pattern A (Editor API): `TOASTER_INCREMENT = str(editor.apply())` — the full cumulative model.
-  - Pattern B (gap construct): `TOASTER_INCREMENT = "..."` — the new SysML fragment only.
-- Print `TOASTER_INCREMENT` immediately after assignment — this print IS the reflection. No other output is needed.
-- For Pattern A: load the base model (state before this notebook's declarations) before calling `base.edit()`. Never use the current chapter's full cumulative as the base (it already contains the construct being added).
-- For Pattern B: add a comment naming the gap issue above the string, e.g. `# abstract modifier not yet supported — toaster#9 / OpenSysML#595`.
-- `conn.close()` belongs at the end of the last code cell in the notebook, never inside cell-02.
-- Judgment, depth, navigation, analysis, and param-sweep notebooks do not assign `TOASTER_INCREMENT`.
+**Rule: code factored as if we had the API calls we wanted.**
+One fragment variable per element = one future `editor.add_*()` call. When the Editor API
+gains full spec coverage, each string fragment is replaced by the corresponding call; the
+structure stays the same.
+
+- One code cell per fragment variable. Each is printed immediately after assignment.
+- Fragment variable names mirror the element: `HEATER_DEF`, `POWER_ATTR`, `TIMELY_REQ`, etc.
+- Fragment size: ≤5 lines of SysML per variable (ideally 1–3). Split if longer.
+- Every gap construct: add a comment citing the toaster issue + OpenSysML issue + spec section
+  directly above the string, e.g.:
+  ```python
+  # abstract modifier not yet supported — toaster#9 / OpenSysML#595
+  # spec: SysML v2 formal/2026-03-02 §7.3.3
+  TOASTING_SYSTEM_DEF = "abstract part def ToastingSystem;"
+  ```
+- `TOASTER_INCREMENT` is assembled from the fragment variables in the final cell of the
+  construction zone; it equals the **new declarations for this notebook only** (not the full
+  cumulative model). Print it as the reflection.
+- The cumulative load (`conn.load_from_content(ch0X-cumulative.sysml)`) happens in the same
+  final cell, after printing `TOASTER_INCREMENT`.
+- `conn.close()` belongs at the end of the last code cell in the notebook (cell-04 or later),
+  never in the construction zone.
+- Judgment, depth, navigation, analysis, and param-sweep notebooks have no construction zone
+  and do not assign `TOASTER_INCREMENT`.
 
 ## What every agent loading this skill must never do
 

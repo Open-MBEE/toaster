@@ -1,5 +1,40 @@
 # Decision log
 
+## DL-012 | 2026-09-25 | Cross-WP | Phase 2 pilot: all 13 notebooks use Pattern B; multi-fragment convention adopted
+
+Path: Handled by ACE — implementing Z's explicit design directives; architecture revision logged
+
+Decision: All 13 construct-introducing notebooks use Pattern B (SysML string fragments) for
+their construction zones. Pattern A (Editor API) is fully deferred. The multi-fragment convention
+is adopted: one named fragment variable per element = one future `editor.add_*()` call. Each
+fragment is in its own code cell, printed immediately, with a narration markdown cell after it.
+`TOASTER_INCREMENT` is assembled from the fragment variables at the end of the construction zone
+and equals new declarations for that notebook only (not the full cumulative model).
+
+Rationale: Phase 2 pilot (Ch3/nb02) probed `add_calc_def` with `inputs` kwarg → TypeError.
+Further probing confirmed: `add_attribute` produces fixed binding (not `default =`), and
+`add_action_def` / `add_member(kind='action def')` produce bare declarations only. Together
+with D-004–D-010 (already confirmed), the API cannot produce any of the 13 notebook constructs
+in their correct form. Z's directions (verbatim):
+
+1. "we can do this but then we need to make sure all the gaps are well documented as issues.
+   each location we encounter this issue needs its own comment markdown, linking to issue in this
+   repo, linking to issue in opensysml and these much carry exact citation to the spec so its
+   clear we're only asking for the spec to be implemented not extraneous feature requests."
+2. "be careful to avoid mega strings. don't do the whole increment in one call or even one cell.
+   you need to do increments do them in smaller chunks. always needs to be inspectable & intuitive."
+3. "code should be factored the same way it would be if we had the api calls we wanted."
+
+New gaps confirmed and filed (Phase 2 pilot 2026-09-25):
+
+- D-011: `attribute default =` modifier — toaster#16 / OpenSysML#603 (KerML §8.4.1)
+- D-012: `calc def` body (inputs + return expression) — toaster#17 / OpenSysML#604 (SysML v2 §7.16)
+- D-013: `action def` body (params, sequencing, nested actions) — toaster#18 / OpenSysML#605 (SysML v2 §7.15, §7.20)
+
+All 5 upstream OpenSysML issues filed: OpenSysML#601 (flow/D-009), #602 (state/D-010), #603 (attr
+default/D-011), #604 (calc def body/D-012), #605 (action def body/D-013). DEFERRED.md updated.
+All 4 skills updated with confirmed issue numbers and multi-fragment convention. Plan updated.
+
 ## DL-011 | 2026-09-25 | Cross-WP | Declarative construction architecture: notebooks ARE the build
 
 Path: Handled by ACE

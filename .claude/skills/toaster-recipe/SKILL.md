@@ -19,11 +19,30 @@ The 7 cells below are the **required skeleton**. Additional markdown+code pairs 
 | **Tall seam** | Markdown | Exactly one sentence naming all three worlds. |
 | **Exercise pointer** | Markdown | One sentence: "Try the chapter exercise in `exercises/ch{N}/exercise.ipynb`: [one-line description]." No embedded code. |
 
-### Cell 2 — model increment pattern (construct-introducing notebooks only)
+### Construction zone — model increment pattern (construct-introducing notebooks only)
 
-Two patterns. See `decisions/declarative-construction-plan.md` and `sysml-v2-toaster-model` skill for which notebook uses which.
+All 13 construction notebooks use SysML string fragments (Editor API gaps — see DEFERRED.md
+D-004 through D-010 and skill `sysml-v2-toaster-model` for the full gap list).
 
-**Pattern A (Editor API) — TOASTER_INCREMENT = full cumulative model after apply():**
+**Structural rule: code factored as if we had the API calls.**
+One named fragment variable per element = one future `editor.add_*()` call.
+When the Editor API matures, replace each string with the corresponding call.
+
+The construction zone replaces the single cell-02 with a sequence of code+markdown pairs:
+
+```
+[code]     fragment variable declared + printed    ← mirrors one editor.add_*() call
+[markdown] narration for that element
+[code]     next fragment variable + printed         ← mirrors next editor.add_*() call
+[markdown] narration
+...
+[code]     TOASTER_INCREMENT assembled + printed    ← reflection
+           cumulative model loaded; assert model.ok ← for subsequent cells
+```
+
+**Fragment size rule:** ≤5 lines per fragment variable (ideally 1–3). If longer, split further.
+
+**Single-element example (Ch1/nb01 — abstract part def):**
 
 ```python
 from pathlib import Path
@@ -31,43 +50,42 @@ import opensysml
 from toaster.report import format_diagnostics
 
 conn = opensysml.connect(version="v0.9.0")
-base = conn.load_from_content(
-    Path("../../models/ch02-cumulative.sysml").read_text(), strict=False
-)
-assert base.ok
-editor = base.edit()
-editor.add_calc_def(
-    owner="ToasterDemo", name="DeliveredEnergy",
-    inputs=[("power", "ISQ::PowerValue"), ("duration", "ISQ::DurationValue"),
-            ("efficiency", "MeasurementReferences::DimensionOneValue")],
-    return_type="ISQ::EnergyValue",
-    expression="power * duration * efficiency",
-)
-increment = editor.apply()
-TOASTER_INCREMENT = str(increment)   # full model up to this point
-print(TOASTER_INCREMENT)             # reflection
 
-source = Path("../../models/ch03-cumulative.sysml").read_text()
+# abstract modifier not yet supported — toaster#9 / OpenSysML#595
+# spec: SysML v2 formal/2026-03-02 §7.3.3 (PartDefinition — AbstractClassifier)
+TOASTING_SYSTEM_DEF = """\
+abstract part def ToastingSystem {
+    doc /* Any system that converts electrical energy into thermal energy
+         for food preparation. */
+}
+"""
+print(TOASTING_SYSTEM_DEF)
+
+TOASTER_INCREMENT = TOASTING_SYSTEM_DEF
+source = Path("../../models/ch01-cumulative.sysml").read_text()
 model = conn.load_from_content(source, strict=False)
 assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
 ```
 
-**Pattern B (gap construct) — TOASTER_INCREMENT = new SysML fragment only:**
+**Multi-element example (Ch1/nb02 — part def + attributes, spread across cells):**
 
 ```python
-from pathlib import Path
-import opensysml
-from toaster.report import format_diagnostics
-
-conn = opensysml.connect(version="v0.9.0")
-
-# abstract modifier not yet supported by Editor API — toaster#9 / OpenSysML#595
-TOASTER_INCREMENT = """\
-abstract part def ToastingSystem {
-    doc /* ... */
-}
-"""
-print(TOASTER_INCREMENT)   # reflection: the declaration itself
+# Cell: part def shell
+# editor.add_part_def(owner='ToasterDemo', name='Heater') when API ships
+HEATER_DEF = "part def Heater {"
+print(HEATER_DEF)
+```
+```python
+# Cell: power attribute
+# editor.add_attribute(..., name='power', ..., default='800.0 [SI::W]') when API ships
+# default = modifier not yet supported — toaster#16 / OpenSysML#603
+POWER_ATTR = "    attribute power : ISQ::PowerValue default = 800.0 [SI::W];"
+print(POWER_ATTR)
+```
+```python
+# Cell: assembly + reflection + cumulative load
+TOASTER_INCREMENT = f"{HEATER_DEF}\n{POWER_ATTR}\n    ...\n}}"
+print(TOASTER_INCREMENT)
 
 source = Path("../../models/ch01-cumulative.sysml").read_text()
 model = conn.load_from_content(source, strict=False)
@@ -75,10 +93,10 @@ assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
 ```
 
 **Notes:**
-- `TOASTER_INCREMENT` must be assigned and printed in cell-02 of every construct-introducing notebook.
-- Pattern A: TOASTER_INCREMENT is the full model. Pattern B: TOASTER_INCREMENT is the fragment only.
-- 13 notebooks have construction cells; judgment, depth, navigation, analysis, and param-sweep notebooks do not.
-- The model file (loaded at end of cell) is authored by A3 and must exist before A4 can finalize this cell.
+- `TOASTER_INCREMENT` = new declarations introduced by this notebook only (not the full model).
+- It is assembled from the named fragment variables and printed as the reflection.
+- 13 notebooks have construction cells; judgment, depth, navigation, analysis, param-sweep do not.
+- The cumulative model file is authored by A3 and must exist before A4 finalizes the assembly cell.
 
 ## Tall's three worlds
 

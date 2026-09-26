@@ -66,25 +66,50 @@ Ch5/nb02 (allocate, toaster#13)
 
 ---
 
-## Cell-02 patterns
+## Construction cell convention (all 13 notebooks — all Pattern B)
 
-### Probe finding (2026-09-25)
+**Phase 2 pilot finding (2026-09-25):** The Editor API produces bare declarations only
+(no bodies, no `default =` form, calc/action/item defs without inputs or expressions).
+All 13 construction notebooks use Pattern B (SysML string fragments) until the Editor API
+reaches full spec coverage. See DEFERRED.md D-004 through D-010 for the gap registry.
 
-`editor.apply()` returns the **full model** (all existing + new members), not just the new member:
+### Structural rule: code factored as if we had the API calls
 
-```python
-# base: package P { part def X; }
-# after editor.add_part_def(owner='P', name='Y')
-str(editor.apply())  →  "package P { part def X; \n    part def Y;\n}"
+**The construction cell structure must mirror exactly what Pattern A would look like if the
+Editor API were fully implemented.** One named fragment variable per element = one future
+`editor.add_*()` call. When the API matures, replace each string with the corresponding
+call; everything else stays the same.
+
+### TOASTER_INCREMENT convention
+
+`TOASTER_INCREMENT` = the **new declarations introduced by this notebook only** (not the full
+cumulative model). It is assembled from the individual fragment variables at the end of the
+construction zone and printed as the reflection.
+
+### Construction zone structure
+
+For a notebook introducing multiple elements (e.g., part def + two attributes):
+
+```
+[code cell]     ONE fragment variable declared + printed   ← mirrors one editor.add_*() call
+[markdown cell] narration for that element
+[code cell]     NEXT fragment variable + printed            ← mirrors next editor.add_*() call
+[markdown cell] narration
+...
+[code cell]     TOASTER_INCREMENT assembled from fragments
+                print(TOASTER_INCREMENT)                    ← reflection: the full increment
+                load ch0X-cumulative.sysml; assert model.ok ← load for subsequent cells
 ```
 
-This affects the TOASTER_INCREMENT convention (see below).
+### Fragment naming convention
 
-### Pattern A — Editor API construct
+Fragment variable names mirror the element being declared:
+- `PART_DEF`, `HEATER_DEF`, `TOASTING_SYSTEM_DEF` — part definitions
+- `POWER_ATTR`, `CYCLE_ATTR` — attribute declarations
+- `HEATER_USAGE`, `CONTROL_USAGE` — part usages (composition)
+- `TIMELY_REQ`, `DELIVERED_ENERGY_CALC` — requirement/calc usages
 
-`editor.apply()` returns the **full cumulative model** after adding the new declaration.
-`TOASTER_INCREMENT` is therefore the full model state at this point in the sequence.
-The reflection (print) shows the full canonical SysML — the new declaration in context.
+### Example: single-element notebook (Ch1/nb01 — abstract part def)
 
 ```python
 from pathlib import Path
@@ -93,83 +118,64 @@ from toaster.report import format_diagnostics
 
 conn = opensysml.connect(version="v0.9.0")
 
-# Load base = model state immediately BEFORE this notebook's declarations.
-# For the first notebook in Ch1: use the preamble (see B-ACE-4 note below).
-# For all others: load the prior chapter's cumulative OR the prior notebook's
-# TOASTER_INCREMENT (whichever captures the state before this notebook).
-base = conn.load_from_content(
-    Path("../../models/ch02-cumulative.sysml").read_text(), strict=False
-)
-assert base.ok
-
-# Declare the increment via Editor API
-editor = base.edit()
-editor.add_calc_def(
-    owner="ToasterDemo",
-    name="DeliveredEnergy",
-    inputs=[("power", "ISQ::PowerValue"),
-            ("duration", "ISQ::DurationValue"),
-            ("efficiency", "MeasurementReferences::DimensionOneValue")],
-    return_type="ISQ::EnergyValue",
-    expression="power * duration * efficiency",
-)
-increment = editor.apply()
-TOASTER_INCREMENT = str(increment)   # full model up to this point
-print(TOASTER_INCREMENT)             # reflection: validated canonical SysML from the service
-
-# Load full chapter cumulative for subsequent cells
-source = Path("../../models/ch03-cumulative.sysml").read_text()
-model = conn.load_from_content(source, strict=False)
-assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
-```
-
-**B-ACE-4 note — Ch1 base:** Ch1 has no ch00-cumulative. Pattern A cells in Ch1 build up the
-model incrementally within the chapter. Convention:
-- Ch1/nb02 (first Pattern A cell in Ch1): base = Ch1/nb01's fragment wrapped in the standard
-  package preamble (package ToasterDemo + imports). Implementer must construct this programmatically.
-- Ch1/nb03: base = Ch1/nb02's TOASTER_INCREMENT (captured during notebook rollout)
-- Ch1/nb04: base = Ch1/nb03's TOASTER_INCREMENT
-
-This chaining is implemented during Phase 4 rollout. The implementer must hold TOASTER_INCREMENT
-in memory across cells within a chapter run.
-
-### Pattern B — Gap construct (Editor API not yet supported)
-
-`TOASTER_INCREMENT` is the **SysML fragment** (new declarations only), not the full model.
-The reflection (print) shows the declaration string itself.
-
-```python
-from pathlib import Path
-import opensysml
-from toaster.report import format_diagnostics
-
-conn = opensysml.connect(version="v0.9.0")
-
-# Declare the increment as SysML notation
-# Editor API does not yet support the abstract modifier — see toaster#9 / OpenSysML#595
-TOASTER_INCREMENT = """\
+# abstract modifier not yet supported in Editor API — toaster#9 / OpenSysML#595
+# spec: SysML v2 formal/2026-03-02 §7.3.3 (PartDefinition — AbstractClassifier)
+TOASTING_SYSTEM_DEF = """\
 abstract part def ToastingSystem {
-    doc /* The top-level concept: any system that converts electrical energy
-         into thermal energy for food preparation. */
+    doc /* Any system that converts electrical energy into thermal energy
+         for food preparation. */
 }
 """
-print(TOASTER_INCREMENT)   # reflection: the declaration itself
+print(TOASTING_SYSTEM_DEF)
 
-# Load full chapter cumulative for subsequent cells
+TOASTER_INCREMENT = TOASTING_SYSTEM_DEF
 source = Path("../../models/ch01-cumulative.sysml").read_text()
 model = conn.load_from_content(source, strict=False)
 assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
 ```
 
-### TOASTER_INCREMENT convention — what each pattern produces
+### Example: multi-element notebook (Ch1/nb02 — part def + attributes)
 
-| Pattern | TOASTER_INCREMENT content | Used by regenerate_fixtures.py |
-|---|---|---|
-| A | Full cumulative model after apply() | Last Pattern A notebook in a chapter → chapter fixture |
-| B | New SysML fragment only | Fragment validation only; not used to reconstruct fixture |
+```python
+from pathlib import Path
+import opensysml
+from toaster.report import format_diagnostics
 
-**Key implication:** `regenerate_fixtures.py` does NOT concatenate TOASTER_INCREMENT values.
-See Phase 1c for the revised script design.
+conn = opensysml.connect(version="v0.9.0")
+
+# Part def shell — editor.add_part_def(owner='ToasterDemo', name='Heater') when API ships
+HEATER_DEF = "part def Heater {"
+print(HEATER_DEF)
+
+# Power attribute — editor.add_attribute(owner=..., name='power', type=..., default=...) when API ships
+# default = modifier not yet supported — toaster#N / OpenSysML#N
+# spec: KerML formal/2026-03-02 §9.4.2 (FeatureValue — default keyword)
+POWER_ATTR = "    attribute power : ISQ::PowerValue default = 800.0 [SI::W];"
+print(POWER_ATTR)
+
+# Cycle time attribute
+CYCLE_ATTR = "    attribute cycleTime : ISQ::DurationValue default = 120.0 [SI::s];"
+print(CYCLE_ATTR)
+
+# Assembly — mirrors editor.apply() new-member output
+TOASTER_INCREMENT = f"""\
+{HEATER_DEF}
+{POWER_ATTR}
+{CYCLE_ATTR}
+}}
+"""
+print(TOASTER_INCREMENT)
+
+source = Path("../../models/ch01-cumulative.sysml").read_text()
+model = conn.load_from_content(source, strict=False)
+assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
+```
+
+### Fragment size rule
+
+Each fragment variable: ≤5 lines of SysML, ideally 1–3 lines. If a fragment is longer,
+it should be split into multiple fragment variables (one per logical sub-element). The
+`TOASTER_INCREMENT` assembly may be longer but must be derivable from its named parts.
 
 ---
 

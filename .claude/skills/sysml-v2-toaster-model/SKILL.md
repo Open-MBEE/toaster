@@ -137,6 +137,11 @@ gRPC authoring allowlist only.
 | D-006 | `require constraint { ... }` | Ch2 | OpenSysML#597 | `conn.load_from_content()` |
 | D-007 | `assert satisfy R by P` | Ch3 | OpenSysML#598 | `conn.load_from_content()` |
 | D-008 | `allocate X to Y` | Ch5 | OpenSysML#599 | `conn.load_from_content()` |
+| D-009 | `flow X.port to Y.port` | Ch5 | OpenSysML#601 | `conn.load_from_content()` |
+| D-010 | `state` + sub-states + transitions | Ch7 | OpenSysML#602 | `conn.load_from_content()` |
+| D-011 | `attribute` with `default =` modifier | Ch1 | OpenSysML#603 | `conn.load_from_content()` |
+| D-012 | `calc def` body (inputs + return expr) | Ch3 | OpenSysML#604 | `conn.load_from_content()` |
+| D-013 | `action def` body (params + sequencing) | Ch4 | OpenSysML#605 | `conn.load_from_content()` |
 
 **Rule for notebook cells with gap constructs:** Use `conn.load_from_content(source, strict=False)`
 to load a cumulative model string containing the gap construct. The parse/eval/execute paths work
@@ -147,44 +152,35 @@ cumulative SysML string and loaded as text rather than constructed via the Edito
 API is used for the constructs it supports (~8 kinds); the remaining 5 are demonstrated via the
 `conn.load_from_content()` round-trip, which still shows the A-F → O-S → E Tall seam clearly.
 
-## Construction cell patterns — which notebook uses which
+## Construction cell patterns — all 13 notebooks use SysML strings
 
-13 notebooks have construction cells (cell-02 two-phase pattern). 18 notebooks do not.
+All 13 construction notebooks use SysML string fragments (Editor API gaps — see DEFERRED.md).
+Pattern A (Editor API) is deferred until the API reaches full spec coverage (D-004 through D-013,
+confirmed during Phase 0 and Phase 2 pilot 2026-09-25).
 
-### Pattern assignment
+**Code is factored as if we had the API calls.** One fragment variable per element = one future
+`editor.add_*()` call. When the API matures, swap each string for the call; structure stays the same.
 
-| Construct | Pattern | Chapter/Notebook |
+### Construction cell table
+
+| Construct | Chapter/Notebook | Known gap issue |
 |---|---|---|
-| `abstract part def` | B (gap — toaster#9) | Ch1/nb01 |
-| `part def` + `attribute` | A | Ch1/nb02 |
-| `:>` specialization | A | Ch1/nb03 |
-| `part` usage (composition) | A | Ch1/nb04 |
-| `requirement def` + `require constraint` | B (gap — toaster#11) | Ch2/nb01 |
-| `attribute :>>` override | B (gap — toaster#10) | Ch2/nb02 |
-| `requirement` usage + `assert satisfy` | B (gap — toaster#12) | Ch3/nb01 |
-| `calc def` | A | Ch3/nb02 |
-| `action def` | A | Ch4/nb01 |
-| `item def` | A | Ch4/nb02 |
-| `allocate` | B (gap — toaster#13) | Ch5/nb02 |
-| `flow` | B (gap — toaster#14) | Ch5/nb03 |
-| `state def` (full machine w/ sub-states + transitions) | B (gap — toaster#15) | Ch7/nb02 |
+| `abstract part def` | Ch1/nb01 | toaster#9 / OpenSysML#595 |
+| `part def` + `attribute` (with `default =`) | Ch1/nb02 | toaster#16 / OpenSysML#603 |
+| `:>` specialization | Ch1/nb03 | (none — specializes= works via API; stays string for consistency) |
+| `part` usage (composition) | Ch1/nb04 | (none — add_part works; stays string for consistency) |
+| `requirement def` + `require constraint` | Ch2/nb01 | toaster#11 / OpenSysML#597 |
+| `attribute :>>` override | Ch2/nb02 | toaster#10 / OpenSysML#596 |
+| `requirement` usage + `assert satisfy` | Ch3/nb01 | toaster#12 / OpenSysML#598 |
+| `calc def` with body (inputs + return) | Ch3/nb02 | toaster#17 / OpenSysML#604 |
+| `action def` with body | Ch4/nb01 | toaster#18 / OpenSysML#605 |
+| `item def` | Ch4/nb02 | (none — add_item_def works; stays string for consistency) |
+| `allocate` | Ch5/nb02 | toaster#13 / OpenSysML#599 |
+| `flow` | Ch5/nb03 | toaster#14 / OpenSysML#601 |
+| `state def` (full machine w/ sub-states + transitions) | Ch7/nb02 | toaster#15 / OpenSysML#602 |
 
-### Ch1 base model convention
+### TOASTER_INCREMENT convention
 
-Ch1 has no ch00-cumulative. Pattern A cells within Ch1 chain on the prior notebook's output:
-
-- **Ch1/nb02** (first Pattern A in Ch1): base = Ch1/nb01's TOASTER_INCREMENT wrapped in the
-  standard package preamble (package ToasterDemo + imports). Constructed programmatically.
-- **Ch1/nb03**: base = Ch1/nb02's `TOASTER_INCREMENT` (full model after nb02's `editor.apply()`).
-- **Ch1/nb04**: base = Ch1/nb03's `TOASTER_INCREMENT`.
-
-### TOASTER_INCREMENT content by pattern
-
-| Pattern | TOASTER_INCREMENT content |
-|---|---|
-| A | Full cumulative model after `editor.apply()` (all prior + new declarations) |
-| B | New SysML fragment only (not full model) |
-
-These are NOT interchangeable. `check_construction.py` handles them differently:
-- Pattern A last-in-chapter: compared against committed `models/chXX-cumulative.sysml`
-- Pattern B: fragment validated to parse in a minimal package; not compared to cumulative
+`TOASTER_INCREMENT` = the **new declarations for this notebook only** (assembled from fragment
+variables at the end of the construction zone). It is NOT the full cumulative model.
+`check_construction.py` validates it by loading it in a minimal package context.
