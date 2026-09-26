@@ -62,7 +62,7 @@ def test_docs_page_is_rendered_sorted_and_checked(root: Path, repo: Path) -> Non
     assert text.index("## logical") > 0
     assert f"\n{GLOSS}\n" in text
     assert "- Idea\n  - Canon, p. 5\n" in text
-    assert "- Tutorial\n  - This tutorial's gloss refines the sources above.\n" in text
+    assert "- Tutorial\n  - This tutorial's gloss.\n" in text  # its only refines target is proposed, so not named
     assert "AGENTS.md" not in text
     assert "Video" not in text  # proposed only
     assert render(load_graph(root), repo, root) == []
@@ -94,11 +94,16 @@ def test_docs_page_terms_sorted_case_insensitively(tmp_path: Path, repo: Path) -
     assert heads == ["## alpha", "## Beta", "## logical"]
 
 
+FORMAL_SOURCE = """glid:src-formal a gl:Source ; gl:label "Formal" ; gl:edition "1" ; gl:sourceKind gl:Repository ;
+    gl:kind gl:formal ; gl:rank 2 ; gl:commit "def456" .
+"""
+
+
 def make_page_root(tmp_path: Path, extra_defs: str, extra_terms: str = "") -> Path:
-    from .conftest import DEFS, TERMS, make_root
+    from .conftest import DEFS, SOURCES, TERMS, make_root
     defs = dict(DEFS)
     defs["extra"] = DEFS["canon"].split("glid:def-canon--logical")[0] + extra_defs
-    return make_root(tmp_path, terms=TERMS + extra_terms, defs=defs)
+    return make_root(tmp_path, sources=SOURCES + FORMAL_SOURCE, terms=TERMS + extra_terms, defs=defs)
 
 
 def edge(name: str, src: str, term: str, locator: str, extra: str = "") -> str:
@@ -110,7 +115,7 @@ def test_kind_order_and_within_kind_order(tmp_path: Path, repo: Path) -> None:
     extra = "".join([
         edge("tut--zeta", "tutorial", "zeta", "x", "; gl:gloss \"g\" "),
         edge("video--zeta", "video", "zeta", "2:00"),
-        edge("canon--zeta-b", "canon", "zeta", "p. 20"),
+        edge("canon--zeta-b", "canon", "zeta", "p. 5"),
         edge("canon--zeta-a", "canon", "zeta", "p. 3"),
     ])
     r = make_page_root(tmp_path, extra, 'glid:term-zeta a gl:Term ; gl:label "zeta" .\n')
@@ -118,8 +123,8 @@ def test_kind_order_and_within_kind_order(tmp_path: Path, repo: Path) -> None:
     render(load_graph(r), repo, r)
     section = page.read_text().split("## zeta")[1]
     assert section.index("- Idea") < section.index("- Story") < section.index("- Tutorial")
-    # same kind, rank and source: ordered by locator string ("p. 20" before "p. 3")
-    assert section.index("Canon, p. 20") < section.index("Canon, p. 3")
+    # same kind, rank and source: locator order (lexicographic and natural agree here; neither is pinned as intended)
+    assert section.index("Canon, p. 3") < section.index("Canon, p. 5")
 
 
 def test_render_without_write_and_dry_run_leave_the_page_unchanged(root: Path, repo: Path) -> None:
@@ -177,7 +182,7 @@ def test_tutorial_entry_names_refined_sources_and_other_terms(tmp_path: Path, re
     render(load_graph(r), repo, r)
     text = page.read_text()
     zeta = text.split("## zeta")[1].split("\n## ")[0]
-    assert "- Tutorial\n  - This tutorial's gloss refines the sources above.\n" in zeta
+    assert "- Tutorial\n  - This tutorial's gloss refines Canon.\n" in zeta
     mine = text.split("## mine")[1].split("\n## ")[0]
     assert "  - This tutorial's gloss refines other in Canon; Video and zeta in Canon.\n" in mine
     assert "AGENTS.md" not in text
@@ -189,3 +194,104 @@ def test_departure_note_derived_from_differs_from(root: Path, repo: Path) -> Non
     # in the fixture the tutorial edge differs from the Canon edge; the note names that edge's source
     assert page.read_text().endswith("This tutorial uses this term differently from Canon.\n")
     assert page.read_text().count("differently from") == 1
+
+
+ZETA = 'glid:term-zeta a gl:Term ; gl:label "zeta" .\n'
+
+
+def tutorial_lines(r: Path, repo: Path, term: str = "zeta") -> list[str]:
+    page = docs_repo(repo)
+    render(load_graph(r), repo, r)
+    section = page.read_text().split(f"## {term}")[1].split("\n## ")[0]
+    return section.split("- Tutorial\n")[1].splitlines()
+
+
+def test_own_term_refines_names_only_the_refined_sources(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("canon--zeta", "canon", "zeta", "p. 1"),
+        edge("video--zeta", "video", "zeta", "1:00"),
+        edge("tut--zeta", "tutorial", "zeta", "x", "; gl:refines glid:def-video--zeta "),
+    ])
+    line = tutorial_lines(make_page_root(tmp_path, extra, ZETA), repo)[0]
+    assert line == "  - This tutorial's gloss refines Video."
+
+
+def test_refines_of_an_unconfirmed_edge_is_not_named(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("canon--zeta", "canon", "zeta", "p. 1"),
+        'glid:def-video--zeta a gl:Definition ; gl:source glid:src-video ; gl:term glid:term-zeta ; '
+        'gl:text "t" ; gl:locator "1:00" ; gl:status gl:proposed .\n',
+        edge("tut--zeta", "tutorial", "zeta", "x", "; gl:refines glid:def-canon--zeta, glid:def-video--zeta "),
+    ])
+    line = tutorial_lines(make_page_root(tmp_path, extra, ZETA), repo)[0]
+    assert line == "  - This tutorial's gloss refines Canon."
+    assert "Video" not in line
+
+
+def test_only_unconfirmed_refines_falls_back(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        'glid:def-video--zeta a gl:Definition ; gl:source glid:src-video ; gl:term glid:term-zeta ; '
+        'gl:text "t" ; gl:locator "1:00" ; gl:status gl:proposed .\n',
+        edge("tut--zeta", "tutorial", "zeta", "x", "; gl:refines glid:def-video--zeta "),
+    ])
+    assert tutorial_lines(make_page_root(tmp_path, extra, ZETA), repo) == ["  - This tutorial's gloss."]
+
+
+def test_no_refines_uses_the_fallback_line(tmp_path: Path, repo: Path) -> None:
+    extra = edge("tut--zeta", "tutorial", "zeta", "x")
+    assert tutorial_lines(make_page_root(tmp_path, extra, ZETA), repo) == ["  - This tutorial's gloss."]
+
+
+def test_own_and_other_term_refines_together(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("canon--zeta", "canon", "zeta", "p. 1"),
+        edge("video--zeta", "video", "zeta", "1:00"),
+        edge("canon--other", "canon", "other", "p. 2"),
+        edge("tut--zeta", "tutorial", "zeta", "x",
+             "; gl:refines glid:def-canon--zeta, glid:def-canon--other "),
+    ])
+    terms = ZETA + 'glid:term-other a gl:Term ; gl:label "other" .\n'
+    line = tutorial_lines(make_page_root(tmp_path, extra, terms), repo)[0]
+    assert line == "  - This tutorial's gloss refines Canon and other in Canon."
+
+
+def test_two_departures_give_two_sorted_notes(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("canon--zeta", "canon", "zeta", "p. 1"),
+        edge("video--zeta", "video", "zeta", "1:00"),
+        edge("tut--zeta", "tutorial", "zeta", "x",
+             "; gl:differsFrom glid:def-video--zeta, glid:def-canon--zeta "),
+    ])
+    r = make_page_root(tmp_path, extra, ZETA)
+    page = docs_repo(repo)
+    render(load_graph(r), repo, r)
+    zeta = page.read_text().split("## zeta")[1].split("\n## ")[0]
+    notes = [ln for ln in zeta.splitlines() if "differently from" in ln]
+    assert notes == ["This tutorial uses this term differently from Canon.",
+                     "This tutorial uses this term differently from Video."]
+
+
+def test_attribution_sources_ordered_by_rank_not_label(tmp_path: Path, repo: Path) -> None:
+    # Formal (rank 2) sorts before Video (rank 1) by label; rank wins
+    extra = "".join([
+        edge("formal--zeta", "formal", "zeta", "s. 1"),
+        edge("video--zeta", "video", "zeta", "1:00"),
+        edge("tut--zeta", "tutorial", "zeta", "x", "; gl:refines glid:def-formal--zeta, glid:def-video--zeta "),
+    ])
+    line = tutorial_lines(make_page_root(tmp_path, extra, ZETA), repo)[0]
+    assert line == "  - This tutorial's gloss refines Video and Formal."
+
+
+def test_kind_order_is_idea_formal_story_tutorial(tmp_path: Path, repo: Path) -> None:
+    extra = "".join([
+        edge("tut--zeta", "tutorial", "zeta", "x"),
+        edge("video--zeta", "video", "zeta", "1:00"),
+        edge("formal--zeta", "formal", "zeta", "s. 1"),
+        edge("canon--zeta", "canon", "zeta", "p. 1"),
+    ])
+    r = make_page_root(tmp_path, extra, ZETA)
+    page = docs_repo(repo)
+    render(load_graph(r), repo, r)
+    section = page.read_text().split("## zeta")[1]
+    heads = [section.index(h) for h in ("- Idea", "- Formal semantics", "- Story", "- Tutorial")]
+    assert heads == sorted(heads)

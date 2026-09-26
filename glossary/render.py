@@ -62,25 +62,32 @@ def _and(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
 
 
-def _sources_of(graph: Graph, defs: list) -> str:
+def _ordered_sources(graph: Graph, defs: list) -> list[str]:
+    """The distinct source labels of the given edges, by source rank then label."""
     srcs = {graph.value(d, GL.source) for d in defs}
     ordered = sorted(srcs, key=lambda s: (int(graph.value(s, GL.rank) or 0), str(graph.value(s, GL.label)).lower()))
-    return "; ".join(str(graph.value(s, GL.label)) for s in ordered)
+    return [str(graph.value(s, GL.label)) for s in ordered]
+
+
+def _sources_of(graph: Graph, defs: list) -> str:
+    return "; ".join(_ordered_sources(graph, defs))
 
 
 def bridge_attribution(graph: Graph, edge: str) -> str:
-    """The Tutorial entry, derived from the bridge edge's gl:refines targets (its stored locator is not shown)."""
+    """The Tutorial entry, derived from the bridge edge's confirmed gl:refines targets (its stored locator is not shown)."""
     d = URIRef(edge)
     term = graph.value(d, GL["term"])
     own: list = []
     other: dict = {}
     for tgt in graph.objects(d, GL.refines):
+        if graph.value(tgt, GL.status) != GL.confirmed or graph.value(tgt, GL.source) is None:
+            continue
         t = graph.value(tgt, GL["term"])
         if t == term:
             own.append(tgt)
         else:
             other.setdefault(t, []).append(tgt)
-    parts = ["the sources above"] if own else []
+    parts = _ordered_sources(graph, own)
     for t in sorted(other, key=lambda t: str(graph.value(t, GL.label)).lower()):
         parts.append(f"{graph.value(t, GL.label)} in {_sources_of(graph, other[t])}")
     return f"This tutorial's gloss refines {_and(parts)}." if parts else "This tutorial's gloss."
