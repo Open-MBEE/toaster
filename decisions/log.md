@@ -1,5 +1,35 @@
 # Decision log
 
+## DL-018 | 2026-09-26 | PASS2-001 | F-1 confirmed: Toaster::cycleTime default is an emergent result entered as a choice
+
+Path: Handled by ACE
+Decision: F-1 stands. `attribute cycleTime : ISQ::DurationValue default = 120.0 [SI::s]` on `Toaster`, later checked against `<= 180 s` (ch02), is a prescription tested against a threshold, not emergent behavior. In the re-derivation, cycle time is derived from the mechanism and the energy balance and compared with intent; the attribute may exist as a typed, unit-bearing slot without a default value. No edit now (current models are not a trusted baseline).
+Rationale: ace-protocol handle case for an emergent performance set as an attribute default and then verified; AGENTS.md 1.5 prescribed-versus-emergent test names this construct. Z-6, Z-7, Z-22.
+
+## DL-019 | 2026-09-26 | PASS2-001 | OQ-1: ToastingSystem is a logical type (not yet built) carrying a functional statement
+
+Path: Handled by ACE (worth Z's skim: rests on an ACE inference, see `decisions/pass2-run-001.md`)
+Decision: The doc "Transform bread into toast acceptable to its user" is functional (substitution test) and the seed of a MoE. The `abstract part def` that carries it is the top logical type, not yet built (no mechanism, perform or interface). The auditor's default ("functional" for the whole element) is narrowed: functional for the statement, logical for the construct. Re-derivation guidance: the purpose belongs in a functional construct (an action def with typed flows, or a behavioral requirement def) that the abstract part def performs. F-3 stays live: the subsystems specialize the whole's purpose type and the whole does not.
+Rationale: Z-4, Z-2, Z-5, Z-1, Z-8, AGENTS.md 1.5 idiom table and 1.1, Z-22, term-logical-component.
+
+## DL-020 | 2026-09-26 | PASS2-001 | OQ-2: HeatingSystem and ControlSystem are logical components, not yet built
+
+Path: Handled by ACE
+Decision: Logical, not yet built. Responsibility groupings (Douglas "who" = tutorial "how"), typed slots with no values, later the target of allocation. Incomplete, not wrong. For the re-derivation: the logical idiom is `abstract part def` that performs an action (these are concrete), and `ControlSystem` carries any policy, including a timer setpoint.
+Rationale: Z-13, Z-14, Z-8, Z-21, Z-6, AGENTS.md 1.5, term-logical-component, def-douglas--logical-architecture.
+
+## DL-021 | 2026-09-26 | PASS2-001 | OQ-3: Toaster is logical (system-level arrangement)
+
+Path: Handled by ACE
+Decision: Logical. `Toaster` prescribes an arrangement (one heating, one control slot) with no specific part and no part value; `cycleTime` is not a part value (F-1). `index.md`'s "physical architecture layer" contradicts Part 1 and is F-4 material for the re-derivation. F-2 (`Heater` specializes no logical def; 800 W is a physical sizing choice) stands as flagged.
+Rationale: Z-3, Z-8, Z-1, AGENTS.md 1.5 logical-to-physical test, Numbers, and "Allocation is not realization".
+
+## DL-022 | 2026-09-26 | PASS2-001 | OQ-4: cycleTime is not a timer setpoint as declared; F-1 stands
+
+Path: Handled by ACE
+Decision: A timer setpoint is a legitimate prescribed policy parameter but a different element: it lives on the control component, is named as a setpoint, and is never the quantity a requirement checks as time to acceptable toast, which is emergent under any control scheme. Whether the re-derived design uses a timer is the modeler's choice; the rule constrains only its expression (setpoint on the policy carrier, cycle time derived). OQ-5 (MoE versus MoP for toast timing) acknowledged without action: Chapter 3's re-derivation carries a recorded justification (Z-5, Z-26).
+Rationale: Z-6, Z-22, AGENTS.md 1.5 prescribed-versus-emergent test.
+
 ## DL-017 | 2026-09-26 | Pass 1 (M2) | Z walk-through: mechanisms as laws, MoE/MoP as judgment, two-tier conformance
 
 Status: COMPLETE
