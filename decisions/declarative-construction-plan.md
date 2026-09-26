@@ -450,26 +450,28 @@ If Phase 2 resolves cleanly with no code changes needed, Phase 3 is a sign-off c
 Apply construction cells in this order. Within each chapter, do all notebooks before moving on.
 After each chapter batch, run `pytest -m checkpoint --chapter=N` before starting Ch(N+1).
 
-| Batch | Notebook | Construct | Pattern | Gate |
+All 13 notebooks use Pattern B (SysML string fragments). See DL-012.
+
+| Batch | Notebook | Construct | Gap issue | Gate |
 |---|---|---|---|---|
-| Ch1 | nb01 | abstract part def | B | — |
-| Ch1 | nb02 | part def + attribute | A | base = Ch1/nb01 fragment in preamble |
-| Ch1 | nb03 | :> specialization | A | base = Ch1/nb02 TOASTER_INCREMENT |
-| Ch1 | nb04 | part usage (composition) | A | base = Ch1/nb03 TOASTER_INCREMENT |
+| Ch1 | nb01 | abstract part def | toaster#9 / OpenSysML#595 | — |
+| Ch1 | nb02 | part def + attribute `default =` | toaster#16 / OpenSysML#603 | — |
+| Ch1 | nb03 | `:>` specialization | (none — string for consistency) | — |
+| Ch1 | nb04 | `part` usage (composition) | (none — string for consistency) | — |
 | checkpoint | | | | `pytest -m checkpoint --chapter=1` GREEN |
-| Ch2 | nb01 | requirement def + require constraint | B | — |
-| Ch2 | nb02 | attribute :>> override | B | — |
+| Ch2 | nb01 | requirement def + require constraint | toaster#11 / OpenSysML#597 | — |
+| Ch2 | nb02 | `attribute :>>` override | toaster#10 / OpenSysML#596 | — |
 | checkpoint | | | | `pytest -m checkpoint --chapter=2` GREEN |
-| Ch3 | nb01 | requirement usage + assert satisfy | B | — |
-| Ch3 | nb02 | calc def | A | **already done in pilot** |
+| Ch3 | nb01 | requirement usage + assert satisfy | toaster#12 / OpenSysML#598 | — |
+| Ch3 | nb02 | calc def body (inputs + return) | toaster#17 / OpenSysML#604 | — |
 | checkpoint | | | | `pytest -m checkpoint --chapter=3` GREEN |
-| Ch4 | nb01 | action def | A | base = ch03-cumulative.sysml |
-| Ch4 | nb02 | item def | A | base = Ch4/nb01 TOASTER_INCREMENT |
+| Ch4 | nb01 | action def body | toaster#18 / OpenSysML#605 | — |
+| Ch4 | nb02 | item def | (none — string for consistency) | — |
 | checkpoint | | | | `pytest -m checkpoint --chapter=4` GREEN |
-| Ch5 | nb02 | allocate | B | — |
-| Ch5 | nb03 | flow | B | D-009 confirmed 2026-09-25 |
+| Ch5 | nb02 | allocate | toaster#13 / OpenSysML#599 | — |
+| Ch5 | nb03 | flow | toaster#14 / OpenSysML#601 | — |
 | checkpoint | | | | `pytest -m checkpoint --chapter=5` GREEN |
-| Ch7 | nb02 | state machine | B | D-010 confirmed 2026-09-25 |
+| Ch7 | nb02 | state machine | toaster#15 / OpenSysML#602 | — |
 | checkpoint | | | | `pytest -m checkpoint --chapter=7` GREEN |
 
 **Ch6, Ch8–Ch10:** No construction cells. Do not modify.
