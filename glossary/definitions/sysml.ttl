@@ -127,7 +127,7 @@ glid:def-sysml--verification
     a gl:Definition ;
     gl:locator "Sec. 7.24.1, p. 141 (PDF 173)" ;
     gl:pdfPage "173"^^xsd:integer ;
-    gl:quote "A verification case definition is a kind of case definition" ;
+    gl:quote "whose result is a verdict on whether the subject of the case satisfies certain requirements" ;
     gl:source glid:src-sysml ;
     gl:status gl:proposed ;
     gl:term glid:term-verification ;
@@ -137,7 +137,7 @@ glid:def-sysml--view
     a gl:Definition ;
     gl:locator "Sec. 7.26.1, p. 149 (PDF 181)" ;
     gl:pdfPage "181"^^xsd:integer ;
-    gl:quote "A view definition is a kind of part definition" ;
+    gl:quote "A view artifact is a rendering of information that addresses some aspect of a system or domain of interest" ;
     gl:source glid:src-sysml ;
     gl:status gl:proposed ;
     gl:term glid:term-view ;

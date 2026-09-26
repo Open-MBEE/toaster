@@ -1,5 +1,26 @@
 # Decision log
 
+## DL-016 | 2026-09-26 | Pass 1 (M1) | Glossary confirmation triage: 11 tutorial edges, 35 tutorialDefinition proposals
+
+Status: PENDING (awaiting Z's `gl:confirmed`)
+
+Path: Handled by ACE (Fable 5.1, cold session, from Z's recorded statements) for 43 items / Escalated to Z for 4 (physical architecture, allocation, dynamical system, specialization). Z ruled all four; ACE rulings are recommendations Z skims, since only Z sets `gl:confirmed`.
+
+Decision:
+- Tutorial edges: functional architecture, policy, selection among alternatives, MoE, TPM unchanged. Edited: logical architecture (Douglas says "who"; "how" is our sharpening), mechanism (word and determinism emphasis marked ours; also refines Astrom Sec. 3.2), logical component (abstract-part-def/perform stated as the tutorial's modeling convention), behavior (not prescribed; derived by analysis or simulation and judged against intent, never "never asserted").
+- MoP (Z): a MoP characterizes a requirement but does not make one; the requirement also needs a threshold and a means of checking. Refines SEBoK MoP, and now cites SysML (MoP is metadata identifying an attribute, 9.3.4.2.2; a requirement is a constraint a valid solution must satisfy, 8.3.21.8; a verification case's pass criteria are modeled explicitly, 7.24.1).
+- Physical architecture (Z, E-1): lens vocabulary is not barred but may not be load-bearing; kept only if it makes the term easier to learn. The "feasibility/utility" sentence was replaced by plain wording (each part fits the logical interfaces and meets the derived thresholds).
+- Allocation (Z, E-2): SysML v2 sense governs because the model is the executable source of truth; new tutorial refinement edge acknowledges the SEBoK and Douglas senses and says why SysML is used. Rule recorded: our terms position themselves as refinements or interpretations of INCOSE/SEBoK wherever possible, never contradict SysML v2 semantics, and where they strictly disagree SysML v2 governs.
+- Ties (Z, E-3): Astrom over Sutton for `dynamical system` (statements must stay consistent with both; reassess on hard contradiction); SysML over KerML for `specialization` (closer to our abstraction level; the two must not contradict).
+- Proposed tutorialDefinition assignments (set only after Z confirms the target edge, since check requires a confirmed target): SEBoK edge where two sources define a term, except emergence -> def-sebok--emergence-2 and function -> def-sebok--function (def. 3); single-edge terms take their only edge; allocation -> def-tutorial--allocation; dynamical system -> def-astrom--dynamical-system; specialization -> def-sysml--specialization; the nine tutorial-edge terms take their tutorial edge.
+- Data fixes: replaced weak or mismatched quotes (Hawkins appropriateness and assumption, Astrom control law, SEBoK selection, SysML verification and view), each machine-verified on its page; added term `concept` with a SEBoK edge to ground the "concept selection" claim.
+
+Rationale: Z-recorded positions (canonical first, refinements only, no invention, judgment never eliminated, lens vocabulary allowed only when it earns its place). `glossary check` and `verify-sources` pass; 0 confirmed, 82 proposed.
+
+Open preconditions before Z confirms: Douglas quotes are unverified (children refining Douglas edges cannot be confirmed until they are); tutorial-edge locators still say "Foundations (AGENTS.md Part 1...)" and are fixed at M2.
+
+Z's decision: PENDING
+
 ## DL-015 | 2026-09-26 | Pass 1 | Z-directed alignment pass: Foundations, glossary, layer and query skills, ACE definition, handoff
 
 Status: PENDING

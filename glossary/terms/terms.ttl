@@ -58,6 +58,11 @@ glid:term-behavior
     gl:label "behavior" ;
     gl:loadBearing "true"^^xsd:boolean .
 
+glid:term-concept
+    a gl:Term ;
+    gl:label "concept" ;
+    gl:loadBearing "false"^^xsd:boolean .
+
 glid:term-confidence-argument
     a gl:Term ;
     gl:label "confidence argument" ;

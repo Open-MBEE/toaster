@@ -5,9 +5,9 @@
 
 glid:def-hawkins--appropriateness
     a gl:Definition ;
-    gl:locator "Sec. 3.1, p. 9 (PDF 7)" ;
+    gl:locator "Sec. 3.2, p. 9 (PDF 7)" ;
     gl:pdfPage "7"^^xsd:integer ;
-    gl:quote "the sub-claims put forward to implement the chosen argument strategy are, if true, a sufficient basis upon which to infer the conclusion" ;
+    gl:quote "it is being asserted that the context is appropriate for the argument elements to which it applies" ;
     gl:source glid:src-hawkins ;
     gl:status gl:proposed ;
     gl:term glid:term-appropriateness ;
@@ -47,7 +47,7 @@ glid:def-hawkins--assumption
     a gl:Definition ;
     gl:locator "Sec. 3.2, p. 9 (PDF 7)" ;
     gl:pdfPage "7"^^xsd:integer ;
-    gl:quote "context or assumption elements" ;
+    gl:quote "contextual information (represented by context or assumption elements)" ;
     gl:source glid:src-hawkins ;
     gl:status gl:proposed ;
     gl:term glid:term-assumption ;

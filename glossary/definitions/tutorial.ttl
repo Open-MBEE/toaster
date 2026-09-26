@@ -3,15 +3,27 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+glid:def-tutorial--allocation
+    a gl:Definition ;
+    gl:gloss "Assigning functions to logical components, and components to parts (SysML v2 allocate); SEBoK and Douglas use the word for related assignments." ;
+    gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
+    gl:refines glid:def-douglas--allocation,
+        glid:def-sebok--allocation,
+        glid:def-sysml--allocation ;
+    gl:source glid:src-tutorial ;
+    gl:status gl:proposed ;
+    gl:term glid:term-allocation ;
+    gl:text "Assigning one element of the model to another so that the target takes responsibility for it: functions to logical components, and logical components to parts. In SysML v2 this is the allocate relationship between usages, and the tutorial follows that sense because the model is the executable source of truth. SEBoK's sense (requirements assigned to the next lower level of the physical architecture) and Douglas's (functions grouped into components) are the same assigning seen from other angles; where they differ, SysML v2 governs." .
+
 glid:def-tutorial--behavior
     a gl:Definition ;
-    gl:gloss "The emergent outcome of a system in use; derived by analysis and checked against intent, never asserted." ;
+    gl:gloss "The emergent outcome of a system in use; not prescribed but derived by analysis or simulation and judged against intent." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-sebok--behavior-2 ;
     gl:source glid:src-tutorial ;
     gl:status gl:proposed ;
     gl:term glid:term-behavior ;
-    gl:text "The emergent outcome of a system operating in its environment. A design prescribes elements, relationships and principles; behavior is derived by analysis and checked against intent, never asserted." .
+    gl:text "The emergent outcome of a system operating in its environment. A design prescribes elements, relationships and principles; behavior is not prescribed: it is derived by analysis or simulation and judged against intent." .
 
 glid:def-tutorial--functional-architecture
     a gl:Definition ;
@@ -35,11 +47,11 @@ glid:def-tutorial--logical-architecture
     gl:source glid:src-tutorial ;
     gl:status gl:proposed ;
     gl:term glid:term-logical-architecture ;
-    gl:text "The layer that states prescriptions and the intents derived from them: the mechanisms chosen to achieve the functions, the policies designed over them, the logical components that carry them, and the interfaces between components, with measures of performance as derived thresholds. Narrower than SEBoK's logical architecture, which also contains the functional view." .
+    gl:text "The layer that states prescriptions and the intents derived from them: the mechanisms chosen to achieve the functions, the policies designed over them, the logical components that carry them, and the interfaces between components, with measures of performance as derived thresholds. Narrower than SEBoK's logical architecture, which also contains the functional view. Douglas calls this layer \"who\"; reading it as \"how\" is this tutorial's sharpening." .
 
 glid:def-tutorial--logical-component
     a gl:Definition ;
-    gl:gloss "The prescribed carrier of a mechanism, with its interfaces: an abstract part definition that performs an action." ;
+    gl:gloss "The prescribed carrier of a mechanism, with its interfaces; modeled here as an abstract part definition that performs an action." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--logical-component,
         glid:def-sebok--logical-component,
@@ -47,18 +59,19 @@ glid:def-tutorial--logical-component
     gl:source glid:src-tutorial ;
     gl:status gl:proposed ;
     gl:term glid:term-logical-component ;
-    gl:text "The prescribed carrier of a mechanism, with its interfaces: in SysML v2 an abstract part definition that performs an action. It names who is responsible without committing to a physical solution." .
+    gl:text "The prescribed carrier of a mechanism, with its interfaces; this tutorial models it in SysML v2 as an abstract part definition that performs an action. It names who is responsible without committing to a physical solution." .
 
 glid:def-tutorial--mechanism
     a gl:Definition ;
     gl:gloss "A prescribed, comparatively deterministic input-to-output relation: an open-loop declaration of how something works; not a behavior." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-astrom--dynamical-system,
+        glid:def-astrom--dynamical-system-2,
         glid:def-sutton--dynamical-system ;
     gl:source glid:src-tutorial ;
     gl:status gl:proposed ;
     gl:term glid:term-mechanism ;
-    gl:text "A prescribed input-to-output relation with comparatively high determinism: an open-loop declaration of how something will work. A mechanism is designed, not observed, and is not a behavior: behavior is the emergent outcome of mechanisms operating together in context. The word is ours; the underlying idea is the input/output dynamics of a system." .
+    gl:text "A prescribed input-to-output relation with comparatively high determinism: an open-loop declaration of how something will work. A mechanism is designed, not observed, and is not a behavior: behavior is the emergent outcome of mechanisms operating together in context. The word and the emphasis on determinism are ours; the underlying idea is the input/output dynamics of a system." .
 
 glid:def-tutorial--moe
     a gl:Definition ;
@@ -72,24 +85,26 @@ glid:def-tutorial--moe
 
 glid:def-tutorial--mop
     a gl:Definition ;
-    gl:gloss "A derived design requirement with a threshold that the prescriptions must meet; typically stated at the logical layer." ;
+    gl:gloss "A performance measure (timeliness, efficiency) that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
-    gl:refines glid:def-sebok--mop ;
+    gl:refines glid:def-sebok--mop,
+        glid:def-sysml--mop,
+        glid:def-sysml--requirement ;
     gl:source glid:src-tutorial ;
     gl:status gl:proposed ;
     gl:term glid:term-mop ;
-    gl:text "A design requirement with a threshold derived so that a MoE can be satisfied (for example timeliness or efficiency). Typically stated at the logical layer and derived by composing relations symbolically; a performance figure is not effectiveness." .
+    gl:text "A performance measure: a quantity in the model, such as timeliness or efficiency, that characterizes how well a design performs. A MoP characterizes a requirement but does not make one; the requirement also needs a threshold (a constraint the valid solution must satisfy) and a means of checking it. Typically stated at the logical layer, with thresholds derived from what the MoEs need; a performance figure is not effectiveness." .
 
 glid:def-tutorial--physical-architecture
     a gl:Definition ;
-    gl:gloss "Concrete parts that realize the logical components and confer values; checked for feasibility against the logical layer and utility against the functional layer." ;
+    gl:gloss "Concrete parts that realize the logical components and confer values; each must fit the logical interfaces and meet the derived thresholds." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--physical-architecture,
         glid:def-sebok--physical-architecture ;
     gl:source glid:src-tutorial ;
     gl:status gl:proposed ;
     gl:term glid:term-physical-architecture ;
-    gl:text "The layer of concrete parts that realize the logical components and confer values (sizes, ratings, part numbers). A candidate checked against the logical layer for feasibility and against the functional layer for utility; values assessed on it are the technical performance measures." .
+    gl:text "The layer of concrete parts that realize the logical components and confer values (sizes, ratings, part numbers): where the logical \"how\" is implemented and the functional \"what\" realized. Each part must fit the logical interfaces and meet the derived thresholds; values assessed on the parts are the technical performance measures." .
 
 glid:def-tutorial--policy
     a gl:Definition ;

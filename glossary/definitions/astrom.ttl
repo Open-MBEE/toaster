@@ -5,9 +5,9 @@
 
 glid:def-astrom--control-law
     a gl:Definition ;
-    gl:locator "Sec. 1.5 (PDF 30)" ;
-    gl:pdfPage "30"^^xsd:integer ;
-    gl:quote "This control law implies" ;
+    gl:locator "Sec. 2.4 (PDF 60)" ;
+    gl:pdfPage "60"^^xsd:integer ;
+    gl:quote "The control law in Figure 2.7 has error feedback because the control signal u is generated from the error" ;
     gl:source glid:src-astrom ;
     gl:status gl:proposed ;
     gl:term glid:term-control-law ;

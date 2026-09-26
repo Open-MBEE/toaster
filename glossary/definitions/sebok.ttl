@@ -43,6 +43,17 @@ glid:def-sebok--behavior-2
     gl:term glid:term-behavior ;
     gl:text "The effect produced when an instance of a complex system is used in its operational environment: an emergent outcome of the whole (cars have behavior, engines have functions)." .
 
+glid:def-sebok--concept
+    a gl:Definition ;
+    gl:gloss "The stage before any formal definition of the system: problem statement, needs and requirements." ;
+    gl:locator "Glossary: Concept Definition (PDF 1469)" ;
+    gl:pdfPage "1469"^^xsd:integer ;
+    gl:quote "activities which occur before any formal definition of the system-of-interest (SoI) is developed" ;
+    gl:source glid:src-sebok ;
+    gl:status gl:proposed ;
+    gl:term glid:term-concept ;
+    gl:text "SEBoK's 'concept' names the stage before any formal definition of the system: problem statement, stakeholder needs and requirements. It is a problem-space stage, not a choice among mechanisms." .
+
 glid:def-sebok--decomposition
     a gl:Definition ;
     gl:locator "Physical Architecture, activities (PDF 601)" ;
@@ -185,9 +196,9 @@ glid:def-sebok--requirement
 
 glid:def-sebok--selection-among-alternatives
     a gl:Definition ;
-    gl:locator "Article: Analysis and Selection between Alternative Solutions (PDF 337)" ;
-    gl:pdfPage "337"^^xsd:integer ;
-    gl:quote "Analysis and Selection between Alternative Solutions" ;
+    gl:locator "Article: Analysis and Selection between Alternative Solutions (PDF 340)" ;
+    gl:pdfPage "340"^^xsd:integer ;
+    gl:quote "should include an understanding of cost and risk, as well as effectiveness" ;
     gl:source glid:src-sebok ;
     gl:status gl:proposed ;
     gl:term glid:term-selection-among-alternatives ;
@@ -242,3 +253,8 @@ glid:def-sebok--verification
     gl:status gl:proposed ;
     gl:term glid:term-verification ;
     gl:text "Confirmation, through objective evidence, that specified requirements have been fulfilled: the system was built right." .
+
+glid:term-concept
+    a gl:Term ;
+    gl:label "concept" ;
+    gl:loadBearing "false"^^xsd:boolean .
