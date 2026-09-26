@@ -40,6 +40,26 @@ Determined: yes, after F7.
 Extension: no.
 Provenance: AGENTS.md 1.5 (logical-to-physical test, Numbers, allocation is not realization); z-model Z-3, Z-8, Z-1; audit report OQ-3, F-2, F-4.
 
+## DL-026 | 2026-09-26 | PASS2-006 | Near-verbatim canonical wording on the public glossary page: Z accepts short attributed wording
+
+Path: Escalated to Z (the ACE could not determine it: a licence acceptance and a change to confirmed definitions); Z chose option A
+Decision: Z accepts reproducing short definitional wording from canonical sources on the public glossary page when the source is attributed and the wording is not put in quotation marks as if verbatim. Recorded as a rule in `tutorial-glossary` (rule 3): a single definitional sentence of at most 200 characters may reproduce canonical wording in `gl:text` or `gl:gloss`; longer text is paraphrased; `gl:quote` is never rendered publicly. No graph edits. Quotation marks around the on-page gloss (option C) were rejected by the ACE, and printing `gl:quote` is not allowed. The page stays out of any published deploy until the WP-8 deploy job exists; merging publishes nothing (the deploy job is a placeholder).
+Principles applied: P6 (licensing; Z keeps the decision), F5, P5, heuristic 7.
+Reasoning: the ACE found 16 confirmed edges whose text reproduces a run of 8 or more consecutive source words, so the question is a rule for a class of edges. Whether attributed near-verbatim wording may be published is a licence acceptance that only Z gives; a paraphrase for each would change confirmed definitions. Z accepted the attributed wording.
+Determined: no for the ACE (P6); decided by Z.
+Extension: yes (new class of case).
+Provenance: ACE triage 2026-09-26; the existing edges' text lengths (longest 186 characters); glossary/README.md; tutorial-glossary rules 3 and 4. Note for Z: the option offered said "about 160 characters"; the rule states 200 because existing confirmed edges reach 186. Adjust if you want a tighter limit; the page is unaffected until then.
+
+## DL-027 | 2026-09-26 | PASS2-006 | docs/glossary.md renders every confirmed term; Tutorial entry, locators and departure note
+
+Path: Handled by ACE (DL-601, DL-602 and the docs-page scope ruling, numbered here)
+Decision: (1) The page renders every confirmed term as `render` output of the confirmed graph; the `tutorial-supporting-pages` row for `docs/glossary.md` is corrected to say so. (2) The Tutorial entry is an attribution derived from `gl:refines` (last in Sources), not a source with a builder-facing locator. (3) "(PDF n)" is stripped from every rendered locator; graph strings and `gl:pdfPage` unchanged. (4) A bridge edge with a `gl:differsFrom` gets the line "This tutorial uses this term differently from <source>." (binding rule AGENTS.md 1.2, orchestrator-required).
+Principles applied: P4 (earn your place), P3 (derived from the source of truth), F5, P5.
+Reasoning: the learner must be able to tell canonical paraphrase from the tutorial's own sharpening (F5), and builder-facing locators (AGENTS.md, PDF indexes into gitignored local files) do not help a learner (P4); the page is derived from the graph, not hand-curated (P3); the approved departure must be visible to learners (AGENTS.md 1.2).
+Determined: yes.
+Extension: yes (P4 applied to citation locators; P3 applied to a generated reference page).
+Provenance: ACE triage 2026-09-26; independent review PASS2-006-R (Opus 5.5); myst.yml toc; AGENTS.md 1.2 and 1.3.
+
 ## DL-025 | 2026-09-26 | PASS2-004 | Conformance statuses: add blocked (with unblock criterion) and wont-do; supersedes DL-024's "no fourth status"
 
 Path: Escalated to Z (Z's own ruling; the ACE had recommended against a fourth status in DL-024 and flagged the alternative)
