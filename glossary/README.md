@@ -49,3 +49,7 @@ tests/                         pytest, run from the repo root
 5. Ask Z to confirm. Do not set `gl:confirmed` yourself.
 
 Do not add a term without a canonical source. If a word has no canonical definition, it is not ready to be a glossary term.
+
+## Lint
+
+`uv run python -m glossary lint [--json] [--baseline FILE] [--write-baseline FILE]` scans learner-facing content (markdown cells of `chapters/**/*.ipynb`, `chapters/**/*.md`, `docs/**/*.md` except the generated `docs/glossary.md`) against the rules in `lint_rules.toml`. Each rule has `id`, `regex` (case-insensitive), `message`, `why`, `severity` (`error` or `warn`) and `scope` (`learner`); a malformed rules file exits 2. Each hit reports file, cell (notebooks), line, rule, matched text and severity, followed by per-rule counts. Without `--baseline` the exit code is 1 if any error hit exists. `--write-baseline` saves the current hits; with `--baseline`, hits matching a saved entry by file, rule and matched text (not line) are "baselined", the rest "new", and only a new error exits 1.

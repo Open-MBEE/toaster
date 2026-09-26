@@ -12,6 +12,7 @@ from pathlib import Path
 import typer
 from rdflib import RDF, URIRef
 
+from . import lint as lint_mod
 from .check import run_check, verify_sources
 from .graph import (
     KIND_ORDER,
@@ -302,3 +303,35 @@ def render_cmd(dry_run: bool = typer.Option(False, "--dry-run", help="List files
     if not changed:
         typer.echo("render: nothing to change")
     raise typer.Exit(1 if (dry_run and changed) else 0)
+
+
+BaselineOpt = typer.Option(None, "--baseline", help="Classify hits matching this baseline as baselined; fail only on new errors.")
+WriteBaselineOpt = typer.Option(None, "--write-baseline", help="Write the current hits to FILE as a baseline.")
+LintRulesOpt = typer.Option(lint_mod.RULES_FILE, "--rules", hidden=True, help="Rules file (tests point this at a fixture).")
+
+
+@app.command("lint")
+def lint_cmd(as_json: bool = JsonOpt, baseline: Path = BaselineOpt, write_baseline: Path = WriteBaselineOpt,
+             rules_file: Path = LintRulesOpt, repo: Path = RepoOpt) -> None:
+    """Scan learner-facing content for rule hits. Exits 1 on any error hit (only new ones with --baseline), 2 on bad input."""
+    try:
+        rules = lint_mod.load_rules(rules_file)
+        hits = lint_mod.scan(repo, rules)
+        base = lint_mod.read_baseline(baseline) if baseline else None
+    except lint_mod.LintConfigError as e:
+        _die(f"lint: {e}")
+    if write_baseline:
+        lint_mod.write_baseline(write_baseline, hits)
+    classified = lint_mod.classify(hits, base)
+    summ = lint_mod.summary(classified, rules)
+    if as_json:
+        _emit({"hits": [{**h.__dict__, **({"status": s} if s else {})} for h, s in classified], "summary": summ})
+    else:
+        for h, s in classified:
+            typer.echo(lint_mod.format_hit(h, s))
+        typer.echo("summary:")
+        for rid, n in summ["per_rule"].items():
+            typer.echo(f"  {rid}  {n}")
+        typer.echo(f"total {summ['total']} ({summ['errors']} error, {summ['warnings']} warn)"
+                   + (f"; {summ['new']} new, {summ['baselined']} baselined" if base is not None else ""))
+    raise typer.Exit(lint_mod.exit_code(classified))
