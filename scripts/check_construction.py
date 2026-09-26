@@ -136,14 +136,23 @@ def check_notebook(nb_path: Path, conn: opensysml.Connection) -> list[str]:
         failures.append(f"TOASTER_INCREMENT is empty after exec: {nb_path.name}")
         return failures
 
-    # Validate: wrap the fragment in a package and load it
+    # Validate: wrap the fragment in a package and load it.
+    # Cross-notebook fragments (e.g., specialization of a type defined in a prior notebook)
+    # will fail with "unresolved reference" errors in the isolated context — those are
+    # acceptable here because the cumulative fixture validation (below) catches real issues.
+    # Only non-reference errors indicate a genuine fragment syntax problem.
     wrapped = _PREAMBLE.format(fragment=increment)
     check = conn.load_from_content(wrapped, strict=False)
     if not check.ok:
-        failures.append(
-            f"TOASTER_INCREMENT does not parse in {nb_path.name}:\n"
-            f"  {[str(d) for d in check.diagnostics[:3]]}"
-        )
+        blocking = [
+            d for d in check.diagnostics
+            if "unresolved reference" not in str(d).lower()
+        ]
+        if blocking:
+            failures.append(
+                f"TOASTER_INCREMENT does not parse in {nb_path.name}:\n"
+                f"  {[str(d) for d in blocking[:3]]}"
+            )
 
     return failures
 
