@@ -139,7 +139,7 @@ def _pdf_root(tmp_path: Path, quote: str, page_text: str) -> Path:
     return root
 
 
-from .conftest import FILE_SHA as FILE_SHA_PLACEHOLDER  # noqa: E402
+from .conftest import FILE_SHA as FILE_SHA_PLACEHOLDER
 
 
 def test_quote_on_its_page_passes(tmp_path: Path, repo: Path) -> None:
