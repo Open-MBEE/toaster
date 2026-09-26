@@ -66,16 +66,32 @@ MAX_GLOSS = 240
 
 
 def tutorial_definitions(graph: Graph, root: Path, *, include_proposed: bool = False) -> dict[URIRef, list[dict]]:
-    """The tutorial-definition view: term -> the edge(s) chosen by citation order.
+    """The tutorial-definition view: term -> the best edge of each kind (bridge, conceptual, formal, didactic).
 
-    One row per term is the norm; more than one is an ambiguity `check` reports. With include_proposed
-    the view previews what it would be if every proposed edge were confirmed.
+    One row per (term, kind) is the norm; two of one kind is an ambiguity `check` reports. With
+    include_proposed the view previews what it would be if every proposed edge were confirmed.
     """
     q = query_text(root, "tutorial_definitions")
     out: dict[URIRef, list[dict]] = {}
     for row in graph.query(q, initBindings={"includeProposed": Literal(include_proposed)}):
-        out.setdefault(row.term, []).append({"def": row["def"], "source": row.source, "status": row.status})
+        out.setdefault(row.term, []).append({"def": row["def"], "source": row.source, "status": row.status,
+                                             "kind": str(row.kind).removeprefix(str(GL))})
     return out
+
+
+KIND_ORDER = ("bridge", "conceptual", "formal", "didactic")  # which kind speaks for the term in a one-line gloss
+
+
+def primary(rows: list[dict]) -> dict | None:
+    """The row that supplies the one-line gloss: the tutorial's own refinement if any, else the idea, else the formal
+    semantics, else the story. None when the term has nothing (or is ambiguous within the leading kind)."""
+    for kind in KIND_ORDER:
+        of_kind = [r for r in rows if r["kind"] == kind]
+        if len(of_kind) == 1:
+            return of_kind[0]
+        if len(of_kind) > 1:
+            return None
+    return None
 
 
 def gloss_of(graph: Graph, definition: URIRef) -> str | None:

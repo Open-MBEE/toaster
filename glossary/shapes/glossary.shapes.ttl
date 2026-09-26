@@ -18,6 +18,8 @@ gl:SourceShape a sh:NodeShape ;
         [ sh:path gl:sourceKind ; sh:minCount 1 ; sh:maxCount 1 ;
           sh:in ( gl:File gl:Video gl:Repository ) ;
           sh:message "a Source has exactly one gl:sourceKind: gl:File, gl:Video or gl:Repository" ] ,
+        [ sh:path gl:kind ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( gl:conceptual gl:formal gl:didactic gl:bridge ) ;
+          sh:message "a Source has exactly one gl:kind: conceptual, formal, didactic or bridge" ] ,
         [ sh:path gl:rank ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
           sh:message "a Source has exactly one integer gl:rank (citation order, lower wins)" ] ,
         [ sh:path gl:sha256 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[0-9a-f]{64}$" ;

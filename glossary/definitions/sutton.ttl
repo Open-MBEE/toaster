@@ -17,6 +17,7 @@ glid:def-sutton--policy
     a gl:Definition ;
     gl:locator "Sec. 1.3 (PDF 28)" ;
     gl:pdfPage "28"^^xsd:integer ;
+    gl:preferred "true"^^xsd:boolean ;
     gl:quote "A policy defines the learning agent's way of behaving at a given time" ;
     gl:source glid:src-sutton ;
     gl:status gl:proposed ;

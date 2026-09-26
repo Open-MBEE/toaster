@@ -25,7 +25,7 @@ def test_lookup_returns_every_edge_ordered_and_deterministic(root: Path) -> None
     assert a.exit_code == 0 and a.output == b.output
     data = json.loads(a.output)
     assert [d["source"] for d in data["definitions"]] == ["Canon", "This tutorial", "Video"]
-    tut = [d for d in data["definitions"] if d.get("tutorialDefinition") == "confirmed"]
+    tut = [d for d in data["definitions"] if d.get("tutorialView", {}).get("state") == "confirmed" and d["tutorialView"]["kind"] == "bridge"]
     assert len(tut) == 1 and tut[0]["differsFrom"] == ["def-canon--logical"]
 
 

@@ -5,7 +5,7 @@
 
 glid:def-tutorial--allocation
     a gl:Definition ;
-    gl:gloss "Assigning functions to logical components, and components to parts (SysML v2 allocate); SEBoK and Douglas use the word for related assignments." ;
+    gl:gloss "Assigning functions to logical components, and components to parts: SEBoK's idea, SysML v2's allocate, Douglas's grouping." ;
     gl:locator "Foundations (AGENTS.md Part 1, to be written at gate M2)" ;
     gl:refines glid:def-douglas--allocation,
         glid:def-sebok--allocation,
@@ -13,7 +13,7 @@ glid:def-tutorial--allocation
     gl:source glid:src-tutorial ;
     gl:status gl:proposed ;
     gl:term glid:term-allocation ;
-    gl:text "Assigning one element of the model to another so that the target takes responsibility for it: functions to logical components, and logical components to parts. In SysML v2 this is the allocate relationship between usages, and the tutorial follows that sense because the model is the executable source of truth. SEBoK's sense (requirements assigned to the next lower level of the physical architecture) and Douglas's (functions grouped into components) are the same assigning seen from other angles; where they differ, SysML v2 governs." .
+    gl:text "Assigning one element of the model to another so that the target takes responsibility for it: functions to logical components, and logical components to parts. SEBoK gives the idea (requirements assigned to the next level down), SysML v2 gives the checkable form (the allocate relationship between usages, which is what the model uses), and Douglas gives the story (functions grouped into components). They describe the same assigning from different angles." .
 
 glid:def-tutorial--behavior
     a gl:Definition ;

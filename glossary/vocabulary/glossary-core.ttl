@@ -57,8 +57,14 @@ gl:Repository a owl:NamedIndividual .
 
 gl:loadBearing a owl:DatatypeProperty ; rdfs:domain gl:Term ; rdfs:range xsd:boolean ;
     rdfs:comment "True when AGENTS.md Foundations or a skill relies on the term." .
+gl:kind a owl:ObjectProperty ; rdfs:domain gl:Source ;
+    rdfs:comment "The kind of definition a source supplies. gl:conceptual: explains the idea (SEBoK, Hawkins, Astrom and Murray, Sutton and Barto). gl:formal: formal and checkable semantics (the OMG specs). gl:didactic: analogy, example, story (Douglas). gl:bridge: this tutorial's own refinements, which tie the other kinds together. Kinds complement each other; they are not rivals." .
+gl:conceptual a owl:NamedIndividual .
+gl:formal a owl:NamedIndividual .
+gl:didactic a owl:NamedIndividual .
+gl:bridge a owl:NamedIndividual .
 gl:rank a owl:DatatypeProperty ; rdfs:domain gl:Source ; rdfs:range xsd:integer ;
-    rdfs:comment "Citation-order rank of the source; lower wins. The tutorial-definition view picks, per term, the confirmed edge from the best-ranked source." .
+    rdfs:comment "Order among sources of the SAME kind (lower first). Only used when two confirmed edges of one kind compete for a term." .
 
 # ---- definition (edge) properties -------------------------------------
 

@@ -14,9 +14,11 @@ from rdflib import RDF, URIRef
 
 from .check import run_check, verify_sources
 from .graph import (
+    KIND_ORDER,
     gloss_of,
     load_graph,
     local_status,
+    primary,
     resolve_source,
     resolve_term,
     run_query,
@@ -50,7 +52,10 @@ def _term_or_die(graph, key: str) -> URIRef:
     return term
 
 
-def _def_view(row: dict, selected: str | None = None) -> dict:
+KIND_LABEL = {"bridge": "tutorial", "conceptual": "idea", "formal": "formal semantics", "didactic": "story"}
+
+
+def _def_view(row: dict, selected: dict | None = None) -> dict:
     out = {
         "id": short_id(row["def"]),
         "source": row["sourceLabel"],
@@ -60,7 +65,7 @@ def _def_view(row: dict, selected: str | None = None) -> dict:
         "text": row["text"],
     }
     if selected:
-        out["tutorialDefinition"] = selected
+        out["tutorialView"] = selected
     for key in ("quote", "gloss", "confirmedBy", "approvedBy"):
         if key in row:
             out[key] = row[key]
@@ -73,8 +78,8 @@ def _def_view(row: dict, selected: str | None = None) -> dict:
 
 def _marked_rows(g, root: Path, t: URIRef) -> list[dict]:
     """Definition rows for a term, marking the edge the tutorial-definition view selects."""
-    sure = {short_id(r["def"]) for r in tutorial_definitions(g, root).get(t, [])}
-    maybe = {short_id(r["def"]) for r in tutorial_definitions(g, root, include_proposed=True).get(t, [])}
+    sure = {short_id(r["def"]): r["kind"] for r in tutorial_definitions(g, root).get(t, [])}
+    maybe = {short_id(r["def"]): r["kind"] for r in tutorial_definitions(g, root, include_proposed=True).get(t, [])}
     merged: dict[str, dict] = {}
     for r in run_query(g, root, "lookup", term=t):  # one row per refines/differsFrom target: merge them
         m = merged.setdefault(r["def"], {**r, "refines": set(), "differsFrom": set()})
@@ -87,7 +92,9 @@ def _marked_rows(g, root: Path, t: URIRef) -> list[dict]:
         for k in ("refines", "differsFrom"):
             if not r[k]:
                 del r[k]
-        rows.append(_def_view(r, "confirmed" if i in sure else "preview" if i in maybe else None))
+        sel = ({"kind": sure[i], "state": "confirmed"} if i in sure
+               else {"kind": maybe[i], "state": "preview"} if i in maybe else None)
+        rows.append(_def_view(r, sel))
     return rows
 
 
@@ -103,8 +110,8 @@ def lookup(term: str, as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
         return
     typer.echo(f"{label}  ({short_id(t)})  {len(rows)} definition(s)")
     for r in rows:
-        mark = {"confirmed": "  <- tutorial definition",
-                "preview": "  <- tutorial definition if confirmed"}.get(r.get("tutorialDefinition"), "")
+        v = r.get("tutorialView")
+        mark = "" if not v else f"  <- tutorial view: {KIND_LABEL[v['kind']]}" + ("" if v["state"] == "confirmed" else " (if confirmed)")
         typer.echo(f"\n[{r['status']}] {r['source']} ({r['edition']}), {r['locator']}{mark}")
         typer.echo(f"  {r['text']}")
         if "quote" in r:
@@ -146,7 +153,7 @@ def terms(as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
     sure = tutorial_definitions(g, root)
     view = [{"id": short_id(r["term"]), "label": r["label"], "definitions": int(r["definitions"]),
              "loadBearing": r.get("loadBearing") is True,
-             "tutorialDefinition": short_id(sure[URIRef(r["term"])][0]["def"]) if len(sure.get(URIRef(r["term"]), [])) == 1 else None}
+             "tutorialDefinition": (short_id(p["def"]) if (p := primary(sure.get(URIRef(r["term"]), []))) else None)}
             for r in rows]
     if as_json:
         _emit(view)
@@ -161,30 +168,28 @@ def terms(as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
 def tutorial(term: str = typer.Argument(None, help="One term, or omit for every term."),
              proposed: bool = typer.Option(False, "--proposed", help="Preview: include proposed edges, as if all were confirmed."),
              as_json: bool = JsonOpt, root: Path = RootOpt) -> None:
-    """The tutorial-definition view: the one edge per term chosen by citation order (confirmed only unless --proposed)."""
+    """The tutorial-definition view: per term, the idea (conceptual), the formal semantics and the story (didactic), plus
+    the tutorial's own refinement when there is one. Confirmed edges only unless --proposed."""
     g = load_graph(root)
     view = tutorial_definitions(g, root, include_proposed=proposed)
     keys = [_term_or_die(g, term)] if term else sorted(g.subjects(RDF.type, GL.Term), key=lambda x: str(g.value(x, GL.label)).lower())
     out = []
     for t in keys:
-        rows = view.get(t, [])
-        entry = {"term": short_id(t), "label": str(g.value(t, GL.label)),
-                 "definitions": [{"id": short_id(r["def"]), "source": str(g.value(r["source"], GL.label)),
-                                  "status": local_status(r["status"]),
-                                  "text": str(g.value(r["def"], GL.text)),
-                                  "gloss": gloss_of(g, r["def"])} for r in rows]}
-        out.append(entry)
+        rows = sorted(view.get(t, []), key=lambda r: KIND_ORDER.index(r["kind"]))
+        out.append({"term": short_id(t), "label": str(g.value(t, GL.label)),
+                    "definitions": [{"kind": r["kind"], "id": short_id(r["def"]), "source": str(g.value(r["source"], GL.label)),
+                                     "status": local_status(r["status"]),
+                                     "text": str(g.value(r["def"], GL.text)),
+                                     "gloss": gloss_of(g, r["def"])} for r in rows]})
     if as_json:
         _emit(out)
         return
     for e in out:
-        if not e["definitions"]:
-            typer.echo(f"{e['label']}  ({e['term']}): none confirmed")
-            continue
+        typer.echo(f"{e['label']}  ({e['term']})" + ("" if e["definitions"] else ": none confirmed"))
         for d in e["definitions"]:
-            flag = "" if d["status"] == "confirmed" else "  [proposed]"
-            typer.echo(f"{e['label']}  ({e['term']}): {d['id']}  <- {d['source']}{flag}")
-            typer.echo(f"    {d['gloss'] or d['text']}")
+            flag = "" if d["status"] == "confirmed" else " [proposed]"
+            typer.echo(f"  {KIND_LABEL[d['kind']]:17s} {d['source']} ({d['id']}){flag}")
+            typer.echo(f"      {d['gloss'] or d['text']}")
 
 
 @app.command()

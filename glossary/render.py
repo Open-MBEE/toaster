@@ -19,7 +19,7 @@ from pathlib import Path
 
 from rdflib import Graph
 
-from .graph import gloss_of, resolve_term, tutorial_definitions
+from .graph import gloss_of, primary, resolve_term, tutorial_definitions
 from .namespaces import PACKAGE_DIR, RENDER_TARGETS, REPO_DIR
 
 GLOSS_RE = re.compile(r"<!-- gloss:(?P<id>[a-z0-9-]+) -->(?P<body>.*?)<!-- /gloss -->", re.DOTALL)
@@ -36,8 +36,8 @@ def expected_gloss(graph: Graph, term_key: str, root: Path = PACKAGE_DIR) -> str
     term = resolve_term(graph, term_key)
     if term is None:
         return None
-    rows = tutorial_definitions(graph, root).get(term, [])
-    return gloss_of(graph, rows[0]["def"]) if len(rows) == 1 else None
+    row = primary(tutorial_definitions(graph, root).get(term, []))
+    return gloss_of(graph, row["def"]) if row else None
 
 
 def render(graph: Graph, repo: Path = REPO_DIR, root: Path = PACKAGE_DIR, *, write: bool = True) -> list[Path]:

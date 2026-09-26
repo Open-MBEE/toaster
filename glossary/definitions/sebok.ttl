@@ -37,6 +37,7 @@ glid:def-sebok--behavior-2
     a gl:Definition ;
     gl:locator "Glossary: Behavior, definition 2 (PDF 1452)" ;
     gl:pdfPage "1452"^^xsd:integer ;
+    gl:preferred "true"^^xsd:boolean ;
     gl:quote "The effect produced when an instance of a complex system or organism is used in its operational environment" ;
     gl:source glid:src-sebok ;
     gl:status gl:proposed ;

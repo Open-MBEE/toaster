@@ -44,46 +44,60 @@ def test_orphan_source_fails(tmp_path: Path, repo: Path) -> None:
     assert "orphan-source" in errors(make_root(tmp_path, sources=sources), repo)
 
 
-def selected(root: Path, *, proposed: bool = False) -> dict[str, list[str]]:
+def selected(root: Path, *, proposed: bool = False) -> dict[str, dict[str, str]]:
+    """term -> {kind: edge id} for the view."""
     g = load_graph(root)
-    return {short_id(t): [short_id(r["def"]) for r in rows] for t, rows in tutorial_definitions(g, root, include_proposed=proposed).items()}
+    out: dict[str, dict[str, str]] = {}
+    for t, rows in tutorial_definitions(g, root, include_proposed=proposed).items():
+        for r in rows:
+            out.setdefault(short_id(t), {})[r["kind"]] = short_id(r["def"])
+    return out
 
 
-def test_view_picks_best_ranked_confirmed_edge(root: Path) -> None:
-    assert selected(root) == {"term-logical": ["def-tutorial--logical"]}
+def test_view_returns_one_edge_per_kind_of_definition(root: Path) -> None:
+    # Canon is conceptual and confirmed; the video (didactic) is only proposed, so it appears in the preview only.
+    assert selected(root)["term-logical"] == {"conceptual": "def-canon--logical", "bridge": "def-tutorial--logical"}
+    assert selected(root, proposed=True)["term-logical"] == {
+        "conceptual": "def-canon--logical", "bridge": "def-tutorial--logical", "didactic": "def-video--logical"}
+
+
+def test_kinds_complement_rather_than_compete(root: Path) -> None:
+    got = selected(root, proposed=True)["term-logical"]
+    assert len(got) == 3  # a bridge, an idea and a story coexist; none displaces another
 
 
 def test_view_ignores_proposed_edges_until_previewed(tmp_path: Path) -> None:
     bad = dict(DEFS)
     bad["tutorial"] = bad["tutorial"].replace("gl:status gl:confirmed ; gl:confirmedBy \"Z\" ;", "gl:status gl:proposed ;")
     root = make_root(tmp_path, defs=bad)
-    assert selected(root)["term-logical"] == ["def-canon--logical"]
-    assert selected(root, proposed=True)["term-logical"] == ["def-tutorial--logical"]
+    assert "bridge" not in selected(root)["term-logical"]
+    assert selected(root, proposed=True)["term-logical"]["bridge"] == "def-tutorial--logical"
 
 
 def test_view_is_empty_for_a_term_with_nothing_confirmed(root: Path) -> None:
     assert "term-function" not in selected(root)
-    assert selected(root, proposed=True)["term-function"] == ["def-canon--function"]
+    assert selected(root, proposed=True)["term-function"] == {"conceptual": "def-canon--function"}
 
 
 def test_same_source_tie_is_ambiguous_until_preferred(tmp_path: Path, repo: Path) -> None:
-    twin = PREFIX + """
+    twin = """
 glid:def-canon--function-2 a gl:Definition ; gl:source glid:src-canon ; gl:term glid:term-function ;
     gl:text "A second reading." ; gl:locator "p. 10" ; gl:status gl:proposed .
 """
-    defs = {**DEFS, "canon": DEFS["canon"] + twin.split("\n", 3)[3]}
+    defs = {**DEFS, "canon": DEFS["canon"] + twin}
     root = make_root(tmp_path, defs=defs)
     assert "tutorial-definition" in errors(root, repo)
-    fixed = {**defs, "canon": defs["canon"].replace("gl:locator \"p. 9\" ;", "gl:locator \"p. 9\" ; gl:preferred true ;")}
+    fixed = {**defs, "canon": defs["canon"].replace('gl:locator "p. 9" ;', 'gl:locator "p. 9" ; gl:preferred true ;')}
     root = make_root(tmp_path / "b", defs=fixed)
     assert "tutorial-definition" not in errors(root, repo)
-    assert selected(root, proposed=True)["term-function"] == ["def-canon--function"]
+    assert selected(root, proposed=True)["term-function"]["conceptual"] == "def-canon--function"
 
 
-def test_preferred_never_beats_a_better_ranked_source(tmp_path: Path) -> None:
+def test_preferred_never_beats_a_better_ranked_source_of_the_same_kind(tmp_path: Path) -> None:
+    sources = SOURCES.replace('gl:kind gl:didactic ; gl:rank 1', 'gl:kind gl:conceptual ; gl:rank 8')
     video = DEFS["video"].replace("gl:status gl:proposed .", "gl:status gl:proposed ; gl:preferred true .")
-    root = make_root(tmp_path, defs={**DEFS, "video": video})
-    assert selected(root, proposed=True)["term-logical"] == ["def-tutorial--logical"]
+    root = make_root(tmp_path, sources=sources, defs={**DEFS, "video": video})
+    assert selected(root, proposed=True)["term-logical"]["conceptual"] == "def-canon--logical"
 
 
 def test_confirmed_selection_needs_gloss_or_short_text(tmp_path: Path, repo: Path) -> None:

@@ -23,11 +23,13 @@ from pyshacl import validate
 from rdflib import RDF, Graph, Literal, URIRef
 
 from .graph import (
+    KIND_ORDER,
     MAX_GLOSS,
     gloss_of,
     load_graph,
     load_shapes,
     load_vocabulary,
+    primary,
     short_id,
     tutorial_definitions,
 )
@@ -127,16 +129,18 @@ def _tutorial_view(graph: Graph, root: Path) -> list[Finding]:
     preview = tutorial_definitions(graph, root, include_proposed=True)
     confirmed = tutorial_definitions(graph, root)
     for t in sorted(graph.subjects(RDF.type, GL.Term)):
-        rows = preview.get(t, [])
         label = short_id(t)
-        if len(rows) > 1:
-            ids = ", ".join(short_id(r["def"]) for r in rows)
-            out.append(_err("tutorial-definition", f"{label}: ambiguous tutorial definition ({ids}); set gl:preferred among same-source edges or adjust gl:rank"))
-        crow = confirmed.get(t, [])
-        if len(crow) == 1 and gloss_of(graph, crow[0]["def"]) is None:
-            out.append(_err("tutorial-definition", f"{label}: {short_id(crow[0]['def'])} has no gl:gloss and its text is over {MAX_GLOSS} characters"))
-        if not crow and graph.value(t, GL.loadBearing) == Literal(True):
-            unresolved.append(label)
+        for kind in KIND_ORDER:
+            rows = [r for r in preview.get(t, []) if r["kind"] == kind]
+            if len(rows) > 1:
+                ids = ", ".join(short_id(r["def"]) for r in rows)
+                out.append(_err("tutorial-definition", f"{label}: ambiguous {kind} definition ({ids}); set gl:preferred among same-source edges or adjust gl:rank"))
+        row = primary(confirmed.get(t, []))
+        if row is None:
+            if graph.value(t, GL.loadBearing) == Literal(True):
+                unresolved.append(label)
+        elif gloss_of(graph, row["def"]) is None:
+            out.append(_err("tutorial-definition", f"{label}: {short_id(row['def'])} has no gl:gloss and its text is over {MAX_GLOSS} characters"))
     if unresolved:
         out.append(_warn("tutorial-definition", f"{len(unresolved)} load-bearing term(s) have no confirmed definition yet"))
     return out
