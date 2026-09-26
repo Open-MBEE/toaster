@@ -90,8 +90,12 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     3: [
         {
             "path": "chapters/ch03-measures/01-moe-definition.ipynb",
-            # context_stubs added when this notebook's construction zone is implemented
-            "context_stubs": [],
+            # timely : TimelyToast, assert satisfy by nominal/slow require prior-chapter types
+            "context_stubs": [
+                "requirement def TimelyToast;",
+                "part nominal;",
+                "part slow;",
+            ],
         },
         {
             "path": "chapters/ch03-measures/02-mop-candidate-eval.ipynb",
