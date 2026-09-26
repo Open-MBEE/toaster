@@ -82,18 +82,18 @@ glid:def-tutorial--mechanism
 glid:def-tutorial--moe
     a gl:Definition ;
     gl:confirmedBy "Z" ;
-    gl:gloss "Acceptance at the functional layer: was the outcome what the stakeholder wanted? Whether a measure is a MoE or a MoP is a justified modeling judgment." ;
+    gl:gloss "A measure of stakeholder satisfaction with the outcome: a measurable attribute with a unit and a means of collecting data (for the toaster, how evenly the bread is toasted). Stated at the functional layer." ;
     gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--moe ;
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
     gl:term glid:term-moe ;
-    gl:text "The measure of whether the intended outcome was achieved as the stakeholder wants it (for the toaster, whether the bread was toasted to the user's liking). Stated at the functional layer; typically explored by simulation or scenarios rather than computed. Whether a given measure is a MoE or a MoP is a modeling judgment made for the case at hand and recorded with its justification: how long toast takes could be part of what the user accepts (a MoE) or an engineering figure derived from it (a MoP)." .
+    gl:text "A measure of how satisfied the stakeholder is with what the technical effort produces (SEBoK). In this tutorial it is a semantic overlay on a measurable attribute of the model, which helps us define, measure and interpret a criterion: it needs a unit and a means of collecting the data (measurement, scenario or simulation). It is stated at the functional layer; for the toaster, how evenly the bread is toasted, which a user cares about and which can be measured across the slice. Whether a measure is a MoE or a MoP is a modeling judgment, recorded with its justification." .
 
 glid:def-tutorial--mop
     a gl:Definition ;
     gl:confirmedBy "Z" ;
-    gl:gloss "A performance measure that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical. MoP versus MoE is a justified modeling judgment." ;
+    gl:gloss "An engineering measure of performance: a measurable attribute with a unit and a means of collecting data (for the toaster, power efficiency). It characterizes a requirement, which also needs a threshold. Typically logical." ;
     gl:locator "AGENTS.md Part 1, section 1.5 (1.6 for behavior)" ;
     gl:refines glid:def-sebok--mop,
         glid:def-sysml--mop,
@@ -101,7 +101,7 @@ glid:def-tutorial--mop
     gl:source glid:src-tutorial ;
     gl:status gl:confirmed ;
     gl:term glid:term-mop ;
-    gl:text "A performance measure: a quantity in the model that characterizes how well a design performs. A MoP characterizes a requirement but does not make one; the requirement also needs a threshold (a constraint the valid solution must satisfy) and a means of checking it. Typically stated at the logical layer, with thresholds derived from what the MoEs need, and derived by composing relations symbolically. Whether a measure is a MoP or a MoE is a modeling judgment recorded with its justification (see MoE); a performance figure is not, by itself, effectiveness." .
+    gl:text "An engineering measure of how well a design performs, whose values help satisfy a MoE (SEBoK). In this tutorial it is a semantic overlay on a measurable attribute of the model, with a unit and a means of collecting or computing the data; for the toaster, power efficiency, the fraction of electrical power converted into heat, so that little energy is wasted. A MoP characterizes a requirement; the requirement also needs a threshold and a means of checking it. It is typically stated at the logical layer. Whether a measure is a MoP or a MoE is a modeling judgment, recorded with its justification." .
 
 glid:def-tutorial--physical-architecture
     a gl:Definition ;

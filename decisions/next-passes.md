@@ -67,7 +67,7 @@ Use query tools and direct lookups (glossary CLI, `model.query`, known file rang
 - **Douglas timestamp** for the tongs-and-flamethrower story is unverified.
 - **Backup branch** `backup/pass1-before-trailer-strip` (local; holds the pre-rewrite commits) awaits Z's word to delete.
 - **Filing the gap issues** (`decisions/gap-issue-drafts.md`) awaits Z's review; nothing is filed.
-- **Definitions edited at Z's direction:** mechanism approved as written by Z (2026-09-26). MoE and MoP: Z asked for a clearer, SEBoK-compatible, less overloaded wording that makes the measure measurable (a unit and a means of collecting data); a revised draft awaits Z's approval.
+- **Definitions edited at Z's direction:** mechanism approved as written by Z (2026-09-26). MoE and MoP: Z asked for a clearer, SEBoK-compatible, less overloaded wording that makes the measure measurable (a unit and a means of collecting data); the redraft (toast evenness for MoE, power efficiency for MoP) was applied on Z's answer and is recorded in DL-017.
 
 ## 7. Content pass (Pass 4) inputs, as candidates the audit will confirm or drop
 

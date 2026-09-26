@@ -75,8 +75,8 @@ Key terms (glossed from the glossary):
 - **Policy.** <!-- gloss:policy -->Decision guidance that selects inputs given the state, typically to close the loop under uncertainty; designed given the available mechanisms.<!-- /gloss -->
 - **Logical component.** <!-- gloss:logical-component -->The prescribed carrier of a mechanism, with its interfaces; modeled here as an abstract part definition that performs an action.<!-- /gloss -->
 - **Selection among alternatives.** <!-- gloss:selection-among-alternatives -->Choosing among alternative mechanisms by trade study against the derived measures.<!-- /gloss -->
-- **MoE.** <!-- gloss:moe -->Acceptance at the functional layer: was the outcome what the stakeholder wanted? Whether a measure is a MoE or a MoP is a justified modeling judgment.<!-- /gloss -->
-- **MoP.** <!-- gloss:mop -->A performance measure that characterizes a requirement; the requirement also needs a threshold and a means of checking. Typically logical. MoP versus MoE is a justified modeling judgment.<!-- /gloss -->
+- **MoE.** <!-- gloss:moe -->A measure of stakeholder satisfaction with the outcome: a measurable attribute with a unit and a means of collecting data (for the toaster, how evenly the bread is toasted). Stated at the functional layer.<!-- /gloss -->
+- **MoP.** <!-- gloss:mop -->An engineering measure of performance: a measurable attribute with a unit and a means of collecting data (for the toaster, power efficiency). It characterizes a requirement, which also needs a threshold. Typically logical.<!-- /gloss -->
 - **TPM.** <!-- gloss:tpm -->The value assessed on a design element by analysis or simulation: the evidence against a MoP threshold.<!-- /gloss -->
 - **Allocation.** <!-- gloss:allocation -->Assigning functions to logical components, and components to parts: SEBoK's idea, SysML v2's allocate, Douglas's grouping.<!-- /gloss -->
 
