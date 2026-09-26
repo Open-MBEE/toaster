@@ -196,6 +196,8 @@ def test_departure_note_derived_from_differs_from(root: Path, repo: Path) -> Non
     assert page.read_text().count("differently from") == 1
 
 
+PROPOSED_VIDEO = ('glid:def-video--zeta a gl:Definition ; gl:source glid:src-video ; gl:term glid:term-zeta ; '
+                  'gl:text "t" ; gl:locator "1:00" ; gl:status gl:proposed .\n')
 ZETA = 'glid:term-zeta a gl:Term ; gl:label "zeta" .\n'
 
 
@@ -219,8 +221,7 @@ def test_own_term_refines_names_only_the_refined_sources(tmp_path: Path, repo: P
 def test_refines_of_an_unconfirmed_edge_is_not_named(tmp_path: Path, repo: Path) -> None:
     extra = "".join([
         edge("canon--zeta", "canon", "zeta", "p. 1"),
-        'glid:def-video--zeta a gl:Definition ; gl:source glid:src-video ; gl:term glid:term-zeta ; '
-        'gl:text "t" ; gl:locator "1:00" ; gl:status gl:proposed .\n',
+        PROPOSED_VIDEO,
         edge("tut--zeta", "tutorial", "zeta", "x", "; gl:refines glid:def-canon--zeta, glid:def-video--zeta "),
     ])
     line = tutorial_lines(make_page_root(tmp_path, extra, ZETA), repo)[0]
@@ -230,8 +231,7 @@ def test_refines_of_an_unconfirmed_edge_is_not_named(tmp_path: Path, repo: Path)
 
 def test_only_unconfirmed_refines_falls_back(tmp_path: Path, repo: Path) -> None:
     extra = "".join([
-        'glid:def-video--zeta a gl:Definition ; gl:source glid:src-video ; gl:term glid:term-zeta ; '
-        'gl:text "t" ; gl:locator "1:00" ; gl:status gl:proposed .\n',
+        PROPOSED_VIDEO,
         edge("tut--zeta", "tutorial", "zeta", "x", "; gl:refines glid:def-video--zeta "),
     ])
     assert tutorial_lines(make_page_root(tmp_path, extra, ZETA), repo) == ["  - This tutorial's gloss."]
