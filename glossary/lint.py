@@ -51,12 +51,30 @@ def load_rules(path: Path = RULES_FILE) -> list[Rule]:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
     except (OSError, tomllib.TOMLDecodeError) as e:
         raise LintConfigError(f"cannot read rules file {path}: {e}") from e
+    unknown = sorted(set(data) - {"rule"})
+    if unknown:
+        raise LintConfigError(f"unknown top-level key(s) {unknown} in {path} (only [[rule]] tables are allowed)")
+    raw_rules = data.get("rule", [])
+    if not isinstance(raw_rules, list) or not all(isinstance(r, dict) for r in raw_rules):
+        raise LintConfigError(f"'rule' in {path} must be a list of [[rule]] tables")
+    if not raw_rules:
+        raise LintConfigError(f"no rules loaded from {path}; refusing to lint with zero rules")
     rules = []
-    for i, raw in enumerate(data.get("rule", [])):
-        name = raw.get("id", f"#{i + 1}")
+    seen: set[str] = set()
+    for i, raw in enumerate(raw_rules):
+        name = raw.get("id") if isinstance(raw.get("id"), str) and raw.get("id") else f"#{i + 1}"
         for f in FIELDS:
             if f not in raw:
                 raise LintConfigError(f"rule {name!r}: missing field {f!r}")
+            if not isinstance(raw[f], str):
+                raise LintConfigError(f"rule {name!r}: field {f!r} must be a string, got {type(raw[f]).__name__}")
+        if not raw["id"]:
+            raise LintConfigError(f"rule {name!r}: id must not be empty")
+        if raw["id"] in seen:
+            raise LintConfigError(f"rule {name!r}: duplicate rule id")
+        seen.add(raw["id"])
+        if not raw["regex"]:
+            raise LintConfigError(f"rule {name!r}: regex must not be empty")
         if raw["severity"] not in SEVERITIES:
             raise LintConfigError(f"rule {name!r}: unknown severity {raw['severity']!r} (expected one of {SEVERITIES})")
         if raw["scope"] not in SCOPES:
@@ -105,21 +123,35 @@ def _key(h: Hit | dict) -> tuple[str, str, str]:
 
 
 def write_baseline(path: Path, hits: list[Hit]) -> None:
-    path.write_text(json.dumps([asdict(h) for h in hits], indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    try:
+        path.write_text(json.dumps([asdict(h) for h in hits], indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    except OSError as e:
+        raise LintConfigError(f"cannot write baseline {path}: {e}") from e
 
 
-def read_baseline(path: Path) -> set[tuple[str, str, str]]:
+def read_baseline(path: Path) -> Counter[tuple[str, str, str]]:
+    """Baseline as a multiset of (file, rule, text) keys: duplicates count."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return {_key(d) for d in data}
+        return Counter(_key(d) for d in data)
     except (OSError, ValueError, KeyError, TypeError) as e:
         raise LintConfigError(f"cannot read baseline {path}: {e}") from e
 
 
-def classify(hits: list[Hit], baseline: set[tuple[str, str, str]] | None) -> list[tuple[Hit, str | None]]:
+def classify(hits: list[Hit], baseline: Counter[tuple[str, str, str]] | None) -> list[tuple[Hit, str | None]]:
+    """A key is baselined only up to the number of times it appears in the baseline; further identical hits are new."""
     if baseline is None:
         return [(h, None) for h in hits]
-    return [(h, "baselined" if _key(h) in baseline else "new") for h in hits]
+    remaining = Counter(baseline)
+    out: list[tuple[Hit, str | None]] = []
+    for h in hits:
+        k = _key(h)
+        if remaining[k] > 0:
+            remaining[k] -= 1
+            out.append((h, "baselined"))
+        else:
+            out.append((h, "new"))
+    return out
 
 
 def exit_code(classified: list[tuple[Hit, str | None]]) -> int:

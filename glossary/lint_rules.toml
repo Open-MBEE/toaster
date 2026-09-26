@@ -5,7 +5,7 @@
 
 [[rule]]
 id = "tall-named"
-regex = '''\b(?-i:Tall)(?:['’]s\s+(?:three|worlds|seam|lens|framework)|\s+(?:seam|lens|three[- ]worlds)|\s*\(\s*(?:19|20)\d\d)'''
+regex = '''\b(?-i:Tall)\b|\bthree\s+worlds\b'''
 message = "The three-worlds lens is builder-facing; do not name Tall in learner content."
 why = "AGENTS.md 1.10"
 severity = "error"
@@ -29,7 +29,7 @@ scope = "learner"
 
 [[rule]]
 id = "stale-physical-layer"
-regex = '''\bphysical\s+architecture\s+layer\b'''
+regex = '''\bphysical\s+architecture\s+layers?\b'''
 message = "Layers are what/how/where; the system of interest is the subject."
 why = "AGENTS.md 1.5"
 severity = "error"

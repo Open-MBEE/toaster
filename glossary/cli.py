@@ -318,14 +318,14 @@ def lint_cmd(as_json: bool = JsonOpt, baseline: Path = BaselineOpt, write_baseli
         rules = lint_mod.load_rules(rules_file)
         hits = lint_mod.scan(repo, rules)
         base = lint_mod.read_baseline(baseline) if baseline else None
+        if write_baseline:
+            lint_mod.write_baseline(write_baseline, hits)
     except lint_mod.LintConfigError as e:
         _die(f"lint: {e}")
-    if write_baseline:
-        lint_mod.write_baseline(write_baseline, hits)
     classified = lint_mod.classify(hits, base)
     summ = lint_mod.summary(classified, rules)
     if as_json:
-        _emit({"hits": [{**h.__dict__, **({"status": s} if s else {})} for h, s in classified], "summary": summ})
+        _emit({"hits": [{**h.__dict__, "status": s} for h, s in classified], "summary": summ})
     else:
         for h, s in classified:
             typer.echo(lint_mod.format_hit(h, s))

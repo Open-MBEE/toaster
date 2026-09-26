@@ -38,13 +38,20 @@ def ids(hs: list[lint.Hit]) -> list[str]:
 # (rule id, text that must hit, text that must not)
 CASES = [
     ("tall-named", "See Tall's three worlds for this.", "Install the tall shelf; a tall seam of coal."),
-    ("tall-named", "the Tall seam is the join", "Tall is a common surname, as is Tallis."),
+    ("tall-named", "the Tall seam is the join", "Tallis is a surname; so is Metall; installation."),
+    ("tall-named", "Tall is named alone", "Metall and Tallis"),
+    ("tall-named", "the Three Worlds lens", "three or more worlds"),
     ("tall-named", "as in Tall (2020), the lens", "install (2020) and tall (2020) are not names"),
     ("concept-selection", "This is Concept Selection.", "concept and selection are separate; selection among alternatives"),
+    ("concept-selection", "concept selection here", "concept selections and concept selectional"),
     ("sub-behavior", "each sub-behavior runs", "the behavior of the subsystem"),
+    ("sub-behavior", "the sub-behaviors run", "the sub-behaviorial thing"),
     ("sub-behavior", "each Sub-Behaviour runs", "a sub behavior is not the hyphenated word"),
     ("stale-physical-layer", "the physical architecture layer", "the physical layer of the network architecture"),
+    ("stale-physical-layer", "the physical architecture layers", "the physical layer of the network architecture"),
     ("stale-partition", "partitioned into implementation-agnostic parts", "partitioned into three layers"),
+    ("stale-partition", "partitioned into implementation-agnostic parts", "The structure is implementation-agnostic."),
+    ("stale-partition", "was partitioned into implementation-agnostic", "departitioned into implementation-agnostic"),
     ("accepted-disposition", "The disposition is accepted here.", "The reviewer accepted the invoice; a disposition is recorded."),
     ("accepted-disposition", "an accepted disposition", "accepted practice, and a disposition. One two three four five six accepted"),
 ]
@@ -98,7 +105,8 @@ def test_cli_text_and_json_output_and_exit(tmp_path: Path) -> None:
     assert "total 2 (1 error, 1 warn)" in r.output
     j = json.loads(runner.invoke(app, ["lint", "--json", "--repo", str(tmp_path)]).output)
     assert j["summary"]["per_rule"]["sub-behavior"] == 1 and len(j["hits"]) == 2
-    assert {"file", "cell", "line", "rule", "text", "severity"} <= set(j["hits"][0])
+    assert {"file", "cell", "line", "rule", "text", "severity", "status"} <= set(j["hits"][0])
+    assert all(h["status"] is None for h in j["hits"])
 
 
 def test_warn_only_exits_zero_and_clean_exits_zero(tmp_path: Path) -> None:
@@ -128,6 +136,47 @@ def test_baseline_classification_and_exit_codes(tmp_path: Path) -> None:
     make_repo(repo, {"docs/b.md": "fine\n"})
     j = json.loads(runner.invoke(app, ["lint", "--json", "--repo", str(repo), "--baseline", str(base)]).output)
     assert j["hits"][0]["status"] == "baselined" and j["summary"]["baselined"] == 1
+
+
+def test_notebook_string_source_is_scanned(tmp_path: Path) -> None:
+    doc = {"cells": [{"cell_type": "markdown", "source": "a\nuse sub-behavior here"}, {"cell_type": "code", "source": "sub-behavior"}]}
+    make_repo(tmp_path, {"chapters/ch/a.ipynb": json.dumps(doc)})
+    hs = lint.scan(tmp_path, lint.load_rules())
+    assert [(h.cell, h.line, h.rule) for h in hs] == [(0, 2, "sub-behavior")]
+
+
+def test_rule_id_is_part_of_baseline_key(tmp_path: Path) -> None:
+    hit = lint.Hit("docs/a.md", None, 1, "rule-a", "foo", "error")
+    other = lint.Hit("docs/a.md", None, 1, "rule-b", "foo", "error")
+    base = tmp_path / "b.json"
+    lint.write_baseline(base, [hit])
+    cl = lint.classify([other, hit], lint.read_baseline(base))
+    assert [s for _, s in cl] == ["new", "baselined"]
+
+
+def test_baseline_is_count_based(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    base = tmp_path / "base.json"
+    make_repo(repo, {"docs/a.md": "sub-behavior\n"})
+    runner.invoke(app, ["lint", "--repo", str(repo), "--write-baseline", str(base)])
+    make_repo(repo, {"docs/a.md": "sub-behavior\nsub-behavior\n"})
+    r = runner.invoke(app, ["lint", "--repo", str(repo), "--baseline", str(base)])
+    assert r.exit_code == 1 and "(new)" in r.output and "(baselined)" in r.output
+    # baseline of two: two are fine, one is fine, zero is fine, three is new
+    runner.invoke(app, ["lint", "--repo", str(repo), "--write-baseline", str(base)])
+    assert runner.invoke(app, ["lint", "--repo", str(repo), "--baseline", str(base)]).exit_code == 0
+    make_repo(repo, {"docs/a.md": "sub-behavior\n"})
+    assert runner.invoke(app, ["lint", "--repo", str(repo), "--baseline", str(base)]).exit_code == 0
+    make_repo(repo, {"docs/a.md": "clean\n"})
+    assert runner.invoke(app, ["lint", "--repo", str(repo), "--baseline", str(base)]).exit_code == 0
+    make_repo(repo, {"docs/a.md": "sub-behavior\n" * 3})
+    assert runner.invoke(app, ["lint", "--repo", str(repo), "--baseline", str(base)]).exit_code == 1
+
+
+def test_json_status_null_without_baseline_and_write_to_missing_dir(tmp_path: Path) -> None:
+    make_repo(tmp_path / "r", {"docs/a.md": "sub-behavior\n"})
+    r = runner.invoke(app, ["lint", "--repo", str(tmp_path / "r"), "--write-baseline", str(tmp_path / "nodir" / "b.json")])
+    assert r.exit_code == 2 and "cannot write baseline" in r.output and "Traceback" not in r.output
 
 
 def test_new_warning_does_not_fail_baseline_run(tmp_path: Path) -> None:
@@ -173,3 +222,21 @@ def test_valid_custom_rules_file_and_case_insensitive(tmp_path: Path) -> None:
     make_repo(tmp_path, {"docs/a.md": "a FOO here\n"})
     r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(rules_file(tmp_path))])
     assert r.exit_code == 1 and "'FOO'" in r.output
+
+
+@pytest.mark.parametrize(("body", "needle"), [
+    ("[[rule]]\nid='r'\nregex=5\nmessage='m'\nwhy='w'\nseverity='error'\nscope='learner'\n", "field 'regex' must be a string"),
+    ("[[rule]]\nid='r'\nregex='x'\nmessage=1\nwhy='w'\nseverity='error'\nscope='learner'\n", "field 'message' must be a string"),
+    ("[[rule]]\nid=3\nregex='x'\nmessage='m'\nwhy='w'\nseverity='error'\nscope='learner'\n", "field 'id' must be a string"),
+    ("rule = 5\n", "list of [[rule]] tables"),
+    ("rule = [1, 2]\n", "list of [[rule]] tables"),
+    ("", "no rules loaded"),
+    ("[[rules]]\nid='r'\n", "unknown top-level key"),
+    ("[[rule]]\nid='r'\nregex='x'\nmessage='m'\nwhy='w'\nseverity='error'\nscope='learner'\n" * 2, "duplicate rule id"),
+    ("[[rule]]\nid='r'\nregex=''\nmessage='m'\nwhy='w'\nseverity='error'\nscope='learner'\n", "regex must not be empty"),
+])
+def test_rules_file_structural_errors(tmp_path: Path, body: str, needle: str) -> None:
+    p = tmp_path / "rules.toml"
+    p.write_text(body)
+    r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(p)])
+    assert r.exit_code == 2 and needle in r.output and "Traceback" not in r.output
