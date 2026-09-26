@@ -14,7 +14,7 @@ Decision:
 
 Rationale: Z's corrections; nothing else changed. Confirmed glossary definitions (mechanism, MoE, MoP) were edited at Z's direction in this walk-through and are shown to Z for review; `glossary check` passes.
 
-Z's decision: as above.
+Z's decision: as above. Read-back (2026-09-26): *mechanism* approved as written. *MoE* and *MoP*: revise for clarity and SEBoK compatibility, keep them as semantic overlays that help people define, measure and interpret criteria (a measure needs a unit and a means of collecting data), and do not overload them; redraft pending Z's approval. DL-204: Z chose option A (each kind of emergence is named where its value is first obtained).
 
 ## DL-016 | 2026-09-26 | Pass 1 (M1) | Glossary confirmation triage: 11 tutorial edges, 35 tutorialDefinition proposals
 

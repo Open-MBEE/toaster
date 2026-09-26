@@ -62,12 +62,12 @@ Use query tools and direct lookups (glossary CLI, `model.query`, known file rang
 - **The Tall seam**: the recipe requirement contradicts the rule; the recipe rewrite belongs to Pass 4 and evaluation of the seam to Pass 3.
 - **`docs/references.md`** lacks SEBoK, Åström and Murray, Sutton and Barto (and says a 6-part Douglas series while the playlist lists 5, to verify). **`docs/glossary.md`** is a stub with a wrong H1; the new glossary will regenerate it (`render` support is planned, not built).
 - **Orchestrator integration authority**; **ownership of implicit versus explicit constructions and of the diagrams that make them legible**; **A10's remit** (Ch5 and Ch6 authority).
-- **DL-204 (open):** in which chapter learners first meet "weak" and "strong" emergence (ACE options A: where each is first obtained, B: one paragraph at Ch5, C: never name them; recommended A).
+- **DL-204 (Z ruled A, 2026-09-26):** learners meet each kind of emergence where its value is first obtained: simple at the roll-up (Ch5/6), weak at the first simulation of a functional intent (Ch7), strong at sign-off (Ch10); one sentence each, no separate section. Chapter placement is finalized in Pass 4.
 - **Where each staged conformance check first applies** (for example port types), and the wording that reports it "open" (Z-27).
 - **Douglas timestamp** for the tongs-and-flamethrower story is unverified.
 - **Backup branch** `backup/pass1-before-trailer-strip` (local; holds the pre-rewrite commits) awaits Z's word to delete.
 - **Filing the gap issues** (`decisions/gap-issue-drafts.md`) awaits Z's review; nothing is filed.
-- **Definitions edited at Z's direction** (mechanism, MoE, MoP) await Z's read of the wording.
+- **Definitions edited at Z's direction:** mechanism approved as written by Z (2026-09-26). MoE and MoP: Z asked for a clearer, SEBoK-compatible, less overloaded wording that makes the measure measurable (a unit and a means of collecting data); a revised draft awaits Z's approval.
 
 ## 7. Content pass (Pass 4) inputs, as candidates the audit will confirm or drop
 
