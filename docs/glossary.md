@@ -9,7 +9,7 @@ An abstract definition has no direct instances: every instance must also be an i
 Sources
 
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.6.2, p. 40 (PDF 72)
+  - SysML v2.0 Language Specification, Sec. 7.6.2, p. 40
 
 ## allocation
 
@@ -18,13 +18,13 @@ Assigning functions to logical components, and components to parts: SEBoK's idea
 Sources
 
 - Idea
-  - SEBoK, System Requirements Definition, 'Allocation' (PDF 562)
+  - SEBoK, System Requirements Definition, 'Allocation'
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.15.1, p. 78 (PDF 110)
+  - SysML v2.0 Language Specification, Sec. 7.15.1, p. 78
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 4:12
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## appropriateness
 
@@ -33,7 +33,7 @@ Whether the inference, context or evidence is right for the argument's applicati
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.2, p. 9 (PDF 7)
+  - Hawkins et al. 2011, Sec. 3.2, p. 9
 
 ## architecture
 
@@ -42,7 +42,7 @@ The fundamental concepts or properties of a system in its environment, embodied 
 Sources
 
 - Idea
-  - SEBoK, Glossary: Architecture (PDF 1445)
+  - SEBoK, Glossary: Architecture
 
 ## asserted context
 
@@ -51,7 +51,7 @@ Each time context or assumption is introduced, it is asserted to be appropriate 
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.2, p. 9 (PDF 7)
+  - Hawkins et al. 2011, Sec. 3.2, p. 9
 
 ## asserted inference
 
@@ -60,7 +60,7 @@ Each time a claim is said to be supported by other claims, an assertion is made 
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.1, p. 9 (PDF 7)
+  - Hawkins et al. 2011, Sec. 3.1, p. 9
 
 ## asserted solution
 
@@ -69,7 +69,7 @@ Each time evidence is cited as a solution, it is asserted to be sufficient to su
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.3, p. 12 (PDF 10)
+  - Hawkins et al. 2011, Sec. 3.3, p. 12
 
 ## assumption
 
@@ -78,7 +78,7 @@ Contextual information enters an argument as context or assumption elements, eac
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.2, p. 9 (PDF 7)
+  - Hawkins et al. 2011, Sec. 3.2, p. 9
 
 ## assurance claim point (ACP)
 
@@ -87,7 +87,7 @@ The place in the safety argument where an assertion is made; a confidence argume
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3, p. 8 (PDF 6)
+  - Hawkins et al. 2011, Sec. 3, p. 8
 
 ## assurance deficit
 
@@ -96,7 +96,7 @@ Any knowledge gap that prohibits total confidence.
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 1, p. 4 (PDF 2)
+  - Hawkins et al. 2011, Sec. 1, p. 4
 
 ## behavior
 
@@ -105,10 +105,10 @@ The emergent outcome of a system in use; not prescribed but derived by analysis 
 Sources
 
 - Idea
-  - SEBoK, Glossary: Behavior, definition 1 (Ackoff) (PDF 1452)
-  - SEBoK, Glossary: Behavior, definition 2 (PDF 1452)
+  - SEBoK, Glossary: Behavior, definition 1 (Ackoff)
+  - SEBoK, Glossary: Behavior, definition 2
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## concept
 
@@ -117,7 +117,7 @@ The stage before any formal definition of the system: problem statement, needs a
 Sources
 
 - Idea
-  - SEBoK, Glossary: Concept Definition (PDF 1469)
+  - SEBoK, Glossary: Concept Definition
 
 ## confidence argument
 
@@ -126,7 +126,7 @@ The component that justifies the sufficiency of confidence in the safety argumen
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 1, p. 3 (PDF 1)
+  - Hawkins et al. 2011, Sec. 1, p. 3
 
 ## control law
 
@@ -135,7 +135,7 @@ A rule mapping the control error to the actuation command.
 Sources
 
 - Idea
-  - Astrom and Murray, Feedback Systems, Sec. 2.4 (PDF 60)
+  - Astrom and Murray, Feedback Systems, Sec. 2.4
 
 ## counter-evidence
 
@@ -144,7 +144,7 @@ Recognising assurance deficits guides the search for where counter-evidence may 
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.4, p. 14 (PDF 12)
+  - Hawkins et al. 2011, Sec. 3.4, p. 14
 
 ## decomposition
 
@@ -153,7 +153,7 @@ Decompose a function until implementable system elements can be identified: the 
 Sources
 
 - Idea
-  - SEBoK, Physical Architecture, activities (PDF 601)
+  - SEBoK, Physical Architecture, activities
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 4:02
 
@@ -164,7 +164,7 @@ A definition element classifies a kind of element (a classification of attribute
 Sources
 
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.6.1, p. 31 (PDF 63)
+  - SysML v2.0 Language Specification, Sec. 7.6.1, p. 31
 
 ## design
 
@@ -173,7 +173,7 @@ Activities that create concepts and models to answer an intended purpose; the ou
 Sources
 
 - Idea
-  - SEBoK, Glossary: Design (PDF 1481)
+  - SEBoK, Glossary: Design
 
 ## dynamical system
 
@@ -182,9 +182,9 @@ A system whose behavior changes over time, often in response to external stimula
 Sources
 
 - Idea
-  - Astrom and Murray, Feedback Systems, Sec. 1.1 (PDF 13)
-  - Astrom and Murray, Feedback Systems, Sec. 3.2 (PDF 82)
-  - Sutton and Barto, Reinforcement Learning, Sec. 3.1 (PDF 70)
+  - Astrom and Murray, Feedback Systems, Sec. 1.1
+  - Astrom and Murray, Feedback Systems, Sec. 3.2
+  - Sutton and Barto, Reinforcement Learning, Sec. 3.1
 
 ## emergence
 
@@ -193,8 +193,8 @@ Properties or behaviors that arise at the level of the whole and cannot be attri
 Sources
 
 - Idea
-  - SEBoK, Emergence and Complexity, 'Emergence in Systems' (PDF 231)
-  - SEBoK, Glossary: Emergence (PDF 1491)
+  - SEBoK, Emergence and Complexity, 'Emergence in Systems'
+  - SEBoK, Glossary: Emergence
 
 ## function
 
@@ -203,8 +203,8 @@ A transformation of input flows to output flows, with defined performance.
 Sources
 
 - Idea
-  - SEBoK, Glossary: Function, definition 1 (Ackoff) (PDF 1510)
-  - SEBoK, Glossary: Function, definition 3 (PDF 1510)
+  - SEBoK, Glossary: Function, definition 1 (Ackoff)
+  - SEBoK, Glossary: Function, definition 3
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 3:12
 
@@ -215,11 +215,11 @@ Intended behavior, stated solution-independently: functions with typed flows, th
 Sources
 
 - Idea
-  - SEBoK, Glossary: Functional Architecture (PDF 1511)
+  - SEBoK, Glossary: Functional Architecture
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 1:16
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## interface
 
@@ -228,9 +228,9 @@ A shared boundary between two functional units, defined by characteristics of th
 Sources
 
 - Idea
-  - SEBoK, Glossary: Interface, definition 1 (PDF 1541)
+  - SEBoK, Glossary: Interface, definition 1
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.14.1, p. 74 (PDF 106)
+  - SysML v2.0 Language Specification, Sec. 7.14.1, p. 74
 
 ## judgment
 
@@ -239,7 +239,7 @@ Completely mitigating all assurance deficits is not normally achievable, so a ju
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.4, p. 14 (PDF 12)
+  - Hawkins et al. 2011, Sec. 3.4, p. 14
 
 ## logical architecture
 
@@ -248,11 +248,13 @@ Prescribed mechanisms and policies carried by logical components, plus the inter
 Sources
 
 - Idea
-  - SEBoK, Glossary: Logical Architecture (PDF 1554)
+  - SEBoK, Glossary: Logical Architecture
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 1:56
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
+
+This tutorial uses this term differently from SEBoK.
 
 ## logical component
 
@@ -261,13 +263,13 @@ The prescribed carrier of a mechanism, with its interfaces; modeled here as an a
 Sources
 
 - Idea
-  - SEBoK, System Architecture Design Definition (platform independent model) (PDF 571)
+  - SEBoK, System Architecture Design Definition (platform independent model)
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.11.1, p. 58 (PDF 90)
+  - SysML v2.0 Language Specification, Sec. 7.11.1, p. 58
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 4:12
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## measure of effectiveness (MoE)
 
@@ -276,11 +278,11 @@ A measure of stakeholder satisfaction with the outcome: a measurable attribute w
 Sources
 
 - Idea
-  - SEBoK, Glossary: Measure of Effectiveness (MoE) (PDF 1562)
+  - SEBoK, Glossary: Measure of Effectiveness (MoE)
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 9.3.4.2.1, p. 527 (PDF 559)
+  - SysML v2.0 Language Specification, Sec. 9.3.4.2.1, p. 527
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## measure of performance (MoP)
 
@@ -289,11 +291,11 @@ An engineering measure of performance: a measurable attribute with a unit and a 
 Sources
 
 - Idea
-  - SEBoK, Glossary: Measure of Performance (MoP) (PDF 1562)
+  - SEBoK, Glossary: Measure of Performance (MoP)
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 9.3.4.2.2, p. 527 (PDF 559)
+  - SysML v2.0 Language Specification, Sec. 9.3.4.2.2, p. 527
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above and requirement in SysML v2.0 Language Specification.
 
 ## mechanism
 
@@ -302,7 +304,7 @@ A prescribed, comparatively deterministic input-to-output relation: a modeling d
 Sources
 
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines dynamical system in Astrom and Murray, Feedback Systems; Sutton and Barto, Reinforcement Learning.
 
 ## part definition
 
@@ -311,7 +313,7 @@ A part can be a purely logical component without implementation constraints, a p
 Sources
 
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.11.1, p. 58 (PDF 90)
+  - SysML v2.0 Language Specification, Sec. 7.11.1, p. 58
 
 ## perform action
 
@@ -320,7 +322,7 @@ A perform action usage in a part definition or usage makes the part the performe
 Sources
 
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.17.6, p. 104 (PDF 136)
+  - SysML v2.0 Language Specification, Sec. 7.17.6, p. 104
 
 ## physical architecture
 
@@ -329,11 +331,11 @@ Concrete parts that realize the logical components and confer values; each must 
 Sources
 
 - Idea
-  - SEBoK, Glossary: Physical Architecture (PDF 1587)
+  - SEBoK, Glossary: Physical Architecture
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 2:05
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## policy
 
@@ -342,10 +344,10 @@ Decision guidance that selects inputs given the state, typically to close the lo
 Sources
 
 - Idea
-  - Sutton and Barto, Reinforcement Learning, Sec. 1.3 (PDF 28)
-  - Sutton and Barto, Reinforcement Learning, Sec. 3.5 (PDF 80)
+  - Sutton and Barto, Reinforcement Learning, Sec. 1.3
+  - Sutton and Barto, Reinforcement Learning, Sec. 3.5
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above and control law in Astrom and Murray, Feedback Systems.
 
 ## query
 
@@ -354,7 +356,7 @@ A query selects Data objects from a project by scope, the properties to return, 
 Sources
 
 - Formal semantics
-  - Systems Modeling API and Services, Query resource: scope, select, where, orderBy (PDF 39)
+  - Systems Modeling API and Services, Query resource: scope, select, where, orderBy
 
 ## requirement
 
@@ -363,9 +365,9 @@ A statement of an operational, functional or design characteristic or constraint
 Sources
 
 - Idea
-  - SEBoK, Glossary: Requirement (PDF 1607)
+  - SEBoK, Glossary: Requirement
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.21.1, p. 129 (PDF 161)
+  - SysML v2.0 Language Specification, Sec. 7.21.1, p. 129
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 4, 1:43
 
@@ -376,7 +378,7 @@ The component of an assured safety argument that documents the arguments and evi
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 1, p. 3 (PDF 1)
+  - Hawkins et al. 2011, Sec. 1, p. 3
 
 ## selection among alternatives
 
@@ -385,11 +387,11 @@ Choosing among alternative mechanisms by trade study against the derived measure
 Sources
 
 - Idea
-  - SEBoK, Article: Analysis and Selection between Alternative Solutions (PDF 340)
+  - SEBoK, Article: Analysis and Selection between Alternative Solutions
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 13:40
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## simulation
 
@@ -398,7 +400,7 @@ A model that behaves like a given system when given controlled inputs.
 Sources
 
 - Idea
-  - SEBoK, Glossary: Simulation, definition 1 (PDF 1623)
+  - SEBoK, Glossary: Simulation, definition 1
 
 ## specialization
 
@@ -407,8 +409,8 @@ A definition is specialized by subclassification; the specialized definition inh
 Sources
 
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.6.1, p. 32 (PDF 64)
-  - KerML, Language overview: specialization (PDF 51)
+  - SysML v2.0 Language Specification, Sec. 7.6.1, p. 32
+  - KerML, Language overview: specialization
 
 ## sufficiency
 
@@ -417,7 +419,7 @@ For inductive arguments, the probable truth of the premises is sufficient to est
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.1, p. 9 (PDF 7)
+  - Hawkins et al. 2011, Sec. 3.1, p. 9
 
 ## technical performance measure (TPM)
 
@@ -426,9 +428,9 @@ The value assessed on a design element by analysis or simulation: the evidence a
 Sources
 
 - Idea
-  - SEBoK, Glossary: Technical Performance Measure (TPM), definition 1 (PDF 1663)
+  - SEBoK, Glossary: Technical Performance Measure (TPM), definition 1
 - Tutorial
-  - This tutorial, AGENTS.md Part 1, section 1.5 (1.6 for behavior)
+  - This tutorial's gloss refines the sources above.
 
 ## traceability
 
@@ -437,7 +439,7 @@ The degree to which a relationship can be established between two or more develo
 Sources
 
 - Idea
-  - SEBoK, Glossary: Traceability (PDF 1666)
+  - SEBoK, Glossary: Traceability
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 4, 9:43
 
@@ -448,7 +450,7 @@ Freedom from flaw, argued by considering the processes that generated the artefa
 Sources
 
 - Idea
-  - Hawkins et al. 2011, Sec. 3.2, p. 10 (PDF 8)
+  - Hawkins et al. 2011, Sec. 3.2, p. 10
 
 ## usage
 
@@ -457,7 +459,7 @@ A usage is a usage of a definition in a context; it must be defined by at least 
 Sources
 
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.6.1, p. 31 (PDF 63)
+  - SysML v2.0 Language Specification, Sec. 7.6.1, p. 31
 
 ## validation
 
@@ -466,7 +468,7 @@ Confirmation, through objective evidence, that stakeholder requirements for an i
 Sources
 
 - Idea
-  - SEBoK, Glossary: Validation, definition 1a (PDF 1671)
+  - SEBoK, Glossary: Validation, definition 1a
 
 ## verification
 
@@ -475,9 +477,9 @@ Confirmation, through objective evidence, that specified requirements have been 
 Sources
 
 - Idea
-  - SEBoK, Glossary: Verification, definition 1a (PDF 1674)
+  - SEBoK, Glossary: Verification, definition 1a
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.24.1, p. 141 (PDF 173)
+  - SysML v2.0 Language Specification, Sec. 7.24.1, p. 141
 
 ## view
 
@@ -486,4 +488,4 @@ A view definition specifies how to create a view artifact (a rendering of inform
 Sources
 
 - Formal semantics
-  - SysML v2.0 Language Specification, Sec. 7.26.1, p. 149 (PDF 181)
+  - SysML v2.0 Language Specification, Sec. 7.26.1, p. 149
