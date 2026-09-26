@@ -18,7 +18,7 @@ See [setup](../../docs/setup.md) to provision Python, Node, and the OpenSysML bi
 
 ## Method
 
-Notebook 01 adds `ApplyHeat`, an action definition that sequences power input through `DeliveredEnergy` to an energy output using `first`/`then` and a nested assign step. Notebook 02 adds `Start`, `Finish`, and `Cancel` — three item definitions that name the typed flows entering and leaving the cycle. Notebook 03 introduces the first `asserted_inference` record: a parent claim (the decomposition is complete) supported by a child claim (the calculate sub-action accounts for all parameters).
+Notebook 01 adds `ApplyHeat`, an action definition that sequences power input through `DeliveredEnergy` to an energy output using `first`/`then` and a nested assign step. `ApplyHeat` corresponds to "apply thermal energy" in the video's decomposition; the full toaster functional architecture from Part 3 covers approximately 15 verb-noun functions. This tutorial models `ApplyHeat` as one worked example to teach the `action def` construct — the same approach applies to the remaining functions. Notebook 02 adds `Start`, `Finish`, and `Cancel` — three item definitions that name the typed flows entering and leaving the cycle. Notebook 03 introduces the first `asserted_inference` record: a parent claim (the decomposition is complete) supported by a child claim (the calculate sub-action accounts for all parameters).
 
 ## Expected result
 

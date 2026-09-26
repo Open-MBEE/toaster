@@ -24,6 +24,8 @@ Every agent on this project knows Parts 3 and 4 of Brian Douglas's *Systems Engi
 
 **Requirement anatomy.** Every requirement has three parts: a description of the need, a rationale for why it is valid, and a verification method. A requirement without all three is incomplete.
 
+**Verification method types.** Inspection, analysis, test, and demonstration. These four types classify how compliance will be checked and determine what evidence counts as meeting the requirement.
+
 **Requirement types.** Functional ("shall convert electrical energy to thermal energy"), performance ("capable of up to 100 W conversion"), constraint ("mass less than 5 kg"), environmental, human factors, reliability, safety. The toaster illustrates each type.
 
 **Requirement hierarchy.** Requirements cascade from stakeholder needs down to components. The toaster examples span from "must fit on a kitchen countertop" (system level) through spring specifications at the component level. Parent requirements decompose into child requirements; every child must be traceable to a parent.

@@ -23,6 +23,8 @@ The four notebooks build the model in one direction: from the most abstract (the
 
 By the end of notebook 04, `Toaster` owns a `HeatingSystem` part and a `ControlSystem` part, both of which specialize `ToastingSystem`. That structure is the starting point for Chapter 2.
 
+In the video's terms, this is the physical architecture layer: the structural types that implement the functions Chapter 4 introduces. Chapter 1 builds the physical hierarchy first because `part def` is the foundational SysML v2 construct; the functional layer (what those parts do) comes in Chapter 4.
+
 ## Expected result
 
 The Ch1 cumulative model contains:
