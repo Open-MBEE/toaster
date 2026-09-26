@@ -5,6 +5,8 @@ The orchestrator writes one per task and passes it, with the subagent's role fil
 ```
 CONTRACT <id> | <date>
 Role:           <.claude/agents/<role>.md>, model <explicit id>, effort <level>
+Reviewer:       <role>, model <explicit id, and different from the author's model>
+State:          <ready | in-progress | in-review | escalated | blocked | done | wont-do>, per decisions/task-states.md
 Task:           <one paragraph, what to produce>
 Context:        <where to look: paths, glossary term ids, decision records>
 Non-goals:      <what the subagent must not do or change>
@@ -16,4 +18,4 @@ Report:         branch and commit, model run on, results of every check, everyth
                 every premise that did not hold
 ```
 
-Rules: the worktree is created by the orchestrator (`git worktree add <path> -b <branch> <base>`); the model is pinned in the launch; commits are plain, with no co-author trailers; the subagent does not merge or push.
+Rules: the author and the reviewer run on different models (no role reviews its own output); a blocked task records `blocked_on`, `unblock_when` and `owner`; the worktree is created by the orchestrator (`git worktree add <path> -b <branch> <base>`); the model is pinned in the launch; commits are plain, with no co-author trailers; the subagent does not merge or push.

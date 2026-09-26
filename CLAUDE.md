@@ -19,7 +19,7 @@ SEBoK (ideas), the OMG SysML v2 / API / KerML specs (formal semantics), Hawkins
 policy only), Douglas (story and the toaster example). OpenSysML and sysml-toolkit
 are toolchain, cited only to flag spec gaps.
 
-Roles (.claude/agents/): `orchestrator` (run the main session as it with `claude --agent orchestrator`), `layer-auditor`, `ace`. Each pins its model; work contracts follow `decisions/work-contract-template.md`.
+Roles (.claude/agents/): `orchestrator` (run the main session as it with `claude --agent orchestrator`), `layer-auditor`, `builder`, `reviewer`, `ace`. Each pins its model; author and reviewer run on different models; work contracts follow `decisions/work-contract-template.md` and task states `decisions/task-states.md`.
 
 Skills (.claude/skills/ directory):
 - architecture-layers       — what / how / where boundary tests, spec idioms, per-layer audit checklist, source map
