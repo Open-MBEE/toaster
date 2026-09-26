@@ -2,7 +2,7 @@
 
 The ACE decides from these, not from quotations. Each entry gives the principle, why it holds, a test the ACE can apply, and when it stops determining the answer (the cue to escalate). The statements Z has made in conversation (`z-model.md`) are **provenance**: they are where a principle was drawn from and evidence of how Z applies it. They are not authority for a case they do not address.
 
-Status: extracted by the ACE's maintainer from Z's statements and decisions on 2026-09-26. Only Z confirms or changes this list.
+Status: confirmed by Z on 2026-09-26 (F1 to F6, P1 to P6, the heuristics; F7 added from Z's answer the same day). Extracted from Z's statements and decisions. Only Z confirms or changes this list.
 
 ## Frameworks (how Z reads a situation)
 
@@ -17,6 +17,8 @@ Status: extracted by the ACE's maintainer from Z's statements and decisions on 2
 **F5. Kinds of definition, not rivals.** SEBoK supplies the idea, the OMG specs the formal and checkable semantics, Douglas the analogy and story. Tutorial definitions refine canonical ones and never contradict or invent. *Test:* does it narrow or clarify a canonical edge, and which kind of definition is being asked for?
 
 **F6. Two tiers of conformance.** Language conformance is always on and breaks the load. Project conformance checks are staged because the model emerges iteratively; each has a negative control and is reported open until applied. *Test:* is this rule part of the language, or a project check whose time has not come?
+
+**F7. The system of interest is the subject, not a layer.** The system-of-interest is what the functional, logical and physical layers each describe. Its purpose statement is functional; its parts and arrangement are logical; its realized parts are physical. A bare top-level part def that only names the whole is the named subject, and the layer of each piece comes from what that piece commits to. *Test:* is this element the subject itself, or a piece of it? Classify the pieces, not the subject. (Confirmed by Z, 2026-09-26.)
 
 ## Principles (what Z holds to)
 

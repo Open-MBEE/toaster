@@ -8,7 +8,7 @@ Purpose: exercise subagent, orchestrator, ACE, Z on one real, low-risk task befo
 2. **Layer auditor** verified the premises (three did not hold), audited every element, wrote `decisions/audits/ch01-layer-audit.md`, and committed one file with a plain message. It did not fix anything and left contested calls as open questions with a recommended default.
 3. **Orchestrator** checked the diff against the blast zone (one file, as contracted), integrated the commit (`171c4ef`), removed the worktree, and routed the open questions to the ACE.
 4. **ACE** (**Fable 5.1**, pinned) ruled all five items (F-1 confirmed; OQ-1 narrowed; OQ-2 to OQ-4 confirmed the auditor's defaults; OQ-5 no action) and returned log-entry text. The orchestrator numbered and committed it as DL-018 to DL-022.
-5. **Z**: nothing was escalated. One ruling is flagged for Z's skim (below).
+5. **Z**: one item came back to Z after the run. Z reviewed the logs and asked that ACE rulings rest on principles, not quotations; DL-019 (OQ-1) did not survive that test, was escalated, and Z ruled that the system-of-interest is the subject the layers describe (framework F7). DL-018 to DL-022 were rewritten in the new log format.
 
 ## Findings about the chain itself
 

@@ -16,6 +16,8 @@ Ask in this order and stop at the first "yes":
 3. **Does it name a specific part def or give a value that only a chosen part has?** Then it is **physical**: a concrete part, its attribute values, a TPM.
 4. **Is it a result the design is expected to produce (a cycle time, an efficiency, a stability margin)?** Then it is *emergent*: it is derived by analysis and compared with intent. It is never entered as a choice.
 
+The **system of interest** (the toaster itself) is the subject all three layers describe, not a layer. Classify its pieces: its purpose statement (functional), its parts and arrangement (logical), its realized parts and values (physical).
+
 ## Toaster examples
 
 | Statement | Layer | Why |
