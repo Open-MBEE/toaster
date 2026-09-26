@@ -40,6 +40,16 @@ Determined: yes, after F7.
 Extension: no.
 Provenance: AGENTS.md 1.5 (logical-to-physical test, Numbers, allocation is not realization); z-model Z-3, Z-8, Z-1; audit report OQ-3, F-2, F-4.
 
+## DL-025 | 2026-09-26 | PASS2-004 | Conformance statuses: add blocked (with unblock criterion) and wont-do; supersedes DL-024's "no fourth status"
+
+Path: Escalated to Z (Z's own ruling; the ACE had recommended against a fourth status in DL-024 and flagged the alternative)
+Decision: Z ruled that project checks carry five statuses: `open` (not yet applied: unscheduled or stage not reached), `passed`, `failed`, `blocked` (cannot be applied until a stated condition holds, and the result records that condition), and `wont-do` (dropped because something changed and the check is no longer needed, with the reason and the change that removed the need). A project check on a model that fails language conformance is `blocked`, with the unblock criterion "language conformance passes (model.ok is True)"; it is not `open`. The same vocabulary and a basic task state machine (ready, in-progress, in-review, escalated, blocked, done, wont-do) coordinate the orchestrator's work (`decisions/task-states.md`); the orchestrator proposes `wont-do` and the ACE rules.
+Principles applied: F6 (tier of the check), P5 (record the reason), P4 (a status must earn its place), P6 (Z keeps the decision).
+Reasoning: DL-024 argued that a `blocked` status would not earn its place because the reason field carried the cause. Z decided otherwise: a distinct status with a checkable unblock criterion makes coordination explicit (what is waiting, on what, and when it may proceed) and lets the orchestrator and the ACE use clear language. The ACE's alternative (B) in DL-024 was the one chosen. `wont-do` records scope changes without deleting the reasoning.
+Determined: yes, by Z.
+Extension: yes (applies the coordination vocabulary to conformance results).
+Provenance: Z, 2026-09-26; DL-024 (option B, "blocked", flagged there as the principled alternative); `decisions/task-states.md`.
+
 ## DL-024 | 2026-09-26 | PASS2-002 | Project checks report open, with reason, when the model fails language conformance
 
 Path: Handled by ACE (extension flagged for Z's skim)
