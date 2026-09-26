@@ -24,7 +24,7 @@ Sources
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 4:12
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines Douglas, Systems Engineering (MathWorks), SEBoK and SysML v2.0 Language Specification.
 
 ## appropriateness
 
@@ -108,7 +108,7 @@ Sources
   - SEBoK, Glossary: Behavior, definition 1 (Ackoff)
   - SEBoK, Glossary: Behavior, definition 2
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines SEBoK.
 
 ## concept
 
@@ -219,7 +219,7 @@ Sources
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 1:16
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines Douglas, Systems Engineering (MathWorks) and SEBoK.
 
 ## interface
 
@@ -252,7 +252,7 @@ Sources
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 1:56
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines Douglas, Systems Engineering (MathWorks).
 
 This tutorial uses this term differently from SEBoK.
 
@@ -269,7 +269,7 @@ Sources
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 4:12
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines Douglas, Systems Engineering (MathWorks), SEBoK and SysML v2.0 Language Specification.
 
 ## measure of effectiveness (MoE)
 
@@ -282,7 +282,7 @@ Sources
 - Formal semantics
   - SysML v2.0 Language Specification, Sec. 9.3.4.2.1, p. 527
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines SEBoK.
 
 ## measure of performance (MoP)
 
@@ -295,7 +295,7 @@ Sources
 - Formal semantics
   - SysML v2.0 Language Specification, Sec. 9.3.4.2.2, p. 527
 - Tutorial
-  - This tutorial's gloss refines the sources above and requirement in SysML v2.0 Language Specification.
+  - This tutorial's gloss refines SEBoK, SysML v2.0 Language Specification and requirement in SysML v2.0 Language Specification.
 
 ## mechanism
 
@@ -335,7 +335,7 @@ Sources
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 2:05
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines Douglas, Systems Engineering (MathWorks) and SEBoK.
 
 ## policy
 
@@ -347,7 +347,7 @@ Sources
   - Sutton and Barto, Reinforcement Learning, Sec. 1.3
   - Sutton and Barto, Reinforcement Learning, Sec. 3.5
 - Tutorial
-  - This tutorial's gloss refines the sources above and control law in Astrom and Murray, Feedback Systems.
+  - This tutorial's gloss refines Sutton and Barto, Reinforcement Learning and control law in Astrom and Murray, Feedback Systems.
 
 ## query
 
@@ -391,7 +391,7 @@ Sources
 - Story
   - Douglas, Systems Engineering (MathWorks), Part 3, 13:40
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines Douglas, Systems Engineering (MathWorks) and SEBoK.
 
 ## simulation
 
@@ -430,7 +430,7 @@ Sources
 - Idea
   - SEBoK, Glossary: Technical Performance Measure (TPM), definition 1
 - Tutorial
-  - This tutorial's gloss refines the sources above.
+  - This tutorial's gloss refines SEBoK.
 
 ## traceability
 
