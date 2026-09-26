@@ -184,3 +184,72 @@ with the formal `#verificationMethod` annotation and remove the gap comment.
 **Spec:** SysML v2 formal/2026-03-02 §7.24 Table 22 (Verification Methods Compartment)
 **Upstream issue:** Open-MBEE/OpenSysML#608
 **Toaster issue:** Open-MBEE/toaster#19
+
+## D-014: Mismatched port types on a connection are not diagnosed (gap G4)
+
+OpenSysML v0.9.0 accepts `connect outlet.o to torch.fuelIn` between a `PowerPort` and a `FuelPort`, and an
+`interface def` with `PowerPort` ends bound to a `FuelPort`, with `ok=True` and no diagnostic. sysml-toolkit v0.9.1
+`check` and `lint` (default rules) accept it too. The KerML 1.1 Beta 2 text searched has no validation constraint
+requiring compatible end types (`validateConnectorRelatedFeatures` requires only two related features), so this
+is treated as a **staged project conformance check** (AGENTS.md 1.9), not as a language-conformance bug.
+Probe record: `decisions/probes.md`. Affects the interface chapters (the chapter that first declares a connection).
+
+**Workaround:** `toaster.query.port_type_mismatches(model)` (tested; recipe 5 in `opensysml-query`), applied from the
+chapter and section where the connection is declared complete, with a negative control; reported open before then.
+**Resolution:** Re-read the connector semantics in KerML 8.4 and SysML 7.12 to 7.14 before filing. If nothing in the
+spec requires type conformance, file only a feature request (see `decisions/gap-issue-drafts.md`).
+**Upstream issue:** not filed (draft awaiting Z's review)
+**Toaster issue:** not filed
+
+## D-015: `model.query()` does not see unnamed connectors, `satisfy`, or metadata (gap G1; extends D-001)
+
+Probed 2026-09-26 (OpenSysML v0.9.0): named `allocation`, `connection` and `flow` are visible to `model.query()`;
+unnamed ones, every `satisfy`/`verify` (cannot be named), and `MetadataUsage` are visible only in
+`json.loads(model.to_api_json().content)`. A named `perform action` appears as `ActionUsage`, and inherited
+members are not expanded. The API spec's `getElements` returns "all the elements" at a commit (API and Services v1.0,
+7.2.2). The repository workaround is one module, `src/toaster/query.py` (`ApiIndex`), tested in `tests/test_query.py`.
+Convention adopted: name allocations, connections and flows in the model.
+
+**Workaround:** `toaster.query` helpers; JSON route for satisfy, metadata and unnamed connectors.
+**Resolution:** When `model.query()` exposes all elements, change `ApiIndex` only.
+**Upstream issue:** not filed (draft awaiting Z's review)
+**Toaster issue:** not filed
+
+## D-016: Editor API does not support `perform action` authoring (gap G5)
+
+`Editor.add_member()` has no kind for `perform action x : ActionDef` (SysML v2 formal/2026-03-02 7.17.6), the
+construct that records which logical component is responsible for a function. Loading it as notation works.
+Sibling of D-008 (`allocate`), D-009 (`flow`) and D-010 (state).
+
+**Workaround:** Load `perform action` declarations via `conn.load_from_content(source, strict=False)` (Pattern B).
+**Resolution:** Add `"perform"` support to the authoring allowlist. Confirm against the current Editor before filing.
+**Upstream issue:** not filed (draft awaiting Z's review)
+**Toaster issue:** not filed
+
+## D-017: `import` across separately loaded sources does not resolve in OpenSysML (gap G7)
+
+A chapter source that imports an implicit part's package fails with `unresolved reference`, both through
+`conn.load_from_content` and `conn.load(path)` from the same directory; concatenating the sources into one load
+works. sysml-toolkit v0.9.1 resolves the same imports across files (`sysmlv2 check base.sysml chapter.sysml`,
+`Session.from_files`), so the capability exists elsewhere in the ecosystem. Needed for explicit and implicit
+construction (AGENTS.md 1.7).
+
+**Workaround:** assemble by concatenation: join the SysML text yielded by the implicit modules and the chapter's
+explicit increment into one string and load once. Concatenation loses which source an element came from, so give
+implicit parts their own package (or a metadata marker) to keep provenance queryable.
+**Resolution:** Check the spec's package-import and the API's project and commit model for the multi-resource
+resolution it requires; file only what the spec requires. Re-test when OpenSysML changes.
+**Upstream issue:** not filed (draft awaiting Z's review)
+**Toaster issue:** not filed
+
+## D-018: sysml-toolkit summary mode is not reachable from the CLI or Python (v0.9.1)
+
+The v0.9.1 changelog adds summary mode for large tree graphs (collapsed containers with hidden counts, member and note
+limits). It is `VizOptions::summary` in the Rust `sysmlv2-viz` crate and the WebAssembly controls only;
+`sysmlv2 viz` and `Session.to_plantuml` have no such option (probed 2026-09-26, `decisions/probes.md`). Collapsing
+implicit parts in notebook diagrams is therefore not available through the toolkit's CLI or Python API.
+
+**Workaround:** choose the `element` root, the view and the filtered model slice per figure (AGENTS.md 1.7).
+**Resolution:** Re-check after the next toolkit release, or request a CLI and Python option.
+**Upstream issue:** not filed (draft awaiting Z's review)
+**Toaster issue:** not filed
