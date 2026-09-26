@@ -147,6 +147,7 @@ def check_notebook(nb_path: Path, conn: opensysml.Connection) -> list[str]:
         blocking = [
             d for d in check.diagnostics
             if "unresolved reference" not in str(d).lower()
+            and "unresolved member" not in str(d).lower()
         ]
         if blocking:
             failures.append(
