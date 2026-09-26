@@ -108,7 +108,7 @@ from toaster.query import get_satisfy_relationships
 satisfies = get_satisfy_relationships(model)    # list of dicts with @type, subsets, subject
 ```
 
-`get_satisfy_relationships()` is the single point of the `to_api_json()` workaround (it must read `.content`; the version in `src/toaster/query.py` is being corrected in Pass 1, and `opensysml-query` has tested recipes meanwhile).
+`get_satisfy_relationships()` is the single point of the `to_api_json()` workaround (it reads `.content`; corrected and tested in Pass 1, see `tests/test_query.py` and the `opensysml-query` skill).
 When D-001 is resolved upstream, only that function changes.
 
 ## Model query (Ch9–10)

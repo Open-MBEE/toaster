@@ -171,7 +171,7 @@ The API JSON `@id` uses `__` for `::` and escapes `_` (`named_flow` becomes `nam
 | Mismatched port types (a power port to a fuel port) are not diagnosed (G4) | Recipe 5, applied as a staged project conformance check. |
 | `import` across separately loaded sources does not resolve (G7) | Assemble by concatenation: join the SysML text yielded by the implicit modules and the chapter's explicit increment into one string and load that. Concatenation loses which source an element came from, so give implicit parts their own package (or a metadata marker) if provenance must stay queryable. |
 | `conn.load(path)` exists but does not resolve imports either | Same workaround. |
-| No `requirement_coverage` in `src/toaster/query.py` yet, and its allocation and satisfy helpers are being corrected in this pass | Use the recipes above until the corrected helpers land, then call those. |
+| Writing these joins by hand in a notebook | Import the tested helpers from `toaster.query`: `find_connectors`, `find_allocations`, `allocations_for`, `satisfy_relationships`, `perform_relationships`, `requirement_coverage`, `specializes_transitively`, `port_type_mismatches`. The recipes above show what they do; `tests/test_query.py` covers them against `models/ch08-cumulative.sysml`. |
 
 The sysml-toolkit Python binding (`sysmlv2.Session.from_files`) does resolve imports across files and sees unnamed elements through `elements_of_metaclass`. It is toolchain, not a chapter dependency (see `decisions/probes.md`).
 
