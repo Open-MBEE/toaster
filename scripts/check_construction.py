@@ -118,11 +118,19 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     5: [
         {
             "path": "chapters/ch05-architecture/02-allocate.ipynb",
-            "context_stubs": [],
+            # allocate references ApplyHeat (Ch4) and HeatingSystem (Ch1)
+            "context_stubs": [
+                "action def ApplyHeat;",
+                "part def HeatingSystem;",
+            ],
         },
         {
             "path": "chapters/ch05-architecture/03-interfaces.ipynb",
-            "context_stubs": [],
+            # BreadLoader/Ejector use Start/Finish item defs (defined in Ch4)
+            "context_stubs": [
+                "item def Start;",
+                "item def Finish;",
+            ],
         },
     ],
     7: [
