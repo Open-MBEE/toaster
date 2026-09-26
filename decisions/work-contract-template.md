@@ -18,4 +18,6 @@ Report:         branch and commit, model run on, results of every check, everyth
                 every premise that did not hold
 ```
 
+Merge gate: the orchestrator may refuse to merge (out-of-zone or noisy diff, unresolved open question, unmet premise, unrun check, same-model or failed review) and returns the task with a PUSH-BACK note; see decisions/task-states.md.
+
 Rules: the author and the reviewer run on different models (no role reviews its own output); a blocked task records `blocked_on`, `unblock_when` and `owner`; the worktree is created by the orchestrator (`git worktree add <path> -b <branch> <base>`); the model is pinned in the launch; commits are plain, with no co-author trailers; the subagent does not merge or push.

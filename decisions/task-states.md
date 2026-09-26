@@ -50,6 +50,30 @@ Default:     <recommended answer>
 
 `scope-drop` proposes `wont-do`; `unblock-dispute` is a disagreement about whether `unblock_when` is met. The ACE answers RULE or ESCALATE with the log entry (see `ace-protocol`); the orchestrator records the outcome and moves the task.
 
+## Merge gate and push-back
+
+The orchestrator owns the merge and may **refuse it**. A task does not leave `in-review` for `done` while any of these hold, and the orchestrator sends it back to `in-progress` with a push-back note:
+
+- the diff touches paths outside the blast zone;
+- the diff is noisy: unrelated reformatting, renames or edits that the task did not need (the author cleans it, the orchestrator does not);
+- an open question is unresolved (the author or reviewer raised it and nobody has answered);
+- a premise did not hold and the contract was not corrected;
+- an acceptance check was not run or its output was not pasted, or the orchestrator's re-run disagrees;
+- the reviewer's model is the same as the author's, or the review found a FAIL or a CANT_TELL;
+- a gap is worked around without a record, or a commit carries a co-author trailer.
+
+Push-back note, sent to the author:
+
+```
+PUSH-BACK
+Task:      <id>
+Refused:   <which merge-gate condition(s)>
+Required:  <what must change, as checkable items: paths to revert, checks to re-run, the question that needs an answer and from whom>
+Route:     <who answers an open question: the orchestrator, the ACE, another subagent, or Z through the ACE>
+```
+
+An open question is resolved by an answer recorded in the task, not by the author choosing: questions that need judgment go to the ACE in the `ESCALATE-TO-ACE` form and the task waits in `escalated` (or `blocked`, with an `unblock_when`). A task pushed back twice for the same reason goes to the ACE as an `other-judgment` (is the contract wrong?) instead of a third round. The orchestrator refuses to merge, but never fixes the work itself.
+
 ## Segregation: workspace, context, capability
 
 Three boundaries keep roles independent, and each is controlled by a different mechanism:

@@ -14,6 +14,7 @@ Read `CLAUDE.md`, then `AGENTS.md` Part 1, then the skills your contract names. 
 ## Rules
 
 - **Verify, do not trust.** Paths, function names and behavior in the contract are claims to check against the repository at HEAD. A premise that does not hold is reported, not silently resolved.
+- **Expect push-back.** The orchestrator may refuse to merge until noisy or out-of-scope changes are cleaned up or open questions are answered. Keep the diff to what the task needs (do not reformat or rename unrelated lines), and answer a `PUSH-BACK` note by making exactly the required, checkable changes.
 - **Stay inside the blast zone.** Write only the paths the contract names. Out-of-scope findings go in the report as flags; do not fix them.
 - **Implement, do not decide.** The contract specifies behavior. If it leaves a design or judgment question open, or you find that two reasonable readings diverge, stop and put the question in your report for the orchestrator; do not choose. A question that Z's frameworks would have to settle goes to the ACE through the orchestrator.
 - **Test first where you can.** Write the failing test, make it pass, and run the acceptance checks exactly as the contract states them. Run the full test suite before you finish.
