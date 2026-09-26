@@ -1,13 +1,13 @@
 """src/toaster/conformance.py: staged project checks, always-on language tier."""
 
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 
 import opensysml
 import pytest
 
 from toaster import conformance as cf
-from toaster.conformance import ConformanceCheck
+from toaster.conformance import ConformanceCheck, WontDo
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,7 +31,9 @@ def conn():
 
 @pytest.fixture(scope="module")
 def ch08(conn):
-    m = conn.load_from_content((ROOT / "models" / "ch08-cumulative.sysml").read_text(), strict=False)
+    m = conn.load_from_content(
+        (ROOT / "models" / "ch08-cumulative.sysml").read_text(), strict=False
+    )
     assert m.ok
     return m
 
@@ -43,13 +45,18 @@ def mismatch(conn):
     return m
 
 
-def _check(findings, applies_from, calls=None):
+UNBLOCK = "language conformance passes (model.ok is True)"
+BAD = "package P { part def A :> Missing; }"
+WONT = WontDo("no longer needed", "DL-099")
+
+
+def _check(findings, applies_from, calls=None, wont_do=None):
     def run(_model):
         if calls is not None:
             calls.append(1)
         return list(findings)
 
-    return ConformanceCheck("c", "d", run, applies_from, MISMATCH)
+    return ConformanceCheck("c", "d", run, applies_from, MISMATCH, wont_do)
 
 
 def test_open_before_applies_from_and_run_not_called() -> None:
@@ -67,7 +74,10 @@ def test_passed_or_failed_at_and_after_applies_from() -> None:
 
 def test_open_when_unscheduled_even_if_fault_exists(mismatch) -> None:
     calls: list[int] = []
-    assert cf.evaluate(_check([{"x": 1}], None, calls), mismatch, (99, 99)).status == "open"
+    assert (
+        cf.evaluate(_check([{"x": 1}], None, calls), mismatch, (99, 99)).status
+        == "open"
+    )
     assert calls == []
     assert cf.query.port_type_mismatches(mismatch)  # the fault is real
     assert cf.evaluate(cf.REGISTRY[0], mismatch, (99, 99)).status == "open"
@@ -86,9 +96,14 @@ def test_language_failure_reported_separately(conn) -> None:
     bad = conn.load_from_content("package P { part def A :> Missing; }", strict=False)
     rep = cf.report(bad, (1, 1), [_check([], (1, 1))])
     assert rep["language"]["ok"] is False
-    assert rep["language"]["diagnostics"] and all(isinstance(d, str) for d in rep["language"]["diagnostics"])
-    assert [r.status for r in rep["project"]] == ["open"]
-    assert [r.reason for r in rep["project"]] == ["not applied: language conformance failed"]
+    assert rep["language"]["diagnostics"] and all(
+        isinstance(d, str) for d in rep["language"]["diagnostics"]
+    )
+    assert [r.status for r in rep["project"]] == ["blocked"]
+    assert [r.reason for r in rep["project"]] == [
+        "not applied: language conformance failed"
+    ]
+    assert [r.unblock_when for r in rep["project"]] == [UNBLOCK]
     assert [r.findings for r in rep["project"]] == [[]]
 
 
@@ -97,12 +112,17 @@ def test_run_not_called_on_language_failed_model(conn) -> None:
     calls: list[int] = []
     rep = cf.report(bad, (9, 9), [_check([{"x": 1}], (1, 1), calls)])
     assert calls == []
-    assert [(r.status, r.findings) for r in rep["project"]] == [("open", [])]
+    assert [(r.status, r.findings) for r in rep["project"]] == [("blocked", [])]
 
 
 def test_open_reasons_distinguish_stage_and_unscheduled() -> None:
-    assert cf.evaluate(_check([], (2, 3)), None, (2, 2)).reason == "not applied: stage not reached"
-    assert cf.evaluate(_check([], None), None, (9, 9)).reason == "not applied: unscheduled"
+    assert (
+        cf.evaluate(_check([], (2, 3)), None, (2, 2)).reason
+        == "not applied: stage not reached"
+    )
+    assert (
+        cf.evaluate(_check([], None), None, (9, 9)).reason == "not applied: unscheduled"
+    )
     assert cf.evaluate(_check([], (2, 3)), None, (2, 3)).reason is None
 
 
@@ -112,11 +132,18 @@ def test_language_ok_on_valid_model(ch08) -> None:
 
 def test_prove_negative_control(conn) -> None:
     assert cf.prove_negative_control(cf.REGISTRY[0], conn) is True
-    assert cf.prove_negative_control(replace(_check([], (1, 1)), negative_control=MISMATCH), conn) is False
+    assert (
+        cf.prove_negative_control(
+            replace(_check([], (1, 1)), negative_control=MISMATCH), conn
+        )
+        is False
+    )
 
 
 def test_prove_negative_control_requires_load_ok(conn) -> None:
-    broken = replace(cf.REGISTRY[0], negative_control="package P { part def A :> Missing; }")
+    broken = replace(
+        cf.REGISTRY[0], negative_control="package P { part def A :> Missing; }"
+    )
     assert cf.prove_negative_control(broken, conn) is False
 
 
@@ -137,3 +164,42 @@ def test_port_type_check_scheduled(ch08, mismatch) -> None:
     scheduled = replace(cf.REGISTRY[0], applies_from=(1, 1))
     assert cf.evaluate(scheduled, ch08, (2, 1)).status == "passed"
     assert cf.evaluate(scheduled, mismatch, (2, 1)).status == "failed"
+
+
+def test_blocked_for_unscheduled_check_on_language_failure(conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    r = cf.report(bad, (9, 9), [_check([], None)])["project"][0]
+    assert (r.status, r.unblock_when, r.applies_from) == ("blocked", UNBLOCK, None)
+
+
+def test_open_carries_no_unblock_when() -> None:
+    assert cf.evaluate(_check([], (2, 3)), None, (2, 2)).unblock_when is None
+    assert cf.evaluate(_check([], None), None, (2, 2)).unblock_when is None
+
+
+def test_wont_do_at_any_stage_and_run_not_called() -> None:
+    calls: list[int] = []
+    c = _check([{"x": 1}], (2, 3), calls, WONT)
+    for stage in [(1, 1), (2, 3), (9, 9)]:
+        r = cf.evaluate(c, None, stage)
+        assert (r.status, r.findings, r.unblock_when) == ("wont-do", [], None)
+        assert r.reason == "no longer needed (changed: DL-099)"
+    assert calls == []
+    assert cf.evaluate(_check([], None, wont_do=WONT), None, (1, 1)).status == "wont-do"
+
+
+def test_wont_do_overrides_fault_and_language_failure(conn, mismatch) -> None:
+    calls: list[int] = []
+    c = _check([{"x": 1}], (1, 1), calls, WONT)
+    assert cf.evaluate(c, mismatch, (9, 9)).status == "wont-do"
+    bad = conn.load_from_content(BAD, strict=False)
+    rep = cf.report(bad, (9, 9), [c, _check([], (1, 1), calls)])
+    assert [r.status for r in rep["project"]] == ["wont-do", "blocked"]
+    assert rep["project"][0].reason == "no longer needed (changed: DL-099)"
+    assert rep["project"][0].unblock_when is None
+    assert calls == []
+
+
+def test_wont_do_dataclass_frozen() -> None:
+    with pytest.raises(FrozenInstanceError):
+        WONT.reason = "x"  # type: ignore[misc]
