@@ -126,7 +126,9 @@ def resolve_term(graph: Graph, key: str) -> URIRef | None:
     for term in graph.subjects(RDF.type, GL.Term):
         tid = short_id(term).lower()
         label = str(graph.value(term, GL.label) or "").lower()
-        if k in (tid, tid.removeprefix("term-"), label):
+        base = label.split(" (")[0]                         # "measure of performance (mop)" -> "measure of performance"
+        abbrev = label[label.index("(") + 1:-1] if label.endswith(")") and "(" in label else ""   # -> "mop"
+        if k in (tid, tid.removeprefix("term-"), label, base, abbrev):
             return term
     return None
 

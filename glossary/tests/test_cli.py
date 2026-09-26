@@ -82,3 +82,12 @@ def test_saved_turtle_is_canonical(root: Path, tmp_path: Path) -> None:
     save_graph(g, out)
     again = Graph().parse(out, format="turtle")
     assert canonical_turtle(again, prefixes=PREFIXES) == out.read_text()
+
+
+def test_term_resolves_by_label_without_its_parenthetical_or_by_abbreviation(tmp_path: Path) -> None:
+    from glossary.graph import load_graph, resolve_term
+
+    from .conftest import DEFS, TERMS, make_root
+    terms = TERMS.replace('gl:label "function"', 'gl:label "function (FN)"')
+    g = load_graph(make_root(tmp_path, terms=terms, defs=DEFS))
+    assert resolve_term(g, "function") == resolve_term(g, "FN") == resolve_term(g, "function (FN)")
