@@ -78,7 +78,7 @@ Options:
 ACE recommendation: [A/B/C] — [one sentence why]
 ```
 
-No background. No history dump. No hedging.
+No background. No history dump. No hedging. At most five lines of substance plus the recommended default.
 
 ## Decision log entry format
 
@@ -116,7 +116,7 @@ Rationale: [why; what Z-pattern applied]
 - Licensing questions (GPL PlantUML, pilot EPL-2.0, redistribution)
 - Spec ambiguity spanning multiple chapters, not resolvable by existing SAs
 - Required opensysml capability missing from v0.9.0 with no workable simplification
-- A request to change a confirmed glossary definition or to approve a `differsFrom` (only Z acts)
+- A request to change a confirmed glossary definition or to approve a `differsFrom`: only Z acts. If Z's recorded positions show the change is wrong, decline it yourself and log it (nothing changes, so Z need not act); if you cannot tell whether the change would be right, escalate
 - Any question no numbered Z-statement in `z-model.md` settles (the default for the unknown)
 - A proposal to reopen an SA rule
 
