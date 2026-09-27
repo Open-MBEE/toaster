@@ -7,19 +7,24 @@ package ToasterDemo {
     private import SI::*;
     private import ISQ::*;
 
-    abstract part def ToastingSystem {
+    item def Bread;
+    item def Toast;
+
+    action def ToastBread {
         doc /* Transform bread into toast acceptable to its user. */
+        in bread : Bread;
+        out toast : Toast;
     }
 
-    part def Heater {
-        attribute power : ISQ::PowerValue default = 800.0 [SI::W];
+    abstract part def ToastingSystem {
+        perform action toastBread : ToastBread;
     }
 
-    part def HeatingSystem :> ToastingSystem;
-    part def ControlSystem :> ToastingSystem;
+    part def HeatingSystem;
+    part def ControlSystem;
 
-    part def Toaster {
-        attribute cycleTime : ISQ::DurationValue default = 120.0 [SI::s];
+    part def Toaster :> ToastingSystem {
+        attribute cycleTime : ISQ::DurationValue;
         part heating : HeatingSystem;
         part control : ControlSystem;
     }

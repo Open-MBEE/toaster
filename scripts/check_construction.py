@@ -66,8 +66,10 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
         },
         {
             "path": "chapters/ch01-system-purpose/04-composition.ipynb",
-            # part usages reference HeatingSystem and ControlSystem (defined in nb02)
+            # Toaster :> ToastingSystem (defined in nb01); part usages reference
+            # HeatingSystem and ControlSystem (defined in nb02)
             "context_stubs": [
+                "abstract part def ToastingSystem;",
                 "part def HeatingSystem;",
                 "part def ControlSystem;",
             ],
