@@ -1,6 +1,6 @@
 # Drafted gap issues
 
-Status: **Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27**, per Z's explicit instruction, after the re-verification below. Draft 2 stays internal-only (Z's ruling, 2026-09-26) and Draft 8 is retracted; neither was ever meant to be filed. Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020, each with its filed issue link).
+Status: **Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27**, per Z's explicit instruction, after the re-verification below. Draft 2 stays internal-only (Z's ruling, 2026-09-26) and Draft 8 is retracted; neither was ever meant to be filed. **Draft 9 (D-023, added Pass 4 Phase 0) is new and held for Z's review — not filed.** Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020 and D-023, each with its filed issue link where one exists).
 
 | Draft | Filed as |
 |---|---|
@@ -114,6 +114,22 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 **No existing issue duplicates this** (checked OpenSysML open/closed issues and sysml-toolkit's single closed issue, 2026-09-27; nothing on `PartDefinition`, item-definition typing, or this constraint name).
 
 **Request.** Report a diagnostic for a part usage none of whose definitions is a part definition.
+
+---
+
+## Draft 9 (OpenSysML, likely bug): a transition's trigger is exported as an opaque string, never resolved against a declared type (D-023)
+
+**Version:** OpenSysML v0.9.0.
+
+**Observed.** For `state def Cycle { entry; state idle; state heating; transition first idle accept Start then heating; }` (`Start` an `item def` in scope): the model loads `ok=True`, and `model.to_api_json()` exports the transition as a `TransitionUsage` whose `sysx:trigger` is the bare string `"Start"` — not a reference to the `Start` item def, not an `AcceptActionUsage` element at all. A reference to an undefined name (`accept Nonexistent`), or a typo of a defined one, loads `ok=True` with no diagnostic either; the trigger then silently never fires at execution, and nothing in the export lets a downstream tool tell the two cases apart. sysml-toolkit v0.9.1 does resolve trigger names and warns on an unresolved one.
+
+**Reference.** SysML v2.0 (formal/2026-03-02): `8.3.18.9 TransitionUsage` (PDF p. 373-374) declares `/triggerAction : AcceptActionUsage [0..*] {subsets ownedFeature}` and `deriveTransitionUsageTriggerAction` derives it from an owned `TransitionFeatureMembership` — a trigger is a full, structured `AcceptActionUsage` element, not a string. `8.3.18.8 TransitionFeatureMembership` (PDF p. 371-372), `validateTransitionFeatureMembershipTriggerAction`: "If the kind of a TransitionUsage is trigger, then its transitionFeature must be a kind of AcceptActionUsage." `8.3.16` `AcceptActionUsage` (PDF p. 342) gives that element a `payloadParameter : ReferenceUsage`, which is exactly where a payload/signal type would be resolved and checked. We could not find a single named constraint that says in so many words "an accept trigger's name must resolve to a declared type" — the case rests on the structural fact that the spec models a trigger as a resolvable, typed element throughout, and the export collapses all of that into an opaque string.
+
+**Before filing:** we have not exhaustively searched every `AcceptActionUsage`/signal-reception constraint in KerML for a more direct textual rule; if the maintainers know of one, it would strengthen this from "the export loses structure the spec establishes" to "the export violates a named rule." Also check whether there's an existing internal issue about `AcceptActionUsage` export fidelity that this duplicates (a broad search on 2026-09-27 found none).
+
+**Request.** Either (a) export a transition's trigger as a real reference to the `AcceptActionUsage`/payload type it names, so a downstream tool can tell a resolved trigger from an unresolved one, or (b) if `sysx:trigger` is deliberately a display-only string, add a diagnostic when it doesn't resolve to anything in scope — the way sysml-toolkit already does.
+
+**Workaround in place:** a language-conformance guard is being added to the tutorial's own conformance tooling (`src/toaster/conformance.py`) that resolves each trigger string against in-scope item defs itself and flags a miss.
 
 ---
 
