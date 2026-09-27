@@ -375,6 +375,26 @@ def test_allocate_between_definitions_skips_unresolvable_connector_end(conn) -> 
     assert len(findings) == 1
 
 
+def test_allocate_between_definitions_skips_end_without_reference_subsetting(conn) -> None:
+    # A connector end whose own element has no `ownedReferenceSubsetting` (end_path returns []
+    # rather than raising): the `if not end: continue` branch, distinct from the KeyError case
+    # above (there, the end's own element is missing from the export entirely).
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    idx = cf.query.ApiIndex(model)
+    allocation = next(e for e in idx.elements if e.get("@type") == "AllocationUsage")
+    end_ref = allocation["connectorEnd"][0]
+    end_id = end_ref["@id"] if isinstance(end_ref, dict) else end_ref
+    idx.by_id[end_id].pop("ownedReferenceSubsetting", None)
+    assert idx.end_path(end_ref) == []  # confirms this reproduces the no-subsetting case
+
+    findings = cf._allocate_between_definitions(model, index=idx)
+    # no crash, and the other end's finding survives — only the end with no subsetting is
+    # skipped, not the whole check
+    assert len(findings) == 1
+
+
 def test_prove_negative_control_covers_both_gap_rules(conn) -> None:
     for rule in cf.GAP_RULES:
         model = conn.load_from_content(rule.negative_control, strict=False)
@@ -778,9 +798,32 @@ def test_bare_satisfy_implicit_subject_is_a_distinguishable_finding(conn) -> Non
     assert "error" not in findings[0]
 
 
+def test_not_evaluated_no_subject_text() -> None:
+    # Same pattern as test_gap_block_unblock_when_text: pin the literal text, not just
+    # equality-to-constant (the earlier bare-satisfy test only compared against the constant
+    # itself, which survives a mutation of the string).
+    assert cf.NOT_EVALUATED_NO_SUBJECT == "not evaluated: no explicit subject"
+
+
 def test_bare_verify_without_subject_is_skipped_not_crashed(conn) -> None:
     # ch08 has no `verify` relationship to exercise this branch (its docstring comment describes
     # a case the fixture doesn't actually contain), so this is a standalone model built for it.
     model = conn.load_from_content(BARE_VERIFY_NO_SUBJECT_MODEL, strict=False)
     assert model.ok
+    assert cf.satisfaction_claims_evaluated(model) == []
+
+
+def test_missing_requirement_reference_skipped_not_crashed(conn, monkeypatch) -> None:
+    # A SatisfyRequirementUsage with a subject but no resolvable requirement reference: the
+    # `if not requirement: continue` branch must skip it, not crash or produce a spurious
+    # finding. A valid `satisfy` always carries a resolvable target in practice, so this is
+    # constructed via monkeypatch, same style as test_satisfaction_claims_evaluated_error_is_a_finding.
+    model = conn.load_from_content(SATISFY_TRUE_MODEL, strict=False)
+    monkeypatch.setattr(
+        cf.query,
+        "satisfy_relationships",
+        lambda model, index=None: [
+            {"id": "P::fake", "requirement": None, "subject": "P::fast"}
+        ],
+    )
     assert cf.satisfaction_claims_evaluated(model) == []
