@@ -332,10 +332,12 @@ package P {
 }
 """
 
-# F-boundary: a `when` (boolean guard) trigger names an attribute/expression, not an item def, and an
-# unconditional transition has no trigger at all — neither is an `accept` trigger, so neither is in
-# scope for this rule (confirmed directly against the tool, not assumed; see the check's docstring).
-UNRESOLVED_TRANSITION_TRIGGER_NON_ACCEPT = """
+# F3 (review of PASS4-000-B): a bare `when <expr>` transition (no `accept`) is not valid SysML —
+# sysml-toolkit rejects it ("expected `then`, found `when`") even though OpenSysML silently accepts it
+# (itself an unrecorded gap, not this rule's job to guard). The real spec form of a change trigger is
+# `accept when <expr>`. Both this and a time trigger (`accept after <duration>`) are expressions, not
+# names, and must not be flagged even though neither resolves to a declared element (F2).
+UNRESOLVED_TRANSITION_TRIGGER_CHANGE_TRIGGER = """
 package P {
   private import ScalarValues::*;
   item def Start;
@@ -345,7 +347,22 @@ package P {
     state idle;
     state heating;
     transition first idle accept Start then heating;
-    transition first heating when someFlag then idle;
+    transition first heating accept when someFlag then idle;
+  }
+}
+"""
+
+UNRESOLVED_TRANSITION_TRIGGER_TIME_TRIGGER = """
+package P {
+  private import ScalarValues::*;
+  private import SI::*;
+  item def Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Start then heating;
+    transition first heating accept after 5 [s] then idle;
   }
 }
 """
@@ -359,6 +376,78 @@ package P {
     state heating;
     transition first idle accept Start then heating;
     transition first heating then idle;
+  }
+}
+"""
+
+# F2 (review of PASS4-000-B): a qualified trigger name must resolve against fully-qualified names
+# anywhere in the model (F4's scope ruling), not just the same package.
+UNRESOLVED_TRANSITION_TRIGGER_QUALIFIED_NAME = """
+package Outer {
+  item def Start;
+}
+package P {
+  private import Outer::Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Outer::Start then heating;
+  }
+}
+"""
+
+# F2: a named payload ("s : Start") resolves the part after the colon, not the whole string.
+UNRESOLVED_TRANSITION_TRIGGER_NAMED_PAYLOAD = """
+package P {
+  item def Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept s : Start then heating;
+  }
+}
+"""
+
+# F2: the payload type need not be an ItemDefinition — any kind with a declaredName (here: part def,
+# port def, attribute def, enum def, and an existing item usage referenced by name) is a legal payload
+# type per the grammar and must resolve.
+UNRESOLVED_TRANSITION_TRIGGER_NON_ITEM_DEF_PAYLOADS = """
+package P {
+  item def Start;
+  item existingStart : Start;
+  part def Widget;
+  port def PortyThing;
+  attribute def AttrThing;
+  enum def EnumThing { enum a; }
+  state Cycle {
+    entry; then a1;
+    state a1; state a2; state a3; state a4; state a5;
+    transition first a1 accept existingStart then a2;
+    transition first a2 accept Widget then a3;
+    transition first a3 accept PortyThing then a4;
+    transition first a4 accept AttrThing then a5;
+  }
+  state Cycle2 {
+    entry; then b1;
+    state b1; state b2;
+    transition first b1 accept EnumThing then b2;
+  }
+}
+"""
+
+# F2/F4: a qualified reference to something that genuinely does not exist must still be flagged.
+UNRESOLVED_TRANSITION_TRIGGER_QUALIFIED_NONEXISTENT = """
+package Outer {
+  item def Start;
+}
+package P {
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Outer::Nope then heating;
   }
 }
 """
@@ -390,20 +479,52 @@ def test_unresolved_transition_trigger_clean_model_has_no_findings(conn) -> None
     assert cf._unresolved_transition_trigger(model) == []
 
 
-def test_unresolved_transition_trigger_ignores_non_accept_triggers(conn) -> None:
-    # F-boundary: a `when` guard trigger and an untriggered (unconditional) transition must not be
-    # flagged, even though neither trigger name is an ItemDefinition.
+def test_unresolved_transition_trigger_ignores_expression_and_untriggered(conn) -> None:
+    # F2/F3: a real `accept when <expr>` change trigger, a real `accept after <duration>` time
+    # trigger, and an untriggered (unconditional) transition are none of them a name to resolve, and
+    # must not be flagged.
+    for src in (
+        UNRESOLVED_TRANSITION_TRIGGER_CHANGE_TRIGGER,
+        UNRESOLVED_TRANSITION_TRIGGER_TIME_TRIGGER,
+        UNRESOLVED_TRANSITION_TRIGGER_UNCONDITIONAL,
+    ):
+        model = conn.load_from_content(src, strict=False)
+        assert model.ok
+        assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_qualified_name_resolves(conn) -> None:
     model = conn.load_from_content(
-        UNRESOLVED_TRANSITION_TRIGGER_NON_ACCEPT, strict=False
+        UNRESOLVED_TRANSITION_TRIGGER_QUALIFIED_NAME, strict=False
     )
     assert model.ok
     assert cf._unresolved_transition_trigger(model) == []
 
-    model2 = conn.load_from_content(
-        UNRESOLVED_TRANSITION_TRIGGER_UNCONDITIONAL, strict=False
+
+def test_unresolved_transition_trigger_named_payload_resolves(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_NAMED_PAYLOAD, strict=False
     )
-    assert model2.ok
-    assert cf._unresolved_transition_trigger(model2) == []
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_non_item_def_payloads_resolve(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_NON_ITEM_DEF_PAYLOADS, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_qualified_nonexistent_is_flagged(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_QUALIFIED_NONEXISTENT, strict=False
+    )
+    assert model.ok
+    findings = cf._unresolved_transition_trigger(model)
+    assert len(findings) == 1
+    assert findings[0]["message"].count("Outer::Nope") == 2
 
 
 def test_unresolved_transition_trigger_real_fixture_has_no_findings(ch07) -> None:

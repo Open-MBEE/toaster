@@ -18,6 +18,7 @@ still be language non-conformant if `gap_findings` is non-empty. Project conform
 `run` is called only for passed and failed.
 """
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -219,66 +220,153 @@ def _part_typed_only_by_item_def(
     return findings
 
 
+# F7 (review of PASS4-000-B): the spec citation for AcceptActionUsage lives here ONCE, and both the
+# GapRule.constraint and the per-finding "constraint" field use this same constant, so the two copies
+# cannot drift apart the way the earlier duplicated text did (F1: AcceptActionUsage is 8.3.17.2, PDF
+# p. 341-342 — NOT 8.3.16, which is Flow Abstract Syntax; matches the citation already corrected in
+# decisions/gap-issue-drafts.md Draft 9, which this task does not otherwise touch).
+_UNRESOLVED_TRANSITION_TRIGGER_CONSTRAINT = (
+    "SysML v2.0 formal/2026-03-02: 8.3.18.9 TransitionUsage "
+    "(/triggerAction : AcceptActionUsage), 8.3.18.8 TransitionFeatureMembership "
+    "(validateTransitionFeatureMembershipTriggerAction), 8.3.17.2 AcceptActionUsage "
+    "(PDF p. 341-342, payloadParameter) — a trigger is a structured, resolvable "
+    "element, so an `accept` trigger's payload name must resolve to a defined "
+    "element in scope"
+)
+
+_TRIGGER_EXPRESSION_KEYWORDS = ("after", "when")
+
+# A named payload ("s : Start", or "s : Outer::Start" with a qualified type) uses a single colon,
+# spaced on both sides in the export; a qualified name ("Outer::Start") uses an unspaced "::". The
+# negative lookahead keeps the two apart: it requires the colon after the leading name NOT be
+# immediately followed by a second colon, so "Outer::Start" is correctly rejected as a whole (see the
+# check's docstring for the scratch-model shapes this was verified against).
+_NAMED_PAYLOAD = re.compile(r"^[A-Za-z_]\w*\s*:(?!:)\s*(.+)$")
+
+
+def _trigger_payload_name(trigger: str) -> str | None:
+    """The identifier or qualified name an `accept` trigger's ``sysx:trigger`` string denotes, or
+    ``None`` if the string is a time/change-trigger expression (an ``after <duration>`` or
+    ``when <expr>`` form), which names no type at all and so is out of scope for this rule (F2/F3).
+    """
+    first_word = trigger.split(None, 1)[0]
+    if first_word in _TRIGGER_EXPRESSION_KEYWORDS:
+        return None
+    named_payload = _NAMED_PAYLOAD.match(trigger)
+    return named_payload.group(1).strip() if named_payload else trigger
+
+
+def _owning_package_qn(idx: "query.ApiIndex", qn: str | None) -> str | None:
+    """Qualified name of the nearest enclosing Package of the element named ``qn``, walking the
+    ``owner``/``owningNamespace`` chain up from it. ``None`` if ``qn`` is not indexed, or the chain
+    does not reach a Package (should not happen for a well-formed model; skipped rather than raised,
+    matching the other gap rules' "cannot judge, don't flag" posture, F4).
+    """
+    if qn is None:
+        return None
+    seen: set[str] = set()
+    e = idx.by_qn.get(qn)
+    while e is not None:
+        if e.get("@type") == "Package":
+            return e.get("qualifiedName")
+        owner_ref = e.get("owningNamespace") or e.get("owner")
+        if owner_ref is None:
+            return None
+        owner_id = owner_ref["@id"] if isinstance(owner_ref, dict) else owner_ref
+        if owner_id in seen:
+            return None
+        seen.add(owner_id)
+        e = idx.by_id.get(owner_id)
+    return None
+
+
 def _unresolved_transition_trigger(
     model: Any, index: "query.ApiIndex | None" = None
 ) -> list[dict]:
-    """Rule (DL-039, D-023): a TransitionUsage's ``accept`` trigger name that resolves to no ItemDefinition.
+    """Rule (DL-039, D-023): an ``accept`` trigger's payload name that resolves to no element in scope.
 
-    SysML v2.0 (formal/2026-03-02) makes ``accept <name>`` a full, structured element, not a string:
-    8.3.18.9 TransitionUsage declares ``/triggerAction : AcceptActionUsage [0..*]``, derived from an
-    owned TransitionFeatureMembership (`deriveTransitionUsageTriggerAction`); 8.3.18.8
-    TransitionFeatureMembership's `validateTransitionFeatureMembershipTriggerAction` requires that
-    element to be a kind of AcceptActionUsage; 8.3.16 AcceptActionUsage gives it a
-    `payloadParameter : ReferenceUsage`, exactly where a payload/signal type is resolved and checked.
-    No single named constraint says in so many words "the trigger name must resolve to a declared
-    type" — the case rests on the structural fact that the spec models a trigger as a resolvable,
-    typed element throughout (gap-issue-drafts.md Draft 9). OpenSysML v0.9.0 keeps the trigger only as
-    the bare string `sysx:trigger` in the API-JSON export — never a reference — and accepts an
-    undefined or misspelled name with `ok=True` and no diagnostic (D-023): the transition then
-    silently never fires at execution.
+    See ``_UNRESOLVED_TRANSITION_TRIGGER_CONSTRAINT`` for the spec citation. OpenSysML v0.9.0 keeps the
+    trigger only as the bare string ``sysx:trigger`` in the API-JSON export — never a reference — and
+    accepts an undefined or misspelled name with ``ok=True`` and no diagnostic (D-023): the transition
+    then silently never fires at execution.
 
-    Only ``sysx:triggerKeyword == "accept"`` is in scope. A transition can also trigger on a boolean
-    guard (`when <expr>`, `sysx:triggerKeyword == "when"`) or have no trigger at all (an unconditional
-    transition, `sysx:trigger` absent) — confirmed directly against the tool: a `when` trigger's
-    `sysx:trigger` string names an attribute/expression, not an item def, and would false-positive here
-    if treated the same as `accept`; an untriggered transition carries neither key at all. Both are
-    skipped by construction (the `.get(...) != "accept"` guard), not flagged.
+    ``sysx:trigger`` is not always a plain name. Confirmed directly against the tool (scratch models,
+    not assumed):
 
-    "In scope" for resolution is taken as *any* ItemDefinition anywhere in the loaded model, not scoped to
-    the trigger's own package: the flat API-JSON export carries no reliable per-element import/visibility
-    information for a lightweight index-based check (unlike a type reference, which the tool resolves to
-    a concrete element itself), and a narrower same-package rule would false-positive on a legitimate
-    cross-package import, contrary to the "skip rather than falsely flag" posture the other two gap rules
-    already take (F4). The real ch07 fixture cannot distinguish the two readings (its three item defs and
-    its state machine are declared in the same package), so both give the same, empty result there; it
-    produces zero findings from this rule either way.
+    - plain identifier: ``"Start"``
+    - qualified name: ``"Outer::Start"``
+    - named payload: ``"s : Start"`` (resolve the part after the colon, not the whole string; a
+      qualified type in a named payload, ``"s : Outer::Start"``, resolves the same way)
+    - time trigger: ``"after 5 [s]"`` — an expression, not a name; no payload to resolve
+    - change trigger: ``"when someFlag"`` — an expression naming an attribute, not a name to resolve
+      against a type; also no payload to resolve
+    - untriggered (unconditional) transition: neither ``sysx:trigger`` nor ``sysx:triggerKeyword`` at
+      all
+
+    ``_trigger_payload_name`` turns the first three into the name to resolve and the rest into
+    ``None`` (skipped, not flagged). The payload type can be any kind that has a ``declaredName`` —
+    ``ItemDefinition``, ``PartDefinition``, ``PortDefinition``, ``AttributeDefinition``,
+    ``EnumerationDefinition``, an existing usage referenced by name — not only ``ItemDefinition``
+    (confirmed: OpenSysML accepts every one of these as a payload type with ``ok=True``), so this rule
+    matches against the ``declaredName`` of *any* element, not a fixed enum of kinds.
+
+    Scope (F4, a builder-scope design call under DL-039(3)): an unqualified name is resolved only
+    against declared names in the *same package* as the transition itself (walking the ownership chain
+    to the nearest enclosing Package, ``_owning_package_qn``); a qualified name (``"Outer::Start"``) is
+    resolved against every element's qualified name anywhere in the model. This is narrower than
+    resolving an unqualified name against the whole model: OpenSysML's own reference resolution
+    elsewhere (e.g. `perform`) does not resolve an unqualified cross-package name either, so matching
+    that posture is more consistent with the tool's actual behavior than treating "anywhere in the
+    model" as equivalent to "in scope" would be. The accepted limitation this narrowing carries — an
+    unqualified reference to a name legitimately brought into scope by an explicit import from another
+    package is a false negative this rule cannot currently detect as *unresolved if it in fact isn't* —
+    is recorded in DEFERRED.md D-023: implementing full import-graph resolution is out of this rule's
+    scope, so an import case is not attempted at all rather than guessed at (same "skip rather than
+    falsely flag" posture the other two gap rules already take, their own F4).
+
+    Both real fixtures (ch07, ch08) are single-package models, so this cannot be exercised by them one
+    way or the other; they produce zero findings from this rule regardless, because their own triggers
+    (`Start`, `Finish`, `Cancel`) resolve within their own package either way.
     """
     idx = index or query.ApiIndex(model)
-    item_def_names = {
-        e["declaredName"] for e in idx.of_type("ItemDefinition") if e.get("declaredName")
-    }
+
+    all_qualified_names: set[str] = set()
+    declared_by_package: dict[str | None, set[str]] = {}
+    for e in idx.elements:
+        qn = e.get("qualifiedName")
+        if qn:
+            all_qualified_names.add(qn)
+        name = e.get("declaredName")
+        if name:
+            pkg = _owning_package_qn(idx, qn)
+            declared_by_package.setdefault(pkg, set()).add(name)
+
     findings = []
     for t in idx.of_type("TransitionUsage"):
         if t.get("sysx:triggerKeyword") != "accept":
             continue
         trigger = t.get("sysx:trigger")
-        if not trigger or trigger in item_def_names:
+        if not trigger:
             continue
+        payload_name = _trigger_payload_name(trigger)
+        if payload_name is None:
+            continue  # time/change-trigger expression: not a name, nothing to resolve (F2/F3)
         t_id = t.get("qualifiedName")
+        if "::" in payload_name:
+            resolved = payload_name in all_qualified_names
+        else:
+            pkg = _owning_package_qn(idx, t_id)
+            resolved = payload_name in declared_by_package.get(pkg, set())
+        if resolved:
+            continue
         findings.append(
             {
                 "rule": "unresolved-transition-trigger",
-                "constraint": (
-                    "SysML v2.0 formal/2026-03-02: 8.3.18.9 TransitionUsage "
-                    "(/triggerAction : AcceptActionUsage), 8.3.18.8 "
-                    "TransitionFeatureMembership (validateTransitionFeatureMembershipTriggerAction), "
-                    "8.3.16 AcceptActionUsage (payloadParameter) — a trigger is a structured, "
-                    "resolvable element, so its name must resolve to a defined type in scope"
-                ),
+                "constraint": _UNRESOLVED_TRANSITION_TRIGGER_CONSTRAINT,
                 "element": t_id,
                 "message": (
-                    f"transition {t_id} accepts trigger {trigger!r}, which "
-                    "resolves to no ItemDefinition in the model"
+                    f"transition {t_id} accepts trigger {trigger!r}, whose payload "
+                    f"{payload_name!r} resolves to no element in scope"
                 ),
             }
         )
@@ -333,13 +421,7 @@ GAP_RULES: list[GapRule] = [
     ),
     GapRule(
         name="unresolved-transition-trigger",
-        constraint=(
-            "SysML v2.0 formal/2026-03-02: 8.3.18.9 TransitionUsage "
-            "(/triggerAction : AcceptActionUsage), 8.3.18.8 TransitionFeatureMembership "
-            "(validateTransitionFeatureMembershipTriggerAction), 8.3.16 AcceptActionUsage "
-            "(payloadParameter) — a trigger is a structured, resolvable element, so its "
-            "name must resolve to a defined type in scope"
-        ),
+        constraint=_UNRESOLVED_TRANSITION_TRIGGER_CONSTRAINT,
         check=_unresolved_transition_trigger,
         negative_control=_UNRESOLVED_TRANSITION_TRIGGER_CONTROL,
     ),
