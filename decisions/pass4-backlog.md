@@ -4,28 +4,28 @@ Source: `decisions/audits/ch01-layer-audit.md` to `ch05-layer-audit.md` (indepen
 
 ## 1. A result is entered as a choice, and the "verification" cannot fail (systematic, Ch1 to Ch8)
 
-- `Toaster::cycleTime` is a settable default (120 s); `slow` binds 200 s; Ch2's threshold, Ch3's `assert satisfy` and the judgment records AC-001 and AS-C03 all compare that entered number with a limit (ch01 F-1, ch02 F-5, ch03 F-2). Rulings: DL-018, DL-022, DL-035. Re-derive: cycle time is derived from the mechanism and the energy balance and compared with intent; a setpoint, if any, lives on the policy carrier (`ControlSystem`).
-- The model asserts `assert satisfy timely by slow` although `slow` (200 s) violates the 180 s limit; the same pattern appears with `weak` (400 W against 600 W) in Ch6 to Ch8. OpenSysML does not flag a false `assert satisfy`; `assert not satisfy` parses and can express a deliberate failing branch (ch03 F-3, confirmed by spot review). Rulings: DL-033 (`slow` is a fixture for the failing branch; not a candidate or an operating condition), DL-039 (a staged "satisfaction claims evaluated" check, with `slow` as the natural negative control).
-- Assumptions: an assumption may enter as asserted context or a labelled estimate, never as the derived result (DL-035).
+- `Toaster::cycleTime` is a settable default (120 s); `slow` binds 200 s; Ch2's threshold, Ch3's `assert satisfy` and the judgment records AC-001 and AS-C03 all compare that entered number with a limit (ch01 F-1, ch02 F-5, ch03 F-2). Rulings: DL-018, DL-022, DL-034. Re-derive: cycle time is derived from the mechanism and the energy balance and compared with intent; a setpoint, if any, lives on the policy carrier (`ControlSystem`).
+- The model asserts `assert satisfy timely by slow` although `slow` (200 s) violates the 180 s limit; the same pattern appears with `weak` (400 W against 600 W) in Ch6 to Ch8. OpenSysML does not flag a false `assert satisfy`; `assert not satisfy` parses and can express a deliberate failing branch (ch03 F-3, confirmed by spot review). Rulings: DL-032 (`slow` is a fixture for the failing branch; not a candidate or an operating condition), DL-039 (a staged "satisfaction claims evaluated" check, with `slow` as the natural negative control).
+- Assumptions: an assumption may enter as asserted context or a labelled estimate, never as the derived result (DL-034).
 
 ## 2. The functional layer mixes a mechanism and does not account for its flows (Ch3, Ch4)
 
 - `ApplyHeat` takes `efficiency` as an input and assigns `energy := DeliveredEnergy(power, duration, efficiency)`, a deterministic conversion with a MoP parameter inside a functional action; the required functional relation, the balance inequality, is absent; efficiency is unbounded (`efficiency = 1.5` delivers 144 kJ from 96 kJ) (ch03 F-5, ch04 F-1, F-2). Ruling: DL-030. Re-derive: typed flows in and out (bread and energy in; toast, delivered energy and loss out), the balance inequality, efficiency bounded 0 to 1 and moved to the logical carrier.
-- No decomposition and no parent function; `calculate` is not a verb-noun function (ch04 F-4). `Start`, `Finish`, `Cancel` are unconnected item defs whose names (events) contradict the chapter text (bread, toast) (ch04 F-3). Ruling: DL-037 (functional flow types; the model must state what each denotes).
+- No decomposition and no parent function; `calculate` is not a verb-noun function (ch04 F-4). `Start`, `Finish`, `Cancel` are unconnected item defs whose names (events) contradict the chapter text (bread, toast) (ch04 F-3). Ruling: DL-036 (functional flow types; the model must state what each denotes).
 - `duration` is an input slot copied from `DeliveredEnergy` (ch04 OQ-2). Ruling: DL-031 (functional input slot; never the quantity checked as time to toast).
 
 ## 3. The logical to physical chain is missing (Ch1, Ch2, Ch5)
 
-- No `perform`, no abstract logical part def carrying a mechanism, `HeatingSystem` and `ControlSystem` are concrete groupings that specialize the whole's purpose type, `Heater` specializes nothing and is unused, `nominal` and `slow` contain no concrete part (ch01 F-2, F-3, ch02 F-6, ch05 F-2, F-4, F-6). Rulings: DL-020, DL-021, DL-033. Re-derive with the idiom in `architecture-layers` (`abstract part def` with `perform action`, concrete specialization, named `allocate` between usages).
-- `BreadLoader`, `BreadEjector`, `BreadHandling` trace to no function, `BreadHandling` is not part of `Toaster`, and the flow is not an interface (no ports, unrelated item-typed ends, no payload) (ch05 F-4 to F-6). Ruling: DL-038 (name groupings by function, not by mechanism, until a selection is recorded), DL-038 and DL-039 for the interface check.
+- No `perform`, no abstract logical part def carrying a mechanism, `HeatingSystem` and `ControlSystem` are concrete groupings that specialize the whole's purpose type, `Heater` specializes nothing and is unused, `nominal` and `slow` contain no concrete part (ch01 F-2, F-3, ch02 F-6, ch05 F-2, F-4, F-6). Rulings: DL-020, DL-021, DL-032. Re-derive with the idiom in `architecture-layers` (`abstract part def` with `perform action`, concrete specialization, named `allocate` between usages).
+- `BreadLoader`, `BreadEjector`, `BreadHandling` trace to no function, `BreadHandling` is not part of `Toaster`, and the flow is not an interface (no ports, unrelated item-typed ends, no payload) (ch05 F-4 to F-6). Ruling: DL-037 (name groupings by function, not by mechanism, until a selection is recorded), DL-038 and DL-039 for the interface check.
 
 ## 4. Measures: none are declared (Ch3)
 
-- No MoE, MoP or TPM metadata or measure-tagged attribute exists in any fixture Ch1 to Ch8; "MoE" and "MoP" appear only in two notebook file names; no MoE/MoP justification is recorded (ch03 F-1). Ruling: DL-036 (no label is ruled now; the re-derivation records the justification, and the measured quantity must be derived; if a MoP, its threshold is derived from a stated MoE).
+- No MoE, MoP or TPM metadata or measure-tagged attribute exists in any fixture Ch1 to Ch8; "MoE" and "MoP" appear only in two notebook file names; no MoE/MoP justification is recorded (ch03 F-1). Ruling: DL-035 (no label is ruled now; the re-derivation records the justification, and the measured quantity must be derived; if a MoP, its threshold is derived from a stated MoE).
 
 ## 5. Judgment and evidence are mislabeled (Ch2, Ch3, Ch4)
 
-- `part evidence` is a container with no part holding claims; records cite the model's own assertion as evidence; the verification case is not linked to the claims (ch02 F-7, ch03 F-4). Ruling: DL-034 (records and satisfaction claims are not layer elements; the container is a defect; reserve "evidence" for analysis results).
+- `part evidence` is a container with no part holding claims; records cite the model's own assertion as evidence; the verification case is not linked to the claims (ch02 F-7, ch03 F-4). Ruling: DL-033 (records and satisfaction claims are not layer elements; the container is a defect; reserve "evidence" for analysis results).
 - Ch4's completeness record checks a weaker criterion than input/output accounting (ch04 F-2).
 
 ## 6. The system of interest and the purpose statement (Ch1, Ch2)
