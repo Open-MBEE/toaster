@@ -147,10 +147,15 @@ def _allocate_between_definitions(
 # specialization tree): ConnectionDefinition, InterfaceDefinition and AllocationDefinition are all kinds of
 # PartDefinition per the spec, even though OpenSysML's API-JSON `@type` names them distinctly from a plain
 # `part def`. A user `part def` chain needs no entry here: its own `@type` is already "PartDefinition".
+# ViewDefinition and RenderingDefinition are likewise kinds of PartDefinition (SysML v2.0 formal/2026-03-02
+# 7.26.1: "A view definition is a kind of part definition (see 7.11)" and "A rendering definition is a kind
+# of part definition (see 7.11)").
 _METACLASS_SUPERTYPES: dict[str, set[str]] = {
     "ConnectionDefinition": {"PartDefinition"},
     "InterfaceDefinition": {"PartDefinition"},
     "AllocationDefinition": {"PartDefinition"},
+    "ViewDefinition": {"PartDefinition"},
+    "RenderingDefinition": {"PartDefinition"},
 }
 
 

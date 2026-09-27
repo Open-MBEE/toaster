@@ -425,6 +425,26 @@ def test_untyped_part_not_flagged(subtypes_model) -> None:
     assert "P::untyped" not in flagged
 
 
+def test_part_typed_by_view_def_not_flagged(conn) -> None:
+    # F7: a view definition is a kind of part definition (SysML v2.0 formal/2026-03-02 7.26.1).
+    model = conn.load_from_content(
+        "package P { view def V; part a : V; }", strict=False
+    )
+    assert model.ok
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(model)}
+    assert "P::a" not in flagged
+
+
+def test_part_typed_by_rendering_def_not_flagged(conn) -> None:
+    # F7: a rendering definition is a kind of part definition (SysML v2.0 formal/2026-03-02 7.26.1).
+    model = conn.load_from_content(
+        "package P { rendering def R; part b : R; }", strict=False
+    )
+    assert model.ok
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(model)}
+    assert "P::b" not in flagged
+
+
 def test_part_typed_by_unresolved_library_type_not_flagged(subtypes_model) -> None:
     # A type missing from the export (a library type not resolved) cannot be judged either way,
     # so it must not be flagged: construct that export gap by removing the type's own entry.
