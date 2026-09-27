@@ -143,14 +143,43 @@ def _allocate_between_definitions(
     return findings
 
 
+# SysML/KerML metamodel supertypes of a metaclass (fixed by the language grammar, not the model's own
+# specialization tree): ConnectionDefinition, InterfaceDefinition and AllocationDefinition are all kinds of
+# PartDefinition per the spec, even though OpenSysML's API-JSON `@type` names them distinctly from a plain
+# `part def`. A user `part def` chain needs no entry here: its own `@type` is already "PartDefinition".
+_METACLASS_SUPERTYPES: dict[str, set[str]] = {
+    "ConnectionDefinition": {"PartDefinition"},
+    "InterfaceDefinition": {"PartDefinition"},
+    "AllocationDefinition": {"PartDefinition"},
+}
+
+
+def _is_or_specializes_part_definition(type_kind: str | None) -> bool:
+    """Whether the metaclass ``type_kind`` (e.g. from an element's ``@type``) is PartDefinition or, per the
+    fixed SysML/KerML metamodel, transitively specializes it. Uses the same `_closure` traversal the
+    port-type check (`port_type_mismatches`) uses over `specialization_graph`, applied here to the static
+    metaclass hierarchy in `_METACLASS_SUPERTYPES` instead of the model's own named specializations.
+    """
+    if type_kind is None:
+        return False
+    return type_kind == "PartDefinition" or "PartDefinition" in query._closure(
+        type_kind, _METACLASS_SUPERTYPES
+    )
+
+
 def _part_typed_only_by_item_def(
     model: Any, index: "query.ApiIndex | None" = None
 ) -> list[dict]:
-    """Rule (DL-039): a PartUsage none of whose types is a PartDefinition.
+    """Rule (DL-039): a PartUsage none of whose types is a PartDefinition (or a subtype of one).
 
     SysML `validatePartUsagePartDefinition` (formal/2026-03-02 p. 323): "At least one of the itemDefinitions
     of a PartUsage must be a PartDefinition." A PartUsage with no declared type at all is out of scope for
-    this rule (there is no itemDefinition to check).
+    this rule (there is no itemDefinition to check). A connection def, interface def or allocation def IS a
+    kind of PartDefinition per the metamodel (F4), so any of those satisfies the constraint too, as does a
+    user part def that specializes another part def at any depth (its own `@type` is already
+    "PartDefinition"). A type reference that cannot be resolved (missing from the API-JSON export, e.g. an
+    unresolved library type) cannot be judged either way, so it is skipped rather than flagged (F4): this
+    rule only flags a PartUsage whose types are *all* resolved and *none* is a PartDefinition or subtype.
     """
     idx = index or query.ApiIndex(model)
     findings = []
@@ -159,22 +188,29 @@ def _part_typed_only_by_item_def(
         type_qns = idx.type_names(e_qn) if e_qn else []
         if not type_qns:
             continue
-        type_kinds = [idx.by_qn.get(tq, {}).get("@type") for tq in type_qns]
-        if "PartDefinition" not in type_kinds:
-            findings.append(
-                {
-                    "rule": "part-typed-only-by-item-def",
-                    "constraint": (
-                        "SysML validatePartUsagePartDefinition (formal/2026-03-02 "
-                        "p. 323): at least one of the itemDefinitions of a "
-                        "PartUsage must be a PartDefinition"
-                    ),
-                    "element": e_qn,
-                    "message": (
-                        f"{e_qn} is typed only by {type_kinds}, none a PartDefinition"
-                    ),
-                }
-            )
+        resolved_kinds = [
+            idx.by_qn.get(tq, {}).get("@type") for tq in type_qns if tq is not None
+        ]
+        if any(_is_or_specializes_part_definition(k) for k in resolved_kinds):
+            continue
+        if len(resolved_kinds) < len(type_qns):
+            # at least one type is missing from the export: cannot determine, not a violation
+            continue
+        findings.append(
+            {
+                "rule": "part-typed-only-by-item-def",
+                "constraint": (
+                    "SysML validatePartUsagePartDefinition (formal/2026-03-02 "
+                    "p. 323): at least one of the itemDefinitions of a "
+                    "PartUsage must be a PartDefinition"
+                ),
+                "element": e_qn,
+                "message": (
+                    f"{e_qn} is typed only by {resolved_kinds}, none a "
+                    "PartDefinition or subtype"
+                ),
+            }
+        )
     return findings
 
 

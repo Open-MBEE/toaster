@@ -356,6 +356,107 @@ def test_prove_negative_control_covers_both_gap_rules(conn) -> None:
         assert rule.check(model)
 
 
+# --- F4: part-typed-only-by-item-def must not flag valid SysML ---
+
+PART_TYPED_BY_SUBTYPES_MODEL = """
+package P {
+  item def Start;
+  part def Base;
+  part def Mid :> Base;
+  part def Deep :> Mid;
+  part def X;
+  part def Y;
+  connection def Conn { end x : X; end y : Y; }
+  interface def Iface { end x2 : X; end y2 : Y; }
+  allocation def Alloc { end x3 : X; end y3 : Y; }
+  part a : Conn;
+  part b : Iface;
+  part c : Alloc;
+  part d : Deep;
+  part e : Start;
+  part combo : Start, Base;
+  part untyped;
+}
+"""
+
+
+@pytest.fixture(scope="module")
+def subtypes_model(conn):
+    m = conn.load_from_content(PART_TYPED_BY_SUBTYPES_MODEL, strict=False)
+    assert m.ok
+    return m
+
+
+def test_part_typed_by_connection_def_not_flagged(subtypes_model) -> None:
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(subtypes_model)}
+    assert "P::a" not in flagged
+
+
+def test_part_typed_by_interface_def_not_flagged(subtypes_model) -> None:
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(subtypes_model)}
+    assert "P::b" not in flagged
+
+
+def test_part_typed_by_allocation_def_not_flagged(subtypes_model) -> None:
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(subtypes_model)}
+    assert "P::c" not in flagged
+
+
+def test_part_typed_by_two_level_specializing_part_def_not_flagged(subtypes_model) -> None:
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(subtypes_model)}
+    assert "P::d" not in flagged
+
+
+def test_part_typed_only_by_item_def_still_flagged(subtypes_model) -> None:
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(subtypes_model)}
+    assert "P::e" in flagged
+
+
+def test_part_typed_by_both_item_def_and_part_def_not_flagged(subtypes_model) -> None:
+    # F6 mutation survivor: a part typed by BOTH an item def and a part def is satisfied by the
+    # part def alone and must not be flagged.
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(subtypes_model)}
+    assert "P::combo" not in flagged
+
+
+def test_untyped_part_not_flagged(subtypes_model) -> None:
+    # F6 mutation survivor: an untyped part (no type at all) is out of scope for this rule.
+    flagged = {f["element"] for f in cf._part_typed_only_by_item_def(subtypes_model)}
+    assert "P::untyped" not in flagged
+
+
+def test_part_typed_by_unresolved_library_type_not_flagged(subtypes_model) -> None:
+    # A type missing from the export (a library type not resolved) cannot be judged either way,
+    # so it must not be flagged: construct that export gap by removing the type's own entry.
+    idx = cf.query.ApiIndex(subtypes_model)
+    start = idx.by_qn["P::Start"]
+    del idx.by_id[start["@id"]]
+    assert idx.type_names("P::e") == [None]  # confirms the gap: unresolved, not just missing
+    flagged = {
+        f["element"]
+        for f in cf._part_typed_only_by_item_def(subtypes_model, index=idx)
+    }
+    assert "P::e" not in flagged
+
+
+def test_only_part_definition_control_still_flagged_exactly(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "part-typed-only-by-item-def")
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    findings = rule.check(model)
+    assert [f["element"] for f in findings] == ["P::BreadLoader::bread"]
+
+
+# --- F6 mutation survivor: pin GAP_BLOCK_UNBLOCK_WHEN's literal text, not just equality-to-constant ---
+
+
+def test_gap_block_unblock_when_text() -> None:
+    assert (
+        cf.GAP_BLOCK_UNBLOCK_WHEN
+        == "no language-tier violation, per the spec, is present (gap_findings is empty)"
+    )
+
+
 # --- report() blocks on gap findings even when model.ok is True (DL-039) ---
 
 
