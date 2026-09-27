@@ -234,20 +234,33 @@ _UNRESOLVED_TRANSITION_TRIGGER_CONSTRAINT = (
     "element in scope"
 )
 
-_TRIGGER_EXPRESSION_KEYWORDS = ("after", "when")
+# F2/F4 round 2: "after" (time trigger) and "when" (change trigger) are expressions, not names; round 2
+# adds "at" (also a time trigger, `accept at <clock-feature>`, confirmed against the tool: F4).
+_TRIGGER_EXPRESSION_KEYWORDS = ("after", "when", "at")
 
-# A named payload ("s : Start", or "s : Outer::Start" with a qualified type) uses a single colon,
-# spaced on both sides in the export; a qualified name ("Outer::Start") uses an unspaced "::". The
-# negative lookahead keeps the two apart: it requires the colon after the leading name NOT be
-# immediately followed by a second colon, so "Outer::Start" is correctly rejected as a whole (see the
-# check's docstring for the scratch-model shapes this was verified against).
-_NAMED_PAYLOAD = re.compile(r"^[A-Za-z_]\w*\s*:(?!:)\s*(.+)$")
+# A named payload ("s : Start", "s :> sig" (F4 round 2: subsetting), or "s : Outer::Start" with a
+# qualified type) uses a single colon or ":>" , spaced on both sides in the export; a qualified name
+# ("Outer::Start") uses an unspaced "::". The alternation (literal ":>" , or a lone ":" not immediately
+# followed by another ":") keeps the two apart, so "Outer::Start" is correctly rejected as a whole (see
+# the check's docstring for the scratch-model shapes this was verified against).
+_NAMED_PAYLOAD = re.compile(r"^[A-Za-z_]\w*\s*(?::>|:(?!:))\s*(.+)$")
 
+# Round 2 F4: the standard-library packages this repo's own models actually import (models/*.sysml:
+# ScalarValues, SI, ISQ, MeasurementReferences), plus Time (named directly in the round-2 push-back).
+# Not exhaustive of the OMG SysML standard library: a reference into a standard-library package not on
+# this list is still flagged (a known false-positive risk, symmetric with the false-negative risk of
+# the "any local package" branch below — both are guesses, in opposite directions, about a name this
+# rule cannot verify either way). Expanding the list is a one-line follow-up when a new standard import
+# is introduced.
+_KNOWN_EXTERNAL_LIBRARY_PACKAGES = frozenset(
+    {"ScalarValues", "SI", "ISQ", "MeasurementReferences", "Time"}
+)
 
 def _trigger_payload_name(trigger: str) -> str | None:
     """The identifier or qualified name an `accept` trigger's ``sysx:trigger`` string denotes, or
-    ``None`` if the string is a time/change-trigger expression (an ``after <duration>`` or
-    ``when <expr>`` form), which names no type at all and so is out of scope for this rule (F2/F3).
+    ``None`` if the string is a time/change-trigger expression (an ``after <duration>``,
+    ``at <clock-feature>`` or ``when <expr>`` form), which names no type at all and so is out of scope
+    for this rule (F2/F3, F4 round 2).
     """
     first_word = trigger.split(None, 1)[0]
     if first_word in _TRIGGER_EXPRESSION_KEYWORDS:
@@ -256,28 +269,29 @@ def _trigger_payload_name(trigger: str) -> str | None:
     return named_payload.group(1).strip() if named_payload else trigger
 
 
-def _owning_package_qn(idx: "query.ApiIndex", qn: str | None) -> str | None:
-    """Qualified name of the nearest enclosing Package of the element named ``qn``, walking the
-    ``owner``/``owningNamespace`` chain up from it. ``None`` if ``qn`` is not indexed, or the chain
-    does not reach a Package (should not happen for a well-formed model; skipped rather than raised,
-    matching the other gap rules' "cannot judge, don't flag" posture, F4).
+def _has_unresolvable_import(idx: "query.ApiIndex") -> bool:
+    """Whether this document has at least one ``NamespaceImport``/``MembershipImport`` whose target
+    does not resolve to any element present in this document's own API-JSON export — i.e. a genuinely
+    external import (a standard-library package, or any other document this rule cannot see into).
+
+    Deliberately does not try to recover *which* package the import names: the export's only handle on
+    an unresolved import's target is an opaque id with no ``declaredName`` at all, and the one place a
+    human-readable name might come from, ``sysx:sourceText``, is not reliable (confirmed directly: it
+    is present for every import in the real ch07 fixture, which formats one import per line, but is
+    empty for an otherwise-identical import packed onto one source line with other statements — a
+    single-formatting-dependent signal is not something this rule should key correctness on). Used only
+    for the unqualified-name case (F4 round 2): a qualified name's own top-level segment already names
+    itself, and is checked directly against ``_KNOWN_EXTERNAL_LIBRARY_PACKAGES`` without needing this
+    (see the check's docstring for why the two cases need different treatment).
     """
-    if qn is None:
-        return None
-    seen: set[str] = set()
-    e = idx.by_qn.get(qn)
-    while e is not None:
-        if e.get("@type") == "Package":
-            return e.get("qualifiedName")
-        owner_ref = e.get("owningNamespace") or e.get("owner")
-        if owner_ref is None:
-            return None
-        owner_id = owner_ref["@id"] if isinstance(owner_ref, dict) else owner_ref
-        if owner_id in seen:
-            return None
-        seen.add(owner_id)
-        e = idx.by_id.get(owner_id)
-    return None
+    for e in idx.elements:
+        if e.get("@type") not in ("NamespaceImport", "MembershipImport"):
+            continue
+        target = e.get("importedNamespace") or e.get("importedMembership")
+        target_id = target["@id"] if isinstance(target, dict) else target
+        if target_id not in idx.by_id:
+            return True
+    return False
 
 
 def _unresolved_transition_trigger(
@@ -296,8 +310,10 @@ def _unresolved_transition_trigger(
     - plain identifier: ``"Start"``
     - qualified name: ``"Outer::Start"``
     - named payload: ``"s : Start"`` (resolve the part after the colon, not the whole string; a
-      qualified type in a named payload, ``"s : Outer::Start"``, resolves the same way)
-    - time trigger: ``"after 5 [s]"`` — an expression, not a name; no payload to resolve
+      qualified type in a named payload, ``"s : Outer::Start"``, resolves the same way); a subsetting
+      named payload, ``"s :> sig"``, resolves ``sig`` the same way (F4 round 2)
+    - time trigger: ``"after 5 [s]"`` or ``"at t"`` — an expression, not a name; no payload to resolve
+      (round 2 adds ``at``, confirmed against the tool: F4)
     - change trigger: ``"when someFlag"`` — an expression naming an attribute, not a name to resolve
       against a type; also no payload to resolve
     - untriggered (unconditional) transition: neither ``sysx:trigger`` nor ``sysx:triggerKeyword`` at
@@ -308,38 +324,73 @@ def _unresolved_transition_trigger(
     ``ItemDefinition``, ``PartDefinition``, ``PortDefinition``, ``AttributeDefinition``,
     ``EnumerationDefinition``, an existing usage referenced by name — not only ``ItemDefinition``
     (confirmed: OpenSysML accepts every one of these as a payload type with ``ok=True``), so this rule
-    matches against the ``declaredName`` of *any* element, not a fixed enum of kinds.
+    matches against the ``declaredName`` of *any* element, not a fixed enum of kinds. Round 2 (R4): this
+    also means an unqualified match is not restricted to type-like ``@type``s at all — a trigger that
+    happens to spell a state's or an attribute's own ``declaredName`` (e.g. ``accept idle``) resolves
+    too, even though neither is a type. This is an intentional, already-reviewed leniency: enumerating
+    every ``@type`` that is a legal payload type is exactly the fragile, drift-prone approach F2 (round
+    1) rejected for the payload side of this check, and the same reasoning applies symmetrically here.
 
-    Scope (F4, a builder-scope design call under DL-039(3)): an unqualified name is resolved only
-    against declared names in the *same package* as the transition itself (walking the ownership chain
-    to the nearest enclosing Package, ``_owning_package_qn``); a qualified name (``"Outer::Start"``) is
-    resolved against every element's qualified name anywhere in the model. This is narrower than
-    resolving an unqualified name against the whole model: OpenSysML's own reference resolution
-    elsewhere (e.g. `perform`) does not resolve an unqualified cross-package name either, so matching
-    that posture is more consistent with the tool's actual behavior than treating "anywhere in the
-    model" as equivalent to "in scope" would be. The accepted limitation this narrowing carries — an
-    unqualified reference to a name legitimately brought into scope by an explicit import from another
-    package is a false negative this rule cannot currently detect as *unresolved if it in fact isn't* —
-    is recorded in DEFERRED.md D-023: implementing full import-graph resolution is out of this rule's
-    scope, so an import case is not attempted at all rather than guessed at (same "skip rather than
-    falsely flag" posture the other two gap rules already take, their own F4).
+    Scope (round 2 corrects round 1's ruling, which was wrong — verified empirically before ruling
+    again, not assumed: the real ch07 fixture itself wildcard-imports four external packages, so a
+    same-package-only restriction would have silently stopped checking exactly the fixture this guard
+    exists to protect):
 
-    Both real fixtures (ch07, ch08) are single-package models, so this cannot be exercised by them one
-    way or the other; they produce zero findings from this rule regardless, because their own triggers
-    (`Start`, `Finish`, `Cancel`) resolve within their own package either way.
+    - An unqualified name is resolved against the ``declaredName`` of *any* element anywhere in the
+      loaded model, full stop — no package or import modeling at all. This is deliberately coarser than
+      real name resolution (it does not require, or check for, an import that would make the name
+      actually visible where the trigger is written), but it is the only reading that handles a
+      same-document, different-package reference through a wildcard or member import (that package's
+      elements ARE all in the API-JSON export, confirmed directly) or a nested/outer-package reference,
+      without attempting to model imports or namespace visibility at all — which round 1 showed is not
+      reliably possible from the flat export. The accepted cost: an unqualified reference to a name
+      that exists in a *different, unrelated* local package purely by coincidence, with no import
+      bringing it into scope, is a false negative this rule will not catch. This is a real, accepted
+      loosening, not a claim that it is equivalent to true visibility-aware resolution.
+    - A qualified name (``"Outer::Start"``) is first tried for an exact match against every element's
+      ``qualifiedName`` anywhere in the model, then a suffix match (``qualifiedName == name`` or
+      ``qualifiedName.endswith("::" + name)``), so a legitimate *relative* qualification (e.g.
+      ``Inner::Start`` when the full path is ``P::Inner::Start``) also resolves.
+    - If neither matches, the qualified name's own top-level segment decides whether the reference is
+      judged at all: if that segment names a real local ``Package`` in this document (by
+      ``declaredName``, any nesting depth), the document CAN see into that package, so a name that
+      still isn't found under it is a genuine broken reference — flagged. If the segment does not name
+      a local package but is a recognized external/standard-library package name
+      (``_KNOWN_EXTERNAL_LIBRARY_PACKAGES``), it is treated as a probable external reference this rule
+      cannot verify either way — skipped, not flagged, per the same "skip rather than falsely flag"
+      posture the other two gap rules already take (their own F4). Anything else (a top segment that is
+      neither a visible local package nor a recognized library name) is flagged as broken: there is
+      nothing to back reading it as external.
+    - An unqualified name that fails the flat match above is skipped (not flagged) only when this
+      document also has at least one import (wildcard or member) that does not itself resolve to a
+      local element (`_has_unresolvable_import`) — the failing name might be a member of that external
+      import. Unlike the qualified case, this does *not* check the import is a *recognized* library:
+      the export gives no reliable, formatting-independent way to name an unresolved import's target
+      (see `_has_unresolvable_import`'s own docstring), so any unresolvable import is treated as enough
+      reason not to guess. This is deliberately coarse (document-wide, not scoped to where the trigger
+      is written, and not restricted to a known list) and carries a real cost documented in DEFERRED.md
+      D-023: in a chapter shaped like ch07 (which itself imports four external packages), a genuine
+      local typo in an `accept` trigger would also go uncaught by this branch, for the same reason the
+      import itself cannot be modeled precisely. It does not affect the real ch07/ch08 fixtures today,
+      because their own triggers (`Start`, `Finish`, `Cancel`) resolve by the flat unqualified match
+      above and never reach this branch.
     """
     idx = index or query.ApiIndex(model)
 
+    all_declared_names: set[str] = set()
     all_qualified_names: set[str] = set()
-    declared_by_package: dict[str | None, set[str]] = {}
+    local_package_declared_names: set[str] = set()
     for e in idx.elements:
         qn = e.get("qualifiedName")
         if qn:
             all_qualified_names.add(qn)
         name = e.get("declaredName")
         if name:
-            pkg = _owning_package_qn(idx, qn)
-            declared_by_package.setdefault(pkg, set()).add(name)
+            all_declared_names.add(name)
+            if e.get("@type") == "Package":
+                local_package_declared_names.add(name)
+
+    has_unresolvable_import = _has_unresolvable_import(idx)
 
     findings = []
     for t in idx.of_type("TransitionUsage"):
@@ -352,13 +403,24 @@ def _unresolved_transition_trigger(
         if payload_name is None:
             continue  # time/change-trigger expression: not a name, nothing to resolve (F2/F3)
         t_id = t.get("qualifiedName")
+
         if "::" in payload_name:
-            resolved = payload_name in all_qualified_names
+            top = payload_name.split("::")[0]
+            resolved = payload_name in all_qualified_names or any(
+                qn.endswith("::" + payload_name) for qn in all_qualified_names
+            )
+            if resolved:
+                continue
+            if top not in local_package_declared_names and (
+                top in _KNOWN_EXTERNAL_LIBRARY_PACKAGES
+            ):
+                continue  # probable external library reference; can't verify, don't flag (F4)
         else:
-            pkg = _owning_package_qn(idx, t_id)
-            resolved = payload_name in declared_by_package.get(pkg, set())
-        if resolved:
-            continue
+            if payload_name in all_declared_names:
+                continue
+            if has_unresolvable_import:
+                continue  # an external import is present; can't rule out the name coming from it (F4)
+
         findings.append(
             {
                 "rule": "unresolved-transition-trigger",

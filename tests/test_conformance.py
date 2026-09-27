@@ -527,6 +527,220 @@ def test_unresolved_transition_trigger_qualified_nonexistent_is_flagged(conn) ->
     assert findings[0]["message"].count("Outer::Nope") == 2
 
 
+# --- round 2 (F4 corrected: same-package-only scoping was wrong; see the check's docstring) ---
+
+# A same-package-only reading would flag this (item def Start lives in a *different* package, A, and
+# is brought into scope only by the wildcard import). Distinct from the plain same-package clean model
+# above: this is the specific case round 1's scoping broke.
+UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_WILDCARD_IMPORT = """
+package A {
+  item def Start;
+}
+package B {
+  private import A::*;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Start then heating;
+  }
+}
+"""
+
+UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_MEMBER_IMPORT = """
+package A {
+  item def Start;
+}
+package B {
+  private import A::Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Start then heating;
+  }
+}
+"""
+
+# A relative qualification (Inner::Start) whose full path is P::Inner::Start: the suffix match, not
+# just an exact qualifiedName match, is what resolves it.
+UNRESOLVED_TRANSITION_TRIGGER_RELATIVE_QUALIFIED = """
+package P {
+  package Inner {
+    item def Start;
+  }
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Inner::Start then heating;
+  }
+}
+"""
+
+# A real local nested package (Inner) with no member named Nope: the top segment IS visible locally,
+# so this is a genuine broken reference, not a probable external one — still flagged, distinct from a
+# qualified reference whose top segment matches no local package at all (below).
+UNRESOLVED_TRANSITION_TRIGGER_RELATIVE_QUALIFIED_BAD = """
+package P {
+  package Inner {
+    item def Start;
+  }
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Inner::Nope then heating;
+  }
+}
+"""
+
+# The top segment ("Q") matches no local package AND no recognized external library: nothing backs
+# reading it as external, so it is flagged, unlike a genuine library-qualified reference (below).
+UNRESOLVED_TRANSITION_TRIGGER_WRONG_UNKNOWN_PACKAGE = """
+package P {
+  item def Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Q::Start then heating;
+  }
+}
+"""
+
+# A qualified reference into a recognized standard-library package this document never declares
+# locally: skipped as a probable external reference, not flagged (contrast with Q::Start above, whose
+# top segment is not on the recognized list at all).
+UNRESOLVED_TRANSITION_TRIGGER_LIBRARY_QUALIFIED = """
+package P {
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept ScalarValues::Boolean then heating;
+  }
+}
+"""
+
+# An unqualified name that fails to resolve locally, with a wildcard import of a recognized external
+# library present: skipped, since the name might be a member of that import (round 2's corrected F4).
+UNRESOLVED_TRANSITION_TRIGGER_LIBRARY_UNQUALIFIED_VIA_IMPORT = """
+package P {
+  private import ScalarValues::*;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Boolean then heating;
+  }
+}
+"""
+
+# Round 2 F4: `at` is a third time-trigger keyword (alongside `after`), an expression, not a name.
+UNRESOLVED_TRANSITION_TRIGGER_AT_TIME = """
+package P {
+  attribute t : Time::TimeInstantValue;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept at t then heating;
+  }
+}
+"""
+
+# Round 2 F4: a subsetting named payload (`s :> sig`) resolves `sig`, not the whole string.
+UNRESOLVED_TRANSITION_TRIGGER_SUBSETTING_PAYLOAD = """
+package P {
+  item def Start;
+  item sig : Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept s :> sig then heating;
+  }
+}
+"""
+
+
+def test_unresolved_transition_trigger_cross_package_wildcard_import_resolves(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_WILDCARD_IMPORT, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_cross_package_member_import_resolves(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_MEMBER_IMPORT, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_relative_qualified_resolves(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_RELATIVE_QUALIFIED, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_relative_qualified_bad_is_flagged(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_RELATIVE_QUALIFIED_BAD, strict=False
+    )
+    assert model.ok
+    findings = cf._unresolved_transition_trigger(model)
+    assert len(findings) == 1
+    assert "Inner::Nope" in findings[0]["message"]
+
+
+def test_unresolved_transition_trigger_wrong_unknown_package_is_flagged(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_WRONG_UNKNOWN_PACKAGE, strict=False
+    )
+    assert model.ok
+    findings = cf._unresolved_transition_trigger(model)
+    assert len(findings) == 1
+    assert "Q::Start" in findings[0]["message"]
+
+
+def test_unresolved_transition_trigger_library_qualified_resolves(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_LIBRARY_QUALIFIED, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_library_unqualified_via_import_resolves(
+    conn,
+) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_LIBRARY_UNQUALIFIED_VIA_IMPORT, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_at_time_is_expression(conn) -> None:
+    model = conn.load_from_content(UNRESOLVED_TRANSITION_TRIGGER_AT_TIME, strict=False)
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_subsetting_payload_resolves(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_SUBSETTING_PAYLOAD, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
 def test_unresolved_transition_trigger_real_fixture_has_no_findings(ch07) -> None:
     # The real ch07 fixture's own triggers (Start, Finish, Cancel) all resolve today (D-023): this
     # proves the new rule does not false-positive on it, not that anything was broken before.
