@@ -6,6 +6,8 @@ the work contract; if they are not present on this machine, that is itself somet
 over.
 """
 
+import os
+import time
 from pathlib import Path
 
 import pytest
@@ -70,6 +72,58 @@ package P {
 }
 """
 
+# Structure only, no constraint/requirement/invariant body at all (PASS2-012 F1).
+ZERO_CONSTRAINTS = """
+package P {
+  part def T;
+}
+"""
+
+# One of each status together (PASS2-012 F4/F2): "ok" trivially satisfied, "bad" a constant-fold
+# contradiction (VIOLATED, no z3 needed), "unsure" unbound and left undecided (with a z3 witness).
+MIXED_STATUSES = """
+package P {
+  private import ScalarValues::*;
+  constraint ok { true }
+  constraint bad { 1 == 2 }
+  part def Toaster {
+    attribute w : Real;
+  }
+  part t : Toaster;
+  constraint unsure { t.w > 0 }
+}
+"""
+
+# Genuinely unsatisfiable over an unbound feature (not a constant-fold contradiction like
+# MIXED_STATUSES's "bad"): z3 must prove no value of cycleTime can ever make this hold (PASS2-012 F2).
+Z3_VIOLATED = """
+package P {
+  private import ScalarValues::*;
+  part def Toaster {
+    attribute cycleTime : Real;
+  }
+  part t : Toaster;
+  constraint c { t.cycleTime > t.cycleTime + 1.0 }
+}
+"""
+
+# Interval-propagation-resolved case (CLI.md "--ranges — interval propagation" example, reproduced
+# verbatim): z3 is never invoked, --ranges alone narrows wingSpan to prove span_lo/span_hi satisfied
+# and count's domain to prove bad VIOLATED (PASS2-012 F2). Deliberately uses no --lib, matching the
+# CLI.md example (ScalarValues isn't needed for `attribute def Real`/`attribute def Integer`).
+PROPAGATION_DEMO = """
+package Demo {
+    attribute def Real;
+    attribute def Integer;
+    attribute wingSpan : Real;
+    attribute count : Integer;
+
+    assert constraint span_lo { wingSpan >= 10 }
+    assert constraint span_hi { wingSpan <= 200 }
+    assert constraint bad { count > 5 & count < 4 }
+}
+"""
+
 
 def _write(tmp_path: Path, name: str, content: str) -> str:
     p = tmp_path / name
@@ -125,6 +179,57 @@ def test_bounded_range_satisfied_with_solve(tmp_path):
     assert v.reason == "z3: holds for all values of unbound features"
 
 
+def test_witness_but_undecided_reason_has_both_segments(tmp_path):
+    """PASS2-012 F2/OQ-1: with --solve, an unbound feature with no other constraint on it is left
+    undecided but z3 can still exhibit a witness — the CLI prints this as two segments (the base
+    "indeterminate" text, then an em-dash-joined witness), and `reason` keeps both verbatim (OQ-1)."""
+    f = _write(tmp_path, "undetermined.sysml", UNDETERMINED)
+    verdicts = mc.verify_holds(f, lib=str(LIB), binary=str(BINARY), solve=True)
+    assert len(verdicts) == 1
+    v = verdicts[0]
+    assert v.status == "undecided"
+    assert "indeterminate over unbound features" in v.reason
+    assert "z3: satisfiable" in v.reason
+
+
+def test_z3_resolved_violated_not_constant_fold(tmp_path):
+    """PASS2-012 F2: a VIOLATED verdict z3 had to actually resolve (unsatisfiable over an unbound
+    feature), distinct from CONTRADICTION's `1 == 2`, which is a trivial constant fold needing no z3."""
+    f = _write(tmp_path, "z3_violated.sysml", Z3_VIOLATED)
+    verdicts = mc.verify_holds(f, lib=str(LIB), binary=str(BINARY), solve=True)
+    assert len(verdicts) == 1
+    v = verdicts[0]
+    assert v.status == "violated"
+    assert "z3" in v.reason
+    assert "unsatisfiable" in v.reason
+
+
+def test_propagation_resolved_case(tmp_path):
+    """PASS2-012 F2: interval propagation (--ranges) alone resolves every verdict here, without z3 —
+    also exercises stdout's trailing "narrowed ranges:" report (present whenever --ranges narrows a
+    feature), which trails the summary line rather than being the last line of stdout."""
+    f = _write(tmp_path, "propagation.sysml", PROPAGATION_DEMO)
+    verdicts = mc.verify_holds(f, binary=str(BINARY), solve=False, ranges=True)
+    assert len(verdicts) == 3
+    by_name = {v.element: v for v in verdicts}
+    assert by_name["span_lo"].status == "satisfied"
+    assert "propagation:" in by_name["span_lo"].reason
+    assert by_name["span_hi"].status == "satisfied"
+    assert "propagation:" in by_name["span_hi"].reason
+    assert by_name["bad"].status == "violated"
+    assert "propagation:" in by_name["bad"].reason
+
+
+def test_multiple_statuses_together(tmp_path):
+    """PASS2-012 F2/F4: a file with satisfied, violated and undecided verdicts together, reused by the
+    holds() precedence test below."""
+    f = _write(tmp_path, "mixed.sysml", MIXED_STATUSES)
+    verdicts = mc.verify_holds(f, lib=str(LIB), binary=str(BINARY), solve=True)
+    assert len(verdicts) == 3
+    statuses = {v.status for v in verdicts}
+    assert statuses == {"satisfied", "violated", "undecided"}
+
+
 def test_missing_binary_raises_modelcheckerror(tmp_path):
     f = _write(tmp_path, "tautology.sysml", TAUTOLOGY)
     with pytest.raises(mc.ModelCheckError):
@@ -154,6 +259,42 @@ def test_bad_lib_path_raises_modelcheckerror(tmp_path):
     assert "cannot load library" in str(exc_info.value)
 
 
+def test_summary_line_with_wrong_exit_code_raises(tmp_path):
+    """PASS2-012 F3: a fake binary (not the real one — this is about the wrapper's own disambiguation
+    logic, not CLI text parsing) that prints a well-formed, internally-consistent summary line but
+    exits with a code that is neither 0 nor "1 with a violation" must not be trusted."""
+    script = tmp_path / "fake_wrong_exit.sh"
+    script.write_text(
+        "#!/bin/sh\n"
+        'echo "somefile.sysml:1:1  c (ConstraintUsage): satisfied"\n'
+        'echo "1 satisfied, 0 violated, 0 undecided"\n'
+        "exit 2\n"
+    )
+    script.chmod(0o755)
+    f = _write(tmp_path, "tautology.sysml", TAUTOLOGY)
+    with pytest.raises(mc.ModelCheckError) as exc_info:
+        mc.verify_holds(f, binary=str(script))
+    assert "exited 2" in str(exc_info.value)
+
+
+def test_summary_line_verdict_count_mismatch_raises(tmp_path):
+    """PASS2-012 F3: a fake binary whose summary line's declared total does not match the number of
+    verdict lines actually parsed must not be trusted, even though the exit code looks fine."""
+    script = tmp_path / "fake_count_mismatch.sh"
+    script.write_text(
+        "#!/bin/sh\n"
+        'echo "somefile.sysml:1:1  c (ConstraintUsage): satisfied"\n'
+        'echo "2 satisfied, 0 violated, 0 undecided"\n'
+        "exit 0\n"
+    )
+    script.chmod(0o755)
+    f = _write(tmp_path, "tautology.sysml", TAUTOLOGY)
+    with pytest.raises(mc.ModelCheckError) as exc_info:
+        mc.verify_holds(f, binary=str(script))
+    assert "2 verdict(s)" in str(exc_info.value)
+    assert "1 verdict line(s) were parsed" in str(exc_info.value)
+
+
 def test_timeout_raises_modelcheck_timeout_error(tmp_path):
     """A slow fake binary, not the real one: this exercises the wrapper's own subprocess timeout
     handling, which has nothing to do with parsing real CLI text and would otherwise make this test
@@ -164,6 +305,47 @@ def test_timeout_raises_modelcheck_timeout_error(tmp_path):
     f = _write(tmp_path, "tautology.sysml", TAUTOLOGY)
     with pytest.raises(mc.ModelCheckTimeoutError):
         mc.verify_holds(f, binary=str(script), timeout=0.2)
+
+
+def test_timeout_kills_process_group_no_lingering_child(tmp_path):
+    """PASS2-012 F5: the timed-out process is run in its own process group (start_new_session=True) and
+    that whole group is killed, not just the immediate process — so a grandchild (standing in for an
+    orphaned z3) does not survive the timeout. Best-effort: polls briefly for the child to actually
+    disappear rather than asserting it is gone the instant the exception is raised."""
+    pidfile = tmp_path / "child.pid"
+    script = tmp_path / "slow_with_child.sh"
+    script.write_text(
+        "#!/bin/sh\n"
+        "sleep 5 &\n"
+        "echo $! > " + str(pidfile) + "\n"
+        "wait\n"
+    )
+    script.chmod(0o755)
+    f = _write(tmp_path, "tautology.sysml", TAUTOLOGY)
+
+    with pytest.raises(mc.ModelCheckTimeoutError):
+        mc.verify_holds(f, binary=str(script), timeout=0.5)
+
+    # Give the grandchild's pid file a moment to appear (it's written right at process start, well
+    # before our 0.5s timeout, but process creation isn't instantaneous — observed empirically to need
+    # more slack than the plain-timeout test above, which does no forking of its own).
+    for _ in range(20):
+        if pidfile.exists():
+            break
+        time.sleep(0.05)
+    assert pidfile.exists(), "fake binary never wrote the child pid file"
+    child_pid = int(pidfile.read_text().strip())
+
+    # Poll for the child to actually exit; SIGKILL delivery isn't instantaneous either.
+    child_alive = True
+    for _ in range(20):
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            child_alive = False
+            break
+        time.sleep(0.05)
+    assert not child_alive, f"child process {child_pid} survived the timeout (orphaned, not killed)"
 
 
 # --- holds() -------------------------------------------------------------------------------------------
@@ -183,6 +365,23 @@ def test_holds_raises_inconclusive_for_undecided(tmp_path):
     f = _write(tmp_path, "undetermined.sysml", UNDETERMINED)
     with pytest.raises(mc.ModelCheckInconclusiveError):
         mc.holds(f, lib=str(LIB), binary=str(BINARY), solve=False)
+
+
+def test_holds_raises_inconclusive_for_zero_constraints(tmp_path):
+    """PASS2-012 F1: a structure-only file with no constraint bodies at all yields zero verdicts.
+    holds() must not read an empty verdict list as vacuously True — nothing was verified, so nothing
+    can be reported as holding."""
+    f = _write(tmp_path, "zero.sysml", ZERO_CONSTRAINTS)
+    with pytest.raises(mc.ModelCheckInconclusiveError):
+        mc.holds(f, lib=str(LIB), binary=str(BINARY), solve=True)
+
+
+def test_holds_false_for_mixed_violated_and_undecided(tmp_path):
+    """PASS2-012 F4: a definite VIOLATED must win over an undecided verdict — holds() returns False,
+    not ModelCheckInconclusiveError, when the verdicts are a mix of satisfied, violated and undecided
+    together (MIXED_STATUSES has one of each)."""
+    f = _write(tmp_path, "mixed.sysml", MIXED_STATUSES)
+    assert mc.holds(f, lib=str(LIB), binary=str(BINARY), solve=True) is False
 
 
 # --- env var resolution ---------------------------------------------------------------------------------
