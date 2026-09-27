@@ -8,7 +8,7 @@ Chapter 1 asks: how do we describe a system in SysML v2 before we know how it is
 
 | Notebook | Construct | Concept |
 |---|---|---|
-| [01 — abstract part def](01-abstract-def.ipynb) | `abstract part def` + `action def` + `item def` | The system's purpose stated as a performed, flow-typed function, not a comment |
+| [01 — abstract part def](01-abstract-def.ipynb) | `abstract part def` + `perform` + `action def` + `item def` | The system's purpose stated as a performed, flow-typed function, not a comment |
 | [02 — part def](02-part-def.ipynb) | `part def` | Two concrete subsystem placeholders, no attributes or hierarchy yet |
 | [03 — specialization](03-specialization.ipynb) | `:>` specialization | Declaring that the whole is a kind of the concept that names it |
 | [04 — composition](04-composition.ipynb) | `part` usage | A system that owns named instances of its subsystem types, plus an unvalued cycle-time slot |
