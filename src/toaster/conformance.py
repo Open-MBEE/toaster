@@ -304,19 +304,45 @@ package P {
 """
 
 
+NOT_EVALUATED_NO_SUBJECT = "not evaluated: no explicit subject"
+
+
 def satisfaction_claims_evaluated(model: Any) -> list[dict]:
     """Staged project check (DL-039 part 4): every asserted satisfy relationship, evaluated.
 
     For every SatisfyRequirementUsage with both a requirement and a subject, calls
-    `model.eval(f"{requirement_qualified_name}({subject_qualified_name})")`. A claim that evaluates to False,
-    or whose evaluation raises, is a finding (an evaluation error is not silently dropped: it is reported
-    with its message). A `verify` relationship (no subject) is not a claim about a subject and is skipped.
+    `model.eval(f"{requirement_qualified_name}({subject_qualified_name})")`. A plain `assert satisfy`
+    (`isNegated` False or absent) is a finding when the expression evaluates False. An `assert not satisfy`
+    (`isNegated` True) asserts the opposite: it is a finding when the expression evaluates True, since the
+    model claims it should NOT hold (F3). An evaluation error is not silently dropped either way: it is
+    itself a finding, reported with its message.
+
+    A `verify` relationship (`sysx:declaredKeyword` "verify") has no subject and is not a claim about one:
+    it is skipped, not reported. A bare `satisfy R;` with an implicit subject is a satisfy claim, just one
+    this check cannot evaluate without a resolved subject; per DL-039's open question 2, that is recorded as
+    a finding with a distinguishable status (`NOT_EVALUATED_NO_SUBJECT`) rather than silently skipped, so it
+    stays visible instead of looking indistinguishable from "no claim here at all".
     """
+    idx = query.ApiIndex(model)
     findings = []
-    for s in query.satisfy_relationships(model):
+    for s in query.satisfy_relationships(model, index=idx):
         requirement, subject = s["requirement"], s["subject"]
-        if not requirement or not subject:
+        if not requirement:
             continue
+        raw = idx.by_qn.get(s["id"], {})
+        if not subject:
+            if raw.get("sysx:declaredKeyword") == "verify":
+                continue
+            findings.append(
+                {
+                    "id": s["id"],
+                    "requirement": requirement,
+                    "subject": None,
+                    "status": NOT_EVALUATED_NO_SUBJECT,
+                }
+            )
+            continue
+        is_negated = bool(raw.get("isNegated", False))
         expression = f"{requirement}({subject})"
         try:
             holds = bool(model.eval(expression))
@@ -331,7 +357,8 @@ def satisfaction_claims_evaluated(model: Any) -> list[dict]:
                 }
             )
             continue
-        if not holds:
+        fails = holds if is_negated else not holds
+        if fails:
             findings.append(
                 {
                     "id": s["id"],
@@ -339,6 +366,7 @@ def satisfaction_claims_evaluated(model: Any) -> list[dict]:
                     "subject": subject,
                     "expression": expression,
                     "result": holds,
+                    "negated": is_negated,
                 }
             )
     return findings

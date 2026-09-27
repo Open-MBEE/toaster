@@ -607,3 +607,134 @@ def test_satisfaction_claims_evaluated_error_is_a_finding(conn, monkeypatch) -> 
     findings = cf.satisfaction_claims_evaluated(model)
     assert len(findings) == 1
     assert findings[0]["error"] == "evaluation exploded"
+
+
+# --- F3: satisfaction_claims_evaluated must respect isNegated ---
+# Reviewer's exact case: temp>=200 requirement, negated claim, temp=150 subject should NOT be a
+# finding, temp=250 subject SHOULD be a finding.
+
+NEGATED_SATISFY_SUBJECT_FAILS_CONSTRAINT = """
+package P {
+  private import ScalarValues::*;
+  part def Toaster {
+    attribute temp : Real = 150.0;
+  }
+  part subject1 : Toaster;
+  requirement def HotEnough {
+    subject t : Toaster;
+    require constraint { t.temp >= 200.0 }
+  }
+  requirement req : HotEnough;
+  assert not satisfy req by subject1;
+}
+"""
+
+NEGATED_SATISFY_SUBJECT_MEETS_CONSTRAINT = """
+package P {
+  private import ScalarValues::*;
+  part def Toaster {
+    attribute temp : Real = 250.0;
+  }
+  part subject1 : Toaster;
+  requirement def HotEnough {
+    subject t : Toaster;
+    require constraint { t.temp >= 200.0 }
+  }
+  requirement req : HotEnough;
+  assert not satisfy req by subject1;
+}
+"""
+
+
+def test_negated_satisfy_constraint_false_is_not_a_finding(conn) -> None:
+    # subject temp=150 fails the >= 200 constraint, so `assert not satisfy` (isNegated=True) is
+    # correctly NOT violated: the constraint really does not hold for this subject.
+    model = conn.load_from_content(NEGATED_SATISFY_SUBJECT_FAILS_CONSTRAINT, strict=False)
+    assert model.ok
+    assert cf.satisfaction_claims_evaluated(model) == []
+
+
+def test_negated_satisfy_constraint_true_is_a_finding(conn) -> None:
+    # subject temp=250 meets the >= 200 constraint, so `assert not satisfy` (isNegated=True) IS
+    # violated: the model claims this should not hold, but it does.
+    model = conn.load_from_content(NEGATED_SATISFY_SUBJECT_MEETS_CONSTRAINT, strict=False)
+    assert model.ok
+    findings = cf.satisfaction_claims_evaluated(model)
+    assert len(findings) == 1
+    assert findings[0]["requirement"] == "P::req"
+    assert findings[0]["subject"] == "P::subject1"
+    assert findings[0]["result"] is True
+    assert findings[0]["negated"] is True
+
+
+def test_plain_satisfy_unaffected_by_isnegated_handling(conn) -> None:
+    # A plain `assert satisfy` (isNegated absent/False) keeps the pre-existing logic: finding
+    # when the expression evaluates False, none when it evaluates True.
+    check = next(c for c in cf.REGISTRY if c.id == "satisfaction-claims-evaluated")
+    false_model = conn.load_from_content(check.negative_control, strict=False)
+    findings = cf.satisfaction_claims_evaluated(false_model)
+    assert findings[0]["negated"] is False
+    true_model = conn.load_from_content(SATISFY_TRUE_MODEL, strict=False)
+    assert cf.satisfaction_claims_evaluated(true_model) == []
+
+
+# --- open question 2: bare `satisfy R;` (implicit subject) is a distinguishable finding, not silently
+# skipped; a `verify` relationship (also no subject) keeps being skipped, since it is not itself a claim
+# about a subject ---
+
+BARE_SATISFY_IMPLICIT_SUBJECT_MODEL = """
+package P {
+  private import ScalarValues::*;
+  part def Toaster {
+    attribute cycleTime : Real = 100.0;
+  }
+  requirement def TimelyToast {
+    subject toaster : Toaster;
+    require constraint { toaster.cycleTime <= 180.0 }
+  }
+  requirement timely : TimelyToast;
+  part fast : Toaster {
+    satisfy timely;
+  }
+}
+"""
+
+BARE_VERIFY_NO_SUBJECT_MODEL = """
+package P {
+  private import ScalarValues::*;
+  part def Toaster {
+    attribute cycleTime : Real = 100.0;
+  }
+  part fast : Toaster;
+  requirement def TimelyToast {
+    subject toaster : Toaster;
+    require constraint { toaster.cycleTime <= 180.0 }
+  }
+  requirement timely : TimelyToast;
+  verification def CheckTimely {
+    subject toaster : Toaster;
+    objective { verify timely; }
+  }
+  verification checkTimely : CheckTimely;
+}
+"""
+
+
+def test_bare_satisfy_implicit_subject_is_a_distinguishable_finding(conn) -> None:
+    model = conn.load_from_content(BARE_SATISFY_IMPLICIT_SUBJECT_MODEL, strict=False)
+    assert model.ok
+    findings = cf.satisfaction_claims_evaluated(model)
+    assert len(findings) == 1
+    assert findings[0]["requirement"] == "P::timely"
+    assert findings[0]["subject"] is None
+    assert findings[0]["status"] == cf.NOT_EVALUATED_NO_SUBJECT
+    assert "result" not in findings[0]
+    assert "error" not in findings[0]
+
+
+def test_bare_verify_without_subject_is_skipped_not_crashed(conn) -> None:
+    # ch08 has no `verify` relationship to exercise this branch (its docstring comment describes
+    # a case the fixture doesn't actually contain), so this is a standalone model built for it.
+    model = conn.load_from_content(BARE_VERIFY_NO_SUBJECT_MODEL, strict=False)
+    assert model.ok
+    assert cf.satisfaction_claims_evaluated(model) == []
