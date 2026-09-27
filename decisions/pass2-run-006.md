@@ -19,3 +19,7 @@ Contract PASS2-008 (four tasks, A to D): layer-audit the elements each of Ch2 to
 ## Follow-ups
 
 Second audit wave (Ch6 to Ch10); the ace-protocol clause on rulings that amend a Z decision; the language-gap guard and the "satisfaction claims evaluated" check (builder contracts, after Z's decision on DL-039); the predecessor check for cumulative fixtures and the missing import in Ch4 nb03 (small builder contracts).
+
+## Z's read-back (2026-09-27)
+
+Z accepted DL-039's reading of DL-025 (language conformance is defined by the spec, not by `model.ok`; a known spec violation blocks a project check with a checkable unblock criterion, and the tutorial supplies a language-gap guard with negative controls until upstream fixes the hole). Z confirmed the six flagged extensions (DL-030, 033, 034, 035, 038, 039) as matching Z's own judgment; they are recorded as Z's rulings, not merely unobjected-to ACE inferences.
