@@ -65,10 +65,11 @@ Use query tools and direct lookups (glossary CLI, `model.query`, known file rang
 - **DL-204 (Z ruled A, 2026-09-26):** learners meet each kind of emergence where its value is first obtained: simple at the roll-up (Ch5/6), weak at the first simulation of a functional intent (Ch7), strong at sign-off (Ch10); one sentence each, no separate section. Chapter placement is finalized in Pass 4.
 - **Where each staged conformance check first applies** (for example port types), and the wording that reports it "open" (Z-27).
 - **Douglas timestamp** for the tongs-and-flamethrower story is unverified.
-- **Backup branch** `backup/pass1-before-trailer-strip` (local; holds the pre-rewrite commits) awaits Z's word to delete.
-- **Audit backlog:** the Ch1 to Ch5 audits are consolidated in `decisions/pass4-backlog.md` (eleven themes; Ch6 to Ch10 not yet audited). ACE rulings DL-030 to DL-039 constrain the re-derivation.
-- **Pass 2 chain runs 001 to 006** (`decisions/pass2-run-00N.md`) established: roles (`orchestrator`, `layer-auditor`, `builder`, `reviewer`, `ace`), task states, the merge gate and push-back, and independent review on a different model. Open follow-ups from run 004 are listed there.
-- **Filing the gap issues** (`decisions/gap-issue-drafts.md`) awaits Z's review; nothing is filed.
+- **Backup branch** `backup/pass1-before-trailer-strip` — deleted, per Z's direction, once the trailer-strip was confirmed to have lost nothing.
+- **Audit backlog:** all eight chapters with real model content (Ch1-Ch8; Ch9/Ch10 are empty stubs) are consolidated in `decisions/pass4-backlog.md` (fifteen sections). ACE rulings DL-030 to DL-049 constrain the re-derivation.
+- **Pass 2 chain runs 001 to 012** (`decisions/pass2-run-0NN.md`) established: roles (`orchestrator`, `layer-auditor`, `builder`, `reviewer`, `ace`, and Pass 3's `simulated-learner`), task states, the merge gate and push-back, and independent review on a different model. `decisions/pass2-close.md` confirms Pass 2's exit criteria against evidence.
+- **Layer audit is a standing, proven tool, not a one-off.** The `layer-auditor` role ran for real across all eight chapters in Pass 2 (`decisions/audits/ch0N-layer-audit.md`); Pass 4 re-derivation reuses it the same way — one contract per chapter, same role file, same checklist — rather than needing new machinery.
+- **Gap issues:** Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27 (`decisions/gap-issue-drafts.md` has the links); Draft 2 stays internal-only per Z's ruling, Draft 8 is retracted.
 - **Definitions edited at Z's direction:** mechanism approved as written by Z (2026-09-26). MoE and MoP: Z asked for a clearer, SEBoK-compatible, less overloaded wording that makes the measure measurable (a unit and a means of collecting data); the redraft (toast evenness for MoE, power efficiency for MoP) was applied on Z's answer and is recorded in DL-017.
 
 ## 7. Content pass (Pass 4) inputs, as candidates the audit will confirm or drop
