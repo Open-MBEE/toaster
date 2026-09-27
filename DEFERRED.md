@@ -305,3 +305,14 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 ## D-024: RETRACTED — OpenSysML v0.9.0's Python binding cannot ask a "holds" question (sysml-toolkit can)
 
 **Retracted the same day it was filed.** This entry originally concluded no tool in the toolchain could ask a "holds" question and that DL-046 must fall back to DL-006 standing. That was wrong: it checked only OpenSysML. `sysmlv2 verify --solve` (sysml-toolkit v0.9.1, already rebuilt in this pass) does exactly this via Z3, verified against a constructed tautology, contradiction and a bounded-range TimelyToast-shaped requirement (`decisions/probes.md`, correction entry). OpenSysML's own gap (its Python binding is evaluate-only) still stands as a fact, but is no longer a blocking gap for DL-046 since sysml-toolkit covers it. The remaining open point is architectural, not a tool gap: sysml-toolkit's Python binding has no `verify`/`solve` method, so using it from a notebook means a `subprocess` call to the Rust CLI binary rather than a Python method call. Routed to Z as a design question, not an upstream issue.
+
+**Superseded by D-025** (below): Z decided the subprocess call is acceptable, wrapped in a utility function with an intent-to-deprecate record.
+
+## D-025: `toaster.modelcheck` wraps `sysmlv2 verify --solve` via subprocess, intended for deprecation
+
+sysml-toolkit's Python binding (`sysmlv2.Session`) has no `verify`/`solve` method (checked directly: not in `dir(Session)`); only the Rust CLI (`sysmlv2 verify --solve`) proves a constraint holds for all values of an unbound feature via Z3. `verify` also has no `--format json` (unlike `check`/`lint`), so the wrapper parses the CLI's stable text output. Per Z's ruling (2026-09-27, decisions/log.md DL-046): the subprocess call is accepted, wrapped in `src/toaster/modelcheck.py` so a chapter notebook sees only a clean Python function, never a shell-out, following the repo's standard gap-tracking pattern (patch, document, intend to delete once upstream supports it natively).
+
+**Workaround:** `toaster.modelcheck.verify_holds(...)` shells out to the `sysmlv2` binary and parses its text output into a `Verdict`-shaped result.
+**Resolution:** delete the wrapper and call a Python method directly once EITHER (a) sysml-toolkit's Python binding gains a `verify`/`solve` method, or (b) OpenSysML's Python binding gains a way to pose a holds/outcomes question to its own `check`/`smt` engines (D-024's original ask, still true as a fact about OpenSysML even though it is no longer blocking).
+**Upstream issue:** not filed; not blocking (the workaround is sufficient and intended to be short-lived, not a missing-capability report)
+**Toaster issue:** not filed
