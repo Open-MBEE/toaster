@@ -224,12 +224,18 @@ def _unresolved_transition_trigger(
 ) -> list[dict]:
     """Rule (DL-039, D-023): a TransitionUsage's ``accept`` trigger name that resolves to no ItemDefinition.
 
-    The grammar makes ``accept <name>`` an AcceptActionUsage whose payload parameter is typed by
-    ``<name>`` (an OwnedFeatureTyping), so the name must resolve (decisions/audits/ch07-layer-audit.md
-    F-4(a), citing the vendored `SysML.xtext` grammar lines 1302-1307 and 1897-1899). OpenSysML v0.9.0
-    keeps the trigger only as the bare string `sysx:trigger` in the API-JSON export — never a reference —
-    and accepts an undefined or misspelled name with `ok=True` and no diagnostic (D-023): the transition
-    then silently never fires at execution.
+    SysML v2.0 (formal/2026-03-02) makes ``accept <name>`` a full, structured element, not a string:
+    8.3.18.9 TransitionUsage declares ``/triggerAction : AcceptActionUsage [0..*]``, derived from an
+    owned TransitionFeatureMembership (`deriveTransitionUsageTriggerAction`); 8.3.18.8
+    TransitionFeatureMembership's `validateTransitionFeatureMembershipTriggerAction` requires that
+    element to be a kind of AcceptActionUsage; 8.3.16 AcceptActionUsage gives it a
+    `payloadParameter : ReferenceUsage`, exactly where a payload/signal type is resolved and checked.
+    No single named constraint says in so many words "the trigger name must resolve to a declared
+    type" — the case rests on the structural fact that the spec models a trigger as a resolvable,
+    typed element throughout (gap-issue-drafts.md Draft 9). OpenSysML v0.9.0 keeps the trigger only as
+    the bare string `sysx:trigger` in the API-JSON export — never a reference — and accepts an
+    undefined or misspelled name with `ok=True` and no diagnostic (D-023): the transition then
+    silently never fires at execution.
 
     Only ``sysx:triggerKeyword == "accept"`` is in scope. A transition can also trigger on a boolean
     guard (`when <expr>`, `sysx:triggerKeyword == "when"`) or have no trigger at all (an unconditional
@@ -263,11 +269,11 @@ def _unresolved_transition_trigger(
             {
                 "rule": "unresolved-transition-trigger",
                 "constraint": (
-                    "SysML.xtext grammar (vendored in sysml-toolkit; per "
-                    "decisions/audits/ch07-layer-audit.md F-4(a), lines 1302-1307 "
-                    "and 1897-1899): `accept <name>` is an AcceptActionUsage whose "
-                    "payload is typed by `<name>`, so the name must resolve to a "
-                    "defined type in scope"
+                    "SysML v2.0 formal/2026-03-02: 8.3.18.9 TransitionUsage "
+                    "(/triggerAction : AcceptActionUsage), 8.3.18.8 "
+                    "TransitionFeatureMembership (validateTransitionFeatureMembershipTriggerAction), "
+                    "8.3.16 AcceptActionUsage (payloadParameter) — a trigger is a structured, "
+                    "resolvable element, so its name must resolve to a defined type in scope"
                 ),
                 "element": t_id,
                 "message": (
@@ -328,10 +334,11 @@ GAP_RULES: list[GapRule] = [
     GapRule(
         name="unresolved-transition-trigger",
         constraint=(
-            "SysML.xtext grammar (vendored in sysml-toolkit; per "
-            "decisions/audits/ch07-layer-audit.md F-4(a), lines 1302-1307 and "
-            "1897-1899): `accept <name>` is an AcceptActionUsage whose payload is "
-            "typed by `<name>`, so the name must resolve to a defined type in scope"
+            "SysML v2.0 formal/2026-03-02: 8.3.18.9 TransitionUsage "
+            "(/triggerAction : AcceptActionUsage), 8.3.18.8 TransitionFeatureMembership "
+            "(validateTransitionFeatureMembershipTriggerAction), 8.3.16 AcceptActionUsage "
+            "(payloadParameter) — a trigger is a structured, resolvable element, so its "
+            "name must resolve to a defined type in scope"
         ),
         check=_unresolved_transition_trigger,
         negative_control=_UNRESOLVED_TRANSITION_TRIGGER_CONTROL,
