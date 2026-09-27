@@ -60,7 +60,7 @@ Use query tools and direct lookups (glossary CLI, `model.query`, known file rang
 - **SA-3** (energy model `Q = eta P t`) and **SA-8** (one construct per notebook) will collide with the content pass.
 - **SA-7** versus the Ch10 sign-off framing (no "accepted" dispositions).
 - **The Tall seam**: the recipe requirement contradicts the rule; the recipe rewrite belongs to Pass 4 and evaluation of the seam to Pass 3.
-- **`docs/references.md`** lacks SEBoK, Åström and Murray, Sutton and Barto (and says a 6-part Douglas series while the playlist lists 5, to verify). **`docs/glossary.md`** is a stub with a wrong H1; the new glossary will regenerate it (`render` support is planned, not built).
+- **`docs/references.md`** — fixed (Pass 4 Phase 0): added SEBoK, Åström and Murray, Sutton and Barto; corrected the Douglas series from "6-part" to five parts (matching `glossary/sources/notes/reading-notes.md`'s already-verified count). **`docs/glossary.md`** — `render` support was built (`glossary/render.py`, `DOCS_PAGE`), contrary to this note's earlier claim; the page is current and `glossary check`'s `_docs_page` check passes against it.
 - **Orchestrator integration authority**; **ownership of implicit versus explicit constructions and of the diagrams that make them legible**; **A10's remit** (Ch5 and Ch6 authority).
 - **DL-204 (Z ruled A, 2026-09-26):** learners meet each kind of emergence where its value is first obtained: simple at the roll-up (Ch5/6), weak at the first simulation of a functional intent (Ch7), strong at sign-off (Ch10); one sentence each, no separate section. Chapter placement is finalized in Pass 4.
 - **Where each staged conformance check first applies** (for example port types), and the wording that reports it "open" (Z-27).

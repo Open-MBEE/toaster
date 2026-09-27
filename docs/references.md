@@ -4,9 +4,27 @@ This page lists the primary sources this tutorial draws on.
 
 ---
 
+## SEBoK — Guide to the Systems Engineering Body of Knowledge
+
+*Guide to the Systems Engineering Body of Knowledge (SEBoK)*, version 2.14. BKCASE / INCOSE / IEEE Computer Society / SERC.
+
+The tutorial's conceptual source, cited first in this tutorial's citation order (AGENTS.md Part 1): the ideas behind functional, logical and physical architecture, MoE/MoP/TPM, allocation, and the "what/how/where" progression this tutorial refines. SEBoK itself nests the functional view inside the logical architecture (PDF 587, 593, 1554), which is why the tutorial's own logical/functional split is a recorded departure (`differsFrom`, approved by Z), not a restatement.
+
+## Åström and Murray — Feedback Systems
+
+K. J. Åström and R. M. Murray. *Feedback Systems: An Introduction for Scientists and Engineers*, 2nd ed., electronic edition v3.1.5 (2020-07-24). (SEBoK itself cites the 2008 first edition; this tutorial uses the current 2nd edition instead.)
+
+The canonical control-theory anchor for **mechanism**: a system as an input-to-output dynamic relation (state-space form `dx/dt = f(x, u)`, §3.2), distinct from a control law that chooses inputs. Cited only for this term, outside the SEBoK/OMG-spec canon; the tutorial's specific word "mechanism" and its determinism emphasis are a recorded refinement, not this source's own vocabulary.
+
+## Sutton and Barto — Reinforcement Learning: An Introduction
+
+R. S. Sutton and A. G. Barto. *Reinforcement Learning: An Introduction*, 2nd ed. MIT Press, 2018 (authors' PDF).
+
+The canonical anchor for **policy**: a rule for choosing actions given states (§1.3, §3.5), against the environment's own dynamics. Cited only for this term, alongside Åström and Murray's "control law" as a near-synonym; neither source uses "mechanism" or "policy" in exactly the tutorial's sense, so both terms are recorded refinements.
+
 ## Brian Douglas — Systems Engineering: Managing System Complexity
 
-A 6-part MATLAB Tech Talk series by Brian Douglas, published by MathWorks in 2020. Parts 3 and 4 both use a domestic toaster as the worked example and establish the engineering ground truth this tutorial re-implements in SysML v2 and Python.
+A MATLAB Tech Talk series by Brian Douglas, published by MathWorks in 2020; the playlist lists five parts (verified 2026-09-26, `glossary/sources/notes/reading-notes.md`). Parts 3 and 4 both use a domestic toaster as the worked example and establish the engineering ground truth this tutorial re-implements in SysML v2 and Python.
 
 **Part 3 — The Benefits of Functional Architectures**
 Brian Douglas. MathWorks, October 15, 2020. 14:24.
