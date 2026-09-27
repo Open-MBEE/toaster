@@ -71,3 +71,29 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 **Observed.** CHANGELOG v0.9.1 lists "summary mode for large tree graphs". It is `VizOptions::summary` in the `sysmlv2-viz` crate and the WebAssembly controls. `sysmlv2 viz` has no flag for it, and `Session.to_plantuml` takes no such argument.
 
 **Request.** Expose the summary and member and note limits in the CLI and in `Session.to_plantuml`, or document that they are library and WebAssembly only.
+
+---
+
+## Draft 6 (OpenSysML, bug): an allocate between definitions is accepted (D-019)
+
+**Version:** OpenSysML v0.9.0. sysml-toolkit v0.9.1 with the standard library rejects the same source.
+
+**Observed.** `package P { action def A; part def H; allocate A to H; }` loads with `ok=True` and no diagnostic. With usages instead (`part def S { action a : A; part h : H; allocate a to h; }`) it loads in both tools. sysml-toolkit `check --lib <sysml.library>` on the definition form reports `ReferenceSubsetting::referencedFeature must refer to a Feature` at the allocate. OpenSysML rejects `perform A;` naming an action definition (correctly: a perform references a usage), so it already distinguishes definitions from usages there.
+
+**Reference.** KerML 1.1 Beta 2, 8.3.3.3.9 ReferenceSubsetting (PDF p. 203): the referenced element of a ReferenceSubsetting, which identifies a connector's related features, is a Feature. SysML v2.0 (formal/2026-03-02) 7.15.2 allocates between usages in its examples.
+**Not yet verified:** the exact validation-constraint wording in the formal 2026-03-02 release (the toolkit's message comes from the vendored 20250201 metamodel); re-check before filing. Check that no existing OpenSysML issue covers it.
+
+**Request.** Diagnose an allocate whose ends are not features, as sysml-toolkit does.
+
+---
+
+## Draft 7 (OpenSysML and sysml-toolkit, bug): a part usage typed only by an item definition is accepted (D-020)
+
+**Versions:** OpenSysML v0.9.0; sysml-toolkit v0.9.1 (`check --lib`).
+
+**Observed.** `package P { item def Start; part def L { part bread : Start; } }` loads with `ok=True` in OpenSysML and exits 0 with no output in sysml-toolkit.
+
+**Reference.** SysML v2.0 (formal/2026-03-02), `validatePartUsagePartDefinition` (PDF p. 323): "At least one of the itemDefinitions of a PartUsage must be a PartDefinition." (`partDefinition->notEmpty()`).
+
+**Request.** Report a diagnostic for a part usage none of whose definitions is a part definition. Check for existing issues in both repositories first.
+

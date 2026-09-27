@@ -256,3 +256,31 @@ implicit parts in notebook diagrams is therefore not available through the toolk
 **Resolution:** Re-check after the next toolkit release, or request a CLI and Python option.
 **Upstream issue:** not filed (draft awaiting Z's review)
 **Toaster issue:** not filed
+
+## D-019: OpenSysML accepts an allocate between definitions (language conformance hole)
+
+OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definition and a part definition) with `ok=True`. sysml-toolkit v0.9.1 with the standard library rejects it: `ReferenceSubsetting::referencedFeature must refer to a Feature`. KerML 1.1 Beta 2 8.3.3.3.9 ReferenceSubsetting (PDF p. 203) defines the referenced element as a Feature. An allocate between usages loads in both tools. The tool rejects `perform ToastBread;` naming a definition (G2), so the allocate case is inconsistent with its own handling. Found by the Ch5 audit (`decisions/audits/ch05-layer-audit.md` F-1), confirmed by a spot review. Classified as language-tier non-conformance (DL-039); affects `models/ch05-cumulative.sysml` line 53 and the same line in ch06 to ch08.
+
+**Workaround:** none in the model yet (Pass 4 re-derives with usages); the tutorial supplies a language-gap guard with a negative control (to be built).
+**Resolution:** upstream fix in OpenSysML; re-test with `scripts/probes`.
+**Upstream issue:** not filed (draft 6 awaiting Z's review)
+**Toaster issue:** not filed
+
+## D-020: Neither OpenSysML nor sysml-toolkit reports a part usage typed only by an item definition
+
+`part bread : Start;` (`Start` an `item def`) loads with `ok=True` in OpenSysML v0.9.0 and passes sysml-toolkit v0.9.1 `check --lib`. SysML v2.0 (formal/2026-03-02) `validatePartUsagePartDefinition` (PDF p. 323): "At least one of the itemDefinitions of a PartUsage must be a PartDefinition" (`partDefinition->notEmpty()`). Found by the Ch5 audit (F-3), confirmed by a spot review. Classified as language-tier non-conformance (DL-039); affects `models/ch05-cumulative.sysml` lines 54 and 55 and later fixtures.
+
+**Workaround:** the tutorial supplies a language-gap guard with a negative control (to be built).
+**Resolution:** upstream fix in both tools.
+**Upstream issue:** not filed (draft 7 awaiting Z's review)
+**Toaster issue:** not filed
+
+## D-021: A false `assert satisfy` is accepted
+
+`assert satisfy timely by slow` loads with no diagnostic while the constraint evaluates False (`slow.cycleTime` 200 s against 180 s), and the same holds for `weak` in Ch6 to Ch8 (400 W against 600 W). This is not language conformance (parse, name resolution and typing pass): it is a staged project check, "satisfaction claims evaluated" (DL-039). `assert not satisfy` parses (`isNegated: true`) and can express a deliberate failing branch. Found by the Ch3 audit (F-3), confirmed and extended by a spot review.
+
+**Workaround:** none yet; a staged check with `slow` as its negative control is to be built.
+**Resolution:** none upstream is expected (a semantic check); the tutorial owns it.
+**Upstream issue:** none
+**Toaster issue:** not filed
+
