@@ -405,7 +405,10 @@ REGISTRY: list[ConformanceCheck] = [
         id="satisfaction-claims-evaluated",
         description="Every asserted satisfy relationship evaluates to True (DL-039 part 4).",
         run=satisfaction_claims_evaluated,
-        applies_from=None,
+        # DL-048: applies from the chapter/section that first declares an `assert satisfy` — in the
+        # current sequence, ch03-measures/01-moe-definition.ipynb. Re-derivation follows the criterion,
+        # not this literal stage.
+        applies_from=(3, 1),
         negative_control=_SATISFACTION_CLAIM_CONTROL,
     ),
 ]

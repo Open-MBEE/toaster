@@ -45,6 +45,24 @@ def mismatch(conn):
     return m
 
 
+@pytest.fixture(scope="module")
+def ch03(conn):
+    m = conn.load_from_content(
+        (ROOT / "models" / "ch03-cumulative.sysml").read_text(), strict=False
+    )
+    assert m.ok
+    return m
+
+
+@pytest.fixture(scope="module")
+def ch04(conn):
+    m = conn.load_from_content(
+        (ROOT / "models" / "ch04-cumulative.sysml").read_text(), strict=False
+    )
+    assert m.ok
+    return m
+
+
 UNBLOCK = "language conformance passes (model.ok is True)"
 BAD = "package P { part def A :> Missing; }"
 WONT = WontDo("no longer needed", "DL-099")
@@ -155,7 +173,9 @@ def test_registry_port_type_entry() -> None:
 
 def test_report_shape(ch08) -> None:
     # ch08 carries known gap findings (test_language_gap_findings_on_real_fixture; Pass 4's job to
-    # re-derive, not this task's), so both unscheduled REGISTRY checks are blocked, not open.
+    # re-derive, not this task's), so both REGISTRY checks are blocked, not open — port-type because
+    # it is unscheduled, satisfaction-claims-evaluated because a language failure blocks it regardless
+    # of schedule or stage reached (DL-048; see test_satisfaction_claims_evaluated_scheduled_* below).
     rep = cf.report(ch08, (1, 1))
     assert set(rep) == {"language", "project"}
     assert set(rep["language"]) == {"ok", "diagnostics", "gap_findings"}
@@ -631,7 +651,7 @@ package P {
 
 def test_satisfaction_claims_evaluated_registered() -> None:
     check = next(c for c in cf.REGISTRY if c.id == "satisfaction-claims-evaluated")
-    assert check.applies_from is None
+    assert check.applies_from == (3, 1)  # DL-048
     assert check.run is cf.satisfaction_claims_evaluated
 
 
@@ -655,6 +675,32 @@ def test_satisfaction_claims_evaluated_clean_model_has_no_findings(conn) -> None
 def test_satisfaction_claims_evaluated_prove_negative_control(conn) -> None:
     check = next(c for c in cf.REGISTRY if c.id == "satisfaction-claims-evaluated")
     assert cf.prove_negative_control(check, conn) is True
+
+
+def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch03(ch03) -> None:
+    # DL-048: scheduled from (3, 1), and ch03 passes language conformance, so at its own chapter
+    # the check runs for real and catches the `slow` claim it was staged to catch.
+    r = cf.report(ch03, (3, 1))["project"][1]
+    assert r.check_id == "satisfaction-claims-evaluated"
+    assert r.status == "failed"
+    assert any(f["subject"] == "ToasterDemo::slow" for f in r.findings)
+
+
+def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch04(ch04) -> None:
+    r = cf.report(ch04, (4, 1))["project"][1]
+    assert r.check_id == "satisfaction-claims-evaluated"
+    assert r.status == "failed"
+    assert any(f["subject"] == "ToasterDemo::slow" for f in r.findings)
+
+
+def test_satisfaction_claims_evaluated_stays_blocked_on_ch08_despite_stage_reached(
+    ch08,
+) -> None:
+    # DL-048: ch05-ch08 carry the DL-039 language-tier violations, so the check stays blocked
+    # there regardless of scheduling — reaching its stage does not run it past a language failure.
+    r = cf.report(ch08, (8, 1))["project"][1]
+    assert r.check_id == "satisfaction-claims-evaluated"
+    assert r.status == "blocked"
 
 
 def test_satisfaction_claims_evaluated_skips_verify_without_subject(ch08) -> None:

@@ -8,10 +8,13 @@ always-on language tier (ok, diagnostics, gap_findings) and the staged project c
 (id, status, reason, unblock_when).
 
 Default (no MODEL_FILE args): load every models/chNN-cumulative.sysml in order (ch01
-through ch08, whichever exist). The stage for each model defaults to (N, 0), where N is
-the chapter number parsed from its filename (the `chNN` prefix); `--stage CH,SEC`
-overrides that default for every model named on the command line, whether default or
-explicit.
+through ch08, whichever exist). A `chNN-cumulative.sysml` fixture already carries every
+section of chapter N (that is what "cumulative" means), so its default stage is
+(N, END_OF_CHAPTER) — not (N, 0), which would understate its content and let a check
+scheduled partway through chapter N (DL-048) report "stage not reached" on a fixture
+that has, in fact, reached it. `--stage CH,SEC` overrides that default for every model
+named on the command line, whether default or explicit, for a caller who wants a
+specific in-chapter stage instead of "the whole chapter".
 
 Exit code: 1 if any project check on any model has status "failed"; 0 otherwise ("open",
 "blocked", "wont-do" and "passed" are not failures, per the status semantics documented at
@@ -61,14 +64,18 @@ def parse_stage(text: str) -> conformance.Stage:
         ) from exc
 
 
+END_OF_CHAPTER = 99  # sentinel section number; no chapter has this many notebooks
+
 def _stage_from_filename(path: Path) -> conformance.Stage:
-    """Default stage (N, 0), where N is the chapter number parsed from a ``chNN`` filename prefix."""
+    """Default stage (N, END_OF_CHAPTER), N the chapter number parsed from a ``chNN`` filename
+    prefix: a ``-cumulative.sysml`` fixture already carries every section of chapter N, so its
+    default stage must not understate that (see module docstring)."""
     m = _CHAPTER_RE.search(path.stem)
     if not m:
         raise SystemExit(
             f"cannot infer a chapter/stage from filename {path.name!r}: pass --stage CH,SEC"
         )
-    return (int(m.group(1)), 0)
+    return (int(m.group(1)), END_OF_CHAPTER)
 
 
 def _display_path(path: Path) -> str:

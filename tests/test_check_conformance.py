@@ -1,9 +1,8 @@
 """scripts/check_conformance.py: the CLI's exit-code logic, against CONSTRUCTED models.
 
-Not the real chapter fixtures (their behavior is exercised manually per the PASS2-010
-contract's acceptance checks; the real REGISTRY has `applies_from=None` on both checks, so
-it can never itself produce a "failed" status — see AGENTS.md 1.9 and the PASS2-010
-non-goal "do not schedule any conformance check"). These tests monkeypatch
+Not the real chapter fixtures for most of this file (their behavior against
+`satisfaction-claims-evaluated`, scheduled per DL-048, is covered directly in
+tests/test_conformance.py's ch03/ch04/ch08 fixture tests). These tests monkeypatch
 `toaster.conformance.REGISTRY` with small constructed checks to exercise the exit-code
 branch that a "failed" status takes 1, and that "open"/"blocked"/"wont-do" (no "failed")
 take 0, per the status semantics documented at the top of conformance.py.
@@ -132,10 +131,11 @@ def test_exit_code_0_when_a_check_passes(tmp_path, monkeypatch, capsys, cc):
     assert report[0]["project"][0]["status"] == "passed"
 
 
-def test_default_stage_is_chapter_from_filename_section_0(tmp_path, monkeypatch, cc):
-    """With no --stage, the stage passed into conformance.report() is (N, 0), where N is
-    the chapter number parsed from the model's ``chNN`` filename prefix — asserted on the
-    actual stage tuple used (not just on printed text)."""
+def test_default_stage_is_chapter_from_filename_end_of_chapter(tmp_path, monkeypatch, cc):
+    """With no --stage, the stage passed into conformance.report() is (N, END_OF_CHAPTER),
+    N the chapter number parsed from the model's ``chNN`` filename prefix — a cumulative
+    fixture already carries every section of chapter N, so the default must not understate
+    that — asserted on the actual stage tuple used (not just on printed text)."""
     captured_stages = []
     original_report = conformance.report
 
@@ -149,7 +149,7 @@ def test_default_stage_is_chapter_from_filename_section_0(tmp_path, monkeypatch,
 
     cc.main()
 
-    assert captured_stages == [(5, 0)]
+    assert captured_stages == [(5, cc.END_OF_CHAPTER)]
 
 
 def test_stage_flag_overrides_the_default(tmp_path, monkeypatch, cc):
