@@ -562,6 +562,29 @@ package B {
 }
 """
 
+# Round 2, final ruling: a genuine no-import cross-package reference is NOT flagged by this rule. This
+# is a deliberate, accepted false negative, not an oversight or a regression waiting to happen: getting
+# it right needs real import-graph resolution, judged disproportionate for a guard against a defect
+# that doesn't exist in any real fixture today (ch07/ch08 both give zero findings from this rule). It
+# is the direct, accepted cost of resolving an unqualified name against the whole model (point 1) to
+# correctly handle the cross-package-WITH-import and nested-package cases above, which are the ones
+# that actually occur in real chapter content. This test exists so a future change cannot silently
+# regress those legitimate cases back to same-package-only scoping (round 1's mistake) without
+# consciously overriding this documented choice.
+UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_NO_IMPORT = """
+package A {
+  item def Start;
+}
+package B {
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Start then heating;
+  }
+}
+"""
+
 # A relative qualification (Inner::Start) whose full path is P::Inner::Start: the suffix match, not
 # just an exact qualifiedName match, is what resolves it.
 UNRESOLVED_TRANSITION_TRIGGER_RELATIVE_QUALIFIED = """
@@ -676,6 +699,18 @@ def test_unresolved_transition_trigger_cross_package_wildcard_import_resolves(co
 def test_unresolved_transition_trigger_cross_package_member_import_resolves(conn) -> None:
     model = conn.load_from_content(
         UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_MEMBER_IMPORT, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_no_import_cross_package_not_flagged(conn) -> None:
+    # Deliberate, accepted false negative (round 2 final ruling, PASS4-000-B): a genuine no-import
+    # cross-package reference is not flagged. See UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_NO_IMPORT
+    # above and the check's own docstring for why. This is not an oversight to "fix" by reintroducing
+    # same-package scoping — that regresses the cross-package/import and nested-package cases above.
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_NO_IMPORT, strict=False
     )
     assert model.ok
     assert cf._unresolved_transition_trigger(model) == []

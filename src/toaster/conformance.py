@@ -343,10 +343,20 @@ def _unresolved_transition_trigger(
       same-document, different-package reference through a wildcard or member import (that package's
       elements ARE all in the API-JSON export, confirmed directly) or a nested/outer-package reference,
       without attempting to model imports or namespace visibility at all — which round 1 showed is not
-      reliably possible from the flat export. The accepted cost: an unqualified reference to a name
-      that exists in a *different, unrelated* local package purely by coincidence, with no import
-      bringing it into scope, is a false negative this rule will not catch. This is a real, accepted
-      loosening, not a claim that it is equivalent to true visibility-aware resolution.
+      reliably possible from the flat export.
+
+      **Final ruling (round 2), stated explicitly, not just implied:** a genuine no-import
+      cross-package reference — an unqualified name declared only in a different package, with *no*
+      import bringing it into scope at all (``test_unresolved_transition_trigger_no_import_cross_package_not_flagged``,
+      ``UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_NO_IMPORT`` in the tests) — is **not flagged** by
+      this rule. This is a deliberate, accepted false negative, not an oversight: real import-graph
+      resolution is what would be needed to distinguish it from the legitimate with-import case above,
+      and that is disproportionate for a guard against a defect that does not exist in any real fixture
+      today (ch07 and ch08 both give zero findings from this rule). It is the direct, accepted cost of
+      resolving unqualified names against the whole model to correctly handle the with-import and
+      nested-package cases that actually occur in real chapter content. Do not "fix" this by
+      reintroducing same-package-only scoping (round 1's mistake, which broke exactly those legitimate
+      cases) without consciously overriding this documented ruling.
     - A qualified name (``"Outer::Start"``) is first tried for an exact match against every element's
       ``qualifiedName`` anywhere in the model, then a suffix match (``qualifiedName == name`` or
       ``qualifiedName.endswith("::" + name)``), so a legitimate *relative* qualification (e.g.
