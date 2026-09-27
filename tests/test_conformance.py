@@ -709,11 +709,42 @@ def test_unresolved_transition_trigger_no_import_cross_package_not_flagged(conn)
     # cross-package reference is not flagged. See UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_NO_IMPORT
     # above and the check's own docstring for why. This is not an oversight to "fix" by reintroducing
     # same-package scoping — that regresses the cross-package/import and nested-package cases above.
+    # Note: this resolves at step 1 (the flat, package-blind exact match), the same step that resolves
+    # the legitimate with-import case above — it never reaches the step 2/3 logic below at all, because
+    # "Start" really is, verbatim, declared somewhere in this model.
     model = conn.load_from_content(
         UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_NO_IMPORT, strict=False
     )
     assert model.ok
     assert cf._unresolved_transition_trigger(model) == []
+
+
+# Round 3 (F4): an unqualified name that matches nothing exactly, resembles nothing local closely
+# enough (step 2), AND has no import to blame it on (step 3's fallback) must still be flagged as
+# broken — this exercises step 3's own "no close match, no import -> flag" branch specifically,
+# distinct from every other flagged case above, which are all caught earlier, at step 2 (a close
+# match) or in the qualified-name path.
+UNRESOLVED_TRANSITION_TRIGGER_UNRELATED_NAME_NO_IMPORT = """
+package P {
+  item def Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Zephyr then heating;
+  }
+}
+"""
+
+
+def test_unresolved_transition_trigger_unrelated_name_no_import_is_flagged(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_UNRELATED_NAME_NO_IMPORT, strict=False
+    )
+    assert model.ok
+    findings = cf._unresolved_transition_trigger(model)
+    assert len(findings) == 1
+    assert "Zephyr" in findings[0]["message"]
 
 
 def test_unresolved_transition_trigger_relative_qualified_resolves(conn) -> None:
@@ -780,6 +811,56 @@ def test_unresolved_transition_trigger_real_fixture_has_no_findings(ch07) -> Non
     # The real ch07 fixture's own triggers (Start, Finish, Cancel) all resolve today (D-023): this
     # proves the new rule does not false-positive on it, not that anything was broken before.
     assert cf._unresolved_transition_trigger(ch07) == []
+
+
+# --- F4 round 3: the reviewer's own regression test, made permanent (this is exactly what caught the
+# "any unresolvable import -> skip" bug: it silently defeated the rule on every real chapter model,
+# since every one imports ScalarValues/SI/ISQ/MeasurementReferences). Uses the real fixture files
+# themselves, not a synthetic model, because a synthetic model with the same shape did not catch it --
+# only the real fixture's actual vocabulary and imports did.
+
+
+@pytest.mark.parametrize("chapter", ["ch07", "ch08"])
+def test_unresolved_transition_trigger_real_fixture_typo_is_flagged(conn, chapter) -> None:
+    src = (ROOT / "models" / f"{chapter}-cumulative.sysml").read_text()
+    typo_src = src.replace("accept Start then", "accept Strat then", 1)
+    assert typo_src != src  # the replacement actually happened
+    model = conn.load_from_content(typo_src, strict=False)
+    assert model.ok
+    findings = cf._unresolved_transition_trigger(model)
+    assert len(findings) == 1
+    assert "Strat" in findings[0]["message"]
+
+
+UNRESOLVED_TRANSITION_TRIGGER_LOCAL_TYPO_WITH_UNRELATED_IMPORT = """
+package P {
+  private import ScalarValues::*;
+  item def Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Strat then heating;
+  }
+}
+"""
+
+
+def test_unresolved_transition_trigger_local_typo_still_flagged_with_unrelated_import(
+    conn,
+) -> None:
+    # The exact combination the round-2 bug missed: a genuine local typo (Strat for Start) must still
+    # be flagged even though the document also has an external library import (which, on its own,
+    # would make an unrelated unresolved name like Boolean a probable import member and get skipped --
+    # see test_unresolved_transition_trigger_library_unqualified_via_import_resolves above). The
+    # similarity match (step 2) takes priority over the import fallback (step 3).
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_LOCAL_TYPO_WITH_UNRELATED_IMPORT, strict=False
+    )
+    assert model.ok
+    findings = cf._unresolved_transition_trigger(model)
+    assert len(findings) == 1
+    assert "Strat" in findings[0]["message"]
 
 
 def test_clean_model_has_no_gap_findings(conn) -> None:

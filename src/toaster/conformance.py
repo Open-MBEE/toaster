@@ -18,6 +18,7 @@ still be language non-conformant if `gap_findings` is non-empty. Project conform
 `run` is called only for passed and failed.
 """
 
+import difflib
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -256,6 +257,27 @@ _KNOWN_EXTERNAL_LIBRARY_PACKAGES = frozenset(
     {"ScalarValues", "SI", "ISQ", "MeasurementReferences", "Time"}
 )
 
+# Round 2 follow-up (F4, replacing the blanket "any unresolvable import -> skip" rule for an unqualified
+# name, which the reviewer found defeats this rule's entire purpose: every real chapter fixture imports
+# ScalarValues/SI/ISQ/MeasurementReferences, so it silently skipped unqualified-name checking in every
+# real chapter, including D-023's own headline case, a plain typo of a locally-declared name).
+#
+# Chosen and verified empirically against the real ch07 fixture's own declared-name vocabulary (48
+# names: item/part/attribute/state names, etc. — see `test_unresolved_transition_trigger_...` for the
+# exact figures) rather than picked arbitrarily:
+#   - Every one-letter-off or transposition-style typo tried (`Strat`/`Start` 0.800, `Cancle`/`Cancel`
+#     0.833, `Finsh`/`Finish` 0.909, `Staart`/`Start` 0.909, `Fnish`/`Finish` 0.909) scores at or above
+#     0.8.
+#   - Of 22 plausible standard-library member names tried against that same vocabulary (`Boolean`,
+#     `Integer`, `Real`, `Vector`, `PowerValue`, `TimeInstantValue`, ...), the single closest is `Vector`
+#     vs. the locally-declared part `ejector` at 0.769 — below 0.8. At a lower cutoff (0.75, tried
+#     first) that pair is a false match; 0.8 is the smallest round threshold that excludes it while
+#     still keeping every typo case above.
+# This is an empirical fit to one real fixture's vocabulary, not a proof for all possible names; a
+# future chapter's vocabulary could in principle need re-tuning if it produces its own false match.
+_TRIGGER_TYPO_SIMILARITY_CUTOFF = 0.8
+
+
 def _trigger_payload_name(trigger: str) -> str | None:
     """The identifier or qualified name an `accept` trigger's ``sysx:trigger`` string denotes, or
     ``None`` if the string is a time/change-trigger expression (an ``after <duration>``,
@@ -279,10 +301,16 @@ def _has_unresolvable_import(idx: "query.ApiIndex") -> bool:
     human-readable name might come from, ``sysx:sourceText``, is not reliable (confirmed directly: it
     is present for every import in the real ch07 fixture, which formats one import per line, but is
     empty for an otherwise-identical import packed onto one source line with other statements — a
-    single-formatting-dependent signal is not something this rule should key correctness on). Used only
-    for the unqualified-name case (F4 round 2): a qualified name's own top-level segment already names
-    itself, and is checked directly against ``_KNOWN_EXTERNAL_LIBRARY_PACKAGES`` without needing this
-    (see the check's docstring for why the two cases need different treatment).
+    single-formatting-dependent signal is not something this rule should key correctness on).
+
+    Used only as a narrow, secondary signal for the unqualified-name case, and only once a name has
+    already failed both the flat declared-name match AND the similarity check
+    (`_TRIGGER_TYPO_SIMILARITY_CUTOFF`) against every declared name in the document — never as a
+    blanket "this document has *some* import, so skip every unresolved unqualified name" rule. An
+    earlier version of this rule used it that way; the reviewer found it defeats the rule's whole
+    purpose, since every real chapter fixture imports at least one external library, which would have
+    silently skipped unqualified-name checking everywhere, including a plain typo of a locally-declared
+    name (D-023's own headline case). See the check's docstring for the corrected three-step order.
     """
     for e in idx.elements:
         if e.get("@type") not in ("NamespaceImport", "MembershipImport"):
@@ -336,31 +364,60 @@ def _unresolved_transition_trigger(
     same-package-only restriction would have silently stopped checking exactly the fixture this guard
     exists to protect):
 
-    - An unqualified name is resolved against the ``declaredName`` of *any* element anywhere in the
-      loaded model, full stop — no package or import modeling at all. This is deliberately coarser than
-      real name resolution (it does not require, or check for, an import that would make the name
-      actually visible where the trigger is written), but it is the only reading that handles a
-      same-document, different-package reference through a wildcard or member import (that package's
-      elements ARE all in the API-JSON export, confirmed directly) or a nested/outer-package reference,
-      without attempting to model imports or namespace visibility at all — which round 1 showed is not
-      reliably possible from the flat export.
+    An unqualified name is resolved in three steps, in this order (rewritten after the reviewer found
+    the previous, second-round version defeated the whole rule — see below):
 
-      **Final ruling (round 2), stated explicitly, not just implied:** a genuine no-import
-      cross-package reference — an unqualified name declared only in a different package, with *no*
-      import bringing it into scope at all (``test_unresolved_transition_trigger_no_import_cross_package_not_flagged``,
-      ``UNRESOLVED_TRANSITION_TRIGGER_CROSS_PACKAGE_NO_IMPORT`` in the tests) — is **not flagged** by
-      this rule. This is a deliberate, accepted false negative, not an oversight: real import-graph
-      resolution is what would be needed to distinguish it from the legitimate with-import case above,
-      and that is disproportionate for a guard against a defect that does not exist in any real fixture
-      today (ch07 and ch08 both give zero findings from this rule). It is the direct, accepted cost of
-      resolving unqualified names against the whole model to correctly handle the with-import and
-      nested-package cases that actually occur in real chapter content. Do not "fix" this by
-      reintroducing same-package-only scoping (round 1's mistake, which broke exactly those legitimate
-      cases) without consciously overriding this documented ruling.
-    - A qualified name (``"Outer::Start"``) is first tried for an exact match against every element's
-      ``qualifiedName`` anywhere in the model, then a suffix match (``qualifiedName == name`` or
-      ``qualifiedName.endswith("::" + name)``), so a legitimate *relative* qualification (e.g.
-      ``Inner::Start`` when the full path is ``P::Inner::Start``) also resolves.
+    1. **Exact match.** Resolved against the ``declaredName`` of *any* element anywhere in the loaded
+       model, full stop — no package or import modeling at all. This is deliberately coarser than real
+       name resolution (it does not require, or check for, an import that would make the name actually
+       visible where the trigger is written), but it is the only reading that handles a same-document,
+       different-package reference through a wildcard or member import (that package's elements ARE
+       all in the API-JSON export, confirmed directly) or a nested/outer-package reference, without
+       attempting to model imports or namespace visibility at all — which round 1 showed is not
+       reliably possible from the flat export.
+    2. **Similarity match (typo detection).** If step 1 finds nothing, ``difflib.get_close_matches``
+       (stdlib, no new dependency) is tried against every declared name in the model, at
+       ``_TRIGGER_TYPO_SIMILARITY_CUTOFF`` (0.8; see that constant for the empirical case behind the
+       number). A close match is **flagged** — this is D-023's own headline case: `accept Strat` for a
+       locally-declared `Start` is a near-miss (ratio 0.8) of a real local name, so it is a plausible
+       typo, not a plausible import.
+    3. **External-import fallback.** Only if steps 1 and 2 both find nothing does the presence of an
+       unresolvable import (`_has_unresolvable_import`) matter: if the document has at least one import
+       that does not itself resolve to a local element, the failing name might be a member of that
+       import and is skipped, not flagged (the export gives no reliable way to name the import's target
+       to check further — see that function's docstring). With no such import either, the name is
+       flagged as broken (``accept Zephyr`` with no local match and no import at all —
+       `test_unresolved_transition_trigger_unrelated_name_no_import_is_flagged`).
+
+    Note what step 1 alone, independent of steps 2 and 3, still means: the round-2 final ruling on a
+    genuine no-import cross-package reference (an unqualified name declared only in a *different*
+    package, with no import at all bringing it into scope) is unchanged by this round's fix — it is
+    resolved at step 1 already, the same package-blind exact match that resolves the legitimate
+    with-import case, since step 1 never checks for an import either way
+    (`test_unresolved_transition_trigger_no_import_cross_package_not_flagged`). It never reaches steps
+    2 or 3 at all, because the name it names really is, verbatim, declared somewhere in the model.
+
+    **Why step 2 had to be added, not just documented:** round 2's version skipped every step
+    1-failing unqualified name whenever *any* unresolvable import was present in the document, with no
+    similarity check at all — i.e. step 3 with no step 2 in between. The reviewer found this defeats
+    the rule's entire purpose: every real chapter model imports at least one external library
+    (ScalarValues, SI, ISQ, MeasurementReferences), so that blanket rule silently skipped
+    unqualified-name checking in every real chapter, including a plain `accept Strat` typo of a
+    locally-declared `Start` — confirmed directly: replacing `Start` with `Strat` in the real ch07 and
+    ch08 fixtures gave zero findings under round 2's rule
+    (`test_unresolved_transition_trigger_real_fixture_typo_is_flagged`, parametrized over both).
+    Step 2 fixes this: a name that closely resembles something declared right here is flagged before
+    the import fallback is even consulted, regardless of what else the document imports
+    (`test_unresolved_transition_trigger_local_typo_still_flagged_with_unrelated_import` pins the exact
+    combination that broke); the import fallback in step 3 now only ever applies to a name that
+    resembles nothing local at all (a genuine external-library member, e.g. `Boolean`).
+
+    A qualified name is unaffected by this round's change:
+
+    - It is first tried for an exact match against every element's ``qualifiedName`` anywhere in the
+      model, then a suffix match (``qualifiedName == name`` or ``qualifiedName.endswith("::" + name)``),
+      so a legitimate *relative* qualification (e.g. ``Inner::Start`` when the full path is
+      ``P::Inner::Start``) also resolves.
     - If neither matches, the qualified name's own top-level segment decides whether the reference is
       judged at all: if that segment names a real local ``Package`` in this document (by
       ``declaredName``, any nesting depth), the document CAN see into that package, so a name that
@@ -371,19 +428,6 @@ def _unresolved_transition_trigger(
       posture the other two gap rules already take (their own F4). Anything else (a top segment that is
       neither a visible local package nor a recognized library name) is flagged as broken: there is
       nothing to back reading it as external.
-    - An unqualified name that fails the flat match above is skipped (not flagged) only when this
-      document also has at least one import (wildcard or member) that does not itself resolve to a
-      local element (`_has_unresolvable_import`) — the failing name might be a member of that external
-      import. Unlike the qualified case, this does *not* check the import is a *recognized* library:
-      the export gives no reliable, formatting-independent way to name an unresolved import's target
-      (see `_has_unresolvable_import`'s own docstring), so any unresolvable import is treated as enough
-      reason not to guess. This is deliberately coarse (document-wide, not scoped to where the trigger
-      is written, and not restricted to a known list) and carries a real cost documented in DEFERRED.md
-      D-023: in a chapter shaped like ch07 (which itself imports four external packages), a genuine
-      local typo in an `accept` trigger would also go uncaught by this branch, for the same reason the
-      import itself cannot be modeled precisely. It does not affect the real ch07/ch08 fixtures today,
-      because their own triggers (`Start`, `Finish`, `Cancel`) resolve by the flat unqualified match
-      above and never reach this branch.
     """
     idx = index or query.ApiIndex(model)
 
@@ -427,9 +471,15 @@ def _unresolved_transition_trigger(
                 continue  # probable external library reference; can't verify, don't flag (F4)
         else:
             if payload_name in all_declared_names:
-                continue
-            if has_unresolvable_import:
-                continue  # an external import is present; can't rule out the name coming from it (F4)
+                continue  # step 1: exact match
+            close_match = difflib.get_close_matches(
+                payload_name, all_declared_names, n=1, cutoff=_TRIGGER_TYPO_SIMILARITY_CUTOFF
+            )
+            if not close_match and has_unresolvable_import:
+                continue  # step 3: no local resemblance at all; might be an external import member
+            # step 2 (close_match): flag as a plausible typo of a real local name, regardless of any
+            # import present — a name that resembles something declared right here is not given the
+            # benefit of the doubt just because the document also imports a library (F4 round 2 fix)
 
         findings.append(
             {
