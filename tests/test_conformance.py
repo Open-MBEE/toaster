@@ -325,6 +325,32 @@ def test_language_conformance_does_not_crash_when_model_not_ok(conn) -> None:
     assert lc["gap_findings"] == []
 
 
+NOT_OK_MODEL_WITH_GAP_CONSTRUCTS = """
+package P {
+  action def A;
+  part def B;
+  allocate A to B;
+  item def I;
+  part def H { part x : I; }
+  part y : Nope;
+}
+"""
+
+
+def test_language_gap_findings_guard_holds_on_not_ok_model_with_gap_constructs(
+    conn,
+) -> None:
+    # F8: the existing not-ok-model tests (above) use a BAD model with no gap constructs at all
+    # (a broken specialization, no allocation, no item-typed part), so removing the
+    # `if not model.ok: return []` guard entirely still passes them. This model is not-ok for an
+    # unrelated reason (the unresolved `Nope` reference) but DOES contain a definition-level
+    # allocate and an item-typed part — the guard must still return [] without attempting to run
+    # the gap rules over it, not crash and not spuriously flag anything.
+    model = conn.load_from_content(NOT_OK_MODEL_WITH_GAP_CONSTRUCTS, strict=False)
+    assert model.ok is False
+    assert cf.language_gap_findings(model) == []
+
+
 def test_allocate_between_definitions_skips_unresolvable_connector_end(conn) -> None:
     # F2: model.ok is True, but one connector end's own element is missing from the API-JSON
     # export (a constructed export gap) — ApiIndex.end_path raises KeyError for it. The check
