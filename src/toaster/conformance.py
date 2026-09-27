@@ -219,6 +219,66 @@ def _part_typed_only_by_item_def(
     return findings
 
 
+def _unresolved_transition_trigger(
+    model: Any, index: "query.ApiIndex | None" = None
+) -> list[dict]:
+    """Rule (DL-039, D-023): a TransitionUsage's ``accept`` trigger name that resolves to no ItemDefinition.
+
+    The grammar makes ``accept <name>`` an AcceptActionUsage whose payload parameter is typed by
+    ``<name>`` (an OwnedFeatureTyping), so the name must resolve (decisions/audits/ch07-layer-audit.md
+    F-4(a), citing the vendored `SysML.xtext` grammar lines 1302-1307 and 1897-1899). OpenSysML v0.9.0
+    keeps the trigger only as the bare string `sysx:trigger` in the API-JSON export — never a reference —
+    and accepts an undefined or misspelled name with `ok=True` and no diagnostic (D-023): the transition
+    then silently never fires at execution.
+
+    Only ``sysx:triggerKeyword == "accept"`` is in scope. A transition can also trigger on a boolean
+    guard (`when <expr>`, `sysx:triggerKeyword == "when"`) or have no trigger at all (an unconditional
+    transition, `sysx:trigger` absent) — confirmed directly against the tool: a `when` trigger's
+    `sysx:trigger` string names an attribute/expression, not an item def, and would false-positive here
+    if treated the same as `accept`; an untriggered transition carries neither key at all. Both are
+    skipped by construction (the `.get(...) != "accept"` guard), not flagged.
+
+    "In scope" for resolution is taken as *any* ItemDefinition anywhere in the loaded model, not scoped to
+    the trigger's own package: the flat API-JSON export carries no reliable per-element import/visibility
+    information for a lightweight index-based check (unlike a type reference, which the tool resolves to
+    a concrete element itself), and a narrower same-package rule would false-positive on a legitimate
+    cross-package import, contrary to the "skip rather than falsely flag" posture the other two gap rules
+    already take (F4). The real ch07 fixture cannot distinguish the two readings (its three item defs and
+    its state machine are declared in the same package), so both give the same, empty result there; it
+    produces zero findings from this rule either way.
+    """
+    idx = index or query.ApiIndex(model)
+    item_def_names = {
+        e["declaredName"] for e in idx.of_type("ItemDefinition") if e.get("declaredName")
+    }
+    findings = []
+    for t in idx.of_type("TransitionUsage"):
+        if t.get("sysx:triggerKeyword") != "accept":
+            continue
+        trigger = t.get("sysx:trigger")
+        if not trigger or trigger in item_def_names:
+            continue
+        t_id = t.get("qualifiedName")
+        findings.append(
+            {
+                "rule": "unresolved-transition-trigger",
+                "constraint": (
+                    "SysML.xtext grammar (vendored in sysml-toolkit; per "
+                    "decisions/audits/ch07-layer-audit.md F-4(a), lines 1302-1307 "
+                    "and 1897-1899): `accept <name>` is an AcceptActionUsage whose "
+                    "payload is typed by `<name>`, so the name must resolve to a "
+                    "defined type in scope"
+                ),
+                "element": t_id,
+                "message": (
+                    f"transition {t_id} accepts trigger {trigger!r}, which "
+                    "resolves to no ItemDefinition in the model"
+                ),
+            }
+        )
+    return findings
+
+
 _ALLOCATE_BETWEEN_DEFINITIONS_CONTROL = """
 package P {
   action def ApplyHeat;
@@ -231,6 +291,18 @@ _PART_TYPED_ONLY_BY_ITEM_DEF_CONTROL = """
 package P {
   item def Start;
   part def BreadLoader { part bread : Start; }
+}
+"""
+
+_UNRESOLVED_TRANSITION_TRIGGER_CONTROL = """
+package P {
+  item def Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Strat then heating;
+  }
 }
 """
 
@@ -252,6 +324,17 @@ GAP_RULES: list[GapRule] = [
         ),
         check=_part_typed_only_by_item_def,
         negative_control=_PART_TYPED_ONLY_BY_ITEM_DEF_CONTROL,
+    ),
+    GapRule(
+        name="unresolved-transition-trigger",
+        constraint=(
+            "SysML.xtext grammar (vendored in sysml-toolkit; per "
+            "decisions/audits/ch07-layer-audit.md F-4(a), lines 1302-1307 and "
+            "1897-1899): `accept <name>` is an AcceptActionUsage whose payload is "
+            "typed by `<name>`, so the name must resolve to a defined type in scope"
+        ),
+        check=_unresolved_transition_trigger,
+        negative_control=_UNRESOLVED_TRANSITION_TRIGGER_CONTROL,
     ),
 ]
 

@@ -39,6 +39,15 @@ def ch08(conn):
 
 
 @pytest.fixture(scope="module")
+def ch07(conn):
+    m = conn.load_from_content(
+        (ROOT / "models" / "ch07-cumulative.sysml").read_text(), strict=False
+    )
+    assert m.ok
+    return m
+
+
+@pytest.fixture(scope="module")
 def mismatch(conn):
     m = conn.load_from_content(MISMATCH, strict=False)
     assert m.ok
@@ -306,6 +315,101 @@ def test_part_typed_only_by_item_def_control_triggers_finding(conn) -> None:
     assert findings
     assert all(f["rule"] == "part-typed-only-by-item-def" for f in findings)
     assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
+
+
+UNRESOLVED_TRANSITION_TRIGGER_CLEAN = """
+package P {
+  item def Start;
+  item def Finish;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    state ready;
+    transition first idle accept Start then heating;
+    transition first heating accept Finish then ready;
+  }
+}
+"""
+
+# F-boundary: a `when` (boolean guard) trigger names an attribute/expression, not an item def, and an
+# unconditional transition has no trigger at all — neither is an `accept` trigger, so neither is in
+# scope for this rule (confirmed directly against the tool, not assumed; see the check's docstring).
+UNRESOLVED_TRANSITION_TRIGGER_NON_ACCEPT = """
+package P {
+  private import ScalarValues::*;
+  item def Start;
+  attribute someFlag : Boolean;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Start then heating;
+    transition first heating when someFlag then idle;
+  }
+}
+"""
+
+UNRESOLVED_TRANSITION_TRIGGER_UNCONDITIONAL = """
+package P {
+  item def Start;
+  state Cycle {
+    entry; then idle;
+    state idle;
+    state heating;
+    transition first idle accept Start then heating;
+    transition first heating then idle;
+  }
+}
+"""
+
+
+def test_registry_includes_unresolved_transition_trigger() -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "unresolved-transition-trigger")
+    assert rule.check is cf._unresolved_transition_trigger
+
+
+def test_unresolved_transition_trigger_control_triggers_finding(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "unresolved-transition-trigger")
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    findings = rule.check(model)
+    assert len(findings) == 1
+    f = findings[0]
+    assert {"rule", "constraint", "element", "message"} <= f.keys()
+    assert f["rule"] == "unresolved-transition-trigger"
+    assert f["element"] == "P::Cycle::@4"
+    assert "Strat" in f["message"]
+
+
+def test_unresolved_transition_trigger_clean_model_has_no_findings(conn) -> None:
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_CLEAN, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+
+def test_unresolved_transition_trigger_ignores_non_accept_triggers(conn) -> None:
+    # F-boundary: a `when` guard trigger and an untriggered (unconditional) transition must not be
+    # flagged, even though neither trigger name is an ItemDefinition.
+    model = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_NON_ACCEPT, strict=False
+    )
+    assert model.ok
+    assert cf._unresolved_transition_trigger(model) == []
+
+    model2 = conn.load_from_content(
+        UNRESOLVED_TRANSITION_TRIGGER_UNCONDITIONAL, strict=False
+    )
+    assert model2.ok
+    assert cf._unresolved_transition_trigger(model2) == []
+
+
+def test_unresolved_transition_trigger_real_fixture_has_no_findings(ch07) -> None:
+    # The real ch07 fixture's own triggers (Start, Finish, Cancel) all resolve today (D-023): this
+    # proves the new rule does not false-positive on it, not that anything was broken before.
+    assert cf._unresolved_transition_trigger(ch07) == []
 
 
 def test_clean_model_has_no_gap_findings(conn) -> None:
