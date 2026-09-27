@@ -156,7 +156,7 @@ def test_registry_port_type_entry() -> None:
 def test_report_shape(ch08) -> None:
     rep = cf.report(ch08, (1, 1))
     assert set(rep) == {"language", "project"}
-    assert set(rep["language"]) == {"ok", "diagnostics"}
+    assert set(rep["language"]) == {"ok", "diagnostics", "gap_findings"}
     assert [(r.check_id, r.status) for r in rep["project"]] == [("port-type", "open")]
 
 
@@ -239,3 +239,141 @@ def test_empty_registry_means_no_checks(ch08, conn) -> None:
     bad = conn.load_from_content(BAD, strict=False)
     for model in (ch08, bad):
         assert cf.report(model, (9, 9), [])["project"] == []
+
+
+# --- language gap findings (DL-039) ---
+
+CLEAN_LANGUAGE_MODEL = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part heater : HeatingSystem;
+  action doApply : ApplyHeat;
+  allocate doApply to heater;
+  item def Start;
+  part def BreadLoader;
+  part bread : BreadLoader;
+}
+"""
+
+
+def test_allocate_between_definitions_control_triggers_finding(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(f["rule"] == "allocate-between-definitions" for f in findings)
+    assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
+
+
+def test_part_typed_only_by_item_def_control_triggers_finding(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "part-typed-only-by-item-def")
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(f["rule"] == "part-typed-only-by-item-def" for f in findings)
+    assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
+
+
+def test_clean_model_has_no_gap_findings(conn) -> None:
+    model = conn.load_from_content(CLEAN_LANGUAGE_MODEL, strict=False)
+    assert model.ok
+    assert cf.language_gap_findings(model) == []
+
+
+def test_language_gap_findings_on_real_fixture(ch08) -> None:
+    # ch05/ch08 keep their violations (Pass 4's job to re-derive them; not this task's).
+    findings = cf.language_gap_findings(ch08)
+    rules = {f["rule"] for f in findings}
+    assert rules == {"allocate-between-definitions", "part-typed-only-by-item-def"}
+
+
+def test_language_conformance_reports_gap_findings(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    lc = cf.language_conformance(model)
+    assert lc["ok"] is True
+    assert lc["gap_findings"]
+
+
+def test_prove_negative_control_covers_both_gap_rules(conn) -> None:
+    for rule in cf.GAP_RULES:
+        model = conn.load_from_content(rule.negative_control, strict=False)
+        assert model.ok
+        assert rule.check(model)
+
+
+# --- report() blocks on gap findings even when model.ok is True (DL-039) ---
+
+
+def test_report_blocks_scheduled_check_with_specific_reason(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    gapped = conn.load_from_content(rule.negative_control, strict=False)
+    scheduled = _check([], (1, 1))
+    r = cf.report(gapped, (2, 1), [scheduled])["project"][0]
+    assert r.status == "blocked"
+    assert r.reason == "language conformance failed: allocate-between-definitions"
+    assert r.reason != cf.LANGUAGE_BLOCK_REASON
+    assert r.findings == []
+
+
+def test_report_does_not_run_scheduled_check_on_gap_findings(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    gapped = conn.load_from_content(rule.negative_control, strict=False)
+    calls: list[int] = []
+    scheduled = _check([{"x": 1}], (1, 1), calls)
+    cf.report(gapped, (2, 1), [scheduled])
+    assert calls == []
+
+
+def test_report_open_check_unaffected_by_gap_findings(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    gapped = conn.load_from_content(rule.negative_control, strict=False)
+    unscheduled = _check([], None)
+    not_yet = _check([], (5, 5))
+    r_unscheduled = cf.report(gapped, (1, 1), [unscheduled])["project"][0]
+    r_not_yet = cf.report(gapped, (1, 1), [not_yet])["project"][0]
+    assert r_unscheduled.status == "open"
+    assert r_not_yet.status == "open"
+
+
+def test_report_wont_do_unaffected_by_gap_findings(conn) -> None:
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    gapped = conn.load_from_content(rule.negative_control, strict=False)
+    c = _check([{"x": 1}], (1, 1), wont_do=WONT)
+    r = cf.report(gapped, (9, 9), [c])["project"][0]
+    assert r.status == "wont-do"
+
+
+def test_report_gap_reason_lists_multiple_violated_rules(conn) -> None:
+    both = conn.load_from_content(
+        """
+        package P {
+          action def ApplyHeat;
+          part def HeatingSystem;
+          allocate ApplyHeat to HeatingSystem;
+          item def Start;
+          part def BreadLoader { part bread : Start; }
+        }
+        """,
+        strict=False,
+    )
+    assert both.ok
+    scheduled = _check([], (1, 1))
+    r = cf.report(both, (2, 1), [scheduled])["project"][0]
+    assert r.status == "blocked"
+    assert r.reason == (
+        "language conformance failed: allocate-between-definitions, "
+        "part-typed-only-by-item-def"
+    )
+
+
+def test_report_clean_model_not_blocked_by_gap_findings(conn) -> None:
+    clean = conn.load_from_content(CLEAN_LANGUAGE_MODEL, strict=False)
+    scheduled = _check([], (1, 1))
+    r = cf.report(clean, (2, 1), [scheduled])["project"][0]
+    assert r.status == "passed"
+
+
