@@ -277,6 +277,25 @@ def test_summary_line_with_wrong_exit_code_raises(tmp_path):
     assert "exited 2" in str(exc_info.value)
 
 
+def test_exit_1_with_zero_violated_raises(tmp_path):
+    """PASS2-012 F3, closing the N1 gap: the other half of the disambiguation. A fake binary that
+    exits 1 (which the CLI otherwise uses to mean "a constraint was violated") but whose own
+    summary line declares zero violated must not be trusted either — exit 1 alone isn't enough;
+    it must be exit 1 together with violated > 0."""
+    script = tmp_path / "fake_exit1_no_violation.sh"
+    script.write_text(
+        "#!/bin/sh\n"
+        'echo "somefile.sysml:1:1  c (ConstraintUsage): undecided (z3: satisfiable, e.g. x = 1)"\n'
+        'echo "0 satisfied, 0 violated, 1 undecided"\n'
+        "exit 1\n"
+    )
+    script.chmod(0o755)
+    f = _write(tmp_path, "tautology.sysml", TAUTOLOGY)
+    with pytest.raises(mc.ModelCheckError) as exc_info:
+        mc.verify_holds(f, binary=str(script))
+    assert "exited 1" in str(exc_info.value)
+
+
 def test_summary_line_verdict_count_mismatch_raises(tmp_path):
     """PASS2-012 F3: a fake binary whose summary line's declared total does not match the number of
     verdict lines actually parsed must not be trusted, even though the exit code looks fine."""

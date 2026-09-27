@@ -7,7 +7,7 @@ This file declares what follows Pass 1 and what Pass 1 leaves as input. It recor
 | Pass | Scope | Entry | Exit |
 |---|---|---|---|
 | 1 (this one) | Foundations, glossary, ACE definition, layer and query skills, handoff | Z's plan | DL-015 COMPLETE; Z has skimmed the ACE key and confirmed the glossary |
-| 2. The agent system | Roles, responsibilities, protocols, skills, expertise, authority matrix; the orchestrator, subagents and their model assignments | Pass 1 exit | The roster and authority matrix are consistent with the Foundations; every role skill cites glossary ids; each role has a pinned model and a cold-start test |
+| 2. The agent system — **closed, see `decisions/pass2-close.md`** | Roles, responsibilities, protocols, skills, expertise, authority matrix; the orchestrator, subagents and their model assignments | Pass 1 exit | The roster and authority matrix are consistent with the Foundations; every role skill cites glossary ids; each role has a pinned model and a cold-start test |
 | 3. Evaluation workflows | Simulated learners, layer audit, Tall-seam effectiveness, glossary `check` and skill-snippet tests in CI, prose lint against confirmed definitions | Pass 2 roster | Evaluations run on the pinned models and produce reports the ACE can triage |
 | 4. Didactic content | Track B audit and rebuild of chapters and models, the recipe, SA-3 and SA-8 collisions, docs stubs, Ch9 and Ch10, staged conformance placement | Pass 3 | A chapter set that follows Part 1, with the staged model built explicit and implicit |
 

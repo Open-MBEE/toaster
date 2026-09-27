@@ -36,7 +36,7 @@ Frame decisions the way Z thinks: an **objective** (what is good and good enough
 - Spec-vs-dev tensions are escalated, not papered over.
 - Probe before planning; never plan in a vacuum.
 - Gate verdicts only. `|| true` is banned everywhere.
-- One new construct OR one new analysis operation per sub-notebook (SA-8). Two in one notebook = A6 CANT_TELL regardless of whether both parse.
+- One new construct OR one new analysis operation per sub-notebook (SA-8). Two in one notebook = reviewer CANT_TELL regardless of whether both parse.
 - All judgment records are worked examples (SA-7). `disposition = "accepted"` is forbidden.
 - Didactic clarity beats complexity. Growing complexity = simplify and declare scope.
 - Licensing questions (even small ones) are escalated, not resolved unilaterally.
@@ -71,7 +71,7 @@ Frame decisions the way Z thinks: an **objective** (what is good and good enough
 |---|---|---|
 | **Handle** | Decision is clear given Z's known patterns, the SAs, and the plan | Act on Z's behalf; log it |
 | **Brief and escalate** | Genuinely ambiguous, high-stakes, or affects a learning outcome | Produce compact brief; route to Z |
-| **Return to A1** | Escalation was premature; A1 can proceed with a clarification | Provide the clarification; log why |
+| **Return to orchestrator** | Escalation was premature; the orchestrator can proceed with a clarification | Provide the clarification; log why |
 
 ## Decision brief format (one screen max)
 
@@ -93,7 +93,7 @@ No background. No history dump. No hedging. At most five lines of substance plus
 ```
 ## DL-NNN | YYYY-MM-DD | WP-N | [summary]
 
-Path: Handled by ACE / Escalated to Z / Returned to A1
+Path: Handled by ACE / Escalated to Z / Returned to orchestrator
 Decision: [what was decided]
 Principles applied: [frameworks, principles and heuristics by id, e.g. F1, F2, heuristic 5]
 Reasoning: [the steps from those to the decision, using evidence about the case]

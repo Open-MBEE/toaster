@@ -3,7 +3,7 @@
 This file is the binding contract for everyone who works on the Open-MBEE/toaster repository. It has two parts.
 
 - **Part 1, Foundations**, says what the tutorial teaches, which sources define its terms, how the three architecture layers differ, and how models are built and queried. It is role-agnostic and stable. It governs wherever Part 2 conflicts with it.
-- **Part 2, Roster and authority**, is the earlier role, file-authority and escalation material. It is **legacy, pending rebuild** in a later pass (see `decisions/next-passes.md`). Treat it as the current authority matrix until then.
+- **Part 2, Roster and authority**, is the earlier role, file-authority and escalation material. Pass 2 rebuilt the process roles (orchestrator, layer-auditor, builder, reviewer, ace — see the mapping at the head of Part 2); the content-authoring archetypes (A3, A4, A7, A9, A10) remain **legacy, pending rebuild** in Pass 4 (see `decisions/next-passes.md`). Treat Part 2 as the current authority matrix for anything a rebuilt role does not cover.
 
 A cold session should reach working alignment from `CLAUDE.md`, this Part 1, the skills it lists, and the glossary CLI. Nothing here depends on conversation history.
 
@@ -162,9 +162,19 @@ Alignment passes (changes to this Part 1, the glossary's confirmed definitions, 
 
 ---
 
-# Part 2 — Roster and authority (legacy, pending rebuild)
+# Part 2 — Roster and authority (partially rebuilt; content archetypes legacy, pending Pass 4)
 
-Roles rebuilt in Pass 2 live in `.claude/agents/` (currently `orchestrator`, `layer-auditor`, `builder`, `reviewer`, `ace`); where a role file exists it governs that role's duties, model and authority, and the matching legacy row below is superseded. Everything below is the earlier role and file-authority material, kept unchanged except where Part 1 or a rebuilt role replaced it. Where it conflicts with Part 1, Part 1 governs. Role ids (A1-A10) belong to this legacy roster only.
+Roles rebuilt in Pass 2 live in `.claude/agents/` (`orchestrator`, `layer-auditor`, `builder`, `reviewer`, `ace`); where a role file exists it governs that role's duties, model and authority, and the matching legacy row below is superseded. Mapping, so this supersession is explicit rather than inferred:
+
+| Pass 2 role file | Supersedes | Notes |
+|---|---|---|
+| `orchestrator` | A1 Orchestrator | A1 was READ ONLY; the rebuilt role also integrates subagent commits (`decisions/next-passes.md` §2 operating model; the "read only, never edits files" line below is the superseded text). |
+| `builder` | A2 Builder | File-authority matrix (§2 below) still names A2's blast zone for content work; a builder's own work contract (`decisions/work-contract-template.md`) narrows it per task. |
+| `ace` | A8 ACE | A8's file authority (`decisions/log.md`, `.claude/skills/**/*.md`) still applies; `ace-protocol` is the current decision framework. |
+| `layer-auditor` | *(none — new role)* | Did not exist as an archetype; audits chapters against `architecture-layers` (`decisions/audits/ch0N-layer-audit.md`). |
+| `reviewer` | *(none — new role; overlaps A5/A6's intent)* | A5 (Technical) and A6 (Didactic) reviewer were both READ ONLY archetypes with no model assignment; `reviewer` generalizes that duty with the independent-model rule (`decisions/task-states.md`). A5/A6 remain legacy names for content-specific review until Pass 4 gives them their own role files, if it does. |
+
+A3 Modeler, A4 Educator, A7 Visualization Assessor, A9 Simulated Learner and A10 Systems Architect are content-authoring archetypes with no Pass 2 role file; they remain the legacy roster below, pending Pass 4 (the didactic content pass). Everything below is the earlier role and file-authority material, kept unchanged except where Part 1 or a rebuilt role replaced it. Where it conflicts with Part 1, Part 1 governs. Role ids (A1-A10) belong to this legacy roster only.
 
 ## 1. Shared domain context (story source: Douglas)
 
