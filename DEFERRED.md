@@ -215,7 +215,7 @@ Related: OpenSysML#590 (closed 2026-09-26). A maintainer said anonymous elements
 
 **Workaround:** `toaster.query` helpers; JSON route for satisfy, metadata and unnamed connectors.
 **Resolution:** When `model.query()` exposes all elements, change `ApiIndex` only.
-**Upstream issue:** not filed (draft awaiting Z's review)
+**Upstream issue:** filed 2026-09-27, [OpenSysML#643](https://github.com/Open-MBEE/OpenSysML/issues/643)
 **Toaster issue:** not filed
 
 ## D-016: Editor API does not support `perform action` authoring (gap G5)
@@ -225,8 +225,8 @@ construct that records which logical component is responsible for a function. Lo
 Sibling of D-008 (`allocate`), D-009 (`flow`) and D-010 (state).
 
 **Workaround:** Load `perform action` declarations via `conn.load_from_content(source, strict=False)` (Pattern B).
-**Resolution:** Add `"perform"` support to the authoring allowlist. Confirm against the current Editor before filing.
-**Upstream issue:** not filed (draft awaiting Z's review)
+**Resolution:** Add `"perform"` support to the authoring allowlist. Re-confirmed 2026-09-27 against the current Editor: `add_member(kind="perform action", ...)` only queues the operation; `apply()` raises `IllegalMemberKindError`.
+**Upstream issue:** filed 2026-09-27, [OpenSysML#644](https://github.com/Open-MBEE/OpenSysML/issues/644)
 **Toaster issue:** not filed
 
 ## D-017: `import` across separately loaded sources does not resolve in OpenSysML (gap G7)
@@ -242,7 +242,7 @@ explicit increment into one string and load once. Concatenation loses which sour
 implicit parts their own package (or a metadata marker) to keep provenance queryable.
 **Resolution:** Check the spec's package-import and the API's project and commit model for the multi-resource
 resolution it requires; file only what the spec requires. Re-test when OpenSysML changes.
-**Upstream issue:** not filed (draft awaiting Z's review)
+**Upstream issue:** filed 2026-09-27, [OpenSysML#645](https://github.com/Open-MBEE/OpenSysML/issues/645) (filed as a question about intended multi-resource loading, not a bug claim — the spec requirement was never established)
 **Toaster issue:** not filed
 
 ## D-018: sysml-toolkit summary mode is not reachable from the CLI or Python (v0.9.1)
@@ -254,7 +254,7 @@ implicit parts in notebook diagrams is therefore not available through the toolk
 
 **Workaround:** choose the `element` root, the view and the filtered model slice per figure (AGENTS.md 1.7).
 **Resolution:** Re-check after the next toolkit release, or request a CLI and Python option.
-**Upstream issue:** not filed (draft awaiting Z's review)
+**Upstream issue:** filed 2026-09-27, [sysml-toolkit#5](https://github.com/Open-MBEE/sysml-toolkit/issues/5)
 **Toaster issue:** not filed
 
 ## D-019: OpenSysML accepts an allocate between definitions (language conformance hole)
@@ -263,7 +263,7 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 
 **Workaround:** none in the model yet (Pass 4 re-derives with usages); the tutorial supplies a language-gap guard with a negative control (to be built).
 **Resolution:** upstream fix in OpenSysML; re-test with `scripts/probes`.
-**Upstream issue:** not filed (draft 6 re-verified 2026-09-27 — citations confirmed against the current formal PDFs, no duplicate issue found; note [OpenSysML#95](https://github.com/Open-MBEE/OpenSysML/issues/95), a related but distinct open issue the filed text must cite to distinguish this claim from that one's already-settled question — awaiting Z's go on filing)
+**Upstream issue:** filed 2026-09-27, [OpenSysML#646](https://github.com/Open-MBEE/OpenSysML/issues/646) (cites and distinguishes from [OpenSysML#95](https://github.com/Open-MBEE/OpenSysML/issues/95) per the re-verification above)
 **Toaster issue:** not filed
 
 ## D-020: Neither OpenSysML nor sysml-toolkit reports a part usage typed only by an item definition
@@ -272,7 +272,7 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 
 **Workaround:** the tutorial supplies a language-gap guard with a negative control (to be built).
 **Resolution:** upstream fix in both tools.
-**Upstream issue:** not filed (draft 7 re-verified 2026-09-27 — repro re-run against current binaries with both `check` and `lint`, citation confirmed exact, no duplicate issue found — awaiting Z's go on filing)
+**Upstream issue:** filed 2026-09-27, [OpenSysML#647](https://github.com/Open-MBEE/OpenSysML/issues/647) and [sysml-toolkit#6](https://github.com/Open-MBEE/sysml-toolkit/issues/6)
 **Toaster issue:** not filed
 
 ## D-021: A false `assert satisfy` is accepted

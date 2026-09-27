@@ -1,6 +1,15 @@
-# Drafted gap issues (nothing filed)
+# Drafted gap issues
 
-Status: **drafts for Z's review.** Nothing here has been filed on any public repository. Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020). Z decides what is filed, where, and with what wording.
+Status: **Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27**, per Z's explicit instruction, after the re-verification below. Draft 2 stays internal-only (Z's ruling, 2026-09-26) and Draft 8 is retracted; neither was ever meant to be filed. Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020, each with its filed issue link).
+
+| Draft | Filed as |
+|---|---|
+| 1 | [OpenSysML#643](https://github.com/Open-MBEE/OpenSysML/issues/643) |
+| 3 | [OpenSysML#644](https://github.com/Open-MBEE/OpenSysML/issues/644) |
+| 4 | [OpenSysML#645](https://github.com/Open-MBEE/OpenSysML/issues/645) (filed as a question, not a bug claim) |
+| 5 | [sysml-toolkit#5](https://github.com/Open-MBEE/sysml-toolkit/issues/5) |
+| 6 | [OpenSysML#646](https://github.com/Open-MBEE/OpenSysML/issues/646) |
+| 7 | [OpenSysML#647](https://github.com/Open-MBEE/OpenSysML/issues/647), [sysml-toolkit#6](https://github.com/Open-MBEE/sysml-toolkit/issues/6) |
 
 **Drafts 6 and 7 re-verified 2026-09-27** (Pass 2 wrap-up), per Z's request before Pass 3: both repros re-run against the current OpenSysML v0.9.0 and sysml-toolkit v0.9.1 binaries and reconfirmed exactly as drafted; both spec citations re-checked page-by-page directly against the PDFs in `sysmlv2-testing/sources/local/` (Draft 6's KerML citation is precise but the constraint is a structural attribute-typing fact, not a named OCL rule — corrected in the draft text; its SysML §7.15.2 citation, initially doubted, is confirmed correct); both checked against every open and closed issue on `Open-MBEE/OpenSysML` and `Open-MBEE/sysml-toolkit` — no duplicate found for either, but Draft 6 is closely adjacent to the open, unresolved `Open-MBEE/OpenSysML#95` ("Subsetting type conformance is not checked"), which the draft must now cite and distinguish from (see Draft 6, below) to avoid the same "not a bug" reply that issue already received for a related-but-different claim.
 
@@ -50,7 +59,9 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 **Reference.** SysML v2.0 (formal/2026-03-02) 7.17.6 Perform Action Usages.
 
-**Request.** Add `perform action` to the authoring allowlist, consistent with the existing requests for `allocate` (#599), `flow`, and state usages. **Before filing:** confirm against the current Editor that no `perform` path exists, and cross-link the sibling issues.
+**Request.** Add `perform action` to the authoring allowlist, consistent with the existing requests for `allocate` (#599), `flow`, and state usages.
+
+**Re-verified 2026-09-27:** `editor.add_member(kind="perform action", ...)` does not raise immediately (the call only queues the operation) but `editor.apply()` does raise `IllegalMemberKindError: kind "perform action" is not legal`, confirmed against the current v0.9.0 Editor. Claim holds.
 
 ---
 
