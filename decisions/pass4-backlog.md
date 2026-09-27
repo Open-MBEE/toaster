@@ -1,6 +1,6 @@
 # Pass 4 backlog: what the Ch1 to Ch5 audits found (2026-09-26)
 
-Source: `decisions/audits/ch01-layer-audit.md` to `ch05-layer-audit.md` (independent auditors, Opus 5.5; the Ch3 and Ch5 tool and fact claims were re-verified by Sonnet 5 spot reviews), the ACE rulings DL-018 to DL-023 and DL-030 to DL-039, and the vocabulary lint. Nothing has been edited: the current chapters and models are not a trusted baseline and are re-derived against the aligned harness in Pass 4. Each item says which ruling constrains the re-derivation. Ch6 to Ch10 have not been audited (see Coverage).
+Source: `decisions/audits/ch01-layer-audit.md` to `ch08-layer-audit.md` (independent auditors, Opus 5.5; tool and fact claims re-verified by Sonnet 5 spot reviews on Ch3, Ch5, Ch7, Ch8), the ACE rulings DL-018 to DL-023 and DL-030 to DL-049, and the vocabulary lint. Nothing has been edited: the current chapters and models are not a trusted baseline and are re-derived against the aligned harness in Pass 4. Each item says which ruling constrains the re-derivation. Ch9 and Ch10 are entirely stub notebooks (no model content, no cumulative fixture) and could not be layer-audited; see Coverage.
 
 ## 1. A result is entered as a choice, and the "verification" cannot fail (systematic, Ch1 to Ch8)
 
@@ -57,10 +57,41 @@ Source: `decisions/audits/ch01-layer-audit.md` to `ch05-layer-audit.md` (indepen
 
 - Ch2 and Ch4 show no view of the assembled model; Ch5's interconnection SVG is written to a temporary directory and never shown (AGENTS.md 1.7).
 
+## 12. Chapter 6 findings (new)
+
+- `Heater::power` is a chosen part rating (not DL-018's defect); `weak` (400 W) is a valid failing-branch fixture in kind, expressed wrongly as a false-positive `assert satisfy` instead of `assert not satisfy`. `HeatingReq`'s 600 W threshold is a free-standing number, underived from any MoE. Rulings: DL-040, DL-041, DL-049.
+- `HeatingElement` is a mechanism-suggestive name for a not-yet-built logical grouping with no recorded selection among alternatives (extends DL-037). `PowerWire :> HeatingElement` is a real modeling error (a wire is not a kind of heating element). Ruling: DL-042.
+- The recursion from `HeatingSystem` (logical, level 1) straight to `HeatingAssembly`/`ResistanceCoil`/`PowerWire` (physical, level 2) skips level-2 functional and logical content entirely (no sub-function, no interface, no mechanism) — incomplete recursion under AGENTS.md 1.8. Ruling: DL-043.
+- `HeatingAssembly :> HeatingSystem` is the first concrete specialization of a logical component in the whole model (Ch1-Ch6), but nothing uses it: `Toaster::heating` still points at the abstract type, so there is still no candidate toaster. The requirement branch (`Heater`/`efficient`/`weak`) and the structure branch (`HeatingElement`/coil/wire) share no element.
+- Ch4's `NameError: ReviewRecord` missing-import defect (DL-014's earlier fix) recurs in Ch6 notebook 3.
+
+## 13. Chapter 7 findings (new)
+
+- Adds one element: `state Cycle` (idle/heating/ready/cancelled, triggered by Start/Finish/Cancel). It is functional as declared (a mode-machine description, substitution-independent); the Finish transition's layer follows what Finish denotes (still undecided, DL-036); if a timer/thermostat issues Finish, that issuing rule is a policy on `ControlSystem`, kept separate from the mode machine itself. Ruling: DL-044.
+- `Cycle` is not exhibited or owned by any part (nobody's modes) — the same missing-realization pattern as Ch1-Ch6, confirmed independently by spot review via two query surfaces.
+- Two of four states (`ready`, `cancelled`) are dead ends; the machine does not cycle.
+- State execution traces (`execute_state`) are not an emergent result of any kind — they are deterministic replay of a prescribed table, valid as specification analysis but not evidence about behavior. The chapter's "proves" language overclaims (AGENTS.md 1.6). Ruling: DL-045.
+- **New tool gap, confirmed by spot review: OpenSysML v0.9.0 does not resolve state-machine transition trigger names at all.** A reference to an undefined item def loads `ok=True` and fires; a typo'd trigger loads `ok=True` and silently never fires; the API-JSON export keeps the trigger only as a string, not a resolved reference. sysml-toolkit v0.9.1 does resolve these names and warns on broken references. Nothing currently tracks this gap (no DEFERRED entry). The real Ch7 fixture is not itself broken — the gap is that nothing would catch it if it were.
+- Notebook 01 defines the efficiency bound and formula meaning in Python, not the model (a repeat of the F4 concern); calls single-point agreement "proves". The sweep in notebook 03 rests on numbers (0.7 efficiency, 50 kJ threshold) that exist only in Python, none derived from a model relation or MoE.
+
+## 14. Chapter 8 findings (new)
+
+- **Adds zero model elements.** ch07-cumulative.sysml and ch08-cumulative.sysml are identical except the header comment (confirmed independently by spot review, both by text diff and JSON element-by-element diff). This is a valid form of the loop under SA-8 and AGENTS.md 1.4 (an analysis-only turn is a legitimate turn), ruled DL-047 — but the fixture's own provenance comment falsely claims a Chapter 8 increment exists, and no chapter-8 entry exists in `check_construction.py`'s `CONSTRUCTION_NOTEBOOKS`.
+- **No formal model checking exists anywhere in the chapter, despite the title "Constraint Checking" and AGENTS.md 1.1 item 5 naming model checking and simulation as complementary.** Everything is `verify_satisfaction()`, Python claim evaluation on fixed usage values (the `run` engine, rated "observed"), confirmed by spot review to be exactly what both false-satisfy findings already flagged (`timely`/`slow`, `heating`/`weak`). Formal engines (`check`, `smt`, `explore`, `solve`, including z3) are installed and available but unused; every form tried was declined as "not covered" because nothing in the model has anything to quantify over. Chapter prose says "formally satisfy", "bounded checks", "formal engineering evidence" — none of which the analysis delivers (AGENTS.md 1.6, P1). **Escalated to Z: DL-046** — does DL-006 (a pre-alignment decision that scoped model checking out) still stand against Part 1's own stated learning outcome? The prose defects stand regardless of the answer.
+- `satisfaction-claims-evaluated` (DL-039) is currently unscheduled (`applies_from=None`). Ruled: it should apply from the chapter/section that first declares an `assert satisfy` — currently Chapter 3 — not parked like the port-type check, since its precondition (a satisfy claim to evaluate) already exists. Ruling: DL-048. **Builder follow-up:** set `applies_from` in `src/toaster/conformance.py`'s `REGISTRY` accordingly.
+- Ch8 is the most-referenced fixture in the test suite (used throughout `tests/test_query.py`, `tests/test_conformance.py`) and is neither "full" nor valid SysML under the spec: it lacks any verification case and carries both language-tier gap findings (DL-039). Three existing tests pass on vacuous or misleadingly-named conditions, confirmed by spot review: `test_port_type_check_is_clean_on_ch08` (0 port usages, so the mismatch check is vacuously empty), `test_language_ok_on_valid_model` (checks only `model.ok`, not `gap_findings`, despite the fixture having 4), and the "skip verify without subject" test never reaches that branch (0 verify relationships in ch08) — its own later test admits this in a code comment.
+- Two skill/tool disagreements: `opensysml-api` names a nonexistent `ir` engine and calls `verify_constraint` on a requirement def (wrong kind); `sysml-v2-toaster-model` places satisfaction evaluation and stale detection in Chapter 9, but Chapter 8 introduces both.
+
+## 15. Process finding: a citation error, self-correcting via independent audits
+
+DL-030 to DL-039's Q-letter to DL-number mapping was mistranscribed by the orchestrator when logging the original ACE batch (`decisions/log.md`'s own headers were always correct; the error was in `z-principles.md`'s "Confirmed extensions" section, this file, and `decisions/pass2-run-006.md`). All three Ch6-8 auditors independently noticed and flagged the mismatch before being told about it. Fixed in commit `6995a84`; the confirmed *content* of Z's approval was unaffected, only the numbers pointing to it. Lesson: cross-reference a batch ruling's citations against the log's own headers once, right after logging it, rather than trusting the transcription.
+
 ## Cross-chapter dependencies
 
 `DeliveredEnergy` (Ch3) is used from Ch4 onward and must be re-derived with `ApplyHeat`; the false-satisfy pattern persists Ch3 to Ch8; `Start` and `Finish` are used as part types in Ch5 and as state-machine triggers in Ch8; the `slow`/`weak` fixtures and the `heatingEvidence` claims must be redone together.
 
 ## Coverage and next
 
-Audited: Ch1 to Ch5 (elements each chapter adds). Not audited: Ch6 to Ch10; the exercises; figures beyond what the reports read; the rendered pages. The Ch6 to Ch8 models repeat Ch3's patterns (confirmed for `weak`); a second audit wave should check the new elements (recursive decomposition, execution, checking) and Ch9 and Ch10 (coverage, sign-off).
+Audited: Ch1 to Ch8 (elements each chapter adds; Ch8 adds none, confirmed). **Ch9 and Ch10 could not be audited**: both are entirely stub notebooks (`[TODO]` placeholders throughout index.md/conclusion.md; every notebook's model-loading cell is `source = """\n# stub — replace with full model\n"""`) with no cumulative fixture (`models/ch09-cumulative.sysml` and `ch10-cumulative.sysml` do not exist). Their layer audit is deferred until Pass 4 gives them real content; auditing a stub would produce nothing. Not audited: the exercises; figures beyond what the reports read; the rendered pages.
+
+Every systematic pattern from the Ch1-5 audit (settable result, false satisfy, missing perform/realization) is confirmed present through Ch8. One new pattern appears at Ch7: OpenSysML's language-conformance surface has a further hole (state-machine trigger resolution) not covered by the existing gap guard.

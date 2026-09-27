@@ -293,3 +293,11 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 **Upstream issue:** none (not a tool gap)
 **Toaster issue:** not filed
 
+## D-023: OpenSysML does not resolve state-machine transition trigger names
+
+`accept <name>` in a transition usage is kept in the API-JSON export only as a string (`sysx:trigger`), never resolved against an `item def`. A reference to an undefined name, or a typo of a defined name, loads with `ok=True` and no diagnostic; a typo'd trigger silently never fires at execution. sysml-toolkit v0.9.1 does resolve these names and warns on broken references. Found by the Ch7 audit (`decisions/audits/ch07-layer-audit.md` F-4), confirmed by independent spot review (four sub-claims reproduced on scratch models, plus confirmed the real Ch7 fixture's own triggers all resolve correctly today). Nothing currently guards this: no DEFERRED entry, probe row, or issue draft existed before this one.
+
+**Workaround:** none yet; not yet added to `language_gap_findings` in `src/toaster/conformance.py`. A candidate rule: resolve each transition's `sysx:trigger` string against the item defs in scope and flag it if none matches.
+**Resolution:** upstream fix (resolve triggers like `perform`/`allocate` targets are resolved); or a tutorial-supplied guard per DL-039's pattern.
+**Upstream issue:** not filed (no draft yet — needs the exact spec citation for trigger resolution, not yet located)
+**Toaster issue:** not filed
