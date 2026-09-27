@@ -302,11 +302,6 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 **Upstream issue:** not filed (no draft yet — needs the exact spec citation for trigger resolution, not yet located)
 **Toaster issue:** not filed
 
-## D-024: OpenSysML v0.9.0's Python binding exposes no way to ask a "holds" question
+## D-024: RETRACTED — OpenSysML v0.9.0's Python binding cannot ask a "holds" question (sysml-toolkit can)
 
-`conn.list_engines()` reports `check` and `smt` as answering question kinds "outcomes", "holds" and "sensitive" (bounded and proved strength respectively), distinct from `run`'s "evaluate". But every public method taking an `engine=` argument (`verify_constraint`, `verify_requirement`, `validate_instance`) poses only an evaluate-style question ("the verdict is about concrete values"); given an underdetermined subject, every non-`run` engine replies "does not answer evaluate questions — not covered", and `run` replies with an evaluation failure. No method exposes a holds/outcomes/sensitive/satisfiable request. Found while probing DL-046 (does OpenSysML support formal model checking for Chapter 8); recorded in `decisions/probes.md`.
-
-**Workaround:** none; DL-046 falls back to DL-006 standing (no formal model checking in this tutorial against v0.9.0).
-**Resolution:** upstream feature — expose a method (or an `engine=` parameter on an existing one) that poses a holds/outcomes question, matching what `check`/`smt` already declare they can answer.
-**Upstream issue:** not filed (Draft 8 awaiting Z's review)
-**Toaster issue:** not filed
+**Retracted the same day it was filed.** This entry originally concluded no tool in the toolchain could ask a "holds" question and that DL-046 must fall back to DL-006 standing. That was wrong: it checked only OpenSysML. `sysmlv2 verify --solve` (sysml-toolkit v0.9.1, already rebuilt in this pass) does exactly this via Z3, verified against a constructed tautology, contradiction and a bounded-range TimelyToast-shaped requirement (`decisions/probes.md`, correction entry). OpenSysML's own gap (its Python binding is evaluate-only) still stands as a fact, but is no longer a blocking gap for DL-046 since sysml-toolkit covers it. The remaining open point is architectural, not a tool gap: sysml-toolkit's Python binding has no `verify`/`solve` method, so using it from a notebook means a `subprocess` call to the Rust CLI binary rather than a Python method call. Routed to Z as a design question, not an upstream issue.
