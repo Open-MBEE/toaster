@@ -105,11 +105,22 @@ def _allocate_between_definitions(
 
     KerML 8.3.3.3.9 ReferenceSubsetting requires the referenced element to be a Feature. OpenSysML v0.9.0
     accepts `allocate ActionDef to PartDef;` (both ends definitions) with no diagnostic.
+
+    Resolves each connector end itself, one at a time, rather than through `query.find_allocations` (which
+    resolves every end of every allocation in one list comprehension): a single end whose referenced element
+    is missing from the API-JSON export raises `KeyError` inside `ApiIndex.end_path`, and going through
+    `find_allocations` would let that propagate out of the whole check. Here it is caught per end, so only
+    that one unresolvable end is skipped (F2) instead of crashing the check for every allocation.
     """
     idx = index or query.ApiIndex(model)
     findings = []
-    for a in query.find_allocations(model, index=idx):
-        for end in a["ends"]:
+    for a in idx.of_type("AllocationUsage"):
+        a_id = a.get("qualifiedName")
+        for end_ref in a.get("connectorEnd", []):
+            try:
+                end = idx.end_path(end_ref)
+            except KeyError:
+                continue
             if not end:
                 continue
             target_qn = end[-1]
@@ -122,9 +133,9 @@ def _allocate_between_definitions(
                             "KerML 8.3.3.3.9 ReferenceSubsetting requires the "
                             "referenced element to be a Feature"
                         ),
-                        "element": a["id"],
+                        "element": a_id,
                         "message": (
-                            f"allocation {a['id']} end resolves to {target_type} "
+                            f"allocation {a_id} end resolves to {target_type} "
                             f"{target_qn}, not a Feature"
                         ),
                     }
@@ -211,7 +222,13 @@ def language_gap_findings(model: Any) -> list[dict]:
     dict with at least `rule`, `constraint`, `element` and `message` keys. Flags constructs OpenSysML v0.9.0
     accepts (`model.ok` is True) but the spec forbids; part of language conformance, so it runs regardless
     of stage.
+
+    The gap rules target constructs the tool accepts: when `model.ok` is False the model never reached a
+    state where allocation/part-def resolution is meaningful, so this returns `[]` without attempting it
+    (F2). `report()`'s existing model.ok=False branch already blocks every project check in that case.
     """
+    if not model.ok:
+        return []
     idx = query.ApiIndex(model)
     findings: list[dict] = []
     for rule in GAP_RULES:

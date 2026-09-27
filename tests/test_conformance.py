@@ -309,6 +309,46 @@ def test_language_conformance_reports_gap_findings(conn) -> None:
     assert lc["gap_findings"]
 
 
+# --- F2: language_gap_findings must not crash on model.ok=False or an unresolvable connector end ---
+
+
+def test_language_gap_findings_empty_when_model_not_ok(conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    assert bad.ok is False
+    assert cf.language_gap_findings(bad) == []
+
+
+def test_language_conformance_does_not_crash_when_model_not_ok(conn) -> None:
+    bad = conn.load_from_content(BAD, strict=False)
+    lc = cf.language_conformance(bad)
+    assert lc["ok"] is False
+    assert lc["gap_findings"] == []
+
+
+def test_allocate_between_definitions_skips_unresolvable_connector_end(conn) -> None:
+    # F2: model.ok is True, but one connector end's own element is missing from the API-JSON
+    # export (a constructed export gap) — ApiIndex.end_path raises KeyError for it. The check
+    # must catch that per end and skip it, not crash for every allocation.
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    baseline = cf._allocate_between_definitions(model)
+    assert len(baseline) == 2  # both ends of `allocate ApplyHeat to HeatingSystem` are Definitions
+
+    idx = cf.query.ApiIndex(model)
+    allocation = next(e for e in idx.elements if e.get("@type") == "AllocationUsage")
+    end_ref = allocation["connectorEnd"][0]
+    end_id = end_ref["@id"] if isinstance(end_ref, dict) else end_ref
+    del idx.by_id[end_id]
+    with pytest.raises(KeyError):
+        idx.end_path(end_ref)  # confirms this really does reproduce the underlying failure
+
+    findings = cf._allocate_between_definitions(model, index=idx)
+    # no crash, and the other, still-resolvable end's finding survives — only the unresolvable
+    # end itself is skipped, not the whole check
+    assert len(findings) == 1
+
+
 def test_prove_negative_control_covers_both_gap_rules(conn) -> None:
     for rule in cf.GAP_RULES:
         model = conn.load_from_content(rule.negative_control, strict=False)
