@@ -154,13 +154,21 @@ def test_registry_port_type_entry() -> None:
 
 
 def test_report_shape(ch08) -> None:
+    # ch08 carries known gap findings (test_language_gap_findings_on_real_fixture; Pass 4's job to
+    # re-derive, not this task's), so both unscheduled REGISTRY checks are blocked, not open.
     rep = cf.report(ch08, (1, 1))
     assert set(rep) == {"language", "project"}
     assert set(rep["language"]) == {"ok", "diagnostics", "gap_findings"}
     assert [(r.check_id, r.status) for r in rep["project"]] == [
-        ("port-type", "open"),
-        ("satisfaction-claims-evaluated", "open"),
+        ("port-type", "blocked"),
+        ("satisfaction-claims-evaluated", "blocked"),
     ]
+    assert all(
+        r.reason
+        == "language conformance failed: allocate-between-definitions, "
+        "part-typed-only-by-item-def"
+        for r in rep["project"]
+    )
 
 
 def test_port_type_check_scheduled(ch08, mismatch) -> None:
@@ -331,15 +339,30 @@ def test_report_does_not_run_scheduled_check_on_gap_findings(conn) -> None:
     assert calls == []
 
 
-def test_report_open_check_unaffected_by_gap_findings(conn) -> None:
+def test_report_blocks_unscheduled_and_stage_not_reached_checks_on_gap_findings(
+    conn,
+) -> None:
+    # Symmetric with model.ok is False (PASS2-009 reading B): gap_findings blocks every non-wont-do
+    # check, including one that is unscheduled or whose stage has not been reached.
     rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
     gapped = conn.load_from_content(rule.negative_control, strict=False)
+    reason = "language conformance failed: allocate-between-definitions"
     unscheduled = _check([], None)
     not_yet = _check([], (5, 5))
     r_unscheduled = cf.report(gapped, (1, 1), [unscheduled])["project"][0]
     r_not_yet = cf.report(gapped, (1, 1), [not_yet])["project"][0]
-    assert r_unscheduled.status == "open"
-    assert r_not_yet.status == "open"
+    assert (r_unscheduled.status, r_unscheduled.reason, r_unscheduled.applies_from) == (
+        "blocked",
+        reason,
+        None,
+    )
+    assert (r_not_yet.status, r_not_yet.reason, r_not_yet.applies_from) == (
+        "blocked",
+        reason,
+        (5, 5),
+    )
+    assert r_unscheduled.unblock_when == cf.GAP_BLOCK_UNBLOCK_WHEN
+    assert r_not_yet.unblock_when == cf.GAP_BLOCK_UNBLOCK_WHEN
 
 
 def test_report_wont_do_unaffected_by_gap_findings(conn) -> None:

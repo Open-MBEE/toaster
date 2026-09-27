@@ -5,12 +5,13 @@ loader's own proxy for language conformance) and `gap_findings` (`language_gap_f
 v0.9.0 accepts but the spec forbids. `model.ok` is a proxy, not the definition: a model can have `ok` True and
 still be language non-conformant if `gap_findings` is non-empty. Project conformance checks carry five statuses:
 
-- open: not yet applied, because the check is unscheduled (`applies_from` is None) or its stage has not been reached.
+- open: not yet applied, because the check is unscheduled (`applies_from` is None) or its stage has not been
+  reached — only when the model passes language conformance; see blocked below for when it does not.
 - passed: applied to a loaded model and found nothing.
 - failed: applied to a loaded model and found something.
 - blocked: cannot be applied until a stated condition holds. When the model fails language conformance (`model.ok`
-  is False, or `gap_findings` is non-empty) every project check that would otherwise run (scheduled, stage reached,
-  not wont-do) is blocked instead, with a reason and `unblock_when` naming the failure.
+  is False, or `gap_findings` is non-empty) every non-wont-do project check is blocked instead, with a reason and
+  `unblock_when` naming the failure — scheduled or not, and whether or not its stage has been reached.
 - wont-do: dropped because something changed and the check is no longer needed; the check's `wont_do` records the
   reason and the change that removed the need. It holds at any stage and whatever the language result.
 
@@ -331,21 +332,6 @@ def _gap_block_reason(gap_findings: list[dict]) -> str:
     return "language conformance failed: " + ", ".join(rules)
 
 
-def _evaluate_with_gap_block(
-    check: ConformanceCheck, model: Any, stage: Stage, reason: str
-) -> Result:
-    """Like `evaluate`, but a check that would run (scheduled, stage reached) is blocked instead.
-
-    `wont-do` and `open` (unscheduled, or stage not reached) are unaffected: nothing they would have run is
-    skipped that was not already skipped, so `evaluate`'s own logic applies unchanged.
-    """
-    if check.wont_do is not None or check.applies_from is None or stage < check.applies_from:
-        return evaluate(check, model, stage)
-    return Result(
-        check.id, "blocked", [], check.applies_from, reason, GAP_BLOCK_UNBLOCK_WHEN
-    )
-
-
 def report(
     model: Any, stage: Stage, registry: list[ConformanceCheck] | None = None
 ) -> dict:
@@ -368,9 +354,23 @@ def report(
         ]
     elif language["gap_findings"]:
         # The model loaded but violates a spec constraint the tool does not enforce (DL-039): treat it as
-        # language non-conformant too, and block every check that would otherwise run.
+        # language non-conformant too, symmetrically with the model.ok is False branch above (PASS2-009
+        # reading B) — every non-wont-do check is blocked, whether or not it is scheduled or its stage
+        # reached, not just the ones that would otherwise run.
         reason = _gap_block_reason(language["gap_findings"])
-        project = [_evaluate_with_gap_block(c, model, stage, reason) for c in checks]
+        project = [
+            _wont_do_result(c)
+            if c.wont_do is not None
+            else Result(
+                c.id,
+                "blocked",
+                [],
+                c.applies_from,
+                reason,
+                GAP_BLOCK_UNBLOCK_WHEN,
+            )
+            for c in checks
+        ]
     else:
         project = [evaluate(c, model, stage) for c in checks]
     return {"language": language, "project": project}
