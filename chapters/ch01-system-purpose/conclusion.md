@@ -12,4 +12,4 @@ The model answers Chapter 1's engineering question: a toaster is the subject tha
 
 Chapter 2 asks what the toaster must do. It introduces requirements, attribute overrides for design variants, and the first engineering judgment record. The model from Chapter 1 is the starting point.
 
-**Exercise:** The [Chapter 1 exercise](../../exercises/ch01/exercise.ipynb) asks you to model a coffee maker using the same constructs. The problem is structurally similar to the toaster but uses a different domain: declare the abstract concept, add two component types with no content yet, specialize the whole (not the parts) from the concept, and compose it into the top-level system.
+**Exercise:** The [Chapter 1 exercise](../../exercises/ch01/exercise.ipynb) asks you to model a coffee maker using the same constructs. The problem is structurally similar to the toaster but uses a different domain: state the purpose as item defs, a performed action def with a doc, and an abstract part def, add two component types with no content yet, specialize the whole (not the parts) from the concept, and compose it into the top-level system.
