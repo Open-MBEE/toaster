@@ -131,6 +131,14 @@ def test_missing_binary_raises_modelcheckerror(tmp_path):
         mc.verify_holds(f, lib=str(LIB), binary="/nonexistent/path/to/sysmlv2")
 
 
+def test_non_executable_binary_raises_modelcheckerror(tmp_path):
+    not_executable = tmp_path / "not_a_binary.sh"
+    not_executable.write_text("#!/bin/sh\necho hi\n")  # no chmod +x
+    f = _write(tmp_path, "tautology.sysml", TAUTOLOGY)
+    with pytest.raises(mc.ModelCheckError):
+        mc.verify_holds(f, lib=str(LIB), binary=str(not_executable))
+
+
 def test_syntax_error_raises_modelcheckerror_with_stderr(tmp_path):
     f = _write(tmp_path, "syntax_error.sysml", SYNTAX_ERROR)
     with pytest.raises(mc.ModelCheckError) as exc_info:

@@ -147,9 +147,9 @@ def verify_holds(
         result = subprocess.run(
             command, capture_output=True, text=True, timeout=timeout, check=False
         )
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, PermissionError, NotADirectoryError) as exc:
         raise ModelCheckError(
-            f"sysmlv2 binary not found at {resolved_binary!r} (from "
+            f"sysmlv2 binary not found or not runnable at {resolved_binary!r} (from "
             f"{'binary=...' if binary else 'SYSMLV2_BINARY'}): {exc}"
         ) from exc
     except subprocess.TimeoutExpired as exc:
