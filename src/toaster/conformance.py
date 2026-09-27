@@ -249,6 +249,63 @@ package P {
 }
 """
 
+
+def satisfaction_claims_evaluated(model: Any) -> list[dict]:
+    """Staged project check (DL-039 part 4): every asserted satisfy relationship, evaluated.
+
+    For every SatisfyRequirementUsage with both a requirement and a subject, calls
+    `model.eval(f"{requirement_qualified_name}({subject_qualified_name})")`. A claim that evaluates to False,
+    or whose evaluation raises, is a finding (an evaluation error is not silently dropped: it is reported
+    with its message). A `verify` relationship (no subject) is not a claim about a subject and is skipped.
+    """
+    findings = []
+    for s in query.satisfy_relationships(model):
+        requirement, subject = s["requirement"], s["subject"]
+        if not requirement or not subject:
+            continue
+        expression = f"{requirement}({subject})"
+        try:
+            holds = bool(model.eval(expression))
+        except Exception as exc:  # noqa: BLE001 — any eval failure is itself a finding, per DL-039
+            findings.append(
+                {
+                    "id": s["id"],
+                    "requirement": requirement,
+                    "subject": subject,
+                    "expression": expression,
+                    "error": str(exc),
+                }
+            )
+            continue
+        if not holds:
+            findings.append(
+                {
+                    "id": s["id"],
+                    "requirement": requirement,
+                    "subject": subject,
+                    "expression": expression,
+                    "result": holds,
+                }
+            )
+    return findings
+
+
+_SATISFACTION_CLAIM_CONTROL = """
+package P {
+  private import ScalarValues::*;
+  part def Toaster {
+    attribute cycleTime : Real = 200.0;
+  }
+  part slow : Toaster;
+  requirement def TimelyToast {
+    subject toaster : Toaster;
+    require constraint { toaster.cycleTime <= 180.0 }
+  }
+  requirement timely : TimelyToast;
+  assert satisfy timely by slow;
+}
+"""
+
 REGISTRY: list[ConformanceCheck] = [
     ConformanceCheck(
         id="port-type",
@@ -256,6 +313,13 @@ REGISTRY: list[ConformanceCheck] = [
         run=query.port_type_mismatches,
         applies_from=None,
         negative_control=_PORT_TYPE_CONTROL,
+    ),
+    ConformanceCheck(
+        id="satisfaction-claims-evaluated",
+        description="Every asserted satisfy relationship evaluates to True (DL-039 part 4).",
+        run=satisfaction_claims_evaluated,
+        applies_from=None,
+        negative_control=_SATISFACTION_CLAIM_CONTROL,
     ),
 ]
 

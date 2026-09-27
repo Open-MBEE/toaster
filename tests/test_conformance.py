@@ -148,7 +148,7 @@ def test_prove_negative_control_requires_load_ok(conn) -> None:
 
 
 def test_registry_port_type_entry() -> None:
-    assert [c.id for c in cf.REGISTRY] == ["port-type"]
+    assert [c.id for c in cf.REGISTRY] == ["port-type", "satisfaction-claims-evaluated"]
     assert cf.REGISTRY[0].applies_from is None
     assert cf.REGISTRY[0].run is cf.query.port_type_mismatches
 
@@ -157,7 +157,10 @@ def test_report_shape(ch08) -> None:
     rep = cf.report(ch08, (1, 1))
     assert set(rep) == {"language", "project"}
     assert set(rep["language"]) == {"ok", "diagnostics", "gap_findings"}
-    assert [(r.check_id, r.status) for r in rep["project"]] == [("port-type", "open")]
+    assert [(r.check_id, r.status) for r in rep["project"]] == [
+        ("port-type", "open"),
+        ("satisfaction-claims-evaluated", "open"),
+    ]
 
 
 def test_port_type_check_scheduled(ch08, mismatch) -> None:
@@ -377,3 +380,66 @@ def test_report_clean_model_not_blocked_by_gap_findings(conn) -> None:
     assert r.status == "passed"
 
 
+# --- satisfaction-claims-evaluated (DL-039 part 4) ---
+
+SATISFY_TRUE_MODEL = """
+package P {
+  private import ScalarValues::*;
+  part def Toaster {
+    attribute cycleTime : Real = 100.0;
+  }
+  part fast : Toaster;
+  requirement def TimelyToast {
+    subject toaster : Toaster;
+    require constraint { toaster.cycleTime <= 180.0 }
+  }
+  requirement timely : TimelyToast;
+  assert satisfy timely by fast;
+}
+"""
+
+
+def test_satisfaction_claims_evaluated_registered() -> None:
+    check = next(c for c in cf.REGISTRY if c.id == "satisfaction-claims-evaluated")
+    assert check.applies_from is None
+    assert check.run is cf.satisfaction_claims_evaluated
+
+
+def test_satisfaction_claims_evaluated_false_control_is_a_finding(conn) -> None:
+    check = next(c for c in cf.REGISTRY if c.id == "satisfaction-claims-evaluated")
+    model = conn.load_from_content(check.negative_control, strict=False)
+    assert model.ok
+    findings = check.run(model)
+    assert findings
+    assert findings[0]["requirement"] == "P::timely"
+    assert findings[0]["subject"] == "P::slow"
+    assert findings[0]["result"] is False
+
+
+def test_satisfaction_claims_evaluated_clean_model_has_no_findings(conn) -> None:
+    model = conn.load_from_content(SATISFY_TRUE_MODEL, strict=False)
+    assert model.ok
+    assert cf.satisfaction_claims_evaluated(model) == []
+
+
+def test_satisfaction_claims_evaluated_prove_negative_control(conn) -> None:
+    check = next(c for c in cf.REGISTRY if c.id == "satisfaction-claims-evaluated")
+    assert cf.prove_negative_control(check, conn) is True
+
+
+def test_satisfaction_claims_evaluated_skips_verify_without_subject(ch08) -> None:
+    # A `verify` relationship has no subject and is not itself a satisfy claim about one.
+    findings = cf.satisfaction_claims_evaluated(ch08)
+    assert all(f["subject"] for f in findings)
+
+
+def test_satisfaction_claims_evaluated_error_is_a_finding(conn, monkeypatch) -> None:
+    model = conn.load_from_content(SATISFY_TRUE_MODEL, strict=False)
+
+    def boom(expr):
+        raise RuntimeError("evaluation exploded")
+
+    monkeypatch.setattr(model, "eval", boom)
+    findings = cf.satisfaction_claims_evaluated(model)
+    assert len(findings) == 1
+    assert findings[0]["error"] == "evaluation exploded"
