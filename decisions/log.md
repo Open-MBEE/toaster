@@ -110,8 +110,9 @@ Determined: no, at the step "does the outcome belong in Ch8, and under which eng
 Extension: yes (a pre-alignment handle ruling weighed against a Part 1 learning outcome).
 Provenance: DL-006; AGENTS.md 1.1 item 5, 1.6, 1.9; SA-6; opensysml engine listing and probes in audit ch08 (engines ready; "not covered" on `check`, `smt`, `explore`, `solve`; `verify_constraint` on a requirement def raises `WrongKindError`; `explore_state` on `Cycle` "complete"); audit ch08 OQ-1, F-2, F-8; both Sonnet 5 spot reviews.
   Brief: as above (Objective / design space A, B, C / candidate B gated by probe / feasibility and utility / judgment).
-  Z's decision: [pending]
-  Z's rationale: [pending]
+  Z's decision: B, gated by a probe (2026-09-27). DL-006 is superseded IF the probe shows `check` can answer a 'holds' question on a small model; otherwise fall back to A (amend the AGENTS.md 1.1 item 5 outcome) and escalate the tool gap. The prose defects ("formally satisfy", "proves", "bounded checks") are fixed in either case.
+  Z's rationale: (not separately captured beyond the option choice)
+  Probe result (2026-09-27, decisions/probes.md): negative. `check`/`smt` declare they answer holds/outcomes/sensitive questions (`conn.list_engines()`), but no method in the OpenSysML v0.9.0 Python binding poses that kind of question; every engine-taking method (`verify_constraint`, `verify_requirement`, `validate_instance`) is evaluate-only. **Fallback A applies: DL-006 stands.** Chapter 8 does not deliver formal model checking against this tool version. Registered as D-024, drafted as an upstream feature request (Draft 8, not filed). The prose defects are fixed regardless, per this entry's determined part.
 
 ## DL-047 | 2026-09-27 | PASS2-011-C | Q-R: a chapter may add zero model elements; an analysis-only turn is a turn of the loop; conditional on Q-Q, a formal property is a model construct
 

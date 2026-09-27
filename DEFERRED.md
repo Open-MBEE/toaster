@@ -301,3 +301,12 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 **Resolution:** upstream fix (resolve triggers like `perform`/`allocate` targets are resolved); or a tutorial-supplied guard per DL-039's pattern.
 **Upstream issue:** not filed (no draft yet — needs the exact spec citation for trigger resolution, not yet located)
 **Toaster issue:** not filed
+
+## D-024: OpenSysML v0.9.0's Python binding exposes no way to ask a "holds" question
+
+`conn.list_engines()` reports `check` and `smt` as answering question kinds "outcomes", "holds" and "sensitive" (bounded and proved strength respectively), distinct from `run`'s "evaluate". But every public method taking an `engine=` argument (`verify_constraint`, `verify_requirement`, `validate_instance`) poses only an evaluate-style question ("the verdict is about concrete values"); given an underdetermined subject, every non-`run` engine replies "does not answer evaluate questions — not covered", and `run` replies with an evaluation failure. No method exposes a holds/outcomes/sensitive/satisfiable request. Found while probing DL-046 (does OpenSysML support formal model checking for Chapter 8); recorded in `decisions/probes.md`.
+
+**Workaround:** none; DL-046 falls back to DL-006 standing (no formal model checking in this tutorial against v0.9.0).
+**Resolution:** upstream feature — expose a method (or an `engine=` parameter on an existing one) that poses a holds/outcomes question, matching what `check`/`smt` already declare they can answer.
+**Upstream issue:** not filed (Draft 8 awaiting Z's review)
+**Toaster issue:** not filed

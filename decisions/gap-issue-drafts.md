@@ -97,3 +97,16 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 **Request.** Report a diagnostic for a part usage none of whose definitions is a part definition. Check for existing issues in both repositories first.
 
+---
+
+## Draft 8 (OpenSysML, feature request): no public method poses a "holds" question to the check/smt engines (D-024)
+
+**Version:** OpenSysML v0.9.0.
+
+**Observed.** `conn.list_engines()` declares `check` (bounded) and `smt` (proved) as answering question kinds `outcomes`, `holds` and `sensitive`, separate from `run`'s `evaluate`. But `verify_constraint(symbol_id, subject=None, engine="check")`, `verify_requirement(...)` and `validate_instance(...)` all pose an evaluate-style question regardless of the `engine=` argument: with a fully-determined subject they succeed via `run`-style evaluation; with an underdetermined one, `check`/`smt`/`explore`/`solve` each reply "<engine> does not answer evaluate questions — not covered", and no other method takes a holds/outcomes/satisfiable request.
+
+**Reference.** The engine registration API itself (`list_engines()`/`EngineInfo.answers`) is the source for what each engine claims to answer; we found no corresponding entry point in `opensysml.model.Model` or `opensysml.connection.Connection` that constructs a holds-style request.
+
+**Request.** Expose a way to ask the question `check` and `smt` say they answer — for example a `holds=True` argument on `verify_constraint`, or a dedicated `check_constraint`/`ask_holds` method — so a constraint over an underdetermined subject (the ordinary case for bounded model checking) can actually be posed to those engines.
+
+**Repro:** `decisions/probes.md`, "2026-09-27 (DL-046 probe)".

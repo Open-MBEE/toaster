@@ -34,3 +34,24 @@ Environment: OpenSysML v0.9.0 (`uv run`), sysml-toolkit v0.9.1 built from `~/Doc
 
 - **Douglas quotes** (glossary edges `def-douglas--*`): re-read from fresh YouTube transcripts in Z's Chrome (Part 3 `UTm1ORuZ1dg`, Part 4 `Iblo2Il-pOA`). The built-in browser cannot load the transcript (empty response); in Chrome, click "Show transcript", wait 10 to 20 seconds for `ytd-transcript-segment-renderer` elements to appear, normalize and search. Locators corrected: requirement 1:43, traceability 9:43.
 - **PDF quotes**: `uv run python -m glossary verify-sources` finds every quote on its recorded page (needs the gitignored PDFs in `glossary/sources/local/`).
+
+## 2026-09-27 (DL-046 probe: does OpenSysML v0.9.0 answer a "holds" question?)
+
+**Question:** Z gated DL-046 (whether Chapter 8 must deliver formal model checking) on whether `check` (or `smt`/`explore`/`solve`) can actually answer a bounded/formal verification question, as opposed to evaluating a fixed value.
+
+**Method:** `conn.list_engines()` reports each engine's declared question kinds directly:
+```
+check: bounded, answers outcomes, holds, sensitive; ready
+explore: proved, answers outcomes; ready
+run: observed, answers evaluate; ready
+smt: proved, answers holds, sensitive; ready
+solve: proved, answers satisfiable; ready
+sweep: observed, answers sweep; ready
+```
+So `check`/`smt` do declare "holds" as a question kind they answer. The question is whether any Python method actually *poses* a holds/outcomes/sensitive/satisfiable question, as opposed to an evaluate question.
+
+**Result: no.** Every public method that takes an `engine=` argument (`verify_constraint`, `verify_requirement`, `validate_instance`) is documented and behaves as posing an "evaluate" question ("the verdict is about concrete values"; "each asserted constraint ... is evaluated against the object"). Tried on both a fully-determined subject and a deliberately underdetermined one (a part usage with no bound value), with and without an explicit `subject=`, naming the requirement usage and the constraint directly: every non-`run` engine replies `"<engine> does not answer evaluate questions — not covered"`; `run` (or no engine) replies with an evaluation failure ("no value for feature x.w — not covered by run") on the underdetermined case. No method in `opensysml.model.Model` (checked the full method list) takes a question-kind argument or otherwise exposes a holds/outcomes/sensitive/satisfiable request. `explore_state`/`explore_action` explore state machines and actions (schedule=explore), which is a different, already-used capability (Ch7), not a constraint-holds question.
+
+**Conclusion:** the capability check/smt declare (bounded or proved verdicts on a "holds" question) exists at the engine-registration/protocol level but is not reachable through the OpenSysML v0.9.0 Python binding's public API. This is a real tool gap, not a usage error on the probe's part — four call shapes were tried, all producing the same "not covered" boundary.
+
+**Consequence for DL-046:** Z's negative-probe fallback triggers. DL-006 stands: Chapter 8 does not deliver formal model checking against this tool version. The gap is drafted as a feature request (Draft 8, `decisions/gap-issue-drafts.md`) and registered (D-024). Chapter 8's prose defects ("formally satisfy", "proves", "bounded checks") are fixed regardless, per DL-046's determined part.
