@@ -9,7 +9,13 @@ audit's drop of `TimelyToast`'s doc/rationale is an UNNAMED element and is a kno
 blind spot this check does NOT catch (see DEFERRED.md D-022). This is expected and desired
 output, not a bug (see DEFERRED.md and PASS2-010's Task B non-goals: the fixture is not
 touched here). The other adjacent pairs listed in the contract's acceptance check 4
-(ch01->ch02, ch02->ch03, ch04->ch05, ch05->ch06, ch06->ch07, ch07->ch08) are confirmed clean.
+(ch02->ch03, ch04->ch05, ch05->ch06, ch06->ch07, ch07->ch08) are confirmed clean.
+
+ch01->ch02 is a second known, real gap, of the same shape as ch03->ch04 above: PASS4-001
+re-derived Chapter 1 (item def Bread/Toast, action def ToastBread, and ToastingSystem's
+perform) ahead of Chapter 2, so ch02-cumulative.sysml (not yet re-derived) does not carry
+those named elements forward. Expected and temporary, pending Chapter 2's own re-derivation;
+not touched here, same as ch03->ch04.
 
 The constructed-pair tests below (type-change, unnamed-element, and check_chapter wiring)
 point `CUMULATIVE_FILES` at small standalone SysML strings under `tmp_path`, isolated from
@@ -57,9 +63,32 @@ def test_ch03_to_ch04_reports_the_known_dropped_elements(cc, conn):
     assert all("is missing from" in f for f in failures)
 
 
-@pytest.mark.parametrize("chapter", [2, 3, 5, 6, 7, 8])
+def test_ch01_to_ch02_reports_the_known_dropped_elements(cc, conn):
+    """The known, real, PASS4-001 gap: ch02 does not yet carry forward the functional
+    construct Ch1 was re-derived to add (item def Bread/Toast, action def ToastBread,
+    and ToastingSystem's perform), because ch02-cumulative.sysml has not itself been
+    re-derived yet. Same shape as ch03->ch04 above; expected to close when Chapter 2
+    is re-derived, not fixed here."""
+    failures = cc.check_predecessor_containment(2, conn)
+    assert failures, "expected the predecessor-containment check to catch ch02 dropping ch01's new functional elements"
+    joined = "\n".join(failures)
+    for qname in (
+        "ToasterDemo::Bread",
+        "ToasterDemo::Toast",
+        "ToasterDemo::ToastBread",
+        "ToasterDemo::ToastBread::bread",
+        "ToasterDemo::ToastBread::toast",
+        "ToasterDemo::ToastingSystem::toastBread",
+    ):
+        assert qname in joined, f"expected {qname} to be reported missing"
+    assert "ch01-cumulative.sysml" in joined and "ch02-cumulative.sysml" in joined
+    # Every reported failure is a *missing* element (nothing changed @type here).
+    assert all("is missing from" in f for f in failures)
+
+
+@pytest.mark.parametrize("chapter", [3, 5, 6, 7, 8])
 def test_other_adjacent_pairs_report_no_failures(cc, conn, chapter):
-    """ch01->ch02, ch02->ch03, ch04->ch05, ch05->ch06, ch06->ch07, ch07->ch08 are each clean."""
+    """ch02->ch03, ch04->ch05, ch05->ch06, ch06->ch07, ch07->ch08 are each clean."""
     failures = cc.check_predecessor_containment(chapter, conn)
     assert failures == []
 
