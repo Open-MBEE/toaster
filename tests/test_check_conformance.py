@@ -9,6 +9,7 @@ branch that a "failed" status takes 1, and that "open"/"blocked"/"wont-do" (no "
 take 0, per the status semantics documented at the top of conformance.py.
 """
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -104,3 +105,69 @@ def test_exit_code_0_for_open_blocked_and_wont_do_with_no_failed(tmp_path, monke
         ["check_conformance.py", str(clean_path), str(gap_path), "--stage", "0,0"],
     )
     assert cc.main() == 0
+
+
+def test_exit_code_0_when_a_check_passes(tmp_path, monkeypatch, capsys, cc):
+    """A constructed model with a "passed" check (scheduled, run, found nothing) exits 0,
+    not just because "failed" is absent but because "passed" itself is not a failure."""
+    passing = conformance.ConformanceCheck(
+        id="always-passes",
+        description="test-only check that always passes",
+        run=lambda model: [],
+        applies_from=(0, 0),
+        negative_control=MINIMAL_MODEL,
+    )
+    monkeypatch.setattr(conformance, "REGISTRY", [passing])
+    model_path = _write(tmp_path, "ch99-cumulative.sysml", MINIMAL_MODEL)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["check_conformance.py", str(model_path), "--stage", "0,0", "--json"],
+    )
+
+    assert cc.main() == 0
+
+    report = json.loads(capsys.readouterr().out)
+    assert report[0]["project"][0]["id"] == "always-passes"
+    assert report[0]["project"][0]["status"] == "passed"
+
+
+def test_default_stage_is_chapter_from_filename_section_0(tmp_path, monkeypatch, cc):
+    """With no --stage, the stage passed into conformance.report() is (N, 0), where N is
+    the chapter number parsed from the model's ``chNN`` filename prefix — asserted on the
+    actual stage tuple used (not just on printed text)."""
+    captured_stages = []
+    original_report = conformance.report
+
+    def spy_report(model, stage, registry=None):
+        captured_stages.append(stage)
+        return original_report(model, stage, registry)
+
+    monkeypatch.setattr(conformance, "report", spy_report)
+    model_path = _write(tmp_path, "ch05-cumulative.sysml", MINIMAL_MODEL)
+    monkeypatch.setattr(sys, "argv", ["check_conformance.py", str(model_path)])
+
+    cc.main()
+
+    assert captured_stages == [(5, 0)]
+
+
+def test_stage_flag_overrides_the_default(tmp_path, monkeypatch, cc):
+    """--stage CH,SEC overrides the filename-derived default, for the stage tuple actually
+    passed into conformance.report()."""
+    captured_stages = []
+    original_report = conformance.report
+
+    def spy_report(model, stage, registry=None):
+        captured_stages.append(stage)
+        return original_report(model, stage, registry)
+
+    monkeypatch.setattr(conformance, "report", spy_report)
+    model_path = _write(tmp_path, "ch05-cumulative.sysml", MINIMAL_MODEL)
+    monkeypatch.setattr(
+        sys, "argv", ["check_conformance.py", str(model_path), "--stage", "2,3"]
+    )
+
+    cc.main()
+
+    assert captured_stages == [(2, 3)]
