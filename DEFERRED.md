@@ -263,7 +263,7 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 
 **Workaround:** none in the model yet (Pass 4 re-derives with usages); the tutorial supplies a language-gap guard with a negative control (to be built).
 **Resolution:** upstream fix in OpenSysML; re-test with `scripts/probes`.
-**Upstream issue:** not filed (draft 6 awaiting Z's review)
+**Upstream issue:** not filed (draft 6 re-verified 2026-09-27 — citations confirmed against the current formal PDFs, no duplicate issue found; note [OpenSysML#95](https://github.com/Open-MBEE/OpenSysML/issues/95), a related but distinct open issue the filed text must cite to distinguish this claim from that one's already-settled question — awaiting Z's go on filing)
 **Toaster issue:** not filed
 
 ## D-020: Neither OpenSysML nor sysml-toolkit reports a part usage typed only by an item definition
@@ -272,7 +272,7 @@ OpenSysML v0.9.0 loads `allocate ApplyHeat to HeatingSystem;` (an action definit
 
 **Workaround:** the tutorial supplies a language-gap guard with a negative control (to be built).
 **Resolution:** upstream fix in both tools.
-**Upstream issue:** not filed (draft 7 awaiting Z's review)
+**Upstream issue:** not filed (draft 7 re-verified 2026-09-27 — repro re-run against current binaries with both `check` and `lint`, citation confirmed exact, no duplicate issue found — awaiting Z's go on filing)
 **Toaster issue:** not filed
 
 ## D-021: A false `assert satisfy` is accepted

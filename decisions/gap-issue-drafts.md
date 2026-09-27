@@ -1,6 +1,8 @@
 # Drafted gap issues (nothing filed)
 
-Status: **drafts for Z's review.** Nothing here has been filed on any public repository. Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-018). Z decides what is filed, where, and with what wording.
+Status: **drafts for Z's review.** Nothing here has been filed on any public repository. Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020). Z decides what is filed, where, and with what wording.
+
+**Drafts 6 and 7 re-verified 2026-09-27** (Pass 2 wrap-up), per Z's request before Pass 3: both repros re-run against the current OpenSysML v0.9.0 and sysml-toolkit v0.9.1 binaries and reconfirmed exactly as drafted; both spec citations re-checked page-by-page directly against the PDFs in `sysmlv2-testing/sources/local/` (Draft 6's KerML citation is precise but the constraint is a structural attribute-typing fact, not a named OCL rule — corrected in the draft text; its SysML §7.15.2 citation, initially doubted, is confirmed correct); both checked against every open and closed issue on `Open-MBEE/OpenSysML` and `Open-MBEE/sysml-toolkit` — no duplicate found for either, but Draft 6 is closely adjacent to the open, unresolved `Open-MBEE/OpenSysML#95` ("Subsetting type conformance is not checked"), which the draft must now cite and distinguish from (see Draft 6, below) to avoid the same "not a bug" reply that issue already received for a related-but-different claim.
 
 Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` naming an action *definition* is correctly rejected; SysML 7.17.6 has `perform` reference a usage) and **G3** (`allocation def` with typed ends and `allocation a : Def allocate x to y;` works; the earlier failure was our syntax). **G6** (broken `get_satisfy_relationships` and `find_allocations` in this repo) is fixed in `src/toaster/query.py` with tests.
 
@@ -80,10 +82,13 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 **Observed.** `package P { action def A; part def H; allocate A to H; }` loads with `ok=True` and no diagnostic. With usages instead (`part def S { action a : A; part h : H; allocate a to h; }`) it loads in both tools. sysml-toolkit `check --lib <sysml.library>` on the definition form reports `ReferenceSubsetting::referencedFeature must refer to a Feature` at the allocate. OpenSysML rejects `perform A;` naming an action definition (correctly: a perform references a usage), so it already distinguishes definitions from usages there.
 
-**Reference.** KerML 1.1 Beta 2, 8.3.3.3.9 ReferenceSubsetting (PDF p. 203): the referenced element of a ReferenceSubsetting, which identifies a connector's related features, is a Feature. SysML v2.0 (formal/2026-03-02) 7.15.2 allocates between usages in its examples.
-**Not yet verified:** the exact validation-constraint wording in the formal 2026-03-02 release (the toolkit's message comes from the vendored 20250201 metamodel); re-check before filing. Check that no existing OpenSysML issue covers it.
+**Reference, re-verified 2026-09-27 directly against the PDFs (`sysmlv2-testing/sources/local/`), not carried over from the first pass.** KerML 1.1 Beta 2, 8.3.3.3.9 ReferenceSubsetting (PDF p. 203, confirmed): `referencedFeature : Feature {redefines subsettedFeature}` — the attribute's declared type is `Feature`. This section's own **Constraints** subsection reads "None": there is no named OCL `validateXXX` invariant for `referencedFeature`'s type, because none is needed — it is a structural (metamodel attribute-typing) requirement, not a business-rule constraint layered on top. A `part def`/`action def` is a `Definition`-kind element, not a `Feature`, so `allocate A to H` naming two definitions cannot satisfy this typing at all; this is a different and more fundamental thing than a type-*conformance* judgment. SysML v2.0 (formal/2026-03-02) 7.15.2 Allocation Definitions and Usages (PDF p. 112, section number confirmed correct, contrary to my initial doubt): its own worked example allocates only usages, both directly (`allocate logical.component to physical.assembly` inside the allocation def, both ends usages) and via the outer `allocation systemToDevice : ... allocate logical ::> system to physical ::> device;` — the spec's own canonical example never allocates two bare definitions.
 
-**Request.** Diagnose an allocate whose ends are not features, as sysml-toolkit does.
+**Directly relevant, found this pass: [OpenSysML#95](https://github.com/Open-MBEE/OpenSysML/issues/95) (open, unresolved) — "Subsetting type conformance is not checked."** Same family of relationship (`ReferenceSubsetting` is a kind of `Subsetting`), but a **different** claim: #95 is about general Subsetting's *type-conformance* (does the subsetting feature's declared type specialize the subsetted feature's?), which the maintainer investigated carefully and ruled **not a bug** — KerML 8.3.3.3.10 has no type-conformance constraint on plain Subsetting, only `validateSubsettingConstantConformance`, `validateSubsettingFeaturingTypes`, `validateSubsettingUniquenessConformance` and a multiplicity warning. This draft's claim is different in kind, not degree: it is not that `A` and `H`'s types fail to conform to each other (a Subsetting type-conformance question), it is that `A` and `H` are not `Feature`s **at all** (a `ReferenceSubsetting`-specific attribute-typing requirement, independent of the type-conformance debate #95 already settled). **Filing this without citing #95 risks the same "not a bug" reply for the wrong reason; filing it should explicitly distinguish the two.**
+
+**No existing issue duplicates this** (checked OpenSysML open/closed issues and sysml-toolkit's single closed issue, 2026-09-27).
+
+**Request.** Diagnose an allocate whose ends are not features, as sysml-toolkit does — citing #95 to distinguish this from that issue's already-settled question.
 
 ---
 
@@ -91,11 +96,13 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 **Versions:** OpenSysML v0.9.0; sysml-toolkit v0.9.1 (`check --lib`).
 
-**Observed.** `package P { item def Start; part def L { part bread : Start; } }` loads with `ok=True` in OpenSysML and exits 0 with no output in sysml-toolkit.
+**Observed, re-confirmed 2026-09-27 against the current binaries.** `package P { item def Start; part def L { part bread : Start; } }` loads with `ok=True` and no diagnostics in OpenSysML v0.9.0; sysml-toolkit v0.9.1 exits 0 with no output on both `check --lib` and `lint --lib` (checked both commands this pass, not just `check`).
 
-**Reference.** SysML v2.0 (formal/2026-03-02), `validatePartUsagePartDefinition` (PDF p. 323): "At least one of the itemDefinitions of a PartUsage must be a PartDefinition." (`partDefinition->notEmpty()`).
+**Reference, re-verified 2026-09-27 directly against the PDF, page citation confirmed exact.** SysML v2.0 (formal/2026-03-02), section 8.3.11 Parts Abstract Syntax (the constraint sits in the PartUsage constraints block, PDF p. 323): `validatePartUsagePartDefinition` — "At least one of the itemDefinitions of a PartUsage must be a PartDefinition." (`partDefinition->notEmpty()`). Prose right above it on PDF p. 322 states the same rule in plain language: "A PartUsage is a usage of a PartDefinition to represent a system or a part of a system. At least one of the itemDefinitions of the PartUsage must be a PartDefinition."
 
-**Request.** Report a diagnostic for a part usage none of whose definitions is a part definition. Check for existing issues in both repositories first.
+**No existing issue duplicates this** (checked OpenSysML open/closed issues and sysml-toolkit's single closed issue, 2026-09-27; nothing on `PartDefinition`, item-definition typing, or this constraint name).
+
+**Request.** Report a diagnostic for a part usage none of whose definitions is a part definition.
 
 ---
 
