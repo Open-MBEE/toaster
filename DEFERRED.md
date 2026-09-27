@@ -317,7 +317,7 @@ The round-2 final ruling on a genuine no-import cross-package reference stands u
 
 **Workaround:** `unresolved-transition-trigger` (see above) — now added to `language_gap_findings` in `src/toaster/conformance.py`.
 **Resolution:** upstream fix (resolve triggers like `perform`/`allocate` targets are resolved); or a tutorial-supplied guard per DL-039's pattern.
-**Upstream issue:** not filed (no draft yet — needs the exact spec citation for trigger resolution, not yet located)
+**Upstream issue:** not filed — Draft 9 (`decisions/gap-issue-drafts.md`), citing SysML v2.0 formal/2026-03-02 8.3.18.8/8.3.18.9/8.3.17.2, is drafted and held for Z's review
 **Toaster issue:** not filed
 
 ## D-024: RETRACTED — OpenSysML v0.9.0's Python binding cannot ask a "holds" question (sysml-toolkit can)
