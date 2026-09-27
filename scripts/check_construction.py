@@ -35,6 +35,8 @@ from pathlib import Path
 
 import opensysml
 
+from toaster import query
+
 REPO_ROOT = Path(__file__).parent.parent
 
 # Chapters and their construct-introducing notebooks (in order).
@@ -249,6 +251,78 @@ def check_notebook(entry: dict, conn: opensysml.Connection) -> list[str]:
     return failures
 
 
+def _named_elements(index: "query.ApiIndex") -> dict[str, str]:
+    """``{qualifiedName: @type}`` for every NAMED element in an API-JSON export.
+
+    Identity is restricted to elements that carry their own declared name (the export's
+    ``declaredName`` key, not None; the export has no ``name`` key at all, only
+    ``declaredName`` — confirmed by inspection, not assumed). An unnamed member (e.g. a
+    ``doc``, or a bare constraint body) gets a synthetic ``@N`` qualifiedName segment
+    assigned by its position among its owner's members (e.g.
+    ``ToasterDemo::TimelyToast::@2``); that position shifts when a sibling member is
+    added or removed, so it is not a stable identity to compare across two
+    separately-edited chapter fixtures (see decisions/audits/ch04-layer-audit.md F-5,
+    where removing `TimelyToast`'s `doc` renumbers the following `ConstraintUsage` from
+    `@2` to `@1`). A NAMED element's qualifiedName is built from its own declared name and
+    its owners' declared names, not from sibling position, and was confirmed stable
+    across two separately-loaded `opensysml.Connection`s of the same content (the
+    API-JSON `@id` is derived deterministically from the qualifiedName). This matches the
+    contract's "every NAMED element" wording.
+    """
+    return {
+        e["qualifiedName"]: e["@type"]
+        for e in index.elements
+        if e.get("qualifiedName") and e.get("declaredName") is not None
+    }
+
+
+def check_predecessor_containment(chapter: int, conn: opensysml.Connection) -> list[str]:
+    """For ch{chapter}, verify every NAMED element of ch{chapter-1} is still present, same @type.
+
+    Only runs when chapter > 1 and both ch{chapter-1} and ch{chapter} cumulative fixtures
+    exist. Identity is by qualified name via the API-JSON export (`toaster.query.ApiIndex`),
+    restricted to named elements (see `_named_elements`). Loads both fixtures fresh on the
+    given connection rather than reusing a model `check_chapter` may already have loaded,
+    so this function also works standalone (e.g. from a test or a one-off script).
+    """
+    failures: list[str] = []
+    if chapter <= 1:
+        return failures
+
+    prev_path = CUMULATIVE_FILES.get(chapter - 1)
+    cur_path = CUMULATIVE_FILES.get(chapter)
+    if not prev_path or not cur_path or not prev_path.exists() or not cur_path.exists():
+        return failures
+
+    prev_model = conn.load_from_content(prev_path.read_text(), strict=False)
+    cur_model = conn.load_from_content(cur_path.read_text(), strict=False)
+    if not prev_model.ok or not cur_model.ok:
+        # A model that fails to load is reported by the cumulative-fixture-loads check
+        # above; comparing element sets of a model that did not load is not meaningful.
+        return failures
+
+    prev_named = _named_elements(query.ApiIndex(prev_model))
+    cur_named = _named_elements(query.ApiIndex(cur_model))
+
+    prev_label = f"ch{chapter - 1:02d}-cumulative.sysml"
+    cur_label = f"ch{chapter:02d}-cumulative.sysml"
+    for qn in sorted(prev_named):
+        prev_type = prev_named[qn]
+        if qn not in cur_named:
+            failures.append(
+                f"PREDECESSOR CONTAINMENT {prev_label} -> {cur_label}: "
+                f"{qn} ({prev_type}) is missing from {cur_label}"
+            )
+        elif cur_named[qn] != prev_type:
+            failures.append(
+                f"PREDECESSOR CONTAINMENT {prev_label} -> {cur_label}: "
+                f"{qn} changed @type from {prev_type} (in {prev_label}) to "
+                f"{cur_named[qn]} (in {cur_label})"
+            )
+
+    return failures
+
+
 def check_chapter(chapter: int, conn: opensysml.Connection) -> list[str]:
     """Check all construction notebooks for one chapter plus the cumulative fixture."""
     failures = []
@@ -267,6 +341,12 @@ def check_chapter(chapter: int, conn: opensysml.Connection) -> list[str]:
             )
     elif cum_path:
         failures.append(f"MISSING cumulative fixture: {cum_path.name}")
+
+    # Verify ch{chapter} still contains every named element of ch{chapter-1} (same
+    # qualified name, same @type). Not gated on the cumulative-fixture-loads check
+    # above (a fresh pair of loads is used), but naturally produces no findings when
+    # either fixture failed to load, per the guard in check_predecessor_containment.
+    failures.extend(check_predecessor_containment(chapter, conn))
 
     return failures
 
