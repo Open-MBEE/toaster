@@ -56,7 +56,7 @@ Every major operation gets its own dedicated markdown cell. This is not optional
 ## Structural consistency (A4, A6)
 
 - Cell 0 (concept statement): exactly one sentence. No exceptions.
-- Cell 5 (Tall seam): exactly one sentence naming all three worlds. No exceptions.
+- Cell 5 (seam): exactly one sentence addressing the seam (definition, loading tool, rendered result) in behavior. No exceptions, and no naming Tall, "the three worlds", A-F, O-S or E (AGENTS.md 1.10; corrected DL-050) — see `toaster-recipe`'s "Tall's three worlds" section.
 - Cell 6 (exercise pointer): exactly one sentence. Markdown only.
 - Chapter `conclusion.md`: exactly four items (three paragraphs + exercise reference). Not three, not five.
 - `index.md` six recipe elements appear in stated order. No reordering.
@@ -90,8 +90,8 @@ structure stays the same.
 
 ## What every agent loading this skill must never do
 
-- Write a Tall seam that names only two worlds.
-- Write a Tall seam that says "the source string in cell 2" — A-F is the model file `models/chXX-cumulative.sysml`, not the inline string.
+- Write a seam sentence that names Tall, "the three worlds", or their abbreviations (A-F, O-S, E) — those are the author's own design lens, never learner-facing (AGENTS.md 1.10).
+- Write a seam sentence vague enough that a reader could not point to which printed thing is the definition, which is the loading step, and which is the result — e.g. "the source string in cell 2" is not specific enough; name the actual model file or fragment, `models/chXX-cumulative.sysml`, not the inline string.
 - Use Mermaid for any diagram.
 - Use em-dashes in prose.
 - Write a figure caption longer than two sentences.

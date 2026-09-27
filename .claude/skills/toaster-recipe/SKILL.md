@@ -1,6 +1,6 @@
 ---
 name: toaster-recipe
-description: Sub-notebook 7-cell template, chapter index/conclusion structure, Tall three worlds requirement, and A6 review checklist.
+description: Sub-notebook 7-cell template, chapter index/conclusion structure, the seam cell (Tall's three worlds as a builder-facing lens only, never named to learners — AGENTS.md 1.10), and A6 review checklist.
 ---
 
 # Toaster Recipe
@@ -16,7 +16,7 @@ The 7 cells below are the **required skeleton**. Additional markdown+code pairs 
 | **Model increment** | Code | Two-phase. (1) Declare the increment: Pattern A (Editor API, returns full model) or Pattern B (SysML string fragment for gap constructs). Assign to `TOASTER_INCREMENT`; print immediately as reflection. Only in construct-introducing notebooks — see scope table in `decisions/declarative-construction-plan.md`. (2) Load full chapter cumulative from `models/chXX-cumulative.sysml`; `assert model.ok`. |
 | **Negative control** | Code + Markdown | Short bad_source string. `bad = conn.load_from_content(bad_source, strict=False)`. `assert not bad.ok`. Markdown: one sentence naming the error type and pointing to the diagnostic. |
 | **Demonstration** | Code + Markdown | One key operation per code cell. If two things happen, split into two cells each with its own narration markdown. |
-| **Tall seam** | Markdown | Exactly one sentence naming all three worlds. |
+| **Seam** | Markdown | Exactly one sentence, addressing in behavior that the written construct, the tool that loaded it, and the rendered result are three distinct things the reader has just watched connect. Never names Tall or "the three worlds" (AGENTS.md 1.10) — see "Tall's three worlds" below. |
 | **Exercise pointer** | Markdown | One sentence: "Try the chapter exercise in `exercises/ch{N}/exercise.ipynb`: [one-line description]." No embedded code. |
 
 ### Construction zone — model increment pattern (construct-introducing notebooks only)
@@ -98,12 +98,31 @@ assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
 - 13 notebooks have construction cells; judgment, depth, navigation, analysis, param-sweep do not.
 - The cumulative model file is authored by A3 and must exist before A4 finalizes the assembly cell.
 
-## Tall's three worlds
+## Tall's three worlds (builder-facing lens; corrected DL-015/DL-050)
 
-- **A-F (axiomatic formalism):** the SysML model file at `models/chXX-cumulative.sysml`
-- **O-S (operational symbolism):** `conn.load_from_content(...)` loads and indexes it; downstream API calls in demo cells execute operations on it
-- **E (conceptual embodiment):** the output rendered below the demo cell (figure, table, or diagnostic)
-- **Seam cell:** names all three worlds explicitly in one sentence; identified by content type, not cell index
+Tall's three worlds — axiomatic formalism (A-F), operational symbolism (O-S), conceptual
+embodiment (E) — is the lens *this recipe's author* uses to design the seam cell. It is not
+learner-facing vocabulary and it never appears, spelled out or abbreviated, in a notebook, `index.md`
+or `conclusion.md` (AGENTS.md 1.10, both clauses). Two prior drafts of this skill required the
+seam cell to *name* the labels — DL-050's dry run confirmed this is a live violation, found
+independently by two simulated learners and caught by neither's naming lint (the labels don't
+contain the words "Tall" or "three worlds", so `tall-named`'s regex missed them; it was widened in
+the same contract that fixed this text).
+
+For the author's own reference, mapping this recipe's constructs onto the lens:
+
+- **A-F:** the SysML model file at `models/chXX-cumulative.sysml`, or the printed fragment string
+  in a construction-zone cell.
+- **O-S:** `conn.load_from_content(...)` (or `editor.apply()`) loads and indexes it; downstream API
+  calls in demo cells execute operations on it.
+- **E:** the output rendered below the demo cell (figure, table, or diagnostic).
+
+**Seam cell (what the learner actually reads):** one sentence that lets a reader who has never
+heard of Tall still notice the three things connect — e.g. "the definition printed above loaded
+without error, and `model.find()` confirms it's now part of the model, shown by the symbol printed
+below" — never a sentence built around naming the categories themselves. `user-testing`'s
+simulated-learner checklist judges this behaviorally (does removing any label still leave the
+connection legible?), which is exactly the test a lint rule can't run.
 
 ## Chapter index.md — 6-element recipe
 
@@ -140,20 +159,24 @@ Identify required cells by content type, not by cell index — additional narrat
 - [ ] **Model increment cell present (construct-introducing notebooks only):** two-phase — (1) `TOASTER_INCREMENT` assigned and printed as reflection (Pattern A: `str(editor.apply())`; Pattern B: SysML fragment string); (2) full cumulative loaded from `models/chXX-cumulative.sysml`; `assert model.ok`. Judgment/depth/navigation/analysis notebooks: cell-02 loads cumulative only, no TOASTER_INCREMENT.
 - [ ] **Negative control present:** short bad_source inline; `assert not bad.ok`; markdown names the error type
 - [ ] **Demo cell(s) present:** one key operation per code cell; each code cell followed by markdown narration
-- [ ] **Tall seam present:** exactly one sentence naming A-F (model file), O-S (API call), and E (rendered output)
+- [ ] **Seam present:** exactly one sentence addressing, in behavior, that the definition, the loading tool, and the printed result are three distinct things the reader just watched connect — never naming Tall, "the three worlds", A-F, O-S or E
 - [ ] **Exercise pointer present:** markdown only; one sentence pointing to `exercises/ch{N}/exercise.ipynb`
 - [ ] ≤600 words prose; ≤50 lines code
 - [ ] One new construct/operation (or DEPTH annotation for Ch6)
 
-## Tall's three worlds — construction cell update
+## Tall's three worlds — construction cell update (author's lens only, see above)
 
-The A-F → O-S seam is now visible in cell-02 of construct-introducing notebooks:
+The A-F → O-S seam is now visible in cell-02 of construct-introducing notebooks, for the author's
+own design purposes only:
 
 - **A-F:** the SysML declaration produced by the construction call or written as a string
 - **O-S:** `editor.apply()` (Pattern A) or `conn.load_from_content()` (Pattern B) executes it
 - **E:** `TOASTER_INCREMENT` printed as the reflection — the engineer sees the validated canonical SysML
 
-The Tall seam cell (slot 5) must still name all three worlds. For Pattern A notebooks, the A-F reference is the `editor.add_*()` call in cell-02, not the printed TOASTER_INCREMENT (which is the full model). For Pattern B notebooks, the A-F reference is the TOASTER_INCREMENT string itself.
+The seam cell (slot 5) addresses the connection behaviorally, as above — for a Pattern A notebook
+that means pointing at what `editor.add_*()` produced and what running it validated; for Pattern B,
+at the `TOASTER_INCREMENT` string and what loading it validated. Neither the labels above nor "Tall"
+nor "three worlds" appear in the sentence itself.
 
 ## What A4 must never do
 

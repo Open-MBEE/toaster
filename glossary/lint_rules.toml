@@ -5,9 +5,9 @@
 
 [[rule]]
 id = "tall-named"
-regex = '''\b(?-i:Tall)\b|\bthree[\s-]+worlds\b'''
-message = "The three-worlds lens is builder-facing; do not name Tall in learner content."
-why = "AGENTS.md 1.10"
+regex = '''\b(?-i:Tall)\b|\bthree[\s-]+worlds\b|\b(?-i:A-F)\b|\b(?-i:O-S)\b'''
+message = "The three-worlds lens is builder-facing; do not name Tall (or its A-F/O-S abbreviations) in learner content."
+why = "AGENTS.md 1.10; DL-050 (found by two independent simulated learners, invisible to this rule until widened)"
 severity = "error"
 scope = "learner"
 

@@ -153,7 +153,9 @@ correctly. Do not attempt `editor.add_member()` for these kinds — it will rais
 **Implication for declarative notebook architecture:** The 5 gap constructs must be added to the
 cumulative SysML string and loaded as text rather than constructed via the Editor API. The Editor
 API is used for the constructs it supports (~8 kinds); the remaining 5 are demonstrated via the
-`conn.load_from_content()` round-trip, which still shows the A-F → O-S → E Tall seam clearly.
+`conn.load_from_content()` round-trip, which still shows the seam (definition, loading, result)
+clearly — addressed behaviorally in the notebook's seam cell, never by naming Tall's three worlds
+(AGENTS.md 1.10; see `toaster-recipe`'s "Tall's three worlds" section, corrected DL-050).
 
 ## Construction cell patterns — all 13 notebooks use SysML strings
 
