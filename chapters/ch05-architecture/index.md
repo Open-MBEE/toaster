@@ -28,7 +28,7 @@ Notebook 03 introduces `port def` and `interface`, which answer "what connection
 
 ## Expected result
 
-After running all three notebooks, the cumulative model contains the complete Ch1-Ch5 model including `abstract part def HeatingSystem` (performing `ApplyHeat` through a `perform` relationship, no supertype), `allocation heatAllocation allocate ToastBread::applyHeat to Toaster::heating;`, a `DurationPort` connecting `ControlSystem` and `HeatingSystem`, and `interface durationInterface connect control.durationOut to heating.durationIn;` inside `Toaster`. `build_interconnection_intent(model, "ToasterDemo::Toaster")` returns a dict with two parts and one connection, and the rendered interconnection diagram is visible in notebook 03's own output.
+After running all three notebooks, the cumulative model contains the complete Ch1-Ch5 model including `abstract part def HeatingSystem` (performing `ApplyHeat` through a `perform` relationship, no supertype), `allocation heatAllocation allocate ToastBread::applyHeat to Toaster::heating;`, a `DurationPort` typing a new port on each of `ControlSystem` and `HeatingSystem`, and `interface durationInterface connect control.durationOut to heating.durationIn;` inside `Toaster`, joining those two ports. `build_interconnection_intent(model, "ToasterDemo::Toaster")` returns a dict with two parts and one connection, and the rendered interconnection diagram is visible in notebook 03's own output.
 
 ## Experiment
 
