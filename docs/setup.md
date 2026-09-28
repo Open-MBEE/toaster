@@ -67,10 +67,13 @@ loads, validates, queries, and evaluates every model in this tutorial. Every cha
 **sysml-toolkit** does one thing OpenSysML cannot yet: prove that a constraint holds for every
 value of an unbound quantity, not just check it against one fixed value, using the Z3 solver.
 No chapter currently uses this; it becomes relevant once Chapter 8 is re-derived to need it.
-It is not on PyPI or crates.io. (A package named `sysmlv2` does exist on PyPI; it is an
-unrelated placeholder project, not this one.) Pre-built binaries for macOS, Linux, and Windows
-are published on [its GitHub releases page](https://github.com/Open-MBEE/sysml-toolkit/releases);
-download the one for your platform rather than building from source.
+It is not on crates.io. The name `sysmlv2` is reserved on PyPI by sysml-toolkit's own
+maintaining organization, but the package published there today is a placeholder, not the real
+thing; do not `pip install` it. Get a working binary instead from
+[its GitHub releases page](https://github.com/Open-MBEE/sysml-toolkit/releases) (macOS, Linux,
+and Windows builds are published there). Revisit this note once the maintainers publish the real
+package: installing it should then replace both this download step and, eventually, the
+`subprocess` call in `src/toaster/modelcheck.py` (`DEFERRED.md` D-025) with a direct Python call.
 
 When a tool does not yet support something a chapter needs, this tutorial says so, uses the next
 tool that does, and wraps the difference behind a plain Python function so a chapter's own code
