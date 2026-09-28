@@ -320,6 +320,8 @@ The round-2 final ruling on a genuine no-import cross-package reference stands u
 **Upstream issue:** not filed — Draft 9 (`decisions/gap-issue-drafts.md`), citing SysML v2.0 formal/2026-03-02 8.3.18.8/8.3.18.9/8.3.17.2, is drafted and held for Z's review
 **Toaster issue:** not filed
 
+**PASS4-007 note.** Chapter 7's own re-derivation rebuilt `Cycle` as a real `state def`, exhibited by `ToastingSystem` (the abstract subject; `Toaster` inherits it, per DL-019/DL-044), with the same `Start`/`Finish`/`Cancel` triggers this entry already covers. `chapters/ch07-execution/02-state-traces.ipynb` now demonstrates the guard directly, the first chapter notebook to do so: a scratch copy of the real, loaded `ch07-cumulative.sysml` with `Start` typo'd to `Strat` loads with `ok=True` (OpenSysML itself does not catch it), and `language_gap_findings` flags it as `unresolved-transition-trigger`. This is the same construct and mechanism this entry already documents; no new finding, no new draft.
+
 ## D-024: RETRACTED — OpenSysML v0.9.0's Python binding cannot ask a "holds" question (sysml-toolkit can)
 
 **Retracted the same day it was filed.** This entry originally concluded no tool in the toolchain could ask a "holds" question and that DL-046 must fall back to DL-006 standing. That was wrong: it checked only OpenSysML. `sysmlv2 verify --solve` (sysml-toolkit v0.9.1, already rebuilt in this pass) does exactly this via Z3, verified against a constructed tautology, contradiction and a bounded-range TimelyToast-shaped requirement (`decisions/probes.md`, correction entry). OpenSysML's own gap (its Python binding is evaluate-only) still stands as a fact, but is no longer a blocking gap for DL-046 since sysml-toolkit covers it. The remaining open point is architectural, not a tool gap: sysml-toolkit's Python binding has no `verify`/`solve` method, so using it from a notebook means a `subprocess` call to the Rust CLI binary rather than a Python method call. Routed to Z as a design question, not an upstream issue.
@@ -521,6 +523,27 @@ the exact reproduction, isolation table and spec citations above, is drafted and
 held for Z's review.
 **Toaster issue:** not filed
 
+**PASS4-007 note.** Chapter 7's state machine hits this exact gap. `Cycle`'s
+`heating` state was first tried with `do action applyHeat : ApplyHeat;`, invoking
+`ApplyHeat` directly, the same action `HeatingSystem` performs. `execute_state`
+then raised `ExecutionError: state machine execution failed: do action in state
+heating: unbound parameter: action ApplyHeat: input parameter bread is bound by
+no argument`: `ApplyHeat`'s own `bread` input (deliberately left bare, per Q2's
+ruling, since it is always reference-bound wherever `ApplyHeat` is actually
+invoked, e.g. `ToastBread::applyHeat { in bread = ToastBread::bread; }`) has no
+value at this level of decomposition, and `Cycle` has no bread instance to bind
+it to. Confirmed this is genuine execution, not a load-time artifact: temporarily
+breaking `GenerateHeat`'s own already-fixed `[0..*]` multiplicity on `energyIn`
+reproduces the identical failure shape (`unbound parameter: action GenerateHeat:
+input parameter energyIn is bound by no argument`), proving the do action really
+executes whatever it names. `GenerateHeat` was used instead
+(`do action generateHeat : GenerateHeat;`): its own input is already `[0..*]`
+(this entry's own applied fix), so it stays executable with no value bound. This
+is not itself a new instance of D-026 (the unbound `bread` failure is correct
+tool behavior given a genuinely unresolved required input, not the eager-eval bug
+this entry documents), but it depends directly on D-026's applied fix to work at
+all, so it is recorded here rather than as a separate entry.
+
 ## D-027: a second declaration reopening an existing namespace member's name loads with warnings, then crashes `to_api_json()`
 
 **Found:** PASS4-005 (Chapter 5 re-derivation), while probing whether a definition
@@ -572,4 +595,42 @@ above is the actual bug, before filing an upstream report.
 **Upstream issue:** not filed — Draft 11 (`decisions/gap-issue-drafts.md`),
 citing the exact reproduction above and naming the two unresolved framings, is
 drafted and held for Z's review.
+**Toaster issue:** not filed
+
+## D-028: `model.execute_state`'s `performer` argument has no effect on the result
+
+**Found:** PASS4-007 (Chapter 7 re-derivation, round 3 review), while checking a
+notebook claim that naming a specific usage (e.g. `ToasterDemo::nominal`) as
+`performer` demonstrates that `Toaster` inherits and executes the state machine
+`ToastingSystem` exhibits. Independently reproduced by the orchestrator directly
+against the real, committed `models/ch07-cumulative.sysml` before this entry was
+written, not just taken from the reviewer's report.
+
+**Observed.** `model.execute_state("ToasterDemo::Cycle", events=["Start","Finish"])`
+returns the identical `{"states_visited": [...], "final_context": {}, "final_time":
+0.0}` regardless of `performer`: no argument at all, `ToasterDemo::nominal` (a real
+`Toaster` usage that inherits `cycle`), `ToasterDemo::rated` (a `ResistanceCoil`
+usage that exhibits nothing at all), and `ToasterDemo::Bread` (an `item def`, not
+even a part) all give the same trace. Only a `performer` name that resolves to no
+symbol at all changes anything (`ExecutionError: symbol not found`). The tool does
+not check that the named performer actually exhibits the state being executed, and
+does not vary the trace by what it is given.
+
+**Why this matters for the tutorial.** `execute_state` runs a state def's own
+transition table in isolation; it is not, as written, a way to demonstrate that a
+particular usage inherits and can execute an exhibited state machine through
+specialization. That inheritance is a fact about the model's structure (checkable
+via `model.find`, e.g. `Toaster::cycle` resolving to `None` the same way
+`Toaster::toastBread` does, both inherited from `ToastingSystem` and not
+redeclared), not something the execution trace itself shows.
+
+**Workaround:** none needed in shipped content; Chapter 7's own re-derivation
+(`chapters/ch07-execution/02-state-traces.ipynb`) states the distinction directly
+rather than claiming the trace demonstrates inheritance.
+**Resolution:** none attempted; would need `execute_state` to validate that
+`performer` (when given) actually exhibits the named state, and ideally to be
+usable at all as a way to execute a state machine through a specific realizing
+usage rather than only through the state def's own qualified name.
+**Upstream issue:** not filed; not blocking (a documentation/API-surface gap, not
+a load-time or evaluation-correctness defect).
 **Toaster issue:** not filed
