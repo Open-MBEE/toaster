@@ -4,8 +4,8 @@ Runs the real committed fixtures (models/chNN-cumulative.sysml), not constructed
 models, because this check's whole point is a real finding. The check compares
 NAMED elements only (see `_named_elements` in check_construction.py); an UNNAMED
 element (e.g. a `doc`) that changes or drops is a known, separate blind spot this
-check does NOT catch (see DEFERRED.md D-022). ch05->ch06, ch06->ch07 and
-ch07->ch08 are confirmed clean.
+check does NOT catch (see DEFERRED.md D-022). ch06->ch07 and ch07->ch08 are
+confirmed clean.
 
 This gap moves rather than closes, one chapter at a time, as each chapter's own
 re-derivation lands (a rhythm recorded starting with PASS4-002,
@@ -40,10 +40,21 @@ re-derivation lands (a rhythm recorded starting with PASS4-002,
   `@type`. `ch05-cumulative.sysml` is not touched by PASS4-004 (a non-goal) and
   was built against the old, stale ch04 fixture (an unallocated `ApplyHeat`
   with `power`/`efficiency` parameters, a `DeliveredEnergy` invocation, and no
-  `Bread`/`Toast`/`ToastBread`), so ch04->ch05 now opens the same gap one
-  chapter further down: expected and temporary, pending Chapter 5's own
-  re-derivation, the same treatment ch03->ch04 received until PASS4-004 closed
-  it.
+  `Bread`/`Toast`/`ToastBread`), so ch04->ch05 opened the same gap one chapter
+  further down: expected and temporary, pending Chapter 5's own re-derivation,
+  the same treatment ch03->ch04 received until PASS4-004 closed it.
+- PASS4-005 (Chapter 5's own re-derivation) closed ch04->ch05 the same way, by
+  rebasing `ch05-cumulative.sysml` onto `ch04-cumulative.sysml`'s current
+  content. ch04->ch05 is clean: every named element ch04-cumulative.sysml
+  carries is present in ch05-cumulative.sysml with the same `@type`.
+  `ch06-cumulative.sysml` is not touched by PASS4-005 (a non-goal, `models/
+  ch06-cumulative.sysml` belongs to whichever contract re-derives Chapter 6)
+  and was built against the old, stale ch05 fixture (the invalid
+  definition-level `allocate`, the ungrounded `BreadLoader`/`BreadEjector`/
+  `BreadHandling`, and none of Chapter 4's or the new Chapter 5's functional
+  and interface constructs), so ch05->ch06 now opens the same gap one chapter
+  further down: expected and temporary, pending Chapter 6's own re-derivation,
+  the same treatment ch04->ch05 received until PASS4-005 closed it.
 
 The constructed-pair tests below (type-change, unnamed-element, and
 check_chapter wiring) point `CUMULATIVE_FILES` at small standalone SysML strings
@@ -81,21 +92,24 @@ def conn():
     c.close()
 
 
-def test_ch04_to_ch05_reports_the_known_dropped_elements(cc, conn):
-    """PASS4-004 rebased ch04-cumulative.sysml onto ch03-cumulative.sysml's current
-    content (closing ch03->ch04, see the test below), so ch04-cumulative.sysml now
-    carries forward the functional constructs Chapter 3 carries (`Bread`, `Toast`,
-    `ToastBread`, `ToastingSystem::toastBread`, `TimelyToastTest`) plus its own new
-    `ApplyHeat` (nested inside `ToastBread`). `ch05-cumulative.sysml` is not touched
-    by PASS4-004 (a non-goal) and was built against the old, stale ch04 fixture, so
-    it drops all of these: the Chapter 1/3 functional constructs it never carried,
-    and `ApplyHeat`'s new flows and nesting it does not have either. `timely` and
-    the `slow` satisfaction claim are not part of this drop: ch05-cumulative.sysml
-    already carries its own `requirement timely : TimelyToast` and satisfy claims
-    (the assert itself is unnamed, so this NAMED-only check does not compare it)."""
-    failures = cc.check_predecessor_containment(5, conn)
+def test_ch05_to_ch06_reports_the_known_dropped_elements(cc, conn):
+    """PASS4-005 rebased ch05-cumulative.sysml onto ch04-cumulative.sysml's current
+    content (closing ch04->ch05, see the test below), so ch05-cumulative.sysml now
+    carries forward the functional constructs Chapter 4 carries (`Bread`, `Toast`,
+    `ToastBread` and its nested `applyHeat`, `ToastingSystem::toastBread`,
+    `TimelyToastTest`) plus its own new abstract `HeatingSystem` (performing
+    `ApplyHeat`), the named `heatAllocation`, and the `DurationPort` interface
+    between `ControlSystem` and `HeatingSystem`. `ch06-cumulative.sysml` is not
+    touched by PASS4-005 (a non-goal) and was built against the old, stale ch05
+    fixture, so it drops all of these: the Chapter 1/4 functional constructs it
+    never carried, and Chapter 5's new allocation and interface constructs it does
+    not have either. `timely` and the `slow` satisfaction claim are not part of
+    this drop: ch06-cumulative.sysml already carries its own
+    `requirement timely : TimelyToast` and satisfy claims (the assert itself is
+    unnamed, so this NAMED-only check does not compare it)."""
+    failures = cc.check_predecessor_containment(6, conn)
     assert failures, (
-        "expected the predecessor-containment check to catch ch05 dropping ch04 elements"
+        "expected the predecessor-containment check to catch ch06 dropping ch05"
     )
     joined = "\n".join(failures)
     for qname in (
@@ -104,32 +118,40 @@ def test_ch04_to_ch05_reports_the_known_dropped_elements(cc, conn):
         "ToasterDemo::ToastBread",
         "ToasterDemo::ToastBread::bread",
         "ToasterDemo::ToastBread::toast",
+        "ToasterDemo::ToastBread::applyHeat",
+        "ToasterDemo::ToastBread::applyHeat::bread",
         "ToasterDemo::ToastingSystem::toastBread",
         "ToasterDemo::TimelyToastTest",
         "ToasterDemo::TimelyToastTest::toaster",
-        "ToasterDemo::ToastBread::applyHeat",
         "ToasterDemo::ApplyHeat::bread",
         "ToasterDemo::ApplyHeat::toast",
         "ToasterDemo::ApplyHeat::delivered",
         "ToasterDemo::ApplyHeat::loss",
         "ToasterDemo::ApplyHeat::balance",
+        "ToasterDemo::HeatingSystem::applyHeat",
+        "ToasterDemo::HeatingSystem::durationIn",
+        "ToasterDemo::ControlSystem::durationOut",
+        "ToasterDemo::DurationPort",
+        "ToasterDemo::DurationPort::duration",
+        "ToasterDemo::heatAllocation",
     ):
         assert qname in joined, f"expected {qname} to be reported missing"
-    assert "ch04-cumulative.sysml" in joined and "ch05-cumulative.sysml" in joined
+    assert "ch05-cumulative.sysml" in joined and "ch06-cumulative.sysml" in joined
     # Every reported failure is a *missing* element (nothing changed @type here).
     assert all("is missing from" in f for f in failures)
-    # timely is not part of the drop: ch05-cumulative.sysml already carries its own
+    # timely is not part of the drop: ch06-cumulative.sysml already carries its own
     # requirement usage independently.
     assert "ToasterDemo::timely" not in joined
 
 
-@pytest.mark.parametrize("chapter", [2, 3, 4, 6, 7, 8])
+@pytest.mark.parametrize("chapter", [2, 3, 4, 5, 7, 8])
 def test_other_adjacent_pairs_report_no_failures(cc, conn, chapter):
     """ch01->ch02 (clean since PASS4-002), ch02->ch03 (clean since PASS4-003, which
     rebased ch03-cumulative.sysml onto ch02-cumulative.sysml's current content),
     ch03->ch04 (clean since PASS4-004, which rebased ch04-cumulative.sysml onto
-    ch03-cumulative.sysml's current content), ch05->ch06, ch06->ch07 and ch07->ch08
-    are each clean."""
+    ch03-cumulative.sysml's current content), ch04->ch05 (clean since PASS4-005,
+    which rebased ch05-cumulative.sysml onto ch04-cumulative.sysml's current
+    content), ch06->ch07 and ch07->ch08 are each clean."""
     failures = cc.check_predecessor_containment(chapter, conn)
     assert failures == []
 

@@ -138,18 +138,27 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     5: [
         {
             "path": "chapters/ch05-architecture/02-allocate.ipynb",
-            # allocate references ApplyHeat (Ch4) and HeatingSystem (Ch1)
+            # HeatingSystem's `:> ToastingSystem` and `perform` reference
+            # ToastingSystem and ApplyHeat (Ch1/Ch4). The allocation references
+            # ToastBread::applyHeat (Ch4, a nested action usage) and
+            # Toaster::heating (Ch1); this notebook's own fragment declares
+            # HeatingSystem itself, so it is not stubbed here.
             "context_stubs": [
+                "abstract part def ToastingSystem;",
                 "action def ApplyHeat;",
-                "part def HeatingSystem;",
+                "action def ToastBread { action applyHeat : ApplyHeat; }",
+                "part def Toaster { part heating; }",
             ],
         },
         {
             "path": "chapters/ch05-architecture/03-interfaces.ipynb",
-            # BreadLoader/Ejector use Start/Finish item defs (defined in Ch4)
+            # HeatingSystem's `:> ToastingSystem` and `perform` reference
+            # ToastingSystem and ApplyHeat (Ch1/Ch4). This notebook's own
+            # fragment declares DurationPort, HeatingSystem, ControlSystem and
+            # Toaster completely, so none of those are stubbed.
             "context_stubs": [
-                "item def Start;",
-                "item def Finish;",
+                "abstract part def ToastingSystem;",
+                "action def ApplyHeat;",
             ],
         },
     ],
