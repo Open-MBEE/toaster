@@ -1249,7 +1249,7 @@ def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch03(ch03
     claims = satisfy_relationships(ch03)
     # TimelyToastTest's `verify timely;` is also a SatisfyRequirementUsage
     # (declaredKeyword "verify"), with no subject; it is not itself a claim about a
-    # candidate and the check skips it. The one claim with a subject is `slow`'s.
+    # usage and the check skips it. The one claim with a subject is `slow`'s.
     with_subject = [c for c in claims if c["subject"]]
     assert len(with_subject) == 1
     assert with_subject[0]["subject"] == "ToasterDemo::slow"

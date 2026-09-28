@@ -21,17 +21,19 @@ re-derivation lands (a rhythm recorded starting with PASS4-002,
   `ToastingSystem::toastBread` forward, but `ch03-cumulative.sysml` had not
   itself been re-derived yet.
 - PASS4-003 (Chapter 3's own re-derivation) closed ch02->ch03 the same way, by
-  rebasing `ch03-cumulative.sysml` onto `ch02-cumulative.sysml`'s current content
-  (see `decisions/audits/ch03-layer-audit.md` and
-  DL-018/DL-032/DL-033/DL-039/DL-048). ch02->ch03 is clean. The same rebase also
-  adds `requirement timely : TimelyToast`, folds
-  `assert not satisfy timely by slow` into `slow`'s own body, and keeps
-  `TimelyToastTest` unchanged in kind, so ch03->ch04 (not touched by PASS4-003, a
-  non-goal) now drops all of those NAMED elements too, in addition to the
-  pre-existing `TimelyToastTest` wholesale drop PASS2-010 first recorded
-  (`decisions/audits/ch04-layer-audit.md` F-5). Expected and temporary, pending
-  Chapter 4's own re-derivation; not touched here, same treatment ch02->ch03
-  received until PASS4-003 closed it.
+  rebasing `ch03-cumulative.sysml` onto `ch02-cumulative.sysml`'s current
+  content (see `decisions/audits/ch03-layer-audit.md`). ch02->ch03 is clean.
+  ch03-cumulative.sysml now carries forward the functional constructs Chapter
+  2's own rebase added (`Bread`, `Toast`, `ToastBread` and
+  `ToastingSystem::toastBread`), the same way `ch02-cumulative.sysml` already
+  did; `ch04-cumulative.sysml` is not touched by PASS4-003 (a non-goal) and
+  was built against the old, stale ch03 fixture, so it now drops those same
+  functional constructs too, in addition to the pre-existing `TimelyToastTest`
+  wholesale drop PASS2-010 first recorded (`decisions/audits/ch04-layer-audit.md`
+  F-5). ch04-cumulative.sysml keeps its own `requirement timely : TimelyToast`
+  and satisfy claims, so those are not part of this drop. Expected and
+  temporary, pending Chapter 4's own re-derivation; not touched here, same
+  treatment ch02->ch03 received until PASS4-003 closed it.
 
 The constructed-pair tests below (type-change, unnamed-element, and
 check_chapter wiring) point `CUMULATIVE_FILES` at small standalone SysML strings
@@ -71,12 +73,15 @@ def conn():
 
 def test_ch03_to_ch04_reports_the_known_dropped_elements(cc, conn):
     """PASS4-003 rebased ch03-cumulative.sysml onto ch02-cumulative.sysml's current
-    content (closing ch02->ch03, see the test below) and added `timely`, the `slow`
-    satisfaction claim, and kept `TimelyToastTest`. ch04-cumulative.sysml is not
-    touched by PASS4-003 (a non-goal) and was built against the old, stale ch03
-    fixture, so it now drops all of these NAMED elements: the functional constructs
-    ch03 carries forward from Chapter 2's own rebase, and TimelyToastTest, the
-    pre-existing drop PASS2-010 first recorded (F-5)."""
+    content (closing ch02->ch03, see the test below), so ch03-cumulative.sysml now
+    carries forward the functional constructs Chapter 2's own rebase added (`Bread`,
+    `Toast`, `ToastBread`, `ToastingSystem::toastBread`). ch04-cumulative.sysml is
+    not touched by PASS4-003 (a non-goal) and was built against the old, stale ch03
+    fixture, so it drops those same functional constructs, plus TimelyToastTest, the
+    pre-existing drop PASS2-010 first recorded (F-5). `timely` and the `slow`
+    satisfaction claim are not part of this drop: ch04-cumulative.sysml already
+    carries its own `requirement timely : TimelyToast` and satisfy claims (the
+    assert itself is unnamed, so this NAMED-only check does not compare it)."""
     failures = cc.check_predecessor_containment(4, conn)
     assert failures, (
         "expected the predecessor-containment check to catch ch04 dropping ch03 elements"

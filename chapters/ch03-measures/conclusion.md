@@ -12,4 +12,4 @@ The chapter answers its engineering question: the model now records and evaluate
 
 Chapter 4 asks how the system performs its function step by step. It introduces `action def` for functional decomposition and `item def` for typed flows.
 
-**Exercise:** The [Chapter 3 exercise](../../exercises/ch03/exercise.ipynb) asks you to add a `TemperatureReq` usage to your coffee maker model, assert satisfaction for the nominal and hot candidates, and write an `asserted_solution` record for the nominal claim. Use the same pattern as `timely` and `AS-C03`.
+**Exercise:** The [Chapter 3 exercise](../../exercises/ch03/exercise.ipynb) asks you to add a `TemperatureReq` usage to your coffee maker model, assert satisfaction for the nominal and hot usages, and write an `asserted_solution` record for the nominal claim. Use the same pattern as `timely` and `AS-C03`.
