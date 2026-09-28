@@ -94,16 +94,20 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     3: [
         {
             "path": "chapters/ch03-measures/01-moe-definition.ipynb",
-            # timely : TimelyToast, assert satisfy by nominal/slow require prior-chapter types
+            # timely : TimelyToast requires the requirement def from Chapter 2
             "context_stubs": [
                 "requirement def TimelyToast;",
-                "part nominal;",
-                "part slow;",
             ],
         },
         {
             "path": "chapters/ch03-measures/02-mop-candidate-eval.ipynb",
-            "context_stubs": [],
+            # the reopened slow body with its assert not satisfy requires Toaster,
+            # TimelyToast (with its subject and constraint) and timely : TimelyToast
+            "context_stubs": [
+                "part def Toaster { attribute cycleTime : ISQ::DurationValue; }",
+                "requirement def TimelyToast { subject toaster : Toaster; require constraint { toaster.cycleTime <= 180.0 [SI::s] } }",
+                "requirement timely : TimelyToast;",
+            ],
         },
         {
             "path": "chapters/ch03-measures/04-verification-case.ipynb",
