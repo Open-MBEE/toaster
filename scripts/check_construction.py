@@ -230,6 +230,16 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             ],
         },
     ],
+    # PASS4-009 (Chapter 9, Coverage and Sufficiency): no construct-introducing
+    # notebook. Every notebook queries models/ch08-cumulative.sysml directly
+    # (model.query() for RequirementUsage, get_satisfy_relationships() for
+    # SatisfyRequirementUsage) and adds no new named model element; the chapter's
+    # own coverage-gap finding needs none. No models/ch09-cumulative.sysml
+    # fixture exists as a result (see chapters/ch09-coverage-sufficiency/index.md),
+    # so this chapter carries no CUMULATIVE_FILES entry either, and
+    # check_predecessor_containment(9, ...) is a documented no-op
+    # (tests/test_predecessor_containment.py::test_ch08_to_ch09_predecessor_containment_is_a_noop_by_design).
+    9: [],
 }
 
 CUMULATIVE_FILES = {
@@ -429,7 +439,7 @@ def check_chapter(chapter: int, conn: opensysml.Connection) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify construction zone consistency.")
     parser.add_argument("--check", action="store_true", required=True)
-    parser.add_argument("--chapter", type=int, default=None, help="Check one chapter (1–8)")
+    parser.add_argument("--chapter", type=int, default=None, help="Check one chapter (1–9)")
     args = parser.parse_args()
 
     chapters = [args.chapter] if args.chapter else sorted(CONSTRUCTION_NOTEBOOKS.keys())

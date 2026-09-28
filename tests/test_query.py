@@ -182,18 +182,47 @@ def test_specialization_closure_finds_realizers(ch08) -> None:
 
 
 def test_requirement_coverage_joins_satisfy_to_requirements(ch08) -> None:
-    """PASS4-008: `timely` is covered by `slow` only (no `nominal` claim exists in the
-    real model); `heatGenerationReq` is covered by both `rated` and `weak`, the real
-    model's second requirement-coverage pair, not exercised by the old stale fixture's
-    single covered requirement."""
+    """PASS4-009 round 2 (fixing a bug reported live in
+    decisions/audits/ch06-layer-audit.md and never fixed): `requirement_coverage` must
+    split by polarity, not just by requirement. Against the real ch08 model, `timely`
+    has only a NEGATIVE claim (`assert not satisfy timely by slow`) and a `verify`
+    objective with no bound subject -- no candidate has ever been positively claimed to
+    satisfy it, so `covered` must be False, not True. `heatGenerationReq` has one real
+    positive claim (`rated`) and one real negative claim (`weak`): `satisfied_by` must
+    contain only `rated`, and `weak` must appear in `failed_by` instead, never counted
+    as coverage."""
     cov = {c["requirement"]: c for c in query.requirement_coverage(ch08)}
-    assert cov["ToasterDemo::timely"]["covered"]
-    assert cov["ToasterDemo::timely"]["satisfied_by"] == ["ToasterDemo::slow"]
-    assert cov["ToasterDemo::heatGenerationReq"]["covered"]
-    assert cov["ToasterDemo::heatGenerationReq"]["satisfied_by"] == [
-        "ToasterDemo::rated",
-        "ToasterDemo::weak",
-    ]
+
+    assert cov["ToasterDemo::timely"]["covered"] is False
+    assert cov["ToasterDemo::timely"]["satisfied_by"] == []
+    assert cov["ToasterDemo::timely"]["failed_by"] == ["ToasterDemo::slow"]
+
+    assert cov["ToasterDemo::heatGenerationReq"]["covered"] is True
+    assert cov["ToasterDemo::heatGenerationReq"]["satisfied_by"] == ["ToasterDemo::rated"]
+    assert cov["ToasterDemo::heatGenerationReq"]["failed_by"] == ["ToasterDemo::weak"]
+
+
+def test_requirement_coverage_excludes_verification_case_objective(ch08) -> None:
+    """A `verification def`'s own `objective { verify X; }` block is exported as its own
+    unnamed `RequirementUsage` (`ToasterDemo::TimelyToastTest::@2`, no `declaredName`):
+    the objective's own auto-synthesized wrapper, not a design requirement. It must not
+    appear in the coverage report at all (a bare bookkeeping artifact reported as an
+    uncovered requirement would be noise, not a finding)."""
+    reqs = {c["requirement"] for c in query.requirement_coverage(ch08)}
+    assert reqs == {"ToasterDemo::timely", "ToasterDemo::heatGenerationReq"}
+    assert not any(r.startswith("ToasterDemo::TimelyToastTest") for r in reqs)
+
+
+def test_satisfy_relationships_reports_is_negated(ch08) -> None:
+    """`satisfy_relationships` exposes `is_negated` so callers can distinguish a
+    positive claim from a negative one; a `verify` objective (no subject) is
+    `is_negated=False`, since it asserts nothing about any subject to negate."""
+    by_id = {s["id"]: s for s in query.satisfy_relationships(ch08)}
+    assert by_id["ToasterDemo::slow::@1"]["is_negated"] is True
+    assert by_id["ToasterDemo::rated::@1"]["is_negated"] is False
+    assert by_id["ToasterDemo::weak::@1"]["is_negated"] is True
+    assert by_id["ToasterDemo::TimelyToastTest::@2::@0"]["is_negated"] is False
+    assert by_id["ToasterDemo::TimelyToastTest::@2::@0"]["subject"] is None
 
 
 def test_perform_relationships_on_layers_example(conn) -> None:

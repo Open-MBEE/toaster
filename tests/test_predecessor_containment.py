@@ -207,6 +207,45 @@ def test_unnamed_element_change_is_not_flagged(cc, conn, tmp_path, monkeypatch):
     assert failures == []
 
 
+def test_ch09_has_no_cumulative_fixture(cc):
+    """PASS4-009 (Chapter 9, Coverage and Sufficiency) is deliberately built as an
+    analysis chapter: its coverage, sufficiency and staleness notebooks query
+    models/ch08-cumulative.sysml directly and add no new named model element (see
+    chapters/ch09-coverage-sufficiency/index.md). Checked against the real
+    filesystem directly, not just against CUMULATIVE_FILES (which could disagree
+    with reality if the dict and the repo's own files ever drifted apart): no
+    models/ch09-cumulative.sysml exists, and CUMULATIVE_FILES carries no chapter-9
+    entry either, consistently."""
+    ch09_path = cc.REPO_ROOT / "models" / "ch09-cumulative.sysml"
+    assert not ch09_path.exists()
+    assert 9 not in cc.CUMULATIVE_FILES
+
+
+def test_ch08_to_ch09_predecessor_containment_is_a_noop_by_design(cc, conn, monkeypatch):
+    """check_predecessor_containment(9, ...) returns no failures, but not because
+    ch08->ch09 containment was genuinely checked and found clean: it is a no-op,
+    guarded by the function's own "both paths must exist" check, since chapter 9
+    has no cumulative fixture to compare against ch08's (see
+    test_ch09_has_no_cumulative_fixture). Proved here, not just asserted: conn's
+    own load_from_content is monkeypatched to raise, so if the guard were ever
+    bypassed and the function actually tried to load anything for chapter 9 (it
+    should never even reach ch08's own real fixture, since the guard checks
+    BOTH paths before loading either), this test would fail loudly instead of
+    silently returning [] for an unrelated reason. Documented separately from the
+    real, checked "clean" results above so the two are never conflated."""
+
+    def _must_not_be_called(*args, **kwargs):
+        raise AssertionError(
+            "check_predecessor_containment(9, ...) must never call "
+            "load_from_content at all: chapter 9 has no cumulative fixture, so "
+            "its own 'both paths must exist' guard must return before loading "
+            "either file, including ch08's own real one."
+        )
+
+    monkeypatch.setattr(conn, "load_from_content", _must_not_be_called)
+    assert cc.check_predecessor_containment(9, conn) == []
+
+
 def test_check_chapter_surfaces_predecessor_containment_failures(cc, conn, tmp_path, monkeypatch):
     """check_chapter (the wired entry point, not the standalone function) surfaces the
     predecessor-containment check's failures in its own returned failure list."""

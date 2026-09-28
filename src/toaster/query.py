@@ -97,11 +97,20 @@ def get_satisfy_relationships(model: Any) -> list[dict]:
 
 
 def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dict]:
-    """``{id, requirement, subject}`` for every satisfy (and verify) relationship."""
+    """``{id, requirement, subject, is_negated}`` for every satisfy (and verify) relationship.
+
+    ``is_negated`` is True for ``assert not satisfy`` (a claim that the subject does NOT meet
+    the requirement) and False otherwise, including for a ``verify`` objective, which has no
+    ``subject`` to be negated about in the first place. Callers that need positive claims only
+    (coverage: has anyone claimed this requirement is actually met) must check both ``subject``
+    and ``is_negated``; a negative claim is real evidence about a candidate, not coverage of the
+    requirement (``decisions/audits/ch06-layer-audit.md`` F-1, fixed PASS4-009 round 2).
+    """
     idx = index or ApiIndex(model)
     return [{"id": e.get("qualifiedName"),
              "requirement": idx.qn(e["subsets"]) if "subsets" in e else None,
-             "subject": idx.qn(e["subject"]) if "subject" in e else None}
+             "subject": idx.qn(e["subject"]) if "subject" in e else None,
+             "is_negated": bool(e.get("isNegated", False))}
             for e in idx.of_type("SatisfyRequirementUsage")]
 
 
@@ -116,14 +125,43 @@ def perform_relationships(model: Any, index: ApiIndex | None = None) -> list[dic
 
 
 def requirement_coverage(model: Any, index: ApiIndex | None = None) -> list[dict]:
-    """For each requirement usage: ``{requirement, satisfied_by, covered}``. Traceability for sign-off."""
+    """For each NAMED requirement usage: ``{requirement, satisfied_by, failed_by, covered}``.
+
+    ``satisfied_by`` lists candidates with a real POSITIVE claim (``assert satisfy``);
+    ``failed_by`` lists candidates with a real NEGATIVE claim (``assert not satisfy``) against
+    the same requirement. ``covered`` means a genuine positive claim exists, not merely any claim:
+    a negative claim is evidence a candidate fails the requirement, not evidence the requirement
+    has been met, so it must never count as coverage (this function previously ignored polarity
+    entirely and counted both the same way, reported live in
+    ``decisions/audits/ch06-layer-audit.md`` and left unfixed until PASS4-009 round 2 found it
+    again against the real ch08 model and fixed it here).
+
+    The requirement list itself is restricted to NAMED requirement usages (``declaredName`` is
+    not ``None``): a ``verification def``'s own ``objective { verify X; }`` block is exported as
+    an unnamed ``RequirementUsage`` too (the objective's own auto-synthesized wrapper, not a
+    design requirement anyone would check coverage on), and including it would report a bare
+    bookkeeping artifact as an uncovered requirement.
+    """
     idx = index or ApiIndex(model)
-    by_req: dict[str, list[str]] = defaultdict(list)
+    positive: dict[str, list[str]] = defaultdict(list)
+    negative: dict[str, list[str]] = defaultdict(list)
     for s in satisfy_relationships(model, idx):
-        if s["requirement"] and s["subject"]:
-            by_req[s["requirement"]].append(s["subject"])
-    reqs = sorted(e["qualifiedName"] for e in idx.of_type("RequirementUsage") if e.get("qualifiedName"))
-    return [{"requirement": r, "satisfied_by": sorted(by_req.get(r, [])), "covered": bool(by_req.get(r))} for r in reqs]
+        if not s["requirement"] or not s["subject"]:
+            continue
+        (negative if s["is_negated"] else positive)[s["requirement"]].append(s["subject"])
+    reqs = sorted(
+        e["qualifiedName"] for e in idx.of_type("RequirementUsage")
+        if e.get("qualifiedName") and e.get("declaredName") is not None
+    )
+    return [
+        {
+            "requirement": r,
+            "satisfied_by": sorted(positive.get(r, [])),
+            "failed_by": sorted(negative.get(r, [])),
+            "covered": bool(positive.get(r)),
+        }
+        for r in reqs
+    ]
 
 
 def specialization_graph(model: Any, kinds: set[str] | None = None) -> tuple[dict, dict]:
