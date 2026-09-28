@@ -72,6 +72,15 @@ def ch04(conn):
     return m
 
 
+@pytest.fixture(scope="module")
+def ch05(conn):
+    m = conn.load_from_content(
+        (ROOT / "models" / "ch05-cumulative.sysml").read_text(), strict=False
+    )
+    assert m.ok
+    return m
+
+
 UNBLOCK = "language conformance passes (model.ok is True)"
 BAD = "package P { part def A :> Missing; }"
 WONT = WontDo("no longer needed", "DL-099")
@@ -107,7 +116,10 @@ def test_open_when_unscheduled_even_if_fault_exists(mismatch) -> None:
     )
     assert calls == []
     assert cf.query.port_type_mismatches(mismatch)  # the fault is real
-    assert cf.evaluate(cf.REGISTRY[0], mismatch, (99, 99)).status == "open"
+    # port-type is scheduled from (5, 3) (PASS4-005): past that stage, a real fault
+    # is reported as "failed", not "open" (see test_port_type_check_scheduled below
+    # for the same behavior via an explicitly-constructed check).
+    assert cf.evaluate(cf.REGISTRY[0], mismatch, (99, 99)).status == "failed"
 
 
 def test_stage_ordering_across_chapters_and_sections() -> None:
@@ -176,7 +188,9 @@ def test_prove_negative_control_requires_load_ok(conn) -> None:
 
 def test_registry_port_type_entry() -> None:
     assert [c.id for c in cf.REGISTRY] == ["port-type", "satisfaction-claims-evaluated"]
-    assert cf.REGISTRY[0].applies_from is None
+    # DL-038: scheduled from (5, 3) (PASS4-005), the section that first declares a
+    # port-typed connection (ch05-architecture/03-interfaces.ipynb).
+    assert cf.REGISTRY[0].applies_from == (5, 3)
     assert cf.REGISTRY[0].run is cf.query.port_type_mismatches
 
 
@@ -204,6 +218,22 @@ def test_port_type_check_scheduled(ch08, mismatch) -> None:
     scheduled = replace(cf.REGISTRY[0], applies_from=(1, 1))
     assert cf.evaluate(scheduled, ch08, (2, 1)).status == "passed"
     assert cf.evaluate(scheduled, mismatch, (2, 1)).status == "failed"
+
+
+def test_port_type_check_passes_on_ch05_real_port_connection(ch05) -> None:
+    """PASS4-005 builds the model's first genuine port-typed connection (DurationPort,
+    between ControlSystem and HeatingSystem): unlike ch08's vacuous pass (no ports at
+    all), this is a real, non-empty port pair the check actually evaluates."""
+    from toaster.query import port_type_mismatches
+
+    els = cf.query.ApiIndex(ch05).elements
+    ports = [e for e in els if e.get("@type") == "PortUsage"]
+    assert len(ports) == 2  # ControlSystem::durationOut, HeatingSystem::durationIn
+    assert port_type_mismatches(ch05) == []
+    rep = cf.report(ch05, (5, 3))
+    assert rep["project"][0].check_id == "port-type"
+    assert rep["project"][0].status == "passed"
+    assert rep["project"][0].findings == []
 
 
 def test_blocked_for_unscheduled_check_on_language_failure(conn) -> None:
@@ -870,10 +900,18 @@ def test_clean_model_has_no_gap_findings(conn) -> None:
 
 
 def test_language_gap_findings_on_real_fixture(ch08) -> None:
-    # ch05/ch08 keep their violations (Pass 4's job to re-derive them; not this task's).
+    # ch06-ch08 keep their violations (Pass 4's job to re-derive them; not this task's).
+    # ch05 no longer carries them as of PASS4-005 (see the ch05-clean test below).
     findings = cf.language_gap_findings(ch08)
     rules = {f["rule"] for f in findings}
     assert rules == {"allocate-between-definitions", "part-typed-only-by-item-def"}
+
+
+def test_language_gap_findings_on_ch05_clean(ch05) -> None:
+    """PASS4-005 removed the definition-level `allocate` (F-1) and the item-typed part
+    usages (F-3) that gave ch04-ch08 their gap findings: `heatAllocation` is a named,
+    usage-level allocation, and no part usage is typed only by an item def."""
+    assert cf.language_gap_findings(ch05) == []
 
 
 def test_language_conformance_reports_gap_findings(conn) -> None:
@@ -1292,8 +1330,9 @@ def test_satisfaction_claims_evaluated_scheduled_reports_no_findings_on_ch04(ch0
 def test_satisfaction_claims_evaluated_stays_blocked_on_ch08_despite_stage_reached(
     ch08,
 ) -> None:
-    # DL-048: ch05-ch08 carry the DL-039 language-tier violations, so the check stays blocked
-    # there regardless of scheduling — reaching its stage does not run it past a language failure.
+    # DL-048: ch06-ch08 carry the DL-039 language-tier violations, so the check
+    # stays blocked regardless of scheduling: reaching its stage does not run it
+    # past a language failure.
     r = cf.report(ch08, (8, 1))["project"][1]
     assert r.check_id == "satisfaction-claims-evaluated"
     assert r.status == "blocked"
