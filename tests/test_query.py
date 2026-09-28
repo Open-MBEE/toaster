@@ -84,27 +84,35 @@ package P {
   part def HeatingSystem;
   part def HeatingAssembly :> HeatingSystem;
   action doApply : ApplyHeat;
-  allocation alloc allocate doApply to HeatingSystem;
+  part def Toaster {
+    part heater : HeatingSystem;
+  }
+  part def BetterToaster :> Toaster {
+    part :>> heater : HeatingAssembly;
+  }
+  allocation alloc allocate doApply to Toaster::heater;
 }
 """
 
 
 def test_allocations_for_follows_supertypes(conn) -> None:
-    """PASS4-008: the real ch08 model's two allocations are usage-level (`heatAllocation`
-    targets the usage `Toaster::heating`, `heatGenAllocation` targets the usage
-    `HeatingAssembly::heatGen`), not definition-level, so neither `HeatingSystem` nor
-    `HeatingAssembly` (the definitions) is ever itself an allocation end any more, and
-    `inherit=True` has nothing to add over the bare definitions in the real model (see
-    test_allocations_for_on_ch08_usage_level_allocations below). The definition-level,
-    supertype-following shape this test's own name promises (a subtype definition
-    inheriting an allocation declared on its supertype definition) still exists as a
-    capability of `allocations_for` and is demonstrated here on a small standalone
-    fixture built the same shape as the old, stale ch08 fixture used to have."""
+    """PASS4-008 round 2 review: the first version of this fixture allocated directly to
+    a bare PartDefinition (`allocate doApply to HeatingSystem;`), which is language
+    non-conformant (KerML 8.3.3.3.9 ReferenceSubsetting requires a Feature, not a
+    Definition; DL-039's own `allocate-between-definitions` gap rule flags exactly this,
+    confirmed directly), reintroducing by accident the pattern this project's own
+    conformance checks exist to catch. This version allocates to a genuine usage
+    (`Toaster::heater`, a Feature) instead, and demonstrates `inherit=True` following a
+    redefinition (`BetterToaster`'s own `:>> heater`), a real, conformant supertype-chain
+    relationship (confirmed: `model.ok` is True, `language_gap_findings` is empty), the
+    same shape the real ch08 model's own allocations are usage-level (see
+    test_allocations_for_on_ch08_usage_level_allocations below, where neither
+    `HeatingSystem` nor `HeatingAssembly` is itself ever an allocation end)."""
     m = conn.load_from_content(INHERITED_ALLOCATION, strict=False)
     assert m.ok
-    assert query.allocations_for(m, "P::HeatingSystem", inherit=False)
-    assert query.allocations_for(m, "P::HeatingAssembly")  # inherits HeatingSystem's allocation
-    assert not query.allocations_for(m, "P::HeatingAssembly", inherit=False)
+    assert query.allocations_for(m, "P::Toaster::heater", inherit=False)
+    assert query.allocations_for(m, "P::BetterToaster::heater")  # inherits Toaster::heater's allocation via redefinition
+    assert not query.allocations_for(m, "P::BetterToaster::heater", inherit=False)
 
 
 def test_allocations_for_on_ch08_usage_level_allocations(ch08) -> None:
@@ -122,8 +130,8 @@ def test_allocations_for_on_ch08_usage_level_allocations(ch08) -> None:
 FLOW_MODEL = """
 package P {
   item def Bread;
-  part def Loader { part bread : Bread; }
-  part def Ejector { part bread : Bread; }
+  part def Loader { item bread : Bread; }
+  part def Ejector { item bread : Bread; }
   part def Handling {
     part loader : Loader;
     part ejector : Ejector;
@@ -139,7 +147,13 @@ def test_flows_and_connector_ends(conn) -> None:
     current model), so this capability (find_connectors resolving a chained flow end
     through ApiIndex.end_path) is demonstrated on a small standalone fixture instead,
     built the same shape (a loader's bread flowing to an ejector's bread) the old
-    fixture had."""
+    fixture had. PASS4-008 round 2 review: the first version of this fixture typed
+    `bread` as `part bread : Bread` (a part usage typed only by an item def), which is
+    language non-conformant (SysML validatePartUsagePartDefinition; DL-039's own
+    `part-typed-only-by-item-def` gap rule flags exactly this, confirmed directly),
+    reintroducing by accident the pattern this project's own conformance checks exist
+    to catch. `item bread : Bread` (confirmed: `model.ok` is True, `language_gap_findings`
+    is empty) exercises the identical flow-resolution path without that defect."""
     m = conn.load_from_content(FLOW_MODEL, strict=False)
     assert m.ok
     flows = query.find_connectors(m, "FlowUsage")
@@ -151,10 +165,18 @@ def test_specialization_closure_finds_realizers(ch08) -> None:
     specialize `ToastingSystem` directly (DL-019's own fix of the F-3 finding it
     named: a logical component specializing the whole's purpose type contradicted the
     subject reading), so only `Toaster` and its own usages realize `ToastingSystem` now.
-    `HeatingAssembly :> HeatingSystem` is a real, unchanged specialization."""
+    PASS4-008 round 2 review restored the genuine two-hop chain the previous round's
+    rewrite dropped: `rated`'s own supertypes are `ResistanceCoil` and, one hop further,
+    `HeatGenerator` (`ResistanceCoil :> HeatGenerator`), confirmed directly against the
+    real model, giving `supertypes_transitively` a real multi-hop closure to walk, not
+    only the single-hop `HeatingAssembly :> HeatingSystem` case."""
     realizers = query.specializes_transitively(ch08, "ToasterDemo::ToastingSystem")
     assert {"ToasterDemo::Toaster", "ToasterDemo::nominal", "ToasterDemo::slow"} <= realizers
     assert "ToasterDemo::HeatingSystem" in query.supertypes_transitively(ch08, "ToasterDemo::HeatingAssembly")
+    assert query.supertypes_transitively(ch08, "ToasterDemo::rated") == {
+        "ToasterDemo::ResistanceCoil",
+        "ToasterDemo::HeatGenerator",
+    }
 
 
 def test_requirement_coverage_joins_satisfy_to_requirements(ch08) -> None:

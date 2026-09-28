@@ -647,14 +647,34 @@ line is `<file>:<line>:<col>  <name> (<Kind>): <status>[ (<reason>)]`, which
 `toaster/modelcheck.py`'s `_LINE_RE` already parses. For a constraint that is also
 the subject of an `assert satisfy`/`assert not satisfy` declaration, the real CLI
 instead prints one extra verdict line per such declaration, with the kind
-parenthetical widened to `(<Kind>, satisfies <requirement>)` or
-`(<Kind>, not satisfies <requirement>)` and no separate reason parenthetical, e.g.:
+parenthetical widened to `(<Kind>, satisfies <requirement>)` and no separate reason
+parenthetical, e.g. (both lines reproduced verbatim from a real run against
+`models/ch08-cumulative.sysml`):
 
     <file>:83:30  <anonymous> (ConstraintUsage, satisfies ToasterDemo::timely): VIOLATED
     <file>:184:30  <anonymous> (ConstraintUsage, satisfies ToasterDemo::heatGenerationReq): satisfied
+    <file>:184:30  <anonymous> (ConstraintUsage, satisfies ToasterDemo::heatGenerationReq): VIOLATED
+
+**Correction (round 2 review, PASS4-008):** the first draft of this entry claimed
+the CLI also prints a `not satisfies <requirement>` variant for a negative
+declaration (`assert not satisfy ... by ...`). Checked directly against the real
+CLI and found false: every satisfy/not-satisfy declaration prints the identical
+`satisfies <requirement>` wording (there is no `not satisfies` form at all), and
+the two are disambiguated only by the verdict word, which reports whether the
+requirement's own constraint holds for that subject, not whether the surrounding
+`assert`/`assert not` declaration's own polarity was upheld. The line 83 example
+above is `slow`'s `assert not satisfy timely by slow;`: `VIOLATED` means the
+constraint `toaster.cycleTime <= 180.0` is false for `slow` (cycleTime 200), which
+is exactly what the negated declaration correctly asserts should happen. The two
+line-184 examples are `rated`'s `assert satisfy heatGenerationReq by rated;`
+(`satisfied`: `heatGen.power >= 600.0` is true, power 800) and `weak`'s
+`assert not satisfy heatGenerationReq by weak;` (`VIOLATED`: the same constraint
+body is false for `weak`, power 400, again the outcome the negated declaration
+correctly asserts): the same source line and column because both usages check the
+same `require constraint` body text, against different subjects.
 
 `_LINE_RE` matches `(?P<kind>\w+)` only, so the comma and the trailing
-`satisfies ...`/`not satisfies ...` text do not match, and `verify_holds` raises
+`satisfies ...` text do not match, and `verify_holds` raises
 `ModelCheckError(f"could not parse verdict line {line!r}")` on any file containing
 such a declaration, real CLI output that is well-formed, not a CLI error.
 
@@ -666,18 +686,135 @@ against a file that carries no such declaration.
 
 **Workaround:** `chapters/ch08-checking/02-violation-witness.ipynb` runs
 `verify_holds` against a small companion file assembled in the notebook itself (not
-committed to `models/`), restating only `HeatGenerator`'s conservation entailment
-(`deliveredEnergyBoundedBySupply` and the two usages it needs), which carries no
-`assert satisfy` declaration and so never hits this parser gap. The construct
-itself is real, committed content in `models/ch08-cumulative.sysml` (introduced in
+committed to `models/`), restating only `deliveredEnergyBoundedBySupply` and the
+two usages it needs, which carries no `assert satisfy` declaration and so never
+hits this parser gap. The construct itself is real, committed content in
+`models/ch08-cumulative.sysml` (introduced in
 `chapters/ch08-checking/01-invariant-def.ipynb`); only the file handed to
-`verify_holds` is a restatement, and the notebook says so.
+`verify_holds` is a restatement, and the notebook says so. See D-030 and D-031 for
+the separate, deeper reason this construct is a hand-restated lemma rather than a
+solver-checked reference to `HeatGenerator`'s own `efficiencyBounded` and
+`deliveredEnergy`, which is a real limit of this toolchain, not only a parser gap.
 **Resolution:** widen `_LINE_RE` (or add a second pattern) to accept an optional
-`, (not )?satisfies <requirement>` segment inside the kind parenthetical, verified
-against the real CLI's exact text before shipping the fix, per the module's own
-requirement that every case be checked against a real run.
+`, satisfies <requirement>` segment inside the kind parenthetical (no `not`
+variant exists, per the correction above), verified against the real CLI's exact
+text before shipping the fix, per the module's own requirement that every case be
+checked against a real run. **Caution for whoever fixes this:** a naive fix that
+only widens the regex, without also teaching `holds()`'s own status precedence
+about the satisfy/not-satisfy distinction, would make `holds()` read the real
+model's own *correct* negative claims (`assert not satisfy timely by slow`,
+`assert not satisfy heatGenerationReq by weak`, both `VIOLATED` verdicts exactly
+as intended) as if they were failures of the model, since `holds()`'s
+violated-beats-everything precedence has no way to know a `VIOLATED` verdict on a
+`not satisfy` declaration is the correct, desired outcome. Fixing the parser alone
+is not enough; the caller-facing semantics need the same care `satisfaction_claims_evaluated`
+already gives this distinction (its own `is_negated` handling in `src/toaster/conformance.py`).
 **Upstream issue:** not filed; not applicable (this is this repository's own
 wrapper, not a claim about the `sysmlv2` CLI, which is behaving correctly).
 **Toaster issue:** not filed; not blocking (the companion-file workaround is
 sufficient for this chapter; `src/toaster/modelcheck.py` is outside this
 contract's blast zone).
+
+**Note (round 2 review, PASS4-008): a `satisfied` verdict can come from interval
+propagation alone, not necessarily Z3.** `verify --solve` runs propagation first
+and only hands Z3 whatever propagation left undecided (per the CLI's own `--help`
+text), so a verdict's `reason` can read `(propagation: holds for all values in the
+narrowed ranges)` with no `z3:` text at all, even though the summary line and the
+top-level status are identical to a genuinely solver-proved `satisfied`. Confirmed
+directly against the real committed `models/ch08-cumulative.sysml`:
+`efficiencyBounded` itself (`0.0 <= efficiency and efficiency <= 1.0`, a bound with
+no other feature to relate) is reported `satisfied (propagation: holds for all
+values in the narrowed ranges)`, never invoking Z3 at all, while
+`deliveredEnergyBoundedBySupply` (an implication over three unbound features) is
+reported `satisfied (z3: holds for all values of unbound features)`. Anyone
+checking "was this actually proved by the solver, not merely by range narrowing"
+should read the verdict's `reason` text, not just its `status`; `ConstraintVerdict`
+carries both, and `chapters/ch08-checking/02-violation-witness.ipynb` asserts on
+the reason text for exactly this purpose.
+
+## D-030: two independently-declared `assert constraint`s are never composed by `verify --solve`, whether sibling or inherited
+
+**Found:** PASS4-008 round 2 review (Opus 5.5), confirming that
+`deliveredEnergyBoundedBySupply` (Chapter 8's new construct) is not actually
+solver-linked to `HeatGenerator`'s own `efficiencyBounded` and `deliveredEnergy`,
+despite the chapter's first-round prose claiming it proves the entailment those
+two already imply. Independently reproduced by the builder with two further
+constructed probes before writing this entry.
+
+**Observed.** `verify --solve` checks each `assert constraint` (or `constraint`)
+body entirely on its own: nothing in the tool treats an already-declared sibling
+or inherited constraint as an assumed-true hypothesis available to a different
+constraint's own body, even when both are members of the exact same part def.
+Three constructed reproductions, all giving `undecided` with a genuine Z3 witness
+(not a parse error, not a trivial fold):
+
+1. **Sibling, same def, bare (non-dotted) feature references:** a second
+   `assert constraint` added directly inside `HeatGenerator` alongside
+   `efficiencyBounded`, referencing the bare `power`/`efficiency` features (no
+   `heatGenCheck.` qualification) plus a new local `duration`-typed attribute, with
+   no restated bound in its own antecedent:
+   `undecided (result is indeterminate over unbound features) (z3: satisfiable,
+   e.g. power = 0 [W], checkDuration = -1 [s], efficiency = 2)`. `efficiencyBounded`
+   itself still reports `satisfied` alongside it, unaffected, and does nothing to
+   constrain the second constraint's own check.
+2. **Inherited via specialization:** the same second constraint moved onto a new
+   subtype `HeatGeneratorCheck :> HeatGenerator`, so it inherits `efficiencyBounded`
+   through specialization rather than sibling membership: identical `undecided`
+   verdict and witness.
+3. **Confirms the point directly on the real committed model:** loosening
+   `efficiencyBounded`'s own literal bound in `models/ch08-cumulative.sysml` from
+   `<= 1.0` to `<= 1.5`, or doubling `deliveredEnergy`'s own definition from
+   `power * duration * efficiency` to `power * duration * efficiency * 2.0`, leaves
+   `deliveredEnergyBoundedBySupply`'s verdict unchanged (`satisfied`) either way,
+   because the construct's own antecedent restates its own copy of the bound and
+   its own copy of the arithmetic rather than referencing either original element.
+
+**Why this matters for the tutorial.** Any assert constraint meant to state "given
+some other already-declared constraint holds, prove this" must restate that other
+constraint's own hypothesis inline (which is legitimate and is what
+`tests/test_modelcheck.py`'s own `TIMELY_TOAST` fixture already does); it cannot
+rely on inheritance or same-scope membership to import the other constraint's
+truth automatically. A property phrased this way is therefore only ever a
+standalone lemma of the same shape as the original elements, never a solver-
+checked reference to them, and re-checking it after either original element
+changes is a manual, not automatic, step.
+
+**Workaround:** `deliveredEnergyBoundedBySupply`'s own doc comment, and Chapter 8's
+prose (`chapters/ch08-checking/01-invariant-def.ipynb`,
+`02-violation-witness.ipynb`, `index.md`, `conclusion.md`), state this limit
+plainly rather than claiming a link the toolchain cannot check.
+**Resolution:** none attempted; would need `verify --solve` (or a successor tool)
+to treat already-proved sibling or inherited constraints as background axioms
+when checking a new one, a nontrivial solver-integration feature, not a parsing
+fix.
+**Upstream issue:** not filed; a real capability gap in `sysml-toolkit`'s
+`verify --solve`, worth raising once this pattern recurs enough to justify asking
+for it, not this contract's call to file alone.
+**Toaster issue:** not filed
+
+## D-031: a chained calc/function invocation inside an `assert constraint` is not in Z3's solvable fragment
+
+**Found:** PASS4-008 round 2 review (Opus 5.5), same probe session as D-030;
+independently reproduced by the builder.
+
+**Observed.** `assert constraint c { ... heatGenCheck.deliveredEnergy(power, duration) <= power * duration ... }`
+(calling a `calc` through a usage's own dotted path, rather than restating the
+calc's body inline) gives:
+`undecided (result is indeterminate over unbound features; z3: not in the
+solvable fragment: chained function references)`, regardless of what the calc's
+own definition actually computes (confirmed alongside D-030's probe 3: the verdict
+does not change even when the calc's own definition is edited).
+
+**Why this matters for the tutorial.** A property that needs to reason about what
+a `calc` actually computes cannot invoke the calc from inside an `assert
+constraint` and expect Z3 to reason through the call; the calc's own body must be
+restated inline in the constraint (exactly what `deliveredEnergyBoundedBySupply`
+does), which is why the tutorial's new construct is a hand-restated lemma rather
+than a call into `deliveredEnergy` itself.
+
+**Workaround:** none needed; the chapter's own construct never attempts a chained
+calc invocation, and its prose says why.
+**Resolution:** none attempted; would need `verify --solve`'s Z3 encoding to
+inline or symbolically expand a calc invocation, a solver-integration feature.
+**Upstream issue:** not filed, for the same reason as D-030.
+**Toaster issue:** not filed

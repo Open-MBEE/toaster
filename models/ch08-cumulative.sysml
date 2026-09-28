@@ -231,13 +231,25 @@ package ToasterDemo {
     attribute heatGenCheckDuration : ISQ::DurationValue;
 
     assert constraint deliveredEnergyBoundedBySupply {
-        doc /* Conservation entailment: efficiencyBounded (0 <= efficiency <= 1) together
-             * with deliveredEnergy's own definition (power * duration * efficiency)
-             * guarantees delivered energy never exceeds supplied energy, for every value
-             * of efficiency in its bound, not only the one value (0.7) that rated happens
-             * to carry. Proved by Z3 over the unbound heatGenCheck.efficiency and
-             * heatGenCheckDuration features (verify --solve), not evaluated at a single
-             * point the way verify_satisfaction() checks assert satisfy claims. */
+        doc /* A real-arithmetic lemma of the same shape as the relation
+             * efficiencyBounded (0 <= efficiency <= 1) and deliveredEnergy's own
+             * definition (power * duration * efficiency) together would imply:
+             * given efficiency in [0,1] and non-negative power and duration,
+             * power * duration * efficiency never exceeds power * duration.
+             * Restated by hand on a fresh, unbound usage (heatGenCheck) rather
+             * than a solver-checked reference to HeatGenerator's own
+             * efficiencyBounded and deliveredEnergy: this toolchain's Z3 backend
+             * does not compose two separately declared assert constraints,
+             * whether sibling or inherited (D-030), and cannot reason through a
+             * chained calc invocation such as heatGenCheck.deliveredEnergy(...)
+             * (D-031). Proved by Z3 over the unbound heatGenCheck.efficiency,
+             * heatGenCheck.power and heatGenCheckDuration features
+             * (verify --solve): this restated lemma holds for all such values,
+             * but the proof does not track HeatGenerator's own efficiencyBounded
+             * or deliveredEnergy if either changes; a content-hash-based record
+             * against this file does go stale when either changes (any edit to
+             * the file changes the hash), which is a partial safeguard, not a
+             * check that the restated copy stays in sync. */
         (heatGenCheck.efficiency >= 0.0 and heatGenCheck.efficiency <= 1.0
          and heatGenCheck.power >= 0.0 [SI::W] and heatGenCheckDuration >= 0.0 [SI::s])
         implies (heatGenCheck.power * heatGenCheckDuration * heatGenCheck.efficiency)
