@@ -347,7 +347,7 @@ SysML v2.0's own default already gives the first form, §7.6.3/§7.6.4, see belo
 spec-identical declarations. The tool accepts both (`model.ok == True`), but only
 the second keeps the model evaluable.
 
-Found building Chapter 4's own re-derivation (PASS4-004), corrected across three
+Found building Chapter 4's own re-derivation (PASS4-004), corrected across five
 rounds of independent review re-probing (Opus 5.5): nesting `ApplyHeat` as an actual
 step of `ToastBread` (`action def ApplyHeat { in bread : Bread; in energy :
 ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`, kept as typed, valueless
