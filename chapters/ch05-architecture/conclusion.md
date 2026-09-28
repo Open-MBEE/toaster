@@ -10,6 +10,6 @@ The chapter answers its engineering question: the toaster model now allocates a 
 
 ## What comes next
 
-Chapter 6 asks what one complete recursive step looks like, one level below `HeatingSystem`. It nests a function inside `ApplyHeat`, gives it an abstract logical carrier with its own interface point, allocates the function to it, specializes it with a concrete realization, and checks that realization against a requirement, then records a stopping judgment against the recursion's own rule.
+Chapter 6 asks what one branch of the recursion shows one level below `HeatingSystem`. It nests a function inside `ApplyHeat`, gives it an abstract logical carrier with its own interface point, records a mechanism selection and a measure framing before specializing it with a concrete realization, checks that realization against a requirement, then records a stopping judgment stating plainly what the branch establishes and what it does not.
 
 **Exercise:** The [Chapter 5 exercise](../../exercises/ch05/exercise.ipynb) asks you to allocate your coffee maker's `Brew` action to its `BrewUnit`, add a `CoffeeFlow` assembly with a `pump` and a `filter`, declare a flow between them, build the interconnection intent, and confirm the endpoint paths appear correctly in the intent dict.

@@ -117,15 +117,16 @@ package ToasterDemo {
     allocation heatAllocation allocate ToastBread::applyHeat to Toaster::heating;
 
     port def EnergyPort {
-        doc /* Carries an energy signal: electrical energy delivered to a heat
-             * generator. */
+        doc /* Carries an energy signal delivered to a heat generator, not
+             * committed to any particular energy form. */
         out energy : ISQ::EnergyValue[0..*];
     }
 
     action def GenerateHeat {
-        doc /* Converts an electrical energy input into a thermal energy output.
-             * No mechanism is committed yet: any device that turns supplied
-             * electrical energy into heat satisfies this function. */
+        doc /* Converts a supplied energy input into a thermal energy output.
+             * No mechanism, and no energy form, is committed yet: a resistive
+             * coil and a gas flame both take some supplied energy and deliver
+             * heat, so any device that does this satisfies the function. */
         in energyIn : ISQ::EnergyValue[0..*];
         out heatOut : ISQ::EnergyValue;
     }
@@ -148,14 +149,6 @@ package ToasterDemo {
 
     allocation heatGenAllocation allocate ApplyHeat::generateHeat to HeatingAssembly::heatGen;
 
-    part def ResistanceCoil :> HeatGenerator {
-        doc /* A resistive element: converts electrical energy to heat by Joule
-             * heating. The mechanism selection this specialization commits to
-             * is recorded against the alternatives it was chosen over. */
-        attribute :>> power default = 800.0 [SI::W];
-        attribute resistance : ISQ::ResistanceValue default = 12.0 [SI::ohm];
-    }
-
     requirement def HeatGenerationReq {
         doc /*
          * A heat generator shall be rated for at least 600 W.
@@ -169,6 +162,16 @@ package ToasterDemo {
     }
 
     requirement heatGenerationReq : HeatGenerationReq;
+
+    part def ResistanceCoil :> HeatGenerator {
+        doc /* An electrically switched resistive element: converts electrical
+             * energy to heat by Joule heating. The mechanism selection this
+             * specialization commits to is recorded against the alternative
+             * it was chosen over, argued from the model's own existing
+             * control interface, not asserted. */
+        attribute :>> power default = 800.0 [SI::W];
+        attribute resistance : ISQ::ResistanceValue default = 12.0 [SI::ohm];
+    }
 
     part rated : ResistanceCoil {
         assert satisfy heatGenerationReq by rated;

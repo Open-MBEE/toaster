@@ -2,17 +2,17 @@
 
 ## Purpose
 
-This chapter asks: what does one complete step of the recursion look like, one level below where Chapter 5 stopped?
+This chapter asks: for one branch of `ApplyHeat`'s own decomposition, what does the recursion's stopping rule actually show, and what does it not yet show, one level below where Chapter 5 stopped?
 
-After completing this chapter, the cumulative model has a real second-level function (`GenerateHeat`, nested inside `ApplyHeat`), an abstract logical carrier for it (`HeatGenerator`, performing the function and exposing an energy port), a usage-level allocation between them, a concrete physical realization (`ResistanceCoil`), a requirement checked against two real candidates, and three judgment records: a selection among alternatives for the mechanism, a measure-framing judgment for the requirement, and a stopping judgment tying the branch back to the recursion's own rule.
+After completing this chapter, the cumulative model has a real second-level function (`GenerateHeat`, nested inside `ApplyHeat`, committed to no energy form), an abstract logical carrier for it (`HeatGenerator`, performing the function and exposing an energy port, also uncommitted), a usage-level allocation between them, a requirement stated on the carrier, a recorded mechanism selection, a concrete physical realization the selection licenses (`ResistanceCoil`), two real candidates checked against the requirement, and a stopping judgment that states plainly what this one branch does and does not establish.
 
 ## Ingredients
 
 | Notebook | Concept |
 |---|---|
-| [01: Level-2 Function and Logical Carrier](01-subsystem-requirements.ipynb) | Nest `GenerateHeat` inside `ApplyHeat`, the same way `ApplyHeat` nests inside `ToastBread`, and give it a logical carrier, `HeatGenerator`, one level below `HeatingSystem`. |
-| [02: Level-2 Physical Realization](02-second-level.ipynb) | Specialize `HeatGenerator` with `ResistanceCoil`, state the requirement its rating is checked against, and record the mechanism selection and measure framing that decision raises. |
-| [03: Stopping Judgment](03-stopping-judgment.ipynb) | Record `AI-C06`, an `asserted_inference` checked against real analysis on the loaded model, honest about what the branch does and does not yet establish. |
+| [01: Level-2 Function and Logical Carrier](01-subsystem-requirements.ipynb) | Nest `GenerateHeat` inside `ApplyHeat`, the same way `ApplyHeat` nests inside `ToastBread`, and give it a logical carrier, `HeatGenerator`, one level below `HeatingSystem`; neither commits to an energy form or mechanism. |
+| [02: Level-2 Physical Realization](02-second-level.ipynb) | State the requirement `HeatGenerator`'s rating is checked against, record the measure framing and the mechanism selection that requirement raises, then build `ResistanceCoil`, the concrete realization the selection licenses. |
+| [03: Stopping Judgment](03-stopping-judgment.ipynb) | Record `AI-C06`, an `asserted_inference` checked against real analysis on the loaded model, stating plainly what this one branch establishes and what it does not. |
 
 ## Equipment
 
@@ -20,11 +20,11 @@ See [docs/setup.md](../../docs/setup.md) for environment setup. No chapter-speci
 
 ## Method
 
-The chapter carries the recursive step through all three layers at the second level, not straight from a level-1 logical grouping to level-2 physical parts. Notebook 01 builds the function and the abstract carrier that performs it, allocated at the usage level. Notebook 02 builds the concrete realization and the requirement it is checked against, recording the two judgments that choice raises. Notebook 03 asks whether this branch meets the recursion's own stopping rule, against real evidence gathered from the loaded model, and states plainly what it does not yet meet.
+The chapter carries one branch of the recursive step through all three layers at the second level, not straight from a level-1 logical grouping to level-2 physical parts, and not by naming a mechanism-specific part before the argument for it exists. Notebook 01 builds the function and the abstract carrier that performs it, allocated at the usage level, both energy-neutral. Notebook 02 states the requirement first, records why the requirement is a measure of performance and why a resistive mechanism is chosen, then builds the concrete realization that selection licenses. Notebook 03 asks what the recursion's own stopping rule shows for this one branch, against real evidence gathered from the loaded model, and states plainly what it does not yet show.
 
 ## Expected result
 
-After running all three notebooks, `perform_relationships(model)` includes `HeatGenerator` performing `GenerateHeat`; `find_allocations(model)` includes `heatGenAllocation`, from `ApplyHeat::generateHeat` to `HeatingAssembly::heatGen`; `model.eval("ToasterDemo::heatGenerationReq(ToasterDemo::rated)")` is `True` and the same call on `weak` is `False`; and `validate_record()` returns `[]` for `AS-C06`, `AC-C06` and `AI-C06`.
+After running all three notebooks, `perform_relationships(model)` includes `HeatGenerator` performing `GenerateHeat`; `find_allocations(model)` includes `heatGenAllocation`, from `ApplyHeat::generateHeat` to `HeatingAssembly::heatGen`; `model.eval("ToasterDemo::heatGenerationReq(ToasterDemo::rated)")` is `True` and the same call on `weak` is `False`; and `validate_record()` returns `[]` for `AC-C06`, `AS-C06` and `AI-C06`.
 
 ## Experiment
 
