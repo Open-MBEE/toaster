@@ -109,8 +109,11 @@ package ToasterDemo {
 
 287 tests passing (unchanged in count from Phase 0's close — one parametrized case swapped for one
 new, equally-real test), `check_construction.py --check --chapter=1` consistent, `glossary lint`
-shows zero hits from ch01 (down from 9 at baseline; 63 remain, all in chapters ≥3, untouched),
-`glossary check` clean, 0 co-author trailers across 6 commits, worktree and branch cleaned up.
+shows zero hits from ch01 (down from 9 at baseline; 63 remain in chapters 2-10, untouched — this
+record originally said "all in chapters ≥3", which was wrong: 6 of the 63 were in ch02, still
+carrying the same "(A-F)"/"(O-S)"/"(E)" seam-labeling pattern DL-050 fixed in ch01; corrected here
+once PASS4-002 found and fixed them, per its own report), `glossary check` clean, 0 co-author
+trailers across 6 commits, worktree and branch cleaned up.
 
 ## Not fixed here, carried forward explicitly
 
