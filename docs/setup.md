@@ -1,13 +1,15 @@
 # Getting Started
 
-## Prerequisites
+## Run the tutorial
+
+This is everything you need to work through the chapters and exercises. It does not need
+Node.js or npm; those are only for previewing the rendered book, covered further down.
+
+**Prerequisites:**
 
 - Python 3.12 or later
 - [uv](https://docs.astral.sh/uv/) for Python dependency management
-- Node.js 22 (see `.nvmrc`) and npm, for building the site locally
-- Graphviz (`dot` on your PATH), for the diagrams
-
-## Provision the environment
+- Graphviz (`dot` on your PATH): several chapters render diagrams with it
 
 ```sh
 git clone https://github.com/Open-MBEE/toaster.git
@@ -20,22 +22,38 @@ uv run python scripts/check-tools.py
 tutorial's Python package connects to. It prints each tool's version; if anything is missing,
 it names what to install.
 
+`uv sync --locked` also installs JupyterLab and the kernel this project uses (both are
+declared dependencies, not a separate install step). Open any chapter or exercise notebook with:
+
+```sh
+uv run jupyter lab
+```
+
 Run the test suite to confirm the environment is working:
 
 ```sh
 uv run pytest tests/ -v
 ```
 
-## Build and preview the site locally
+## Preview the rendered book locally (optional)
+
+The published site at <https://open-mbee.github.io/toaster/> already has every chapter
+rendered. Build it yourself only if you want to preview a change to the book's layout, or
+you are not connected to that site. This needs Node.js in addition to the Python setup above.
+
+**Additional prerequisite:** Node.js 22 (see `.nvmrc`) and npm.
 
 ```sh
 npm install
 npx mystmd start --execute
 ```
 
-`--execute` runs every notebook and renders its real output. Without it, MyST renders the stored
-cell content only, and a freshly-cloned notebook has none, so every code cell appears with no
-output at all.
+`--execute` runs every notebook and renders its real output. Without it, MyST renders the
+stored cell content only, and a freshly-cloned notebook has none, so every code cell appears
+with no output at all.
+
+Building and deploying the GitHub Pages site itself is a maintainer task, not something you
+need for the tutorial; see `docs/contributor.md`.
 
 ## The tools this tutorial uses, and why
 
@@ -44,23 +62,23 @@ work, and neither implements the full SysML v2 specification yet. Both are under
 development, and this tutorial tracks what each one can currently do.
 
 **OpenSysML** (`opensysml`, installed automatically by `check-tools.py`) is the primary tool: it
-loads, validates, queries, and evaluates every model in this tutorial. Most chapters need nothing
-else.
+loads, validates, queries, and evaluates every model in this tutorial. Every chapter needs it.
 
-**sysml-toolkit** does the one thing OpenSysML cannot yet: Chapter 8 needs a bounded proof that a
-constraint holds for every value of an unbound quantity, not just a check against one fixed value.
-sysml-toolkit's command-line tool has that capability, built on the Z3 solver. It is not a
-published package; building it means cloning
-[Open-MBEE/sysml-toolkit](https://github.com/Open-MBEE/sysml-toolkit) and following its own
-build instructions. Chapters 1 through 7 do not need it.
+**sysml-toolkit** does one thing OpenSysML cannot yet: prove that a constraint holds for every
+value of an unbound quantity, not just check it against one fixed value, using the Z3 solver.
+No chapter currently uses this; it becomes relevant once Chapter 8 is re-derived to need it.
+It is not on PyPI or crates.io. (A package named `sysmlv2` does exist on PyPI; it is an
+unrelated placeholder project, not this one.) Pre-built binaries for macOS, Linux, and Windows
+are published on [its GitHub releases page](https://github.com/Open-MBEE/sysml-toolkit/releases);
+download the one for your platform rather than building from source.
 
 When a tool does not yet support something a chapter needs, this tutorial says so, uses the next
 tool that does, and wraps the difference behind a plain Python function so a chapter's own code
-reads the same either way. `src/toaster/modelcheck.py` is one example: it calls sysml-toolkit's
-command-line tool under the hood, so Chapter 8's own cells only ever see a Python function call.
-Each of these wrappers is recorded in `DEFERRED.md`, with the specific gap it patches and the
-condition under which the patch comes out: once a published Python package reaches the same
-capability, the wrapper is replaced with a direct call to it.
+reads the same either way. `src/toaster/modelcheck.py` is one example: it will call
+sysml-toolkit's command-line tool under the hood, so Chapter 8's own cells only ever see a
+Python function call. Each of these wrappers is recorded in `DEFERRED.md`, with the specific gap
+it patches and the condition under which the patch comes out: once a published Python package
+reaches the same capability, the wrapper is replaced with a direct call to it.
 
 ## Fork and exercise
 
