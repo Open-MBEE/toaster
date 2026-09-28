@@ -17,7 +17,7 @@ An executable tutorial on recursive system decomposition using SysML v2 and Open
 |---|---|---|
 | 1: System and Purpose | What is the system? | abstract part def, part def, specialization, composition |
 | 2: Requirements and Assumptions | What must it do? | requirement def, attribute override, asserted_context |
-| 3: Measures of Success | How do we know it succeeds? | requirement usage, assert satisfy, calc def, asserted_solution |
+| 3: Measures of Success | How do we know it succeeds? | requirement usage, assert satisfy / assert not satisfy, verification def, asserted_solution |
 | 4: Functional Decomposition | What functions must it perform? | action def, item def, asserted_inference |
 | 5: Architecture and Allocation | How is it realized? | model navigation, allocate, flow |
 | 6: Recursive Decomposition | How do subsystems decompose? | DEPTH: recursive application |

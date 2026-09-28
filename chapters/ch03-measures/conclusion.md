@@ -1,15 +1,15 @@
-# Chapter 3 — Conclusion
+# Chapter 3: Conclusion
 
 ## What we built
 
-The Chapter 3 model applies the `TimelyToast` requirement to the nominal and slow candidates via a `requirement timely : TimelyToast` usage and explicit `assert satisfy` claims. It also adds `DeliveredEnergy`, a calc def that computes thermal energy as `power * duration * efficiency`. The Python side adds `AS-C03`, an `asserted_solution` ReviewRecord that records the argument: 120 s is within the 180 s bound by a 60 s margin, and the slow variant at 200 s violates it.
+The Chapter 3 model applies `TimelyToast` to the model as a `requirement timely : TimelyToast` usage. `slow`, Chapter 2's deliberately injected fault (`cycleTime` fixed at 200 s), now carries `assert not satisfy timely by slow`, folded into its own body and evaluated against the model's own values: it holds, confirming the negated claim. `TimelyToastTest`, a `verification def` with an `objective { verify timely; }`, declares how the requirement would be checked, and is never run in this chapter. On the Python side, `AC-C03` records the judgment that `timely` is framed as a measure of effectiveness, and `AS-C03` records what the evaluated claim on `slow` supports.
 
 ## What this establishes
 
-The chapter answers its engineering question: the model now records *which* candidate satisfies the requirement and *why* that judgment holds. The assert-satisfy claims are formal; the ReviewRecord makes the reasoning visible and auditable. That pairing — formal claim plus recorded argument — is what distinguishes an engineering judgment from an assertion.
+The chapter answers its engineering question: the model now records and evaluates a satisfaction claim against a requirement, using `slow` as the requirement's demonstrated failing branch. It does not yet claim that `nominal` satisfies `TimelyToast`: `Toaster.cycleTime` carries no value absent a mechanism-and-energy-balance derivation, so `nominal`'s status stays genuinely open rather than asserted from an unset default. That restraint, an evaluated claim on `slow`, no claim on `nominal`, and a verification case that states how the requirement will eventually be checked, is what distinguishes an engineering judgment from an assertion.
 
 ## What comes next
 
-Chapter 4 asks how the system performs its function step by step. It introduces `action def` for functional decomposition, `item def` for typed flows, and the first `asserted_inference` record — the judgment that a chain of child claims supports a parent claim.
+Chapter 4 asks how the system performs its function step by step. It introduces `action def` for functional decomposition and `item def` for typed flows.
 
-**Exercise:** The [Chapter 3 exercise](../../exercises/ch03/exercise.ipynb) asks you to add a `TemperatureReq` usage to your coffee maker model, assert satisfaction for the nominal and hot candidates, and write an `asserted_solution` record for the nominal claim. Use the same pattern as `timely` and `AS-C03`.
+**Exercise:** The [Chapter 3 exercise](../../exercises/ch03/exercise.ipynb) asks you to add a `TemperatureReq` usage to your coffee maker model, assert satisfaction for the nominal and hot usages, and write an `asserted_solution` record for the nominal claim. Use the same pattern as `timely` and `AS-C03`.

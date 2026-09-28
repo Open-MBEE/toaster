@@ -31,6 +31,7 @@ project:
         - file: chapters/ch03-measures/01-moe-definition
         - file: chapters/ch03-measures/02-mop-candidate-eval
         - file: chapters/ch03-measures/03-threshold-judgment
+        - file: chapters/ch03-measures/04-verification-case
         - file: chapters/ch03-measures/conclusion
     - title: "Chapter 4: Functional Decomposition"
       children:

@@ -10,6 +10,6 @@ The chapter answers its engineering question: we now have a formal requirement a
 
 ## What comes next
 
-Chapter 3 introduces `requirement` usage (applying a requirement to a specific part) and `calc def` (defining a reusable calculation). It also introduces `assert satisfy ... by ...`, which connects a specific part usage to a requirement claim.
+Chapter 3 introduces `requirement` usage (applying `TimelyToast` to the model as `timely`) and the `assert satisfy` / `assert not satisfy` idiom, which folds a satisfaction claim into a usage's own context and evaluates it against the model's own values. It also introduces `verification def`, which declares how a requirement will be checked.
 
 **Exercise:** The [Chapter 2 exercise](../../exercises/ch02/exercise.ipynb) asks you to add a `TemperatureReq` to your coffee maker model and write an `asserted_context` record for the `brewTemp` assumption. Use the same pattern as `TimelyToast` and `context_record`.

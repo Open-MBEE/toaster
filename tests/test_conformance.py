@@ -1233,12 +1233,27 @@ def test_satisfaction_claims_evaluated_prove_negative_control(conn) -> None:
 
 
 def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch03(ch03) -> None:
-    # DL-048: scheduled from (3, 1), and ch03 passes language conformance, so at its own chapter
-    # the check runs for real and catches the `slow` claim it was staged to catch.
+    # DL-048: scheduled from (3, 1), and ch03 passes language conformance, so at its own
+    # chapter the check runs for real. Chapter 3's re-derivation (PASS4-003, per
+    # DL-039(4)/DL-049) states the `slow` claim as `assert not satisfy`, which correctly
+    # holds (slow's fixed 200 s cycle time fails `timely`'s 180 s bound), so the check
+    # reports `passed` with no findings: the one claim in the model evaluates as its own
+    # negation states, not as a fault to report.
     r = cf.report(ch03, (3, 1))["project"][1]
     assert r.check_id == "satisfaction-claims-evaluated"
-    assert r.status == "failed"
-    assert any(f["subject"] == "ToasterDemo::slow" for f in r.findings)
+    assert r.status == "passed"
+    assert r.findings == []
+
+    from toaster.query import satisfy_relationships
+
+    claims = satisfy_relationships(ch03)
+    # TimelyToastTest's `verify timely;` is also a SatisfyRequirementUsage
+    # (declaredKeyword "verify"), with no subject; it is not itself a claim about a
+    # usage and the check skips it. The one claim with a subject is `slow`'s.
+    with_subject = [c for c in claims if c["subject"]]
+    assert len(with_subject) == 1
+    assert with_subject[0]["subject"] == "ToasterDemo::slow"
+    assert with_subject[0]["requirement"] == "ToasterDemo::timely"
 
 
 def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch04(ch04) -> None:
