@@ -48,8 +48,8 @@ def of_type(*t): return [e for e in els if e.get("@type") in t]
 
 ```python
 part_defs = model.query(where=pc("@type", "=", ["PartDefinition"]), select=["name"])
-names = sorted(r.id for r in part_defs)          # ids are qualified names like ToasterDemo::Heater
-assert "ToasterDemo::Heater" in names
+names = sorted(r.id for r in part_defs)          # ids are qualified names like ToasterDemo::HeatGenerator
+assert "ToasterDemo::HeatGenerator" in names
 abstract_ones = [r.id for r in model.query(where={"@type": "CompositeConstraint", "operator": "and", "constraint": [
     pc("@type", "=", ["PartDefinition"]), pc("isAbstract", "=", [True])]}, select=["name"])]
 ```
@@ -78,7 +78,7 @@ def closure(start, edges):
 
 up, down = spec_edges()
 realizers = closure("ToasterDemo::ToastingSystem", down)     # everything that (transitively) specializes it
-assert "ToasterDemo::HeatingSystem" in realizers
+assert "ToasterDemo::Toaster" in realizers
 ```
 
 This is how you find the concrete parts that realize an abstract logical part def. Specialization is *not* expanded for you: a part def that specializes an abstract one does not list the abstract one's members in `model.query`.
@@ -87,7 +87,7 @@ This is how you find the concrete parts that realize an abstract logical part de
 
 ```python
 def end_path(end):
-    """Path a connector end points at, e.g. ['ToasterDemo::BreadHandling::loader', 'ToasterDemo::BreadLoader::bread']."""
+    """Path a connector end points at, e.g. ['ToasterDemo::Toaster::heating']."""
     rs = end.get("ownedReferenceSubsetting")
     if not rs:
         return []
@@ -102,7 +102,8 @@ def connectors(*types):
 
 flows = connectors("FlowUsage")
 allocs = connectors("AllocationUsage")
-assert flows and allocs
+assert allocs
+assert flows == []   # this reference model has no FlowUsage elements; the recipe still applies when one does
 ```
 
 Each `ends` entry is a path; the first element is the owning feature, which lets you ask "is anything allocated *to* this component". To include inherited allocations, first expand the component with `closure(component, up)` from Recipe 2.
