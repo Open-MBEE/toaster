@@ -10,6 +10,13 @@ from pathlib import Path
 
 STUDY_ROOT = Path(os.environ.get("STUDY_ROOT", "/private/tmp/toaster-diagram-study"))
 
+# The raw `-render #view:element -render-form X -o file` CLI binary Task 4's render
+# pipeline actually invokes -- not STUDY_ROOT/opensysml-current (a stray dev build whose
+# -version never reports a release string) and not the toaster package's own gRPC service
+# binary under ~/.opensysml/bin (a different invocation style, used via opensysml.connect()).
+# Same default path run_study.py itself uses for its STUDY_OPENSYSML.
+OPENSYSML_CLI = Path(os.environ.get("STUDY_OPENSYSML", "/private/tmp/functional-toaster-design/sysml"))
+
 PINNED = {
     "opensysml": "v0.9.0",
     "sysml-toolkit": "af839f0d22723772676e509213c65756d1e08ef2",
@@ -53,9 +60,8 @@ def gather_reported_versions() -> dict[str, str]:
     if commit:
         reported["sysml2d"] = commit
 
-    opensysml_bin = STUDY_ROOT / "opensysml-current"
-    if opensysml_bin.exists():
-        result = subprocess.run([str(opensysml_bin), "-version"], capture_output=True, text=True, timeout=10)
+    if OPENSYSML_CLI.exists():
+        result = subprocess.run([str(OPENSYSML_CLI), "-version"], capture_output=True, text=True, timeout=10)
         if "v0.9.0" in (result.stdout + result.stderr):
             reported["opensysml"] = "v0.9.0"
 
@@ -69,7 +75,13 @@ def gather_reported_versions() -> dict[str, str]:
 def main() -> int:
     reported = gather_reported_versions()
     mismatches = compare_pinned_versions(reported, PINNED)
-    report = {"study_root": str(STUDY_ROOT), "reported": reported, "pinned": PINNED, "mismatches": mismatches}
+    report = {
+        "study_root": str(STUDY_ROOT),
+        "opensysml_cli_path": str(OPENSYSML_CLI),
+        "reported": reported,
+        "pinned": PINNED,
+        "mismatches": mismatches,
+    }
     out = Path("decisions/diagram-study-real-fixtures/evidence")
     out.mkdir(parents=True, exist_ok=True)
     (out / "provisioning-report.json").write_text(json.dumps(report, indent=2))
