@@ -24,12 +24,12 @@ The chapter begins with navigation: before adding new relationships, you need to
 
 Notebook 02 introduces `allocate`, which answers the question "which component is responsible for which function?" `HeatingSystem` becomes an abstract logical component that performs `ApplyHeat` (Chapter 4's function, nested inside `ToastBread`), and a named allocation usage connects the two directly.
 
-Notebook 03 introduces `port def` and `flow`, which answer "what passes between components, and through what connection point?" `HeatingSystem` and `ControlSystem` each get a port, connected by a flow carrying the `duration` signal `ApplyHeat` has declared since Chapter 4 but never had a source for. It closes with `build_interconnection_intent()` and `render_sysmld()`, which extract the port connection from the model and render it as a displayed SVG diagram.
+Notebook 03 introduces `port def` and `interface`, which answer "what connection point does each component expose, and how are they joined?" `HeatingSystem` and `ControlSystem` each get a port, joined by a named interface showing where the `duration` signal `ApplyHeat` has declared since Chapter 4 would flow, once something produces it. It closes with `build_interconnection_intent()` and `render_sysmld()`, which extract the connection from the model and render it as a displayed SVG diagram.
 
 ## Expected result
 
-After running all three notebooks, the cumulative model contains the complete Ch1-Ch5 model including `abstract part def HeatingSystem` (performing `ApplyHeat` through a `perform` relationship), `allocation heatAllocation allocate ToastBread::applyHeat to Toaster::heating;`, a `DurationPort` connecting `ControlSystem` and `HeatingSystem`, and `flow control.durationOut to heating.durationIn;` inside `Toaster`. `build_interconnection_intent(model, "ToasterDemo::Toaster")` returns a dict with two parts and one flow, and the rendered interconnection diagram is visible in notebook 03's own output.
+After running all three notebooks, the cumulative model contains the complete Ch1-Ch5 model including `abstract part def HeatingSystem` (performing `ApplyHeat` through a `perform` relationship, no supertype), `allocation heatAllocation allocate ToastBread::applyHeat to Toaster::heating;`, a `DurationPort` connecting `ControlSystem` and `HeatingSystem`, and `interface durationInterface connect control.durationOut to heating.durationIn;` inside `Toaster`. `build_interconnection_intent(model, "ToasterDemo::Toaster")` returns a dict with two parts and one connection, and the rendered interconnection diagram is visible in notebook 03's own output.
 
 ## Experiment
 
-Try the [Chapter 5 exercise](../../exercises/ch05/exercise.ipynb): add an `allocate` statement for your coffee maker's `Brew` action, then a `CoffeeFlow` assembly with `pump` and `filter` parts connected by a flow, and render the interconnection diagram.
+Try the [Chapter 5 exercise](../../exercises/ch05/exercise.ipynb): allocate your coffee maker's `Brew` action to its `BrewUnit`, then add a `CoffeeFlow` assembly with `pump` and `filter` parts connected by a flow, and render the interconnection diagram.
