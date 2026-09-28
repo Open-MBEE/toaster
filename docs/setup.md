@@ -35,11 +35,12 @@ Run the test suite to confirm the environment is working:
 uv run pytest tests/ -v
 ```
 
-## Preview the rendered book locally (optional)
+## Preview the rendered book locally
 
-The published site at <https://open-mbee.github.io/toaster/> already has every chapter
-rendered. Build it yourself only if you want to preview a change to the book's layout, or
-you are not connected to that site. This needs Node.js in addition to the Python setup above.
+There is no published site yet: deployment stays off until the tutorial has complete,
+end-to-end content ready to publish (see `docs/contributor.md`). Building it yourself, here,
+is currently the only way to see the tutorial as a rendered book rather than as raw notebook
+files. This needs Node.js in addition to the Python setup above.
 
 **Additional prerequisite:** Node.js 22 (see `.nvmrc`) and npm.
 
