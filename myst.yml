@@ -4,7 +4,7 @@ project:
   github: https://github.com/Open-MBEE/toaster
   license: Apache-2.0
   authors:
-    - name: Open-MBEE Contributors
+    - name: Michael Zargham
   exclude:
     - exercises/**
   toc:
