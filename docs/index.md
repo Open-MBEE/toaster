@@ -24,6 +24,6 @@ An executable tutorial on recursive system decomposition using SysML v2 and Open
 | 7: Execution and Experiments | What does it do? | bounded calc, assert constraint, exhibit state, do action, execute_state, parameter sweep |
 | 8: Constraint Checking | Does one claim hold at one point, or does a property hold for every value? | assert constraint, verify_satisfaction, verify_holds (Z3), stale records |
 | 9: Coverage and Sufficiency | Are all requirements covered? | requirement coverage, evidence sufficiency, stale detection at scale |
-| 10: Traceability and Sign-off | Is the argument complete? | traceability graph, inference synthesis, sign-off |
+| 10: Traceability and Sign-off | Is the argument complete? | traceability graph, judgment ledger, asserted_inference synthesis |
 
 [Setup and installation](setup.md) | [Glossary](glossary.md) | [References](references.md)
