@@ -1,18 +1,18 @@
-# Chapter 6 — Recursive Decomposition
+# Chapter 6: Recursive Decomposition
 
 ## Purpose
 
-This chapter asks: how deep should the decomposition go, and how do you know when to stop?
+This chapter asks: what does one complete step of the recursion look like, one level below where Chapter 5 stopped?
 
-After completing this chapter, the cumulative model has a second-level structural decomposition of `HeatingSystem` into `ResistanceCoil` and `PowerWire`, a subsystem-level requirement (`HeatingReq`), and an `asserted_inference` record (`AI-C06`) that chains the stopping judgment back to the Chapter 3 and Chapter 4 evidence.
+After completing this chapter, the cumulative model has a real second-level function (`GenerateHeat`, nested inside `ApplyHeat`), an abstract logical carrier for it (`HeatGenerator`, performing the function and exposing an energy port), a usage-level allocation between them, a concrete physical realization (`ResistanceCoil`), a requirement checked against two real candidates, and three judgment records: a selection among alternatives for the mechanism, a measure-framing judgment for the requirement, and a stopping judgment tying the branch back to the recursion's own rule.
 
 ## Ingredients
 
 | Notebook | Concept |
 |---|---|
-| [01 — Subsystem Requirements](01-subsystem-requirements.ipynb) | Apply `requirement def` and `attribute :>>` override to the heating subsystem — the same two constructs from Chapter 2, one level down. |
-| [02 — Second Level](02-second-level.ipynb) | Decompose `HeatingSystem` using the four structural constructs from Chapter 1: abstract def, part def, specialization, and composition. |
-| [03 — Stopping Judgment](03-stopping-judgment.ipynb) | Record `AI-C06`, an `asserted_inference` that the decomposition is complete, with `premises` referencing `AS-C03` and `AI-C04`. |
+| [01: Level-2 Function and Logical Carrier](01-subsystem-requirements.ipynb) | Nest `GenerateHeat` inside `ApplyHeat`, the same way `ApplyHeat` nests inside `ToastBread`, and give it a logical carrier, `HeatGenerator`, one level below `HeatingSystem`. |
+| [02: Level-2 Physical Realization](02-second-level.ipynb) | Specialize `HeatGenerator` with `ResistanceCoil`, state the requirement its rating is checked against, and record the mechanism selection and measure framing that decision raises. |
+| [03: Stopping Judgment](03-stopping-judgment.ipynb) | Record `AI-C06`, an `asserted_inference` checked against real analysis on the loaded model, honest about what the branch does and does not yet establish. |
 
 ## Equipment
 
@@ -20,11 +20,11 @@ See [docs/setup.md](../../docs/setup.md) for environment setup. No chapter-speci
 
 ## Method
 
-The chapter demonstrates self-similarity: the same three-notebook structure (requirement, structure, judgment) that appeared in Chapters 2–4 recurs at the second decomposition level. Notebook 01 applies the requirement and attribute override pattern to `Heater`. Notebook 02 applies the abstract-def, part-def, specialization, and composition pattern to `HeatingSystem`. Notebook 03 records the stopping judgment, which requires a non-empty `premises` list to satisfy the Hawkins §3.1 schema.
+The chapter carries the recursive step through all three layers at the second level, not straight from a level-1 logical grouping to level-2 physical parts. Notebook 01 builds the function and the abstract carrier that performs it, allocated at the usage level. Notebook 02 builds the concrete realization and the requirement it is checked against, recording the two judgments that choice raises. Notebook 03 asks whether this branch meets the recursion's own stopping rule, against real evidence gathered from the loaded model, and states plainly what it does not yet meet.
 
 ## Expected result
 
-After running all three notebooks, `model.query()` returns `HeatingElement`, `ResistanceCoil`, `PowerWire`, and `HeatingAssembly` as `PartDefinition` elements. `model.find("ToasterDemo::HeatingReq")` returns a symbol with `kind='requirementDef'`. `validate_record(stopping_judgment)` returns `[]`, and `stopping_judgment.premises` is `["AS-C03", "AI-C04"]`.
+After running all three notebooks, `perform_relationships(model)` includes `HeatGenerator` performing `GenerateHeat`; `find_allocations(model)` includes `heatGenAllocation`, from `ApplyHeat::generateHeat` to `HeatingAssembly::heatGen`; `model.eval("ToasterDemo::heatGenerationReq(ToasterDemo::rated)")` is `True` and the same call on `weak` is `False`; and `validate_record()` returns `[]` for `AS-C06`, `AC-C06` and `AI-C06`.
 
 ## Experiment
 

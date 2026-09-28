@@ -20,7 +20,7 @@ An executable tutorial on recursive system decomposition using SysML v2 and Open
 | 3: Measures of Success | How do we know it succeeds? | requirement usage, assert satisfy / assert not satisfy, verification def, asserted_solution |
 | 4: Functional Decomposition | What functions must it perform? | action def, constraint, item def, asserted_inference |
 | 5: Architecture and Allocation | Which component performs it, and how do components connect? | model navigation, allocate, perform, port, interface |
-| 6: Recursive Decomposition | How do subsystems decompose? | DEPTH: recursive application |
+| 6: Recursive Decomposition | What does one complete recursive step look like? | nested action, abstract logical carrier, port, allocate, specialization, asserted_solution |
 | 7: Execution and Experiments | What does it do? | sympy, execute_state, parameter sweep |
 | 8: Checking and Revision | Does it satisfy its properties? | verify_constraint, violation witness, stale records |
 | 9: Coverage and Sufficiency | Are all requirements covered? | requirement coverage, completeness check, stale detection |
