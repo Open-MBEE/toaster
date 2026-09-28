@@ -634,3 +634,50 @@ usage rather than only through the state def's own qualified name.
 **Upstream issue:** not filed; not blocking (a documentation/API-surface gap, not
 a load-time or evaluation-correctness defect).
 **Toaster issue:** not filed
+
+## D-029: `toaster.modelcheck.verify_holds`'s line parser cannot read a `verify --solve` verdict for an `assert satisfy`/`assert not satisfy` declaration
+
+**Found:** PASS4-008 (Chapter 8 re-derivation), while probing whether `verify_holds`
+could run directly against the real, committed `models/ch08-cumulative.sysml`
+(which carries Chapter 3's and Chapter 6's `assert satisfy`/`assert not satisfy`
+declarations forward from Chapter 7) rather than a small companion file.
+
+**Observed.** For an ordinary `constraint`/`assert constraint`, the CLI's verdict
+line is `<file>:<line>:<col>  <name> (<Kind>): <status>[ (<reason>)]`, which
+`toaster/modelcheck.py`'s `_LINE_RE` already parses. For a constraint that is also
+the subject of an `assert satisfy`/`assert not satisfy` declaration, the real CLI
+instead prints one extra verdict line per such declaration, with the kind
+parenthetical widened to `(<Kind>, satisfies <requirement>)` or
+`(<Kind>, not satisfies <requirement>)` and no separate reason parenthetical, e.g.:
+
+    <file>:83:30  <anonymous> (ConstraintUsage, satisfies ToasterDemo::timely): VIOLATED
+    <file>:184:30  <anonymous> (ConstraintUsage, satisfies ToasterDemo::heatGenerationReq): satisfied
+
+`_LINE_RE` matches `(?P<kind>\w+)` only, so the comma and the trailing
+`satisfies ...`/`not satisfies ...` text do not match, and `verify_holds` raises
+`ModelCheckError(f"could not parse verdict line {line!r}")` on any file containing
+such a declaration, real CLI output that is well-formed, not a CLI error.
+
+**Why this matters for the tutorial.** `models/ch08-cumulative.sysml` (like
+`ch03-cumulative.sysml` onward) carries `assert satisfy`/`assert not satisfy`
+declarations forward from Chapter 3 and Chapter 6, so `verify_holds` cannot be run
+directly against the real, committed cumulative fixture at all right now, only
+against a file that carries no such declaration.
+
+**Workaround:** `chapters/ch08-checking/02-violation-witness.ipynb` runs
+`verify_holds` against a small companion file assembled in the notebook itself (not
+committed to `models/`), restating only `HeatGenerator`'s conservation entailment
+(`deliveredEnergyBoundedBySupply` and the two usages it needs), which carries no
+`assert satisfy` declaration and so never hits this parser gap. The construct
+itself is real, committed content in `models/ch08-cumulative.sysml` (introduced in
+`chapters/ch08-checking/01-invariant-def.ipynb`); only the file handed to
+`verify_holds` is a restatement, and the notebook says so.
+**Resolution:** widen `_LINE_RE` (or add a second pattern) to accept an optional
+`, (not )?satisfies <requirement>` segment inside the kind parenthetical, verified
+against the real CLI's exact text before shipping the fix, per the module's own
+requirement that every case be checked against a real run.
+**Upstream issue:** not filed; not applicable (this is this repository's own
+wrapper, not a claim about the `sysmlv2` CLI, which is behaving correctly).
+**Toaster issue:** not filed; not blocking (the companion-file workaround is
+sufficient for this chapter; `src/toaster/modelcheck.py` is outside this
+contract's blast zone).
