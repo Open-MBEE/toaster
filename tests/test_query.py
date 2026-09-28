@@ -5,7 +5,7 @@ from pathlib import Path
 import opensysml
 import pytest
 
-from toaster import query
+from toaster import conformance, query
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYERS = ROOT / ".claude" / "skills" / "architecture-layers" / "example-layers.sysml"
@@ -110,6 +110,7 @@ def test_allocations_for_follows_supertypes(conn) -> None:
     `HeatingSystem` nor `HeatingAssembly` is itself ever an allocation end)."""
     m = conn.load_from_content(INHERITED_ALLOCATION, strict=False)
     assert m.ok
+    assert conformance.language_gap_findings(m) == []
     assert query.allocations_for(m, "P::Toaster::heater", inherit=False)
     assert query.allocations_for(m, "P::BetterToaster::heater")  # inherits Toaster::heater's allocation via redefinition
     assert not query.allocations_for(m, "P::BetterToaster::heater", inherit=False)
@@ -156,6 +157,7 @@ def test_flows_and_connector_ends(conn) -> None:
     is empty) exercises the identical flow-resolution path without that defect."""
     m = conn.load_from_content(FLOW_MODEL, strict=False)
     assert m.ok
+    assert conformance.language_gap_findings(m) == []
     flows = query.find_connectors(m, "FlowUsage")
     assert flows[0]["ends"][0] == ["P::Handling::loader", "P::Loader::bread"]
 

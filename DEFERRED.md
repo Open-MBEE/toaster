@@ -648,7 +648,7 @@ line is `<file>:<line>:<col>  <name> (<Kind>): <status>[ (<reason>)]`, which
 the subject of an `assert satisfy`/`assert not satisfy` declaration, the real CLI
 instead prints one extra verdict line per such declaration, with the kind
 parenthetical widened to `(<Kind>, satisfies <requirement>)` and no separate reason
-parenthetical, e.g. (both lines reproduced verbatim from a real run against
+parenthetical, e.g. (all three lines reproduced verbatim from a real run against
 `models/ch08-cumulative.sysml`):
 
     <file>:83:30  <anonymous> (ConstraintUsage, satisfies ToasterDemo::timely): VIOLATED

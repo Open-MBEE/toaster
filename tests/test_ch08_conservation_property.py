@@ -58,7 +58,7 @@ package ConservationCheck {
 
 # Same shape, conclusion deliberately negated: given the same bounded hypothesis,
 # delivered energy can never strictly exceed supplied energy, so this is unsatisfiable.
-# Z3 must actually resolve a product of two bounded unbound features to see this, not
+# Z3 must actually resolve a product of three bounded unbound features to see this, not
 # fold a literal constant the way a `1 == 2` contradiction would.
 COMPANION_NEGATIVE = """
 package ConservationCheckBroken {
@@ -132,7 +132,7 @@ def test_conservation_entailment_proved_for_all_values(tmp_path) -> None:
 
 def test_broken_entailment_reported_violated(tmp_path) -> None:
     """DL-047's negative control: a genuinely broken variant of the same shape (Z3 must
-    resolve a product of two bounded unbound features, not fold a constant) is reported
+    resolve a product of three bounded unbound features, not fold a constant) is reported
     violated, not undecided and not silently accepted."""
     f = _write(tmp_path, "conservation_broken.sysml", COMPANION_NEGATIVE)
     verdicts = mc.verify_holds(f, lib=str(LIB), binary=str(BINARY), solve=True)

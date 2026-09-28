@@ -26,7 +26,7 @@ Chapter 7's parameter sweep samples 50 specific power values and shows where a t
 
 ## Expected result
 
-After running all three notebooks: `deliveredEnergyBoundedBySupply` is confirmed present in the loaded model by `model.find()` and `model.query()`; `verify_holds()` reports it `satisfied`, with the reason text naming `z3`, proved for all values a companion restatement admits, not evaluated at one; a fully broken variant of the same shape is reported `violated`; a merely weakened variant is reported `undecided`, with `holds()` raising an inconclusive error rather than answering `True` or `False`; `verify_satisfaction()` still reports the model's three existing claims exactly as it always has; `conformance.report()` shows `satisfaction-claims-evaluated` reporting `passed`, not `blocked`, for the first time; `check_stale()` returns `True` once the lemma's bound is loosened.
+After running all three notebooks: `deliveredEnergyBoundedBySupply` is confirmed present in the loaded model by `model.find()` and `model.query()`; `verify_holds()` reports it `satisfied`, with the reason text naming `z3`, proved for all values a companion restatement admits, not evaluated at one; a fully broken variant of the same shape is reported `violated`; a merely weakened variant is reported `undecided`, with `holds()` raising an inconclusive error rather than answering `True` or `False`; `verify_satisfaction()` still reports the model's three existing claims exactly as it always has; `conformance.report()` shows `satisfaction-claims-evaluated` reporting `passed`, not `blocked`, on ch08's own fixture for the first time (it was already passing on ch03 through ch07); `check_stale()` returns `True` once the lemma's bound is loosened.
 
 ## Experiment
 
