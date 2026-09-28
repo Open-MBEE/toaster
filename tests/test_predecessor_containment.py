@@ -94,6 +94,27 @@ re-derivation lands (a rhythm recorded starting with PASS4-002,
   `deliveredEnergy` already imply, proved for every value of efficiency in its
   bound rather than evaluated at rated's one checked value).
 
+- PASS4-009 (Chapter 9, Coverage and Sufficiency) added no
+  `ch09-cumulative.sysml` at all: an analysis-only chapter over the real,
+  current ch08 fixture (a deliberate design choice, see
+  `decisions/pass4-run-009.md`), so `ch08->ch09` containment is a documented
+  no-op rather than a real check (`test_ch08_to_ch09_predecessor_containment_
+  is_a_noop_by_design` below), and `check_predecessor_containment(10, ...)`
+  would have looked only at the missing ch09 fixture and no-opped too,
+  silently, the exact gap `decisions/next-passes.md` item 21 named.
+- PASS4-010 (Chapter 10, Traceability and Sign-off) resolved that gap for
+  real rather than inheriting it: `check_predecessor_containment` now falls
+  back to the nearest earlier chapter with a real cumulative fixture
+  (`_nearest_predecessor_fixture`) when the immediate predecessor has none,
+  and Chapter 10 commits its own `ch10-cumulative.sysml` (byte-identical in
+  body to ch08's, since this chapter also adds no new named model element)
+  specifically so that fallback has a real ch10 file to compare ch08's named
+  elements against. `ch08->ch10` is clean: every named element
+  ch08-cumulative.sysml carries is present in ch10-cumulative.sysml with the
+  same `@type` (see `test_ch08_to_ch10_predecessor_containment_via_fallback_
+  is_clean` below; the companion test `..._is_real_not_vacuous` is what proves
+  the fallback is real, not vacuous, by showing it catches a genuine removal).
+
 The constructed-pair tests below (type-change, unnamed-element, and
 check_chapter wiring) point `CUMULATIVE_FILES` at small standalone SysML strings
 under `tmp_path`, isolated from the real committed fixtures above, using
@@ -224,26 +245,114 @@ def test_ch09_has_no_cumulative_fixture(cc):
 def test_ch08_to_ch09_predecessor_containment_is_a_noop_by_design(cc, conn, monkeypatch):
     """check_predecessor_containment(9, ...) returns no failures, but not because
     ch08->ch09 containment was genuinely checked and found clean: it is a no-op,
-    guarded by the function's own "both paths must exist" check, since chapter 9
-    has no cumulative fixture to compare against ch08's (see
-    test_ch09_has_no_cumulative_fixture). Proved here, not just asserted: conn's
-    own load_from_content is monkeypatched to raise, so if the guard were ever
-    bypassed and the function actually tried to load anything for chapter 9 (it
-    should never even reach ch08's own real fixture, since the guard checks
-    BOTH paths before loading either), this test would fail loudly instead of
-    silently returning [] for an unrelated reason. Documented separately from the
-    real, checked "clean" results above so the two are never conflated."""
+    guarded by the function's own early return when chapter 9's OWN cumulative
+    fixture doesn't exist (CUMULATIVE_FILES has no entry for 9 at all -- see
+    test_ch09_has_no_cumulative_fixture). That early return fires before the
+    function ever calls _nearest_predecessor_fixture to look for a predecessor,
+    let alone loads anything. Proved here, not just asserted: conn's own
+    load_from_content is monkeypatched to raise, so if that early return were
+    ever bypassed, this test would fail loudly instead of silently returning []
+    for an unrelated reason. Documented separately from the real, checked
+    "clean" results above so the two are never conflated."""
 
     def _must_not_be_called(*args, **kwargs):
         raise AssertionError(
             "check_predecessor_containment(9, ...) must never call "
-            "load_from_content at all: chapter 9 has no cumulative fixture, so "
-            "its own 'both paths must exist' guard must return before loading "
-            "either file, including ch08's own real one."
+            "load_from_content at all: chapter 9 has no cumulative fixture of "
+            "its own, so the function's early return on its own cur_path check "
+            "must fire before it ever looks for a predecessor, let alone loads "
+            "either file."
         )
 
     monkeypatch.setattr(conn, "load_from_content", _must_not_be_called)
     assert cc.check_predecessor_containment(9, conn) == []
+
+
+def test_ch10_has_a_cumulative_fixture(cc):
+    """PASS4-010 (Chapter 10, Traceability and Sign-off), unlike Chapter 9, DOES commit
+    its own models/ch10-cumulative.sysml, precisely so check_predecessor_containment's
+    own nearest-earlier-fixture fallback has a real ch10 file to compare ch08's named
+    elements against (decisions/next-passes.md item 21). Checked against the real
+    filesystem directly, matching test_ch09_has_no_cumulative_fixture's own method."""
+    ch10_path = cc.REPO_ROOT / "models" / "ch10-cumulative.sysml"
+    assert ch10_path.exists()
+    assert cc.CUMULATIVE_FILES.get(10) == ch10_path
+
+
+def test_nearest_predecessor_fixture_skips_ch09_and_finds_ch08(cc):
+    """_nearest_predecessor_fixture(10) must walk past chapter 9 (no fixture) and land on
+    chapter 8 (a real one), not merely return something. Checked directly against the
+    real, unmodified CUMULATIVE_FILES dict, not a constructed stand-in."""
+    assert 9 not in cc.CUMULATIVE_FILES
+    found = cc._nearest_predecessor_fixture(10)
+    assert found is not None
+    chapter, path = found
+    assert chapter == 8
+    assert path == cc.CUMULATIVE_FILES[8]
+
+
+def test_nearest_predecessor_fixture_general_fallback_skips_a_gap(cc, tmp_path, monkeypatch):
+    """The fallback is general, not special-cased to chapter 9, and skips BOTH real ways a
+    gap can occur, walking through both before landing on a real fixture: chapter 97, a key
+    genuinely absent from CUMULATIVE_FILES (confirmed with `not in`, not merely assumed),
+    and chapter 96, a key that IS present but whose file does not exist on disk (a stale
+    dict entry). Only chapter 95, with a real, existing file, is returned."""
+    assert 97 not in cc.CUMULATIVE_FILES
+    stale_96 = tmp_path / "ch96-does-not-exist.sysml"
+    assert not stale_96.exists()
+    fixture_95 = tmp_path / "ch95.sysml"
+    fixture_95.write_text("package Test95 {\n}\n")
+    monkeypatch.setitem(cc.CUMULATIVE_FILES, 96, stale_96)
+    monkeypatch.setitem(cc.CUMULATIVE_FILES, 95, fixture_95)
+
+    found = cc._nearest_predecessor_fixture(98)
+
+    assert found == (95, fixture_95)
+
+
+def test_ch08_to_ch10_predecessor_containment_via_fallback_is_clean(cc, conn):
+    """check_predecessor_containment(10, ...) falls back past the missing ch09 fixture to
+    the real ch08 one (test_nearest_predecessor_fixture_skips_ch09_and_finds_ch08), and
+    that real ch08->ch10 comparison is clean: ch10-cumulative.sysml carries every named
+    element ch08-cumulative.sysml does, with the same @type, since this chapter's own
+    fixture is byte-identical in body to ch08's (see that file's own header comment) and
+    adds no new named model element, the same design choice Chapter 9 made."""
+    failures = cc.check_predecessor_containment(10, conn)
+    assert failures == []
+
+
+def test_ch08_to_ch10_predecessor_containment_via_fallback_is_real_not_vacuous(cc, conn, tmp_path):
+    """The clean result above is not another silent no-op: point CUMULATIVE_FILES[10] at a
+    scratch copy of the real ch10 fixture with one real named element (rated, and its own
+    satisfy claim) removed, and confirm the fallback check catches it, naming ch08 (not
+    ch09) as the predecessor it compared against. The real CUMULATIVE_FILES dict is
+    restored afterward without monkeypatch, since this test edits it directly to avoid
+    monkeypatch's fixture-scope subtleties around a plain dict item already present."""
+    real_ch10_path = cc.CUMULATIVE_FILES[10]
+    original_source = real_ch10_path.read_text()
+    assert "assert satisfy heatGenerationReq by rated;" in original_source
+
+    truncated = original_source.replace(
+        "    part rated : ResistanceCoil {\n"
+        "        attribute :>> efficiency = 0.7;\n"
+        "        assert satisfy heatGenerationReq by rated;\n"
+        "    }\n",
+        "",
+    )
+    assert truncated != original_source, "Expected the replacement to remove `rated`"
+
+    scratch_path = tmp_path / "ch10-scratch.sysml"
+    scratch_path.write_text(truncated)
+    cc.CUMULATIVE_FILES[10] = scratch_path
+    try:
+        failures = cc.check_predecessor_containment(10, conn)
+    finally:
+        cc.CUMULATIVE_FILES[10] = real_ch10_path
+
+    assert len(failures) == 1
+    assert "ch08-cumulative.sysml -> ch10-cumulative.sysml" in failures[0]
+    assert "ToasterDemo::rated" in failures[0]
+    assert "missing from ch10-cumulative.sysml" in failures[0]
 
 
 def test_check_chapter_surfaces_predecessor_containment_failures(cc, conn, tmp_path, monkeypatch):
