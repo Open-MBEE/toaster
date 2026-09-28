@@ -10,7 +10,7 @@ Chapter 2 asks: what must the toaster do, and what do we assume about the condit
 |---|---|---|
 | [01 — requirement def](01-requirement-def.ipynb) | `requirement def` + `subject` + `require constraint` | A formal statement of what the system must satisfy |
 | [02 — attribute override](02-assumptions.ipynb) | `attribute :>>` override | A named usage that redeclares an inherited attribute value — here, a deliberately faulty one |
-| [03 — asserted context](03-judgment-context.ipynb) | `asserted_context` record | An assumption that frames the requirement evaluation |
+| [03 — asserted context](03-judgment-context.ipynb) | `asserted_context` record | An assumption underlying a cycle-time estimate, not an evaluation of the requirement |
 
 ## Equipment
 
