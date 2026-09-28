@@ -207,6 +207,25 @@ def test_unnamed_element_change_is_not_flagged(cc, conn, tmp_path, monkeypatch):
     assert failures == []
 
 
+def test_ch09_has_no_cumulative_fixture(cc):
+    """PASS4-009 (Chapter 9, Coverage and Sufficiency) is deliberately built as an
+    analysis chapter: its coverage, sufficiency and staleness notebooks query
+    models/ch08-cumulative.sysml directly and add no new named model element (see
+    chapters/ch09-coverage-sufficiency/index.md). No models/ch09-cumulative.sysml
+    fixture exists, so CUMULATIVE_FILES carries no chapter-9 entry."""
+    assert 9 not in cc.CUMULATIVE_FILES
+
+
+def test_ch08_to_ch09_predecessor_containment_is_a_noop_by_design(cc, conn):
+    """check_predecessor_containment(9, ...) returns no failures, but not because
+    ch08->ch09 containment was genuinely checked and found clean: it is a no-op,
+    guarded by the function's own "both paths must exist" check, since chapter 9
+    has no cumulative fixture to compare against ch08's (see
+    test_ch09_has_no_cumulative_fixture). Documented separately from the real,
+    checked "clean" results above so the two are never conflated."""
+    assert cc.check_predecessor_containment(9, conn) == []
+
+
 def test_check_chapter_surfaces_predecessor_containment_failures(cc, conn, tmp_path, monkeypatch):
     """check_chapter (the wired entry point, not the standalone function) surfaces the
     predecessor-containment check's failures in its own returned failure list."""
