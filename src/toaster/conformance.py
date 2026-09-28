@@ -692,7 +692,11 @@ REGISTRY: list[ConformanceCheck] = [
         id="port-type",
         description="Connected ports have related declared types (OpenSysML v0.9.0 gap G4).",
         run=query.port_type_mismatches,
-        applies_from=None,
+        # DL-038: applies from the chapter/section that first declares a port-typed
+        # connection: in the current sequence, ch05-architecture/03-interfaces.ipynb
+        # (ControlSystem-HeatingSystem DurationPort interface). Re-derivation follows
+        # the criterion, not this literal stage.
+        applies_from=(5, 3),
         negative_control=_PORT_TYPE_CONTROL,
     ),
     ConformanceCheck(

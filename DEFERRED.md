@@ -520,3 +520,56 @@ API-JSON `@type` disagreement noted above.
 the exact reproduction, isolation table and spec citations above, is drafted and
 held for Z's review.
 **Toaster issue:** not filed
+
+## D-027: a second declaration reopening an existing namespace member's name loads with warnings, then crashes `to_api_json()`
+
+**Found:** PASS4-005 (Chapter 5 re-derivation), while probing whether a definition
+could be extended across two separate declarations sharing one name (a pattern
+briefly considered, then not used, for spreading `HeatingSystem`'s construction
+across two notebooks). Independently reproduced by the reviewer, who caught that
+an earlier draft of this repro was missing the import `Real` needs and so
+actually failed with `ok=False` (`unresolved: Real`), a different error than the
+one this entry documents; the corrected repro below was re-verified directly.
+
+**Observed.** `package P { private import ScalarValues::*; part def X; part def
+X { attribute a : Real; } }` (two owned members of the same package sharing the
+name `X`) loads with `model.ok == True` and two `severity='warning'`,
+`code='name-conflict'` diagnostics ("Duplicate of other owned member name"),
+one per declaration. `model.find("P::X")` returns a single resolved symbol.
+Calling `model.to_api_json()` on the same loaded model raises `ConversionError:
+cannot convert the duplicate declaration of "X" at <content>:L:C: a name
+identifies an element in the graph, so two members of one namespace cannot
+share it`, not a diagnostic on the model itself.
+
+**Why this matters for the tutorial.** Every helper this repo uses for anything
+beyond `model.query()`/`model.find()` (`toaster.query.ApiIndex` and everything
+built on it: `find_connectors`, `find_allocations`, `perform_relationships`,
+`port_type_mismatches`, `build_interconnection_intent`, and
+`scripts/check_construction.py`'s own predecessor-containment check) goes
+through `to_api_json()`. A model that loads cleanly by every check that reads
+`model.ok` or iterates `model.query()` can still be silently unusable by every
+one of those helpers, with the actual cause (a name collision loudly warned
+about at load time) two calls removed from the crash site.
+
+**Not yet resolved which of two readings is correct:** (a) `to_api_json()`
+should tolerate what `load_from_content` already accepts with only a warning,
+returning some deterministic disambiguation; or (b) a same-namespace,
+same-name second declaration should itself be a load-time error (elevate the
+warning), since two OpenSysML surfaces (load, and the API-JSON conversion this
+model uses for everything else) disagreeing about whether the model is valid
+is the more fundamental problem, independent of which one is "right." No
+spec constraint naming this exact case was checked against the PDF text
+directly (only the diagnostic message and the observed behavior); this entry
+does not claim a specific spec section, unlike D-019/D-020.
+
+**Workaround:** none needed in shipped content; PASS4-005 designed around the
+pattern entirely rather than using it (every construction-zone fragment that
+extends an earlier notebook's type restates it completely, rather than
+reopening it). Flagged here so a future builder does not reach for the
+"reopen to add a member" idiom expecting it to be safe.
+**Resolution:** none attempted; needs Z's read on which of the two framings
+above is the actual bug, before filing an upstream report.
+**Upstream issue:** not filed — Draft 11 (`decisions/gap-issue-drafts.md`),
+citing the exact reproduction above and naming the two unresolved framings, is
+drafted and held for Z's review.
+**Toaster issue:** not filed

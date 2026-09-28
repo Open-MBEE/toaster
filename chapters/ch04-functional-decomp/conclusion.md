@@ -10,6 +10,6 @@ The chapter answers its engineering question: the toaster now has one functional
 
 ## What comes next
 
-Chapter 5 asks how this one function, and the rest of the toaster's functions, are allocated to logical components and connected by interfaces. It introduces `allocate` for assignment relationships and `flow` for item flows between parts.
+Chapter 5 asks which logical component performs this function, and how logical components connect. It introduces a named, usage-level `allocate` connecting `ApplyHeat` to the component that performs it, and a named `interface` giving `duration` a connection point between components, without yet binding it to a value.
 
 **Exercise:** The [Chapter 4 exercise](../../exercises/ch04/exercise.ipynb) asks you to define a `Brew` action for your coffee maker's `BrewUnit`, name its flows with `item def`, and write an `asserted_inference` record claiming the decomposition is complete. Use the same pattern as `ApplyHeat` and `AI-C04`.

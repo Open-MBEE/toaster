@@ -36,6 +36,31 @@ package ToasterDemo {
 }
 """
 
+# PASS4-005 push-back (Finding 9): the allocation target used a fully-qualified path
+# ('Toaster::heating') while the owned-part extraction used the short name ('heating'),
+# so the two were drawn as separate nodes for the same model element. Also exercises
+# the InterfaceUsage recognition OQ-1 added (a connection whose ends are all ports).
+QUALIFIED_ALLOC_AND_INTERFACE_SOURCE = """
+package ToasterDemo {
+    private import ScalarValues::*;
+    private import SI::*;
+    private import ISQ::*;
+    port def DurationPort { out duration : ISQ::DurationValue[0..*]; }
+    action def ApplyHeat;
+    part def ControlSystem { port durationOut : DurationPort; }
+    part def HeatingSystem {
+        perform action applyHeat : ApplyHeat;
+        port durationIn : ~DurationPort;
+    }
+    part def Toaster {
+        part control : ControlSystem;
+        part heating : HeatingSystem;
+        interface durationInterface connect control.durationOut to heating.durationIn;
+    }
+    allocation heatAllocation allocate ApplyHeat to Toaster::heating;
+}
+"""
+
 
 @pytest.fixture(scope="module")
 def flow_model():
@@ -55,6 +80,19 @@ def alloc_model():
     conn = opensysml.connect(version="v0.9.0")
     model = conn.load_from_content(ALLOC_SOURCE, strict=False)
     assert model.ok, f"Alloc model failed: {model.diagnostics}"
+    yield model
+    conn.close()
+
+
+@pytest.fixture(scope="module")
+def qualified_model():
+    import opensysml
+
+    conn = opensysml.connect(version="v0.9.0")
+    model = conn.load_from_content(
+        QUALIFIED_ALLOC_AND_INTERFACE_SOURCE, strict=False
+    )
+    assert model.ok, f"Qualified model failed: {model.diagnostics}"
     yield model
     conn.close()
 
@@ -107,6 +145,40 @@ def test_render_sysmld_svg_contains_parts(flow_model):
         content = out.read_text()
         assert "loader" in content
         assert "ejector" in content
+
+
+def test_intent_flows_includes_interface_usage(qualified_model):
+    """OQ-1: build_interconnection_intent must recognize InterfaceUsage (a
+    connection whose ends are all ports, SysML v2 formal/2026-03-02 §7.14.1),
+    not only FlowUsage."""
+    intent = build_interconnection_intent(qualified_model, "ToasterDemo::Toaster")
+    assert len(intent["flows"]) == 1
+    flow = intent["flows"][0]
+    assert flow["source"] == "control.durationOut"
+    assert flow["target"] == "heating.durationIn"
+
+
+def test_qualified_allocation_target_reuses_the_part_node(qualified_model):
+    """Finding 9: an allocation end written as a fully-qualified path
+    ('Toaster::heating') must resolve to the same node the owned-part extraction
+    already created ('heating'), not a separate, duplicate box for the same
+    model element."""
+    intent = build_interconnection_intent(qualified_model, "ToasterDemo::Toaster")
+    part_names = {p["name"] for p in intent["parts"]}
+    assert "heating" in part_names
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "test.svg"
+        render_sysmld(intent, out)
+        content = out.read_text()
+        titles = [
+            line.split(">")[1].split("<")[0]
+            for line in content.splitlines()
+            if "<title>" in line
+        ]
+        # Exactly one node is titled "heating"; "Toaster::heating" never appears
+        # as its own node.
+        assert titles.count("heating") == 1
+        assert "Toaster::heating" not in titles
 
 
 def test_mutation_changes_diagram(flow_model):

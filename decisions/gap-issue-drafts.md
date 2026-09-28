@@ -1,6 +1,6 @@
 # Drafted gap issues
 
-Status: **Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27**, per Z's explicit instruction, after the re-verification below. Draft 2 stays internal-only (Z's ruling, 2026-09-26) and Draft 8 is retracted; neither was ever meant to be filed. **Draft 9 (D-023, added Pass 4 Phase 0) is new and held for Z's review — not filed. Draft 10 (D-026, added PASS4-004) is new and held for Z's review — not filed.** Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020, D-023 and D-026, each with its filed issue link where one exists).
+Status: **Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27**, per Z's explicit instruction, after the re-verification below. Draft 2 stays internal-only (Z's ruling, 2026-09-26) and Draft 8 is retracted; neither was ever meant to be filed. **Draft 9 (D-023, added Pass 4 Phase 0) is new and held for Z's review — not filed. Draft 10 (D-026, added PASS4-004) is new and held for Z's review — not filed. Draft 11 (D-027, added PASS4-005) is new, a candidate framing only (two unresolved readings of what the actual bug is), and held for Z's review — not filed.** Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020, D-023, D-026 and D-027, each with its filed issue link where one exists).
 
 | Draft | Filed as |
 |---|---|
@@ -233,6 +233,22 @@ package Probe {
 **Before filing:** we have not exhaustively searched every evaluation-related KerML constraint beyond §9.2.8.2.6 for a rule that would explain the top-level-versus-nested asymmetry directly (as opposed to simply not ruling it out); if the maintainers know of one, it would sharpen this from "the export/execution loses a distinction the read semantics don't make" to "the execution violates a named rule." We also have not checked whether sysml-toolkit's execution engine (separate from OpenSysML) exhibits the same asymmetry, since evaluating a requirement/attribute is not currently part of our sysml-toolkit usage (`DEFERRED.md` D-024/D-025 cover what we do use it for).
 
 **Workaround in place.** Writing the multiplicity explicitly as `[0..*]` — the applied fix in the toaster tutorial (`models/ch04-cumulative.sysml`), not a documented-and-rejected alternative: it states nothing the bare declaration did not already mean per §7.6.3/§7.6.4 above, so it changes nothing about the model's intended design (typed, valueless functional-input slots on an unallocated action, per this tutorial's own layer discipline — DL-030, DL-031), only whether the tool honors that meaning. `[0..1]` was considered and rejected: it also silences the tool, but narrows the multiplicity below the spec default and misstates these inputs as genuinely optional, which they are not.
+
+---
+
+## Draft 11 (OpenSysML, likely bug, candidate framing only): a second declaration reopening an existing namespace member's name loads with warnings, then crashes `to_api_json()` (D-027)
+
+**Version:** OpenSysML v0.9.0.
+
+**Observed, corrected and re-verified after review** (an earlier draft's repro omitted the import `Real` needs, so it actually failed with `ok=False`/`unresolved: Real`, a different error than this entry documents; re-run directly against the corrected source below). `package P { private import ScalarValues::*; part def X; part def X { attribute a : Real; } }` (two owned members of the same package sharing the name `X`) loads with `model.ok == True`. `model.diagnostics` is non-empty even so: two `severity='warning'`, `code='name-conflict'` entries, one per declaration, each reading "Duplicate of other owned member name". `model.find("P::X")` resolves to a single symbol. Calling `model.to_api_json()` on the same loaded model raises `opensysml.errors.ConversionError: cannot convert the duplicate declaration of "X" at <content>:L:C: a name identifies an element in the graph, so two members of one namespace cannot share it`. The crash is in the API-JSON conversion step, not reported as a `Diagnostic` on the model itself, and every helper this project uses beyond `model.query()`/`model.find()` (`toaster.query.ApiIndex` and everything built on it) depends on `to_api_json()` succeeding.
+
+**Not yet a settled bug claim, which is why this stays a candidate.** Two different readings of what should happen instead, and we have not determined which (if either) matches spec intent:
+1. `to_api_json()` should tolerate what `load_from_content` already accepts with only a warning, converting some deterministic disambiguation of the two declarations.
+2. The load step should itself refuse a second, same-name declaration in the same namespace outright (an error, not a warning), since KerML's namespace-membership model does not obviously admit two owned members sharing one name at all; on this reading the real defect is that `load_from_content`'s warning-only severity is too lenient, not that `to_api_json()` is too strict.
+
+**Before filing:** we have not checked KerML 1.1 Beta 2's namespace/membership constraints (the `Namespace`/`OwningMembership` family) directly against the PDF for a named rule either forbidding or permitting two owned members with the same name; until that is done, this draft cannot cite a specific constraint the way Drafts 6, 7, 9 and 10 do, and it should not be filed as a bug report in either framing without that reading. Also unchecked: whether sysml-toolkit exhibits the same load/warn-then-convert-crash split, or handles the collision consistently at one stage.
+
+**Workaround in place.** None needed: PASS4-005 (the contract that found this) designed around the pattern entirely, restating a type's complete declaration in each construction-zone notebook that extends it rather than reopening an earlier notebook's declaration by name. See `DEFERRED.md` D-027.
 
 ---
 
