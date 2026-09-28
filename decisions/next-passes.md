@@ -83,6 +83,7 @@ Start with an audit, not an edit: run the `architecture-layers` per-layer checkl
 6. Restructure for explicit and implicit construction: implicit parts as Python modules with a declared dependency order yielding SysML source; per-chapter explicit increments and a stage manifest; extend `scripts/check_construction.py` to assemble and verify each stage; choose the provenance encoding and the diagrams that make implicit parts legible.
 7. Rename Ch3's MoE/MoP-labeled files and update `myst.yml` and `scripts/check_construction.py`; fill in Ch9 and Ch10 and the missing snapshot models.
 8. Stage the project conformance checks (port types, flows accounted, coverage) with negative controls and "open" reporting.
+9. **The exercise track needs its own dedicated contract, not piecemeal per-chapter fixes** (found during PASS4-002): `exercises/ch01/exercise.ipynb` was deliberately scoped down (no numeric-default attribute) when Chapter 1 was re-derived, but `exercises/ch02/exercise.ipynb` still asks the learner to build on that attribute, and `exercises/ch03/ch06/ch07/ch08` all depend on the pre-DL-018 concrete-default-value pattern the main chapters no longer use. Fixing one exercise at a time as its chapter comes up would leave it inconsistent with its still-untouched neighbors. Decide first whether the exercise track mirrors the main chapters' layer discipline or stays its own deliberately simpler parallel design, then re-derive all affected exercises together.
 
 ## 8. What Pass 1 did not test
 
