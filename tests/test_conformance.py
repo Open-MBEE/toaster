@@ -195,23 +195,18 @@ def test_registry_port_type_entry() -> None:
 
 
 def test_report_shape(ch08) -> None:
-    # ch08 carries known gap findings (test_language_gap_findings_on_real_fixture; Pass 4's job to
-    # re-derive, not this task's), so both REGISTRY checks are blocked, not open — port-type because
-    # it is unscheduled, satisfaction-claims-evaluated because a language failure blocks it regardless
-    # of schedule or stage reached (DL-048; see test_satisfaction_claims_evaluated_scheduled_* below).
+    # PASS4-008: ch08 is now rebased onto the real, current model (no gap findings; see
+    # test_language_gap_findings_on_real_fixture_is_now_clean below), so at an early
+    # stage both REGISTRY checks are open (their stage has not been reached yet), not
+    # blocked.
     rep = cf.report(ch08, (1, 1))
     assert set(rep) == {"language", "project"}
     assert set(rep["language"]) == {"ok", "diagnostics", "gap_findings"}
     assert [(r.check_id, r.status) for r in rep["project"]] == [
-        ("port-type", "blocked"),
-        ("satisfaction-claims-evaluated", "blocked"),
+        ("port-type", "open"),
+        ("satisfaction-claims-evaluated", "open"),
     ]
-    assert all(
-        r.reason
-        == "language conformance failed: allocate-between-definitions, "
-        "part-typed-only-by-item-def"
-        for r in rep["project"]
-    )
+    assert all(r.reason == "not applied: stage not reached" for r in rep["project"])
 
 
 def test_port_type_check_scheduled(ch08, mismatch) -> None:
@@ -943,12 +938,14 @@ def test_clean_model_has_no_gap_findings(conn) -> None:
     assert cf.language_gap_findings(model) == []
 
 
-def test_language_gap_findings_on_real_fixture(ch08) -> None:
-    # ch06-ch08 keep their violations (Pass 4's job to re-derive them; not this task's).
-    # ch05 no longer carries them as of PASS4-005 (see the ch05-clean test below).
-    findings = cf.language_gap_findings(ch08)
-    rules = {f["rule"] for f in findings}
-    assert rules == {"allocate-between-definitions", "part-typed-only-by-item-def"}
+def test_language_gap_findings_on_real_fixture_is_now_clean(ch08) -> None:
+    """PASS4-008 rebased ch08-cumulative.sysml onto the real, current ch07 content:
+    the definition-level `allocate` and the item-typed part usages that gave ch04-ch08
+    their gap findings do not exist in the current model (DL-039's own fix, already
+    applied by PASS4-005 for ch05 onward; see test_language_gap_findings_on_ch05_clean).
+    ch08 is the last fixture to carry the old, stale violations forward; it no longer
+    does."""
+    assert cf.language_gap_findings(ch08) == []
 
 
 def test_language_gap_findings_on_ch05_clean(ch05) -> None:
@@ -1371,15 +1368,17 @@ def test_satisfaction_claims_evaluated_scheduled_reports_no_findings_on_ch04(ch0
     assert with_subject[0]["requirement"] == "ToasterDemo::timely"
 
 
-def test_satisfaction_claims_evaluated_stays_blocked_on_ch08_despite_stage_reached(
+def test_satisfaction_claims_evaluated_passes_on_ch08_now_language_conformant(
     ch08,
 ) -> None:
-    # DL-048: ch06-ch08 carry the DL-039 language-tier violations, so the check
-    # stays blocked regardless of scheduling: reaching its stage does not run it
-    # past a language failure.
+    # PASS4-008: ch08 no longer carries the DL-039 language-tier violations (see
+    # test_language_gap_findings_on_real_fixture_is_now_clean), so once its stage is
+    # reached the check actually runs, and finds no false claims: DL-048's own
+    # demonstration that this check now genuinely passes, not merely stays blocked.
     r = cf.report(ch08, (8, 1))["project"][1]
     assert r.check_id == "satisfaction-claims-evaluated"
-    assert r.status == "blocked"
+    assert r.status == "passed"
+    assert r.findings == []
 
 
 def test_satisfaction_claims_evaluated_skips_verify_without_subject(ch08) -> None:
