@@ -1,31 +1,43 @@
 """scripts/check_construction.py: check_predecessor_containment, standalone (PASS2-010 Task B).
 
-Runs the real committed fixtures (models/chNN-cumulative.sysml), not constructed models,
-because this check's whole point is a real finding: the pre-existing, undesired drop of the
-entire `TimelyToastTest` verification def (a NAMED element, including its `toaster` subject
-reference) between ch03 and ch04 (decisions/audits/ch04-layer-audit.md F-5). The check
-compares NAMED elements only (see `_named_elements` in check_construction.py); the same
-audit's drop of `TimelyToast`'s doc/rationale is an UNNAMED element and is a known, separate
-blind spot this check does NOT catch (see DEFERRED.md D-022). This is expected and desired
-output, not a bug (see DEFERRED.md and PASS2-010's Task B non-goals: the fixture is not
-touched here). ch04->ch05, ch05->ch06, ch06->ch07 and ch07->ch08 are confirmed clean.
+Runs the real committed fixtures (models/chNN-cumulative.sysml), not constructed
+models, because this check's whole point is a real finding. The check compares
+NAMED elements only (see `_named_elements` in check_construction.py); an UNNAMED
+element (e.g. a `doc`) that changes or drops is a known, separate blind spot this
+check does NOT catch (see DEFERRED.md D-022). ch04->ch05, ch05->ch06, ch06->ch07
+and ch07->ch08 are confirmed clean.
 
-ch01->ch02 was a second known gap of the same shape, opened by PASS4-001 (Chapter 1's
-re-derivation added `item def Bread`/`Toast`, `action def ToastBread`, and
-`ToastingSystem::toastBread` ahead of Chapter 2) and closed by PASS4-002 (Chapter 2's own
-re-derivation, which rebased `ch02-cumulative.sysml` onto Chapter 1's new content). ch01->ch02
-is clean again.
+This gap moves rather than closes, one chapter at a time, as each chapter's own
+re-derivation lands (a rhythm recorded starting with PASS4-002,
+`decisions/pass4-run-002.md`):
 
-PASS4-002 opened a new gap of the same shape one chapter further down: ch02->ch03. Chapter 2's
-rebase means `ch02-cumulative.sysml` now carries `Bread`/`Toast`/`ToastBread`/
-`ToastingSystem::toastBread` forward, but `ch03-cumulative.sysml` has not itself been
-re-derived yet, so it does not carry them further. Expected and temporary, pending Chapter 3's
-own re-derivation; not touched here, same treatment as ch03->ch04 and (formerly) ch01->ch02.
+- ch01->ch02 was a known gap opened by PASS4-001 (Chapter 1's re-derivation added
+  `item def Bread`/`Toast`, `action def ToastBread`, and
+  `ToastingSystem::toastBread` ahead of Chapter 2) and closed by PASS4-002
+  (Chapter 2's own re-derivation, which rebased `ch02-cumulative.sysml` onto
+  Chapter 1's new content). ch01->ch02 is clean.
+- PASS4-002 opened the same gap one chapter further down, ch02->ch03:
+  `ch02-cumulative.sysml` carried `Bread`/`Toast`/`ToastBread`/
+  `ToastingSystem::toastBread` forward, but `ch03-cumulative.sysml` had not
+  itself been re-derived yet.
+- PASS4-003 (Chapter 3's own re-derivation) closed ch02->ch03 the same way, by
+  rebasing `ch03-cumulative.sysml` onto `ch02-cumulative.sysml`'s current content
+  (see `decisions/audits/ch03-layer-audit.md` and
+  DL-018/DL-032/DL-033/DL-039/DL-048). ch02->ch03 is clean. The same rebase also
+  adds `requirement timely : TimelyToast`, folds
+  `assert not satisfy timely by slow` into `slow`'s own body, and keeps
+  `TimelyToastTest` unchanged in kind, so ch03->ch04 (not touched by PASS4-003, a
+  non-goal) now drops all of those NAMED elements too, in addition to the
+  pre-existing `TimelyToastTest` wholesale drop PASS2-010 first recorded
+  (`decisions/audits/ch04-layer-audit.md` F-5). Expected and temporary, pending
+  Chapter 4's own re-derivation; not touched here, same treatment ch02->ch03
+  received until PASS4-003 closed it.
 
-The constructed-pair tests below (type-change, unnamed-element, and check_chapter wiring)
-point `CUMULATIVE_FILES` at small standalone SysML strings under `tmp_path`, isolated from
-the real committed fixtures above, using sentinel chapter numbers (91/92) that are not keys
-in the real `CUMULATIVE_FILES`/`CONSTRUCTION_NOTEBOOKS` dicts.
+The constructed-pair tests below (type-change, unnamed-element, and
+check_chapter wiring) point `CUMULATIVE_FILES` at small standalone SysML strings
+under `tmp_path`, isolated from the real committed fixtures above, using
+sentinel chapter numbers (91/92) that are not keys in the real
+`CUMULATIVE_FILES`/`CONSTRUCTION_NOTEBOOKS` dicts.
 """
 import importlib.util
 from pathlib import Path
@@ -58,24 +70,17 @@ def conn():
 
 
 def test_ch03_to_ch04_reports_the_known_dropped_elements(cc, conn):
-    """The known, pre-existing, real failure (F-5): ch04 drops TimelyToastTest wholesale."""
+    """PASS4-003 rebased ch03-cumulative.sysml onto ch02-cumulative.sysml's current
+    content (closing ch02->ch03, see the test below) and added `timely`, the `slow`
+    satisfaction claim, and kept `TimelyToastTest`. ch04-cumulative.sysml is not
+    touched by PASS4-003 (a non-goal) and was built against the old, stale ch03
+    fixture, so it now drops all of these NAMED elements: the functional constructs
+    ch03 carries forward from Chapter 2's own rebase, and TimelyToastTest, the
+    pre-existing drop PASS2-010 first recorded (F-5)."""
     failures = cc.check_predecessor_containment(4, conn)
-    assert failures, "expected the predecessor-containment check to catch ch04 dropping ch03 elements"
-    joined = "\n".join(failures)
-    assert "ToasterDemo::TimelyToastTest" in joined
-    assert "ch03-cumulative.sysml" in joined and "ch04-cumulative.sysml" in joined
-    # Every reported failure is a *missing* element (nothing changed @type here).
-    assert all("is missing from" in f for f in failures)
-
-
-def test_ch02_to_ch03_reports_the_known_dropped_elements(cc, conn):
-    """The known, real, PASS4-002 gap: ch03 does not yet carry forward the functional
-    construct Chapter 2's rebase carries into ch02-cumulative.sysml (item def Bread/Toast,
-    action def ToastBread, and ToastingSystem's perform), because ch03-cumulative.sysml has
-    not itself been re-derived yet. Same shape as ch03->ch04 above (and as ch01->ch02 was
-    before PASS4-002); expected to close when Chapter 3 is re-derived, not fixed here."""
-    failures = cc.check_predecessor_containment(3, conn)
-    assert failures, "expected the predecessor-containment check to catch ch03 dropping ch02's carried-forward functional elements"
+    assert failures, (
+        "expected the predecessor-containment check to catch ch04 dropping ch03 elements"
+    )
     joined = "\n".join(failures)
     for qname in (
         "ToasterDemo::Bread",
@@ -84,17 +89,20 @@ def test_ch02_to_ch03_reports_the_known_dropped_elements(cc, conn):
         "ToasterDemo::ToastBread::bread",
         "ToasterDemo::ToastBread::toast",
         "ToasterDemo::ToastingSystem::toastBread",
+        "ToasterDemo::TimelyToastTest",
+        "ToasterDemo::TimelyToastTest::toaster",
     ):
         assert qname in joined, f"expected {qname} to be reported missing"
-    assert "ch02-cumulative.sysml" in joined and "ch03-cumulative.sysml" in joined
+    assert "ch03-cumulative.sysml" in joined and "ch04-cumulative.sysml" in joined
     # Every reported failure is a *missing* element (nothing changed @type here).
     assert all("is missing from" in f for f in failures)
 
 
-@pytest.mark.parametrize("chapter", [2, 5, 6, 7, 8])
+@pytest.mark.parametrize("chapter", [2, 3, 5, 6, 7, 8])
 def test_other_adjacent_pairs_report_no_failures(cc, conn, chapter):
-    """ch01->ch02 (clean again as of PASS4-002), ch04->ch05, ch05->ch06, ch06->ch07 and
-    ch07->ch08 are each clean."""
+    """ch01->ch02 (clean since PASS4-002), ch02->ch03 (clean since PASS4-003, which
+    rebased ch03-cumulative.sysml onto ch02-cumulative.sysml's current content),
+    ch04->ch05, ch05->ch06, ch06->ch07 and ch07->ch08 are each clean."""
     failures = cc.check_predecessor_containment(chapter, conn)
     assert failures == []
 
