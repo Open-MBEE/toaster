@@ -122,9 +122,12 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     4: [
         {
             "path": "chapters/ch04-functional-decomp/01-action-def-ffbd.ipynb",
-            # ApplyHeat calls DeliveredEnergy (defined in Ch3)
+            # ApplyHeat and the reopened ToastBread both reference Bread/Toast (Ch1).
+            # PASS4-004 removed calc def DeliveredEnergy from ApplyHeat's body (DL-030);
+            # it does not originate in this chapter and is not reintroduced here.
             "context_stubs": [
-                "calc def DeliveredEnergy { in power : ISQ::PowerValue; in duration : ISQ::DurationValue; in efficiency : DimensionOneValue; return : ISQ::EnergyValue = power * duration * efficiency; }",
+                "item def Bread;",
+                "item def Toast;",
             ],
         },
         {

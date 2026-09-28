@@ -336,3 +336,187 @@ sysml-toolkit's Python binding (`sysmlv2.Session`) has no `verify`/`solve` metho
 **Upstream issue:** not filed; not blocking (the workaround is sufficient and intended to be short-lived, not a missing-capability report)
 **Toaster issue:** not filed
 **CI note (PASS2-012 F7):** `tests/test_modelcheck.py` is skipped in CI — the `sysmlv2` binary is a local build artifact (`~/Documents/GitHub/sysml-toolkit/target/release/sysmlv2`), not something CI builds or installs, so the whole file is guarded by a `pytest.mark.skipif` on the binary's presence rather than run there.
+
+## D-026: OpenSysML treats an implicit and an explicit-but-spec-identical `[0..*]` multiplicity differently for an `in` parameter reachable through a nested action step
+
+**Headline finding:** writing a bare `in` parameter's already-implicit multiplicity
+out explicitly, changing nothing about what the declaration means, changes whether
+OpenSysML v0.9.0 can evaluate the model. `in energy : ISQ::EnergyValue;` (no
+multiplicity written) and `in energy : ISQ::EnergyValue[0..*];` (the multiplicity
+SysML v2.0's own default already gives the first form, §7.6.3/§7.6.4, see below) are
+spec-identical declarations. The tool accepts both (`model.ok == True`), but only
+the second keeps the model evaluable.
+
+Found building Chapter 4's own re-derivation (PASS4-004), corrected across five
+rounds of independent review re-probing (Opus 5.5): nesting `ApplyHeat` as an actual
+step of `ToastBread` (`action def ApplyHeat { in bread : Bread; in energy :
+ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`, kept as typed, valueless
+functional input slots per DL-030/DL-031's rulings) made `model.eval()` fail on
+*any* attribute of a `Toaster` part usage that transitively owns or performs that
+action graph, not only on expressions that touch `ApplyHeat` itself.
+`ToasterDemo::slow.cycleTime` (a directly-overridden literal, `200.0 [SI::s]`, with
+no relation to `ApplyHeat`, `energy` or `duration` at all) raised `unbound
+parameter: action ApplyHeat: input parameter energy is bound by no argument` (and
+`bread`, before it was bound to `ToastBread::bread` per Q2's ruling), and so did
+`ToasterDemo::timely(ToasterDemo::slow)` (the expression
+`src/toaster/conformance.py::satisfaction_claims_evaluated` and Chapter 3's own
+notebooks both use).
+
+**The precise trigger, isolated in two separate experiments.**
+
+*Experiment 1 (which construction reaches the parameter at all).* Six variants,
+each varying only how `ApplyHeat` is referenced, all tested on the same single
+parameter (`in bread : Bread;`, left as declared, no multiplicity written), against
+the same minimal model (`Toaster :> ToastingSystem { perform action toastBread :
+ToastBread { action applyHeat : <variant>; } }`, `slow.cycleTime` evaluated):
+
+| Variant | Result |
+|---|---|
+| `action def ApplyHeat { out toast : Toast; ... }` (only `out` parameters, no `in` at all) | evaluates cleanly |
+| `action applyHeat : ApplyHeat;` (sequenced with `first`/`then`) | fails |
+| `action applyHeat : ApplyHeat;` (bare ownership, no succession, no `perform`) | fails identically |
+| `ref action applyHeat : ApplyHeat;` | fails |
+| `abstract action def ApplyHeat { ... }` | fails |
+| `action applyHeat : ApplyHeat[0..*];` (multiplicity on the *usage*, not the parameter) | fails |
+
+So the trigger is not "any owned action" (only-`out` is fine), not the
+`perform`/succession machinery (`ref action`, bare ownership and `perform action`
+all fail the same way), and not merely "any reference to a separate definition"
+(the only-`out` variant is such a reference too, and it is fine). It is specifically
+an unbound `in` parameter, reached through a nested step, that matters — which
+motivates Experiment 2.
+
+*Experiment 2 (what about the parameter's declared multiplicity matters).* With the
+nesting held fixed at the failing shape above, only `energy`'s declared multiplicity
+was varied, one value at a time, each tested in isolation (no other unresolved `in`
+parameter present in that run):
+
+| Declared multiplicity on `energy` | Result |
+|---|---|
+| none written (the bare, implicit form) | fails |
+| `[1..1]` (explicit) | fails |
+| `[1]` | fails |
+| `[1..*]` | fails |
+| `[2..*]` | fails |
+| `[0..*]` (explicit, spec-identical to the implicit default — see below) | evaluates cleanly |
+| `[0..1]` | evaluates cleanly |
+| `[0..2]` | evaluates cleanly |
+| `[*]` | evaluates cleanly |
+
+**The mechanism this evidence actually supports:** OpenSysML v0.9.0 gives a
+keyword-less `in` parameter (a `ReferenceUsage` per the grammar, §8.2.2.6.3) the
+tighter `[1..1]` default that SysML v2.0 formal/2026-03-02 §7.6.3 reserves for "an
+attribute usage, an item usage, ..., or a port usage" — usages declared *with* a
+kind keyword, which a bare `in` parameter is not (§7.6.4: "a reference usage is a
+usage that is declared without any kind keyword"). This matches the tool's own
+`model.find(...).kind` reporting `attributeUsage` for these parameters even though
+the API-JSON export types them `ReferenceUsage` (a second, smaller inconsistency,
+kept below as corroborating evidence). Having applied that wrong `[1..1]`-shaped
+default, the tool then raises whenever a nested step's parameter has an effective
+lower bound of 1 or more and is left unbound — which is why every multiplicity with
+lower bound ≥ 1 (bare, `[1..1]`, `[1]`, `[1..*]`, `[2..*]`) fails identically, and
+every multiplicity with lower bound 0 (`[0..*]`, `[0..1]`, `[0..2]`, `[*]`)
+evaluates cleanly. This is a coherent, if wrong, rule — not, as an earlier draft of
+this entry claimed, a tool that "keys on whether a multiplicity token is present in
+the text" regardless of what it means: that reading is contradicted by explicit
+`[1..1]` failing exactly like the bare form.
+
+The spec's own default for `bread`/`energy`/`duration`, none of which carries a kind
+keyword, is the general, unbounded `[0..*]` (KerML 1.1 Beta 2 agrees, calling this
+"the usual default"), not the `[1..1]` the tool applies. Writing `[0..*]` out
+explicitly states nothing the bare declaration did not already mean per §7.6.3/
+§7.6.4 — it is spec-identical to the implicit default — and it evaluates cleanly.
+That is the headline finding: an implicit and an explicit-but-spec-identical
+declaration should behave the same under any coherent reading of the spec, and in
+this tool they do not.
+
+**Reproducing the applied fix precisely.** `ApplyHeat` as built has *three*
+unbound-by-default `in` parameters (`bread`, `energy`, `duration`), not one — a
+reader who changes only one of them (say, `energy`'s multiplicity) on the full,
+real `ApplyHeat` and expects `slow.cycleTime` to evaluate will still see the
+failure, now naming whichever of the other two parameters is still unresolved
+(`bread`, then `duration`, in declaration order). This is expected, not a
+contradiction of Experiment 2 above (which isolates one parameter at a time in a
+model with no other unresolved `in` parameter) or of the applied fix (which
+resolves all three: `bread` by reference-binding to `ToastBread::bread`, per Q2's
+ruling, and `energy`/`duration` by explicit `[0..*]`). All three must be resolved,
+by whichever means, before the model is fully evaluable again.
+
+**Internal inconsistency (further evidence this is a tool defect, not a
+deliberate rule):** `ToastBread`'s own top-level `in bread : Bread;` has the
+identical shape — no declared multiplicity, unbound — and the tool tolerates it
+fine: `slow.cycleTime` evaluates cleanly when `ToastBread`'s body is `first start;
+then done;` with no nested reference to a separate action definition at all. Only
+the *nested* case — one level deeper, where the unbound parameter belongs to a
+definition reached through another action usage rather than being the directly
+performed action's own parameter — triggers the failure. Per KerML 1.1 Beta 2
+§9.2.8.2.6 (`FeatureReadEvaluation`), a feature read's result is scoped to "the
+values of `accessedFeature` of `onOccurrence`" — nothing in the read semantics
+singles out a *nested* unbound feature for different treatment than a top-level
+one, so this asymmetry is not something this citation explains.
+
+A second, smaller inconsistency corroborates the first: the tool's own account of
+what kind of feature these parameters are does not agree with itself.
+`model.find("ToasterDemo::ApplyHeat::bread").kind` (and the same for `energy`,
+`duration`) reports `attributeUsage`, while the same feature's API-JSON export
+types it `ReferenceUsage` (confirmed directly, both checked against the real
+fixture). Whichever is correct, the tool's two own surfaces for asking "what kind
+of feature is this" disagree with each other, on the very parameters this gap is
+about.
+
+`[1..1]` (which would be the spec-accurate way to state that
+`bread`/`energy`/`duration` mean exactly one value, not yet known, rather than
+`[0..*]`'s "any number, including none") fails identically to the bare form, per
+Experiment 2 above — expected under the mechanism this entry now gives, since
+`[1..1]` has lower bound 1, same as the tool's own wrong default. Whether to write
+`[1..1]` everywhere it is spec-accurate across the tutorial, trading the tool's
+current bug (which the model does not need to work around, since `[0..*]` already
+does) for stating each parameter's true intended cardinality, is a broader, separate
+question than this gap, spanning every chapter's action and calc parameters, not
+just Chapter 4's; logged separately (`decisions/next-passes.md` item 11).
+
+**`[0..1]` is a real technical workaround, considered and rejected; `[0..*]` is the
+applied fix.** `[0..1]` does avoid the failure (confirmed above), but it is **not
+used**: it narrows the multiplicity below the spec's own `[0..*]` default and
+asserts `bread`/`energy`/`duration` are genuinely optional (zero-or-one) inputs to
+`ApplyHeat`, neither of which is true — the action needs all three to mean
+anything; they are simply not yet bound to a value at this stage of decomposition.
+`[0..*]`, by contrast, is not a rejected workaround: `models/ch04-cumulative.sysml`
+now declares `in energy : ISQ::EnergyValue[0..*]` and `in duration :
+ISQ::DurationValue[0..*]` (`bread` stays unannotated, already bound to
+`ToastBread::bread` per Q2). This is **the applied fix**, not a documented
+alternative, because writing it states nothing the bare declaration did not already
+mean per §7.6.3/§7.6.4: DL-030/DL-031's requirement (typed, unit-bearing, no value)
+is completely unaffected, the parameter is exactly as valueless and exactly as
+"not yet bound" as before, and the model's claim about `energy`/`duration` has not
+changed at all. Verified: `model.ok == True`; `slow.cycleTime` and
+`timely(slow)` both evaluate normally again (`slow.cycleTime` returns `200 [SI::s]`,
+`timely(slow)` returns `False`, matching Chapter 3's own established result); the
+balance constraint (`assert constraint balance { delivered >= 0.0 [SI::J] and loss
+>= 0.0 [SI::J] and delivered + loss <= energy }`) still evaluates correctly against
+`energy[0..*]`, holding for a plausible split and failing for both an overdrawn and
+a negative-loss one.
+
+**Side effect worth noting:** under explicit `[0..*]`, the tool also now accepts a
+*multi-valued* `energy` (more than one bound value), which the balance constraint's
+`<= energy` cannot evaluate (reports a type mismatch between a quantity and a
+sequence). Nothing in the tutorial ever supplies more than one value, so this has
+no practical effect here, but it shows `[0..*]` only really makes sense for these
+parameters because exactly one value is what every actual use assumes — reinforcing
+that `[1..1]` is the spec-accurate statement of intent (`decisions/next-passes.md`
+item 11), even though `[0..*]` is what the tool currently requires.
+
+**Workaround:** the applied fix above (explicit `[0..*]` on `energy` and
+`duration`) is spec-neutral and needs no separate workaround language:
+`src/toaster/conformance.py::satisfaction_claims_evaluated` now reports Chapter 4's
+`slow` claim exactly as it reports Chapter 3's (`passed`, no findings;
+`tests/test_conformance.py::
+test_satisfaction_claims_evaluated_scheduled_reports_no_findings_on_ch04`).
+**Resolution:** upstream fix so an implicit and an explicit-but-identical
+multiplicity are treated the same (the headline finding above), or documentation
+explaining why they are not; separately, resolving the `model.find(...).kind` vs
+API-JSON `@type` disagreement noted above.
+**Upstream issue:** not filed — Draft 10 (`decisions/gap-issue-drafts.md`), citing
+the exact reproduction, isolation table and spec citations above, is drafted and
+held for Z's review.
+**Toaster issue:** not filed

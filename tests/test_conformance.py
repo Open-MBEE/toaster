@@ -1256,11 +1256,37 @@ def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch03(ch03
     assert with_subject[0]["requirement"] == "ToasterDemo::timely"
 
 
-def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch04(ch04) -> None:
+def test_satisfaction_claims_evaluated_scheduled_reports_no_findings_on_ch04(ch04) -> None:
+    """PASS4-004 nests `ApplyHeat` inside `ToastBread` (F-4), keeping `energy` and
+    `duration` as typed, valueless functional input slots (DL-030, DL-031). Doing so
+    initially surfaced an OpenSysML v0.9.0 execution-semantics gap (`DEFERRED.md`
+    D-026): `model.eval` on any attribute of a `Toaster` usage eagerly executes that
+    usage's full performed-action graph, and raised whenever a nested step's
+    definition had an `in` parameter with no declared multiplicity left unbound, even
+    for an attribute (`slow.cycleTime`) with no dependency on `ApplyHeat` at all.
+    `energy` and `duration` are written with an explicit `[0..*]` multiplicity (the
+    same multiplicity SysML v2.0's own default already gives a bare, unstated
+    declaration like these, per section 7.6.3/7.6.4) specifically because OpenSysML
+    v0.9.0 only honors that default when it is spelled out; writing it changes
+    nothing about what the model means (DL-030/DL-031's valueless-slot requirement is
+    untouched) and keeps the model fully evaluable. `slow`'s own
+    `assert not satisfy timely by slow;` (carried forward unchanged from Chapter 3,
+    predecessor containment) is consequently reported here exactly as it is in
+    Chapter 3: `passed`, with the one claim evaluating as its own negation states, not
+    as a fault to report. See PASS4-004's report for the tool-inconsistency finding
+    this fix works around."""
     r = cf.report(ch04, (4, 1))["project"][1]
     assert r.check_id == "satisfaction-claims-evaluated"
-    assert r.status == "failed"
-    assert any(f["subject"] == "ToasterDemo::slow" for f in r.findings)
+    assert r.status == "passed"
+    assert r.findings == []
+
+    from toaster.query import satisfy_relationships
+
+    claims = satisfy_relationships(ch04)
+    with_subject = [c for c in claims if c["subject"]]
+    assert len(with_subject) == 1
+    assert with_subject[0]["subject"] == "ToasterDemo::slow"
+    assert with_subject[0]["requirement"] == "ToasterDemo::timely"
 
 
 def test_satisfaction_claims_evaluated_stays_blocked_on_ch08_despite_stage_reached(
