@@ -155,6 +155,13 @@ match once that chapter is rebuilt. Standing rule (`decisions/next-passes.md`): 
 *every* chapter's own re-derivation contract, not an optional cleanup pass done only when
 someone happens to reread it.
 
+## Judgment record notebooks
+
+A notebook that builds a `ReviewRecord` (an `asserted_context`, `asserted_inference` or
+`asserted_solution` judgment) uses `toaster-review-protocol`'s own construction-zone pattern for
+it, not one dense call: name each group of fields, narrate what it's for, print it, then assemble.
+The size limits below are relaxed for this content (see that skill for the exact grouping and why).
+
 ## Size limits (A6 review criteria)
 
 - Prose: ≤600 words across markdown cells

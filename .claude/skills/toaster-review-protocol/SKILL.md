@@ -45,6 +45,65 @@ record = ReviewRecord(
 )
 ```
 
+## Why a judgment record is its own notebook content, not an aside
+
+The model is computable: `model.eval(...)` and the conformance checks tell you whether a claim
+holds. That is not the same as the model being interpretable — knowing a claim evaluates True or
+False does not by itself tell a reader whether the claim was the right one to check, whether enough
+was checked to trust it, or what would have to be true for the check to be wrong. A `ReviewRecord`
+is where that second layer lives: it states, in the reader's terms, what appropriateness,
+sufficiency and trustworthiness look like for this specific claim (Hawkins 2011 §§3.1-3.4). A
+notebook that builds one is teaching that layer as directly as a construction-zone cell teaches a
+SysML construct, and deserves the same narrated, one-idea-at-a-time treatment, not a single
+dense call that a reader skims past to get to the printed validation result.
+
+## Judgment record construction zone
+
+Build a `ReviewRecord` the same way a construction-zone notebook builds a model fragment: name each
+group of fields, narrate what it's for, print it, then assemble. Group by the question each part of
+Hawkins' taxonomy is answering, not by the dataclass's field order:
+
+```
+[markdown] narration: what is being claimed, and about what
+[code]     claim = "..."
+           model_ref = "..."
+[markdown] narration: what standard the claim is checked against (appropriateness)
+[code]     scope = "..."
+           criteria = "..."
+[markdown] narration: what's being taken as given
+[code]     premises = [...]
+           assumption_refs = [...]
+[markdown] narration: what supports the claim, and how (sufficiency)
+[code]     evidence_refs = [...]
+           rationale = "..."
+[markdown] narration: what could be wrong, and what's still open (trustworthiness) —
+           counterevidence and residual_uncertainties are never blank; a record that
+           hides its own weak points is not more trustworthy, it is less checkable
+[code]     counterevidence = "..."
+           residual_uncertainties = "..."
+[markdown] narration: assembling the record from the named parts above
+[code]     record = ReviewRecord(identifier=..., kind=..., claim=claim, model_ref=model_ref,
+               content_hash=hash_content(source), scope=scope, criteria=criteria,
+               premises=premises, assumption_refs=assumption_refs,
+               evidence_refs=evidence_refs, rationale=rationale,
+               counterevidence=counterevidence,
+               residual_uncertainties=residual_uncertainties,
+               disposition="pending", dependency_freshness="current",
+               engineering_conclusion=..., record_kind="worked_example")
+           errors = validate_record(record)
+           print(f"Validation errors: {errors}")
+```
+
+Five groups, five narration cells, matching the model-fragment construction zone's pacing rule (no
+two code cells adjacent). Each `print`ed group is the record's own reflection, the same role a
+printed `TOASTER_INCREMENT` plays for a model fragment.
+
+**Size limit:** `toaster-recipe`'s ≤600 words / ≤50 lines budget is sized for a notebook whose main
+content is one model construct. A notebook whose construct is a judgment record may exceed it — the
+fields Hawkins' taxonomy requires are the content, not overhead around it — provided the words spent
+are the record's own claim, criteria, evidence, rationale and challenge, not restated narration
+about the tutorial's own process.
+
 ## Two evidence paths
 
 | Path | Use when | Call |
