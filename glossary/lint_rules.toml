@@ -12,6 +12,14 @@ severity = "error"
 scope = "learner"
 
 [[rule]]
+id = "no-em-dash"
+regex = '''—'''
+message = "No em-dashes in learner-facing prose (tutorial-style-guide). Use a period, comma, colon, or parentheses."
+why = "tutorial-style-guide, prose style"
+severity = "error"
+scope = "learner"
+
+[[rule]]
 id = "concept-selection"
 regex = '''\bconcept\s+selection\b'''
 message = "Say \"selection among alternatives\"."

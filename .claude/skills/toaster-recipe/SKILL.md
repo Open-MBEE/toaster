@@ -9,6 +9,8 @@ description: Sub-notebook 7-cell template, chapter index/conclusion structure, t
 
 The 7 cells below are the **required skeleton**. Additional markdown+code pairs may be inserted between cells 2–4 whenever a new operation needs narration or a code cell would otherwise do two conceptual things. A6 reviews for skeleton completeness by content type, not by cell index.
 
+**Pacing rule (binding, found by direct human review of Ch1/Ch2: every construction-introducing notebook built so far violated this).** Two code cells are never adjacent without a markdown cell between them, unless they are literally two halves of one inseparable operation (a single fragment's declaration and its own `print`, for example). The model-increment cell (declare, assemble, load), the negative control, and any demonstration cell are three different things happening. Each transition between them needs its own sentence saying what just happened and what comes next, even when each individual cell is otherwise correct on its own. A reader should never see two code cells back to back and have to infer the connection alone. This applies retroactively: it is why Chapter 1 and Chapter 2 need a narration-only retrofit.
+
 | Skeleton slot | Type | Constraint |
 |---|---|---|
 | **Concept** | Markdown | Exactly one sentence: "This notebook introduces X; after running it you can Y." |

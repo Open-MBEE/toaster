@@ -11,13 +11,16 @@ Load this skill alongside domain skills. It does not replace them.
 
 - Active voice. Never "it can be seen that" or "it is worth noting." Say the thing.
 - Sentences ≤20 words as the default ceiling. Split longer ones.
-- No em-dashes. Use parentheses (short aside) or a colon: for an elaboration, or a new sentence.
+- **No em-dashes, anywhere, in any learner-facing file.** Not for asides, not for emphasis, not for a dramatic pause. Use a period, a comma, a colon for an elaboration, or parentheses for a short aside. Mechanically enforced: `tall-named`'s neighbor rule `no-em-dash` in `glossary/lint_rules.toml` flags every one (`uv run python -m glossary lint`). Found by direct human review 2026-09-27: 35 em-dashes in Chapters 1-2 alone, in a rule that had already been written down here and never checked. A style rule nobody greps for is not a rule; run the lint before calling prose done.
+- **No metanarration: text about the act of teaching or writing, instead of the subject matter itself.** Textbook register states facts about the model and the method directly; it does not comment on itself. Banned patterns, all found in this tutorial's own output before this pass: "Let's explore/dive into/unpack X," "Now we'll turn to X," "This is where it gets interesting," "As you can see above," "It's worth noting that," "Here's the key insight," any sentence whose subject is "this notebook/section/tutorial" doing something to the reader rather than the subject matter doing something in the model. Write "The requirement constrains cycle time" not "In this section, we'll look at how the requirement constrains cycle time."
 - No hedging when the claim is established: "the model shows" not "the model seems to suggest."
 - Present tense for model facts: "the toaster has three parts." Past tense for actions already taken: "we added a requirement."
 - Oxford comma.
 - Glossary terms introduced once; used without definition thereafter.
 
-**What A4 must never do:** Restate what the code just did. If `model.ok` is True and printed, don't write "as we can see, the model loaded successfully."
+**What A4 must never do:** Restate what the code just did. If `model.ok` is True and printed, don't write "as we can see, the model loaded successfully" (also metanarration, doubly banned).
+
+**What A6 must check, mechanically, not by impression:** run `uv run python -m glossary lint` and read every `no-em-dash` hit before approving prose; grep the diff for the metanarration patterns above. A reviewer who read the prose and "didn't notice" an em-dash is not evidence there are none.
 
 ## Diagram aesthetics (A7)
 
@@ -51,7 +54,16 @@ Every major operation gets its own dedicated markdown cell. This is not optional
 - A code cell whose output needs interpretation is followed by a markdown cell interpreting it. Do not leave output to speak for itself.
 - If a demo involves two distinct steps (e.g., define a sympy expression, then lambdify it), those are two code cells each with its own narration — not one cell with a comment.
 
-**A6 test:** scan each code cell. If it does more than one conceptual thing OR if its output has no adjacent markdown explanation, flag it.
+**A6 test, mechanical, not "scan and see if anything jumps out":** for every notebook in the diff, list the cell types in order (`code`/`markdown`) and check for two `code` cells in a row with no `markdown` between them. Found by direct human review 2026-09-27, not by any prior automated or human check: every one of Chapter 1 and Chapter 2's seven construction-introducing notebooks had at least one such run (`toaster-recipe`'s own pacing rule, and Chapter 1/2's retrofit). A quick check, worth running every time:
+
+```python
+import json
+nb = json.load(open("path/to/notebook.ipynb"))
+seq = [c["cell_type"] for c in nb["cells"]]
+print("".join("C" if t == "code" else "M" for t in seq))
+```
+
+Any run of two or more consecutive `C`s is a finding, unless the contract explicitly names that pair as one inseparable operation.
 
 ## Structural consistency (A4, A6)
 

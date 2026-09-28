@@ -51,6 +51,8 @@ CASES = [
     ("tall-named", "the A-F construct", "a-f is not the abbreviation; neither is AF"),
     ("tall-named", "A-F, O-S, and E all appear", "the range a-f in lowercase does not count"),
     ("tall-named", "shows the O-S seam", "cross-section O S without a hyphen"),
+    ("no-em-dash", "the model—loaded correctly", "the model, loaded correctly"),
+    ("no-em-dash", "a fixed value—not a default", "a fixed value, not a default (a hyphen-only sentence)"),
     ("stale-physical-layer", "the physical architecture layers", "the physical architecture layersy"),
     ("concept-selection", "This is Concept Selection.", "concept and selection are separate; selection among alternatives"),
     ("concept-selection", "concept selection here", "concept selections and concept selectional"),
