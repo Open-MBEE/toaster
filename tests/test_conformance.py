@@ -1256,11 +1256,26 @@ def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch03(ch03
     assert with_subject[0]["requirement"] == "ToasterDemo::timely"
 
 
-def test_satisfaction_claims_evaluated_scheduled_reports_slow_claim_on_ch04(ch04) -> None:
+def test_satisfaction_claims_evaluated_scheduled_reports_execution_error_on_ch04(ch04) -> None:
+    """PASS4-004 nests `ApplyHeat` inside `ToastBread` (F-4), keeping `energy` and
+    `duration` as valueless functional input slots (DL-030, DL-031). This surfaces a
+    newly discovered OpenSysML v0.9.0 execution-semantics gap, not present when
+    `ToastBread` had no body (ch01-ch03): `model.eval` on ANY attribute of a `Toaster`
+    usage eagerly executes that usage's full performed-action graph, including the
+    nested `ApplyHeat` step, and raises when an "in" parameter of a referenced action
+    definition is unbound, even for an attribute (`slow.cycleTime`, a direct literal
+    override) with no dependency on `ApplyHeat` at all. `slow`'s own
+    `assert not satisfy timely by slow;` (carried forward unchanged from Chapter 3,
+    predecessor containment) is consequently reported as an evaluation error rather
+    than a semantic pass or fail; the check's own design already treats an eval error
+    as a distinguishable finding (`error` field), not a silent skip. See PASS4-004's
+    report for the open question this raises."""
     r = cf.report(ch04, (4, 1))["project"][1]
     assert r.check_id == "satisfaction-claims-evaluated"
     assert r.status == "failed"
-    assert any(f["subject"] == "ToasterDemo::slow" for f in r.findings)
+    finding = next(f for f in r.findings if f["subject"] == "ToasterDemo::slow")
+    assert "error" in finding
+    assert "unbound parameter" in finding["error"]
 
 
 def test_satisfaction_claims_evaluated_stays_blocked_on_ch08_despite_stage_reached(
