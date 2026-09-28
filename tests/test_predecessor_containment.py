@@ -112,8 +112,8 @@ re-derivation lands (a rhythm recorded starting with PASS4-002,
   elements against. `ch08->ch10` is clean: every named element
   ch08-cumulative.sysml carries is present in ch10-cumulative.sysml with the
   same `@type` (see `test_ch08_to_ch10_predecessor_containment_via_fallback_
-  is_clean` below, which also proves the fallback is real, not vacuous, by
-  showing it catches a genuine removal).
+  is_clean` below; the companion test `..._is_real_not_vacuous` is what proves
+  the fallback is real, not vacuous, by showing it catches a genuine removal).
 
 The constructed-pair tests below (type-change, unnamed-element, and
 check_chapter wiring) point `CUMULATIVE_FILES` at small standalone SysML strings
