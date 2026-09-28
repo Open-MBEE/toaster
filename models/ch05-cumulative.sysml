@@ -47,9 +47,9 @@ package ToasterDemo {
         out duration : ISQ::DurationValue[0..*];
     }
 
-    abstract part def HeatingSystem :> ToastingSystem {
+    abstract part def HeatingSystem {
         doc /* The logical carrier of the heating mechanism: performs ApplyHeat
-             * and receives its duration signal from a control component. */
+             * and exposes a port for a duration signal from a control component. */
         perform action applyHeat : ApplyHeat;
         port durationIn : ~DurationPort;
     }
@@ -61,7 +61,7 @@ package ToasterDemo {
         attribute cycleTime : ISQ::DurationValue;
         part heating : HeatingSystem;
         part control : ControlSystem;
-        flow control.durationOut to heating.durationIn;
+        interface durationInterface connect control.durationOut to heating.durationIn;
     }
 
     requirement def TimelyToast {
