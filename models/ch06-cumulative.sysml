@@ -167,8 +167,8 @@ package ToasterDemo {
         doc /* An electrically switched resistive element: converts electrical
              * energy to heat by Joule heating. The mechanism selection this
              * specialization commits to is recorded against the alternative
-             * it was chosen over, argued from the model's own existing
-             * control interface, not asserted. */
+             * it was chosen over, argued from a domain premise about how the
+             * two mechanisms work, not from anything the model connects. */
         attribute :>> power default = 800.0 [SI::W];
         attribute resistance : ISQ::ResistanceValue default = 12.0 [SI::ohm];
     }
