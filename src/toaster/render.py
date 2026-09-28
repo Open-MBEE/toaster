@@ -78,7 +78,9 @@ def build_interconnection_intent(model: Any, fqn: str) -> dict:
     Returns a dict with:
       title    — the qualified name
       parts    — list of {name, type} for owned PartUsage elements
-      flows    — list of {source, target} using sysx:sourceText from FlowUsage ends
+      flows    — list of {source, target} using sysx:sourceText from FlowUsage,
+                 InterfaceUsage or ConnectionUsage ends (a connection whose ends
+                 are ports is an interface, SysML v2 formal/2026-03-02 §7.14.1)
       allocs   — list of {source, target} using sysx:sourceText from AllocationUsage ends
     """
     import json as _json
@@ -113,7 +115,7 @@ def build_interconnection_intent(model: Any, fqn: str) -> dict:
         tgt_text = by_id.get(ends[1]["@id"], {}).get("sysx:sourceText", "")
         if not (src_text and tgt_text):
             continue
-        if etype == "FlowUsage":
+        if etype in ("FlowUsage", "InterfaceUsage", "ConnectionUsage"):
             flows.append({"source": src_text, "target": tgt_text})
         elif etype == "AllocationUsage":
             allocs.append({"source": src_text, "target": tgt_text})
@@ -141,6 +143,16 @@ def render_sysmld(intent: dict | str | Path, out: str | Path) -> None:
     allocs = data.get("allocs", [])
     part_names = {p["name"] for p in parts}
 
+    def normalize(ref: str) -> str:
+        """Collapse a qualified reference's leading segment to a known part's
+        short name (e.g. 'Toaster::heating' -> 'heating') so an edge whose
+        endpoint was written fully qualified reuses the same node the parts
+        list already created, instead of drawing a duplicate box for the
+        same model element."""
+        segment = ref.split(".")[0]
+        short = segment.rsplit("::", 1)[-1]
+        return ref.replace(segment, short, 1) if short in part_names else ref
+
     lines = [
         f'digraph "{title}" {{',
         "  rankdir=LR;",
@@ -154,8 +166,8 @@ def render_sysmld(intent: dict | str | Path, out: str | Path) -> None:
         label = f'{p["name"]}\\n:{p["type"]}' if p.get("type") else p["name"]
         lines.append(f'  "{p["name"]}" [label="{label}"];')
     for flow in flows:
-        src = str(flow.get("source", ""))
-        tgt = str(flow.get("target", ""))
+        src = normalize(str(flow.get("source", "")))
+        tgt = normalize(str(flow.get("target", "")))
         src_part = src.split(".")[0]
         tgt_part = tgt.split(".")[0]
         if src_part in part_names and tgt_part in part_names:
@@ -164,8 +176,8 @@ def render_sysmld(intent: dict | str | Path, out: str | Path) -> None:
             lbl = f"{src_port}→{tgt_port}" if src_port else ""
             lines.append(f'  "{src_part}" -> "{tgt_part}" [label="{lbl}" arrowhead=open];')
     for alloc in allocs:
-        src = str(alloc.get("source", ""))
-        tgt = str(alloc.get("target", ""))
+        src = normalize(str(alloc.get("source", "")))
+        tgt = normalize(str(alloc.get("target", "")))
         if src and tgt:
             lines.append(f'  "{src}" -> "{tgt}" [style=dashed label="allocate" arrowhead=open];')
     lines.append("}")
