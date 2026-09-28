@@ -1,4 +1,4 @@
-# Chapter 2 — Conclusion
+# Chapter 2: Conclusion
 
 ## What we built
 
