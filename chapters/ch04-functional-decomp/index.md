@@ -14,7 +14,7 @@ Chapter 4 asks: how do we describe the sequence of functional steps that transfo
 
 ## Equipment
 
-See [setup](../../docs/setup.md) to provision Python, Node, and the OpenSysML binary before running any notebook.
+See [setup](../../docs/setup.md) to provision Python and the OpenSysML binary before running any notebook. Node.js is only needed if you also want to build the rendered book locally, not for running notebooks.
 
 ## Method
 
