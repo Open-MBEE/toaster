@@ -1,6 +1,6 @@
 # Drafted gap issues
 
-Status: **Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27**, per Z's explicit instruction, after the re-verification below. Draft 2 stays internal-only (Z's ruling, 2026-09-26) and Draft 8 is retracted; neither was ever meant to be filed. **Draft 9 (D-023, added Pass 4 Phase 0) is new and held for Z's review — not filed.** Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020 and D-023, each with its filed issue link where one exists).
+Status: **Drafts 1, 3, 4, 5, 6 and 7 filed 2026-09-27**, per Z's explicit instruction, after the re-verification below. Draft 2 stays internal-only (Z's ruling, 2026-09-26) and Draft 8 is retracted; neither was ever meant to be filed. **Draft 9 (D-023, added Pass 4 Phase 0) is new and held for Z's review — not filed. Draft 10 (D-026, added PASS4-004) is new and held for Z's review — not filed.** Each draft cites the exact source and asks only for what it supports. Tool versions: OpenSysML v0.9.0, sysml-toolkit v0.9.1. Probe evidence: `decisions/probes.md`; register: `DEFERRED.md` (D-014 to D-020, D-023 and D-026, each with its filed issue link where one exists).
 
 | Draft | Filed as |
 |---|---|
@@ -132,6 +132,53 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 **Request.** Either (a) export a transition's trigger as a real reference to the `AcceptActionUsage`/payload type it names, so a downstream tool can tell a resolved trigger from an unresolved one, or (b) if `sysx:trigger` is deliberately a display-only string, add a diagnostic when it doesn't resolve to anything in scope — the way sysml-toolkit already does.
 
 **Workaround in place:** a language-conformance guard is being added to the tutorial's own conformance tooling (`src/toaster/conformance.py`) that resolves each trigger string against in-scope item defs itself and flags a miss.
+
+---
+
+## Draft 10 (OpenSysML, likely bug): attribute evaluation on a part usage eagerly executes its entire owned/performed action graph, and fails on any unbound `in` parameter anywhere in it, even one irrelevant to the queried attribute (D-026)
+
+**Version:** OpenSysML v0.9.0.
+
+**Observed.** `part def Toaster { attribute cycleTime : ISQ::DurationValue; }`, with `attribute :>> cycleTime = 200.0 [SI::s];` on a usage (`slow`), where `Toaster` also (transitively, through an abstract supertype's `perform action toastBread : ToastBread;`) owns an action graph whose `ToastBread` step contains a nested action typed by a separate action definition with unbound, typed `in` parameters (`action def ApplyHeat { in bread : Bread; in energy : ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`): `model.eval("...::slow.cycleTime")` raises `unbound parameter: action ApplyHeat: input parameter bread is bound by no argument`, even though `cycleTime` has no relation whatsoever to `ApplyHeat`, `bread`, `energy` or `duration`. Confirmed for two distinct nesting idioms: `first start; then action applyHeat : ApplyHeat; then done;` (a sequenced step) and a bare owned `action applyHeat : ApplyHeat;` (no succession, no `perform`) — both fail identically, so the trigger is reachability/ownership within the part's action graph, not the succession or `perform` machinery specifically. Binding the unbound input to another feature that is itself unbound (e.g. `in bread = ToastBread::bread;`, matching `ToastBread`'s own valueless `bread` parameter) changes the error to `no value for feature ...` at evaluation time, still failing; only binding every quantity-typed `in` parameter to an actual concrete literal value resolves it. A trivial owned action with no nested reference to a separate parameterized definition (`first start; then done;`) does not trigger this at all: `slow.cycleTime` evaluates cleanly in that case.
+
+**Reference.** This is a report about the Python binding's `model.eval()` execution engine, not a language-conformance (parse/diagnostic) question, so we did not find a corresponding SysML v2 language-spec citation to check it against; the language accepts the model (`model.ok == True`) in every variant above.
+
+**Request.** Please confirm whether `model.eval()` on an attribute of a part usage is intended to always require every `in` parameter of every action transitively reachable from that usage's owned or performed action graph to resolve to a concrete value, even when the queried attribute does not depend on that action at all. If this is by design, documentation saying so (something like "the run engine executes the full instance graph before answering any query") would help. If unintended, we would welcome a fix so only the sub-graph the queried expression actually depends on needs full binding (lazy evaluation) — so an unrelated attribute of a part usage stays queryable while a genuinely undecided child action (a functional-decomposition step whose flows are typed but deliberately not yet valued, because no mechanism has been chosen at this stage of a model's development) stays undecided.
+
+**Repro.**
+```
+package Probe {
+    private import ScalarValues::*;
+    private import SI::*;
+    private import ISQ::*;
+    item def Bread;
+    item def Toast;
+    action def ApplyHeat {
+        in bread : Bread;
+        in energy : ISQ::EnergyValue;
+        in duration : ISQ::DurationValue;
+        out toast : Toast;
+        out delivered : ISQ::EnergyValue;
+        out loss : ISQ::EnergyValue;
+        constraint balance { delivered + loss <= energy }
+    }
+    action def ToastBread {
+        in bread : Bread;
+        out toast : Toast;
+        action applyHeat : ApplyHeat;   // or: first start; then action applyHeat : ApplyHeat; then done;
+    }
+    abstract part def ToastingSystem {
+        perform action toastBread : ToastBread;
+    }
+    part def Toaster :> ToastingSystem {
+        attribute cycleTime : ISQ::DurationValue;
+    }
+    part slow : Toaster { attribute :>> cycleTime = 200.0 [SI::s]; }
+}
+```
+`conn.load_from_content(src, strict=False).ok` is `True`; `model.eval("Probe::slow.cycleTime")` raises.
+
+**Workaround in place.** None technical that preserves the intended model design (typed, valueless functional-input slots on an unallocated action, per this tutorial's own layer discipline). The toaster tutorial instead reports the resulting evaluation failure as a distinguishable finding via its own staged conformance check (`src/toaster/conformance.py::satisfaction_claims_evaluated`, which already treats any `model.eval` exception as a reportable finding rather than a silent skip or an uncaught crash), see `tests/test_conformance.py::test_satisfaction_claims_evaluated_scheduled_reports_execution_error_on_ch04`.
 
 ---
 

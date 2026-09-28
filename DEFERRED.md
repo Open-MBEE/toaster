@@ -336,3 +336,52 @@ sysml-toolkit's Python binding (`sysmlv2.Session`) has no `verify`/`solve` metho
 **Upstream issue:** not filed; not blocking (the workaround is sufficient and intended to be short-lived, not a missing-capability report)
 **Toaster issue:** not filed
 **CI note (PASS2-012 F7):** `tests/test_modelcheck.py` is skipped in CI — the `sysmlv2` binary is a local build artifact (`~/Documents/GitHub/sysml-toolkit/target/release/sysmlv2`), not something CI builds or installs, so the whole file is guarded by a `pytest.mark.skipif` on the binary's presence rather than run there.
+
+## D-026: A part usage's attribute access requires every reachable action's `in` parameters bound, even ones irrelevant to the queried attribute
+
+Found building Chapter 4's own re-derivation (PASS4-004): nesting `ApplyHeat` as an
+actual step of `ToastBread` (`action def ApplyHeat { in bread : Bread; in energy :
+ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`, kept as typed, valueless
+functional input slots per DL-030/DL-031's rulings) makes `model.eval()` fail on
+*any* attribute of a `Toaster` part usage that transitively owns/performs that
+action graph, not only on expressions that touch `ApplyHeat` itself.
+`ToasterDemo::slow.cycleTime` (a directly-overridden literal, `200.0 [SI::s]`,
+with no relation to `ApplyHeat`, `bread`, `energy` or `duration` at all) raises
+`unbound parameter: action ApplyHeat: input parameter bread is bound by no
+argument`, and so does `ToasterDemo::timely(ToasterDemo::slow)` (the expression
+`src/toaster/conformance.py::satisfaction_claims_evaluated` and Chapter 3's own
+notebooks both use). Confirmed for two distinct nesting idioms: a sequenced step
+(`first start; then action applyHeat : ApplyHeat; then done;`, the contract's own
+suggested syntax) and a bare owned action usage with no succession and no
+`perform` (`action applyHeat : ApplyHeat;`) — both fail identically, so the
+trigger is reachability/ownership within the part's action graph, not the
+succession or `perform` machinery specifically (this rules out one hypothesis
+tried before filing: it is not the executable-step machinery that causes it, mere
+ownership is enough). Binding the unbound input to another feature that is
+itself unbound changes the error to `no value for feature ...`, still failing;
+only binding every quantity-typed `in` parameter to an actual concrete literal
+value avoids it, which would contradict the layer ruling that keeps `energy` and
+`duration` valueless in this chapter. A trivial owned action with no nested
+reference to a separate parameterized action definition (`first start; then
+done;`) does not trigger this: `slow.cycleTime` evaluates cleanly in that case,
+confirming the failure needs both a *referenced, separate* action definition and
+at least one of its `in` parameters left genuinely unbound.
+
+**Workaround:** none technical that preserves the valueless-slot design DL-030
+and DL-031 require. `models/ch04-cumulative.sysml` keeps the nesting and the
+valueless slots as ruled; `src/toaster/conformance.py::satisfaction_claims_evaluated`
+already treats any `model.eval` exception as a distinguishable, reported finding
+rather than a silent skip or an uncaught crash, so the resulting evaluation
+failure on `slow`'s Chapter-3-established `assert not satisfy timely by slow;`
+claim is surfaced honestly (`tests/test_conformance.py::
+test_satisfaction_claims_evaluated_scheduled_reports_execution_error_on_ch04`)
+rather than hidden or worked around.
+**Resolution:** upstream fix so attribute evaluation only executes the
+sub-graph an expression actually depends on (lazy evaluation), so an unrelated
+attribute of a part usage stays queryable while a genuinely undecided child
+action (typed flows, no value, because no mechanism has been chosen yet) stays
+undecided; or a documented capability to mark such a slot as "intentionally
+unresolved, skip if irrelevant" for `run`-engine evaluation.
+**Upstream issue:** not filed — Draft 10 (`decisions/gap-issue-drafts.md`), citing
+the exact reproduction above, is drafted and held for Z's review.
+**Toaster issue:** not filed
