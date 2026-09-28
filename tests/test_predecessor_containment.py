@@ -101,6 +101,9 @@ def test_ch03_to_ch04_reports_the_known_dropped_elements(cc, conn):
     assert "ch03-cumulative.sysml" in joined and "ch04-cumulative.sysml" in joined
     # Every reported failure is a *missing* element (nothing changed @type here).
     assert all("is missing from" in f for f in failures)
+    # timely is not part of the drop: ch04-cumulative.sysml already carries its own
+    # requirement usage independently (the docstring's claim, pinned as a real assertion).
+    assert "ToasterDemo::timely" not in joined
 
 
 @pytest.mark.parametrize("chapter", [2, 3, 5, 6, 7, 8])
