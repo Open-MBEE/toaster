@@ -694,8 +694,8 @@ REGISTRY: list[ConformanceCheck] = [
         run=query.port_type_mismatches,
         # DL-038: applies from the chapter/section that first declares a port-typed
         # connection: in the current sequence, ch05-architecture/03-interfaces.ipynb
-        # (ControlSystem-HeatingSystem DurationPort flow). Re-derivation follows the
-        # criterion, not this literal stage.
+        # (ControlSystem-HeatingSystem DurationPort interface). Re-derivation follows
+        # the criterion, not this literal stage.
         applies_from=(5, 3),
         negative_control=_PORT_TYPE_CONTROL,
     ),
