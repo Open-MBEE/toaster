@@ -13,42 +13,36 @@
 <!-- heating -->
 <g id="node1" class="node">
 <title>heating</title>
-<polygon fill="white" stroke="black" points="446,-38 334,-38 334,0 446,0 446,-38"/>
-<text xml:space="preserve" text-anchor="middle" x="390" y="-20.7" font-family="Helvetica,sans-Serif" font-size="14.00">heating</text>
-<text xml:space="preserve" text-anchor="middle" x="390" y="-5.7" font-family="Helvetica,sans-Serif" font-size="14.00">:HeatingSystem</text>
+<polygon fill="white" stroke="black" points="446,-64 334,-64 334,-26 446,-26 446,-64"/>
+<text xml:space="preserve" text-anchor="middle" x="390" y="-46.7" font-family="Helvetica,sans-Serif" font-size="14.00">heating</text>
+<text xml:space="preserve" text-anchor="middle" x="390" y="-31.7" font-family="Helvetica,sans-Serif" font-size="14.00">:HeatingSystem</text>
 </g>
 <!-- control -->
 <g id="node2" class="node">
 <title>control</title>
-<polygon fill="white" stroke="black" points="130.75,-38 21.75,-38 21.75,0 130.75,0 130.75,-38"/>
-<text xml:space="preserve" text-anchor="middle" x="76.25" y="-20.7" font-family="Helvetica,sans-Serif" font-size="14.00">control</text>
-<text xml:space="preserve" text-anchor="middle" x="76.25" y="-5.7" font-family="Helvetica,sans-Serif" font-size="14.00">:ControlSystem</text>
+<polygon fill="white" stroke="black" points="130.75,-92 21.75,-92 21.75,-54 130.75,-54 130.75,-92"/>
+<text xml:space="preserve" text-anchor="middle" x="76.25" y="-74.7" font-family="Helvetica,sans-Serif" font-size="14.00">control</text>
+<text xml:space="preserve" text-anchor="middle" x="76.25" y="-59.7" font-family="Helvetica,sans-Serif" font-size="14.00">:ControlSystem</text>
 </g>
 <!-- control&#45;&gt;heating -->
 <g id="edge1" class="edge">
 <title>control&#45;&gt;heating</title>
-<path fill="none" stroke="black" d="M131.2,-19C184.3,-19 265.49,-19 322.54,-19"/>
-<polygon fill="black" stroke="black" points="332.4,-19 322.4,-23.5 328.62,-19 322.4,-19 322.4,-19 322.4,-19 328.62,-19 322.4,-14.5 332.4,-19"/>
-<text xml:space="preserve" text-anchor="middle" x="243.25" y="-23.7" font-family="Helvetica,sans-Serif" font-size="14.00">durationOut→durationIn</text>
+<path fill="none" stroke="black" d="M131.2,-68.15C184.3,-63.39 265.49,-56.09 322.54,-50.97"/>
+<polygon fill="black" stroke="black" points="332.4,-50.08 322.85,-55.46 328.64,-50.42 322.44,-50.98 322.44,-50.98 322.44,-50.98 328.64,-50.42 322.04,-46.5 332.4,-50.08"/>
+<text xml:space="preserve" text-anchor="middle" x="243.25" y="-68.64" font-family="Helvetica,sans-Serif" font-size="14.00">durationOut→durationIn</text>
 </g>
 <!-- ToastBread::applyHeat -->
 <g id="node3" class="node">
 <title>ToastBread::applyHeat</title>
-<polygon fill="white" stroke="black" points="152.5,-92 0,-92 0,-56 152.5,-56 152.5,-92"/>
-<text xml:space="preserve" text-anchor="middle" x="76.25" y="-68.2" font-family="Helvetica,sans-Serif" font-size="14.00">ToastBread::applyHeat</text>
+<polygon fill="white" stroke="black" points="152.5,-36 0,-36 0,0 152.5,0 152.5,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="76.25" y="-12.2" font-family="Helvetica,sans-Serif" font-size="14.00">ToastBread::applyHeat</text>
 </g>
-<!-- Toaster::heating -->
-<g id="node4" class="node">
-<title>Toaster::heating</title>
-<polygon fill="white" stroke="black" points="446,-92 334,-92 334,-56 446,-56 446,-92"/>
-<text xml:space="preserve" text-anchor="middle" x="390" y="-68.2" font-family="Helvetica,sans-Serif" font-size="14.00">Toaster::heating</text>
-</g>
-<!-- ToastBread::applyHeat&#45;&gt;Toaster::heating -->
+<!-- ToastBread::applyHeat&#45;&gt;heating -->
 <g id="edge2" class="edge">
-<title>ToastBread::applyHeat&#45;&gt;Toaster::heating</title>
-<path fill="none" stroke="black" stroke-dasharray="5,2" d="M152.72,-74C204.65,-74 272.98,-74 322.8,-74"/>
-<polygon fill="black" stroke="black" points="332.55,-74 322.55,-78.5 328.77,-74 322.55,-74 322.55,-74 322.55,-74 328.77,-74 322.55,-69.5 332.55,-74"/>
-<text xml:space="preserve" text-anchor="middle" x="243.25" y="-75.7" font-family="Helvetica,sans-Serif" font-size="14.00">allocate</text>
+<title>ToastBread::applyHeat&#45;&gt;heating</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M152.87,-22.78C199.86,-25.98 261.5,-30.59 316,-36 318.14,-36.21 320.32,-36.44 322.52,-36.67"/>
+<polygon fill="black" stroke="black" points="332.42,-37.76 321.98,-41.14 328.66,-37.35 322.48,-36.66 322.48,-36.66 322.48,-36.66 328.66,-37.35 322.97,-32.19 332.42,-37.76"/>
+<text xml:space="preserve" text-anchor="middle" x="243.25" y="-37.7" font-family="Helvetica,sans-Serif" font-size="14.00">allocate</text>
 </g>
 </g>
 </svg>

@@ -138,13 +138,13 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     5: [
         {
             "path": "chapters/ch05-architecture/02-allocate.ipynb",
-            # HeatingSystem's `:> ToastingSystem` and `perform` reference
-            # ToastingSystem and ApplyHeat (Ch1/Ch4). The allocation references
+            # HeatingSystem's `perform` references ApplyHeat (Ch4). It carries no
+            # supertype (DL-019/DL-020: ToastingSystem is the subject, not something
+            # a logical component specializes). The allocation references
             # ToastBread::applyHeat (Ch4, a nested action usage) and
             # Toaster::heating (Ch1); this notebook's own fragment declares
             # HeatingSystem itself, so it is not stubbed here.
             "context_stubs": [
-                "abstract part def ToastingSystem;",
                 "action def ApplyHeat;",
                 "action def ToastBread { action applyHeat : ApplyHeat; }",
                 "part def Toaster { part heating; }",
@@ -152,10 +152,11 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
         },
         {
             "path": "chapters/ch05-architecture/03-interfaces.ipynb",
-            # HeatingSystem's `:> ToastingSystem` and `perform` reference
-            # ToastingSystem and ApplyHeat (Ch1/Ch4). This notebook's own
-            # fragment declares DurationPort, HeatingSystem, ControlSystem and
-            # Toaster completely, so none of those are stubbed.
+            # HeatingSystem's `perform` references ApplyHeat (Ch4) and carries no
+            # supertype (DL-019/DL-020). Toaster's own `:> ToastingSystem`
+            # (Ch1, unchanged) still needs the ToastingSystem stub. This
+            # notebook's own fragment declares DurationPort, HeatingSystem,
+            # ControlSystem and Toaster completely, so none of those is stubbed.
             "context_stubs": [
                 "abstract part def ToastingSystem;",
                 "action def ApplyHeat;",
