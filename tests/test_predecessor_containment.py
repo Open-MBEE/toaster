@@ -78,9 +78,21 @@ re-derivation lands (a rhythm recorded starting with PASS4-002,
   fixture (`state Cycle` as an undifferentiated package-level usage with no
   owner, no `do` action and no return-to-idle transitions, and none of Chapter
   4's, 5's or 6's functional, interface, logical-carrier or allocation
-  constructs), so ch07->ch08 now opens the same gap one chapter further down:
+  constructs), so ch07->ch08 opened the same gap one chapter further down:
   expected and temporary, pending Chapter 8's own re-derivation, the same
   treatment ch06->ch07 received until PASS4-007 closed it.
+- PASS4-008 (Chapter 8's own re-derivation) closed ch07->ch08 the same way, by
+  rebasing `ch08-cumulative.sysml` onto `ch07-cumulative.sysml`'s current
+  content (its own file-header comment, "chapter 8's construct-introducing
+  notebooks", was already true in name, false in fact, until this pass made it
+  true: the fixture was previously a verbatim copy of ch07's content with only
+  the comment's chapter number edited). ch07->ch08 is clean: every named
+  element ch07-cumulative.sysml carries is present in ch08-cumulative.sysml
+  with the same `@type`, plus Chapter 8's own new `heatGenCheck`,
+  `heatGenCheckDuration` and `deliveredEnergyBoundedBySupply` on
+  `ToasterDemo` (the conservation entailment `efficiencyBounded` and
+  `deliveredEnergy` already imply, proved for every value of efficiency in its
+  bound rather than evaluated at rated's one checked value).
 
 The constructed-pair tests below (type-change, unnamed-element, and
 check_chapter wiring) point `CUMULATIVE_FILES` at small standalone SysML strings
@@ -118,104 +130,23 @@ def conn():
     c.close()
 
 
-def test_ch07_to_ch08_reports_the_known_dropped_elements(cc, conn):
-    """PASS4-007 rebased ch07-cumulative.sysml onto ch06-cumulative.sysml's current
-    content (closing ch06->ch07, see the test below), so ch07-cumulative.sysml now
-    carries forward everything Chapter 6 carries (`Bread`, `Toast`, `ToastBread`,
-    `TimelyToastTest`, `HeatingSystem` performing `ApplyHeat`, `heatAllocation`,
-    the `DurationPort` interface, `GenerateHeat`, `EnergyPort`, `HeatGenerator`,
-    `HeatingAssembly::heatGen`, `heatGenAllocation`, `HeatGenerationReq`/
-    `heatGenerationReq` and `rated`) plus its own new `deliveredEnergy`,
-    `efficiency` and `efficiencyBounded` on `HeatGenerator`, and `Cycle` rebuilt
-    as a real `state def` that `ToastingSystem` exhibits, inherited and executable through `Toaster`. `ch08-cumulative.sysml` is not
-    touched by PASS4-007 (a non-goal) and was built against the old, stale ch07
-    fixture, so it drops all of these. `weak` and `ResistanceCoil` are not part
-    of this drop: ch08-cumulative.sysml already carries its own same-named,
-    same-`@type` elements (`weak` typed by the old `Heater`, `ResistanceCoil`
-    specializing the old `HeatingElement`), a false negative of this NAMED-and-
-    @type-only check the same class as the pre-existing blind spot this module's
-    own docstring already names for unnamed elements (DEFERRED.md D-022).
-    `Cycle` itself is not a silent drop: it changes `@type` from
-    `StateDefinition` (Chapter 7's real `state def`) to `StateUsage` (the old
-    fixture's package-level `state Cycle { ... }`), which this check does catch
-    (a changed @type, not a missing element)."""
+def test_ch07_to_ch08_is_clean(cc, conn):
+    """PASS4-008 rebased ch08-cumulative.sysml onto ch07-cumulative.sysml's current
+    content, closing ch07->ch08 the same way every prior chapter's own re-derivation
+    closed the gap one chapter down: every named element ch07-cumulative.sysml
+    carries (`Bread`, `Toast`, `ToastBread`, `TimelyToastTest`, `HeatingSystem`
+    performing `ApplyHeat`, `heatAllocation`, the `DurationPort` interface,
+    `GenerateHeat`, `EnergyPort`, `HeatGenerator` with its `deliveredEnergy`,
+    `efficiency` and `efficiencyBounded`, `HeatingAssembly::heatGen`,
+    `heatGenAllocation`, `HeatGenerationReq`/`heatGenerationReq`, `rated`, and
+    `Cycle` as a real `state def` `ToastingSystem` exhibits) is present in
+    ch08-cumulative.sysml with the same `@type`, plus Chapter 8's own new
+    `heatGenCheck`, `heatGenCheckDuration` and `deliveredEnergyBoundedBySupply`."""
     failures = cc.check_predecessor_containment(8, conn)
-    assert failures, (
-        "expected the predecessor-containment check to catch ch08 dropping ch07"
-    )
-    joined = "\n".join(failures)
-    for qname in (
-        "ToasterDemo::Bread",
-        "ToasterDemo::Toast",
-        "ToasterDemo::ToastBread",
-        "ToasterDemo::ToastBread::bread",
-        "ToasterDemo::ToastBread::toast",
-        "ToasterDemo::ToastBread::applyHeat",
-        "ToasterDemo::ToastBread::applyHeat::bread",
-        "ToasterDemo::ToastingSystem::toastBread",
-        "ToasterDemo::TimelyToastTest",
-        "ToasterDemo::TimelyToastTest::toaster",
-        "ToasterDemo::ApplyHeat::bread",
-        "ToasterDemo::ApplyHeat::toast",
-        "ToasterDemo::ApplyHeat::delivered",
-        "ToasterDemo::ApplyHeat::loss",
-        "ToasterDemo::ApplyHeat::balance",
-        "ToasterDemo::ApplyHeat::generateHeat",
-        "ToasterDemo::ApplyHeat::generateHeat::energyIn",
-        "ToasterDemo::HeatingSystem::applyHeat",
-        "ToasterDemo::HeatingSystem::durationIn",
-        "ToasterDemo::ControlSystem::durationOut",
-        "ToasterDemo::DurationPort",
-        "ToasterDemo::DurationPort::duration",
-        "ToasterDemo::Toaster::durationInterface",
-        "ToasterDemo::heatAllocation",
-        "ToasterDemo::GenerateHeat",
-        "ToasterDemo::GenerateHeat::energyIn",
-        "ToasterDemo::GenerateHeat::heatOut",
-        "ToasterDemo::EnergyPort",
-        "ToasterDemo::EnergyPort::energy",
-        "ToasterDemo::HeatGenerator",
-        "ToasterDemo::HeatGenerator::energyIn",
-        "ToasterDemo::HeatGenerator::generateHeat",
-        "ToasterDemo::HeatGenerator::power",
-        "ToasterDemo::HeatingAssembly::heatGen",
-        "ToasterDemo::heatGenAllocation",
-        "ToasterDemo::HeatGenerationReq",
-        "ToasterDemo::HeatGenerationReq::heatGen",
-        "ToasterDemo::heatGenerationReq",
-        "ToasterDemo::rated",
-        # Chapter 7's own new elements
-        "ToasterDemo::HeatGenerator::efficiency",
-        "ToasterDemo::HeatGenerator::efficiencyBounded",
-        "ToasterDemo::HeatGenerator::deliveredEnergy",
-        "ToasterDemo::HeatGenerator::deliveredEnergy::power",
-        "ToasterDemo::HeatGenerator::deliveredEnergy::duration",
-        "ToasterDemo::ToastingSystem::cycle",
-        "ToasterDemo::Cycle::heating::@0::generateHeat",
-    ):
-        assert qname in joined, f"expected {qname} to be reported missing"
-    assert "ch07-cumulative.sysml" in joined and "ch08-cumulative.sysml" in joined
-    # weak and ResistanceCoil are not part of the drop: ch08-cumulative.sysml
-    # already carries its own same-named PartUsage/PartDefinition independently
-    # (typed differently, which this NAMED-and-@type-only check cannot see).
-    assert "ToasterDemo::weak" not in joined
-    assert "ToasterDemo::ResistanceCoil" not in joined
-    # Cycle itself is reported, but as a changed @type, not a missing element:
-    # Chapter 7's real `state def` versus the old fixture's package-level usage.
-    cycle_failures = [f for f in failures if f.startswith(
-        "PREDECESSOR CONTAINMENT ch07-cumulative.sysml -> ch08-cumulative.sysml: "
-        "ToasterDemo::Cycle "
-    )]
-    assert len(cycle_failures) == 1
-    assert "changed @type from StateDefinition" in cycle_failures[0]
-    assert "to StateUsage" in cycle_failures[0]
-    # Every OTHER reported failure is a missing element.
-    assert all(
-        "is missing from" in f or f == cycle_failures[0] for f in failures
-    )
+    assert failures == []
 
 
-@pytest.mark.parametrize("chapter", [2, 3, 4, 5, 6, 7])
+@pytest.mark.parametrize("chapter", [2, 3, 4, 5, 6, 7, 8])
 def test_other_adjacent_pairs_report_no_failures(cc, conn, chapter):
     """ch01->ch02 (clean since PASS4-002), ch02->ch03 (clean since PASS4-003, which
     rebased ch03-cumulative.sysml onto ch02-cumulative.sysml's current content),
@@ -223,10 +154,12 @@ def test_other_adjacent_pairs_report_no_failures(cc, conn, chapter):
     ch03-cumulative.sysml's current content), ch04->ch05 (clean since PASS4-005,
     which rebased ch05-cumulative.sysml onto ch04-cumulative.sysml's current
     content), ch05->ch06 (clean since PASS4-006, which rebased
-    ch06-cumulative.sysml onto ch05-cumulative.sysml's current content), and
+    ch06-cumulative.sysml onto ch05-cumulative.sysml's current content),
     ch06->ch07 (clean since PASS4-007, which rebased ch07-cumulative.sysml onto
-    ch06-cumulative.sysml's current content) are each clean. ch07->ch08 is now
-    the open gap (see test_ch07_to_ch08_reports_the_known_dropped_elements)."""
+    ch06-cumulative.sysml's current content), and ch07->ch08 (clean since
+    PASS4-008, which rebased ch08-cumulative.sysml onto ch07-cumulative.sysml's
+    current content; see test_ch07_to_ch08_is_clean for the detail) are each
+    clean."""
     failures = cc.check_predecessor_containment(chapter, conn)
     assert failures == []
 
