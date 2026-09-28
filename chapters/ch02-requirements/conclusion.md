@@ -2,7 +2,7 @@
 
 ## What we built
 
-The Chapter 2 model adds `TimelyToast`, a requirement definition that constrains `cycleTime` to at most 180 seconds for any `Toaster`. It also adds two named usages of `Toaster`, not design variants: `nominal`, whose `cycleTime` carries no value, and `slow`, a deliberately faulty fixture whose `cycleTime` is fixed at 200 seconds via `attribute :>>`. The Python side adds `context_record`, a `ReviewRecord` of kind `asserted_context` that records an estimate of nominal cycle time (about 120 seconds, attributed to an assumed manufacturer range) as context for evaluating the requirement, pending a value this chapter does not yet derive.
+The Chapter 2 model adds `TimelyToast`, a requirement definition whose constraint bounds its `Toaster` subject's `cycleTime` to at most 180 seconds. It also adds two named usages of `Toaster`, not design variants: `nominal`, whose `cycleTime` carries no value, and `slow`, a deliberately faulty fixture whose `cycleTime` is fixed at 200 seconds via `attribute :>>`. The Python side adds `context_record`, a `ReviewRecord` of kind `asserted_context` that records an illustrative placeholder estimate of nominal cycle time (about 120 seconds, explicitly labeled as invented for this tutorial, not drawn from any real-world source), used only as context pending the value a later chapter derives.
 
 ## What this establishes
 
