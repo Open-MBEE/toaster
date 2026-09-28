@@ -149,15 +149,19 @@ package ToasterDemo {
                  * heat: it cannot be negative and cannot exceed 1. */
             0.0 <= efficiency and efficiency <= 1.0
         }
-        calc def DeliveredEnergy {
-            doc /* Characterizes the energy this carrier actually delivers:
-                 * its own rated power for a duration, scaled by its own
-                 * conversion efficiency. This conversion is a property of
-                 * the mechanism a concrete realization chooses, so it lives
-                 * on this logical carrier, not on the functional action. */
+        calc deliveredEnergy {
+            doc /* Characterizes the energy this carrier actually delivers: a
+                 * queried power and duration, scaled by this carrier's own
+                 * bound efficiency. efficiency is this carrier's own feature
+                 * here, not a separate parameter, so the relation can never
+                 * be evaluated against an efficiency the model's own bound
+                 * does not cover: only a real candidate's own value is ever
+                 * used, and that value is exactly what efficiencyBounded
+                 * checks. This conversion is a property of the mechanism a
+                 * concrete realization chooses, so it lives on this logical
+                 * carrier, not on the functional action. */
             in power : ISQ::PowerValue;
             in duration : ISQ::DurationValue;
-            in efficiency : DimensionOneValue;
             return : ISQ::EnergyValue = power * duration * efficiency;
         }
     }

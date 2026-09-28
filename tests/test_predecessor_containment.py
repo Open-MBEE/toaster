@@ -71,7 +71,7 @@ re-derivation lands (a rhythm recorded starting with PASS4-002,
   rebasing `ch07-cumulative.sysml` onto `ch06-cumulative.sysml`'s current
   content. ch06->ch07 is clean: every named element ch06-cumulative.sysml
   carries is present in ch07-cumulative.sysml with the same `@type`, plus
-  Chapter 7's own new `DeliveredEnergy`, `efficiency` and `efficiencyBounded`
+  Chapter 7's own new `deliveredEnergy`, `efficiency` and `efficiencyBounded`
   on `HeatGenerator`, `rated`'s own efficiency value, and `Cycle` rebuilt as a
   real `state def` that `Toaster` exhibits. `ch08-cumulative.sysml` is not
   touched by PASS4-007 (a non-goal) and was built against the old, stale ch07
@@ -125,7 +125,7 @@ def test_ch07_to_ch08_reports_the_known_dropped_elements(cc, conn):
     `TimelyToastTest`, `HeatingSystem` performing `ApplyHeat`, `heatAllocation`,
     the `DurationPort` interface, `GenerateHeat`, `EnergyPort`, `HeatGenerator`,
     `HeatingAssembly::heatGen`, `heatGenAllocation`, `HeatGenerationReq`/
-    `heatGenerationReq` and `rated`) plus its own new `DeliveredEnergy`,
+    `heatGenerationReq` and `rated`) plus its own new `deliveredEnergy`,
     `efficiency` and `efficiencyBounded` on `HeatGenerator`, and `Cycle` rebuilt
     as a real `state def` that `Toaster` exhibits. `ch08-cumulative.sysml` is not
     touched by PASS4-007 (a non-goal) and was built against the old, stale ch07
@@ -187,10 +187,9 @@ def test_ch07_to_ch08_reports_the_known_dropped_elements(cc, conn):
         # Chapter 7's own new elements
         "ToasterDemo::HeatGenerator::efficiency",
         "ToasterDemo::HeatGenerator::efficiencyBounded",
-        "ToasterDemo::HeatGenerator::DeliveredEnergy",
-        "ToasterDemo::HeatGenerator::DeliveredEnergy::power",
-        "ToasterDemo::HeatGenerator::DeliveredEnergy::duration",
-        "ToasterDemo::HeatGenerator::DeliveredEnergy::efficiency",
+        "ToasterDemo::HeatGenerator::deliveredEnergy",
+        "ToasterDemo::HeatGenerator::deliveredEnergy::power",
+        "ToasterDemo::HeatGenerator::deliveredEnergy::duration",
         "ToasterDemo::Toaster::cycle",
         "ToasterDemo::Cycle::heating::@0::generateHeat",
     ):

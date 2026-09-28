@@ -523,6 +523,27 @@ the exact reproduction, isolation table and spec citations above, is drafted and
 held for Z's review.
 **Toaster issue:** not filed
 
+**PASS4-007 note.** Chapter 7's state machine hits this exact gap. `Cycle`'s
+`heating` state was first tried with `do action applyHeat : ApplyHeat;`, invoking
+`ApplyHeat` directly, the same action `HeatingSystem` performs. `execute_state`
+then raised `ExecutionError: state machine execution failed: do action in state
+heating: unbound parameter: action ApplyHeat: input parameter bread is bound by
+no argument`: `ApplyHeat`'s own `bread` input (deliberately left bare, per Q2's
+ruling, since it is always reference-bound wherever `ApplyHeat` is actually
+invoked, e.g. `ToastBread::applyHeat { in bread = ToastBread::bread; }`) has no
+value at this level of decomposition, and `Cycle` has no bread instance to bind
+it to. Confirmed this is genuine execution, not a load-time artifact: temporarily
+breaking `GenerateHeat`'s own already-fixed `[0..*]` multiplicity on `energyIn`
+reproduces the identical failure shape (`unbound parameter: action GenerateHeat:
+input parameter energyIn is bound by no argument`), proving the do action really
+executes whatever it names. `GenerateHeat` was used instead
+(`do action generateHeat : GenerateHeat;`): its own input is already `[0..*]`
+(this entry's own applied fix), so it stays executable with no value bound. This
+is not itself a new instance of D-026 (the unbound `bread` failure is correct
+tool behavior given a genuinely unresolved required input, not the eager-eval bug
+this entry documents), but it depends directly on D-026's applied fix to work at
+all, so it is recorded here rather than as a separate entry.
+
 ## D-027: a second declaration reopening an existing namespace member's name loads with warnings, then crashes `to_api_json()`
 
 **Found:** PASS4-005 (Chapter 5 re-derivation), while probing whether a definition
