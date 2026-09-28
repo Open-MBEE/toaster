@@ -135,15 +135,33 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 ---
 
-## Draft 10 (OpenSysML, likely bug): attribute evaluation on a part usage eagerly executes its entire owned/performed action graph, and fails on any unbound `in` parameter anywhere in it, even one irrelevant to the queried attribute (D-026)
+## Draft 10 (OpenSysML, likely bug): a nested step whose definition has an unbound, mandatory `in` parameter breaks attribute evaluation on the whole part usage, even for an unrelated attribute (D-026)
 
 **Version:** OpenSysML v0.9.0.
 
-**Observed.** `part def Toaster { attribute cycleTime : ISQ::DurationValue; }`, with `attribute :>> cycleTime = 200.0 [SI::s];` on a usage (`slow`), where `Toaster` also (transitively, through an abstract supertype's `perform action toastBread : ToastBread;`) owns an action graph whose `ToastBread` step contains a nested action typed by a separate action definition with unbound, typed `in` parameters (`action def ApplyHeat { in bread : Bread; in energy : ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`): `model.eval("...::slow.cycleTime")` raises `unbound parameter: action ApplyHeat: input parameter bread is bound by no argument`, even though `cycleTime` has no relation whatsoever to `ApplyHeat`, `bread`, `energy` or `duration`. Confirmed for two distinct nesting idioms: `first start; then action applyHeat : ApplyHeat; then done;` (a sequenced step) and a bare owned `action applyHeat : ApplyHeat;` (no succession, no `perform`) — both fail identically, so the trigger is reachability/ownership within the part's action graph, not the succession or `perform` machinery specifically. Binding the unbound input to another feature that is itself unbound (e.g. `in bread = ToastBread::bread;`, matching `ToastBread`'s own valueless `bread` parameter) changes the error to `no value for feature ...` at evaluation time, still failing; only binding every quantity-typed `in` parameter to an actual concrete literal value resolves it. A trivial owned action with no nested reference to a separate parameterized definition (`first start; then done;`) does not trigger this at all: `slow.cycleTime` evaluates cleanly in that case.
+**Observed.** `part def Toaster { attribute cycleTime : ISQ::DurationValue; }`, with `attribute :>> cycleTime = 200.0 [SI::s];` on a usage (`slow`), where `Toaster` also (transitively, through an abstract supertype's `perform action toastBread : ToastBread;`) owns an action graph whose `ToastBread` step contains a nested action typed by a separate action definition with an unbound, mandatory-multiplicity `in` parameter (`action def ApplyHeat { in bread : Bread; in energy : ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`): `model.eval("...::slow.cycleTime")` raises `unbound parameter: action ApplyHeat: input parameter bread is bound by no argument`, even though `cycleTime` has no relation whatsoever to `ApplyHeat`, `bread`, `energy` or `duration`.
 
-**Reference.** This is a report about the Python binding's `model.eval()` execution engine, not a language-conformance (parse/diagnostic) question, so we did not find a corresponding SysML v2 language-spec citation to check it against; the language accepts the model (`model.ok == True`) in every variant above.
+**Isolating the precise trigger.** Six variants were probed against the same minimal model (below), each substituted for `ApplyHeat`/its nested step, evaluating `slow.cycleTime`:
 
-**Request.** Please confirm whether `model.eval()` on an attribute of a part usage is intended to always require every `in` parameter of every action transitively reachable from that usage's owned or performed action graph to resolve to a concrete value, even when the queried attribute does not depend on that action at all. If this is by design, documentation saying so (something like "the run engine executes the full instance graph before answering any query") would help. If unintended, we would welcome a fix so only the sub-graph the queried expression actually depends on needs full binding (lazy evaluation) — so an unrelated attribute of a part usage stays queryable while a genuinely undecided child action (a functional-decomposition step whose flows are typed but deliberately not yet valued, because no mechanism has been chosen at this stage of a model's development) stays undecided.
+| Variant | Result |
+|---|---|
+| Only `out` parameters (`action def ApplyHeat { out toast : Toast; ... }`) | evaluates cleanly |
+| Mandatory `in bread`, sequenced (`first start; then action applyHeat : ApplyHeat; then done;`) | fails |
+| Mandatory `in bread`, bare ownership (`action applyHeat : ApplyHeat;`, no succession, no `perform`) | fails identically |
+| `ref action applyHeat : ApplyHeat;` | fails |
+| `abstract action def ApplyHeat { ... }` | fails |
+| `action applyHeat : ApplyHeat[0..*];` (multiplicity on the usage) | fails |
+| `in bread : Bread[0..1];` (multiplicity `[0..1]` on the parameter itself) | evaluates cleanly |
+
+The trigger is not "any owned action" (only-`out` is fine), not the `perform`/succession machinery (`ref action`, bare ownership, and `perform action` all fail the same way), and not "any reference to a separate definition" (`abstract`/`[0..*]` still fail): it is specifically **an `in` parameter of mandatory multiplicity (the default per §7.6.3 below) with no binding**, on a definition reached through a nested action usage.
+
+**The clearest evidence, an internal inconsistency:** `ToastBread`'s own top-level `in bread : Bread;` is *also* mandatory and unbound — exactly the shape above — and the tool tolerates it fine: `slow.cycleTime` evaluates cleanly when `ToastBread`'s body is `first start; then done;`, with no nested reference to a separate action definition at all. Only the *nested* case (one level deeper) triggers the failure, for the identical parameter shape.
+
+Binding the unbound input to another feature that is itself unbound (e.g. `in bread = ToastBread::bread;`, matching `ToastBread`'s own valueless `bread` parameter) removes it from the check: the error simply moves to the next unbound mandatory parameter (`unbound parameter: action ApplyHeat: input parameter energy is bound by no argument`), not to a different class of error. Only binding every mandatory `in` parameter to an actual concrete literal value, or relaxing each to `[0..1]`, avoids the failure — both of which change what the model claims (a value where none should exist yet, or genuine optionality where the input is actually required but not yet sourced).
+
+**Reference.** KerML 1.1 Beta 2 §9.2.8.2.6 (`FeatureReadEvaluation`): a feature read's result is scoped to "the values of `accessedFeature` of `onOccurrence`" — nothing here distinguishes a nested unbound feature from a top-level one, so the internal inconsistency above is not explained by this rule. SysML v2.0 formal/2026-03-02 §7.6.3 (implicit multiplicity defaults for attribute/item/port usages): confirms `[1..1]` is the default when no multiplicity is stated, which is what makes `bread`/`energy`/`duration` "mandatory" in the table above without our having written `[1..1]` explicitly. SysML v2.0 formal/2026-03-02 §8.3.17.14 / §8.4.13.11 (`PerformActionUsage`): its only additional constraints concern specialization and reference typing, nothing about parameter binding — consistent with the bare-ownership probe (no `perform` at all) failing identically to the `perform`-based one, and confirming `perform` itself adds nothing relevant to this behavior.
+
+**Request.** Please confirm whether `model.eval()` on an attribute of a part usage is intended to always require every mandatory `in` parameter of every action transitively reachable one level or more from that usage's owned or performed action graph to resolve to a concrete value, even when the queried attribute does not depend on that action at all, and even though the *directly* performed action's own mandatory, unbound parameters are tolerated. If this is by design, documentation saying so would help, along with an explanation of why the top-level case is exempt. If unintended, we would welcome a fix so only the sub-graph the queried expression actually depends on needs full binding (lazy evaluation) — so an unrelated attribute of a part usage stays queryable while a genuinely undecided child action (a functional-decomposition step whose flows are typed but deliberately not yet valued, because no mechanism has been chosen at this stage of a model's development) stays undecided.
 
 **Repro.**
 ```
@@ -160,7 +178,9 @@ package Probe {
         out toast : Toast;
         out delivered : ISQ::EnergyValue;
         out loss : ISQ::EnergyValue;
-        constraint balance { delivered + loss <= energy }
+        assert constraint balance {
+            delivered >= 0.0 [SI::J] and loss >= 0.0 [SI::J] and delivered + loss <= energy
+        }
     }
     action def ToastBread {
         in bread : Bread;
@@ -176,9 +196,11 @@ package Probe {
     part slow : Toaster { attribute :>> cycleTime = 200.0 [SI::s]; }
 }
 ```
-`conn.load_from_content(src, strict=False).ok` is `True`; `model.eval("Probe::slow.cycleTime")` raises.
+`conn.load_from_content(src, strict=False).ok` is `True`; `model.eval("Probe::slow.cycleTime")` raises. Removing `ApplyHeat`'s `in` parameters entirely (only `out` parameters left) makes it evaluate cleanly; so does declaring `ToastBread`'s own body as `first start; then done;` with no nested `applyHeat` step at all; so does relaxing each `in` parameter to `[0..1]` (not used as our fix, see below).
 
-**Workaround in place.** None technical that preserves the intended model design (typed, valueless functional-input slots on an unallocated action, per this tutorial's own layer discipline). The toaster tutorial instead reports the resulting evaluation failure as a distinguishable finding via its own staged conformance check (`src/toaster/conformance.py::satisfaction_claims_evaluated`, which already treats any `model.eval` exception as a reportable finding rather than a silent skip or an uncaught crash), see `tests/test_conformance.py::test_satisfaction_claims_evaluated_scheduled_reports_execution_error_on_ch04`.
+**Before filing:** we have not exhaustively searched every evaluation-related KerML constraint beyond §9.2.8.2.6 for a rule that would explain the top-level-versus-nested asymmetry directly (as opposed to simply not ruling it out); if the maintainers know of one, it would sharpen this from "the export/execution loses a distinction the read semantics don't make" to "the execution violates a named rule." We also have not checked whether sysml-toolkit's execution engine (separate from OpenSysML) exhibits the same asymmetry, since evaluating a requirement/attribute is not currently part of our sysml-toolkit usage (`DEFERRED.md` D-024/D-025 cover what we do use it for).
+
+**Workaround in place.** None technical that preserves the intended model design (typed, mandatory, valueless functional-input slots on an unallocated action, per this tutorial's own layer discipline — DL-030, DL-031). `[0..1]` on the parameters was considered and rejected: it silences the tool but misstates the model, since these inputs are not optional, only not-yet-sourced. The toaster tutorial instead reports the resulting evaluation failure as a distinguishable finding via its own staged conformance check (`src/toaster/conformance.py::satisfaction_claims_evaluated`, which already treats any `model.eval` exception as a reportable finding rather than a silent skip or an uncaught crash), see `tests/test_conformance.py::test_satisfaction_claims_evaluated_scheduled_reports_execution_error_on_ch04`.
 
 ---
 

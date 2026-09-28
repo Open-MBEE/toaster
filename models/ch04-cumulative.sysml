@@ -13,12 +13,18 @@ package ToasterDemo {
     action def ApplyHeat {
         in bread : Bread;
         in energy : ISQ::EnergyValue;
-        in duration : ISQ::DurationValue;
+        in duration : ISQ::DurationValue {
+            doc /* Signal from a control function: how long to apply heat.
+             * No control function is modeled in this chapter, so this input
+             * is declared and typed but not yet connected to a value. */
+        }
         out toast : Toast;
         out delivered : ISQ::EnergyValue;
         out loss : ISQ::EnergyValue;
 
-        constraint balance { delivered + loss <= energy }
+        assert constraint balance {
+            delivered >= 0.0 [SI::J] and loss >= 0.0 [SI::J] and delivered + loss <= energy
+        }
     }
 
     action def ToastBread {
@@ -26,7 +32,9 @@ package ToasterDemo {
         in bread : Bread;
         out toast : Toast;
         first start;
-        then action applyHeat : ApplyHeat;
+        then action applyHeat : ApplyHeat {
+            in bread = ToastBread::bread;
+        }
         then done;
     }
 

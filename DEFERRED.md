@@ -337,51 +337,96 @@ sysml-toolkit's Python binding (`sysmlv2.Session`) has no `verify`/`solve` metho
 **Toaster issue:** not filed
 **CI note (PASS2-012 F7):** `tests/test_modelcheck.py` is skipped in CI — the `sysmlv2` binary is a local build artifact (`~/Documents/GitHub/sysml-toolkit/target/release/sysmlv2`), not something CI builds or installs, so the whole file is guarded by a `pytest.mark.skipif` on the binary's presence rather than run there.
 
-## D-026: A part usage's attribute access requires every reachable action's `in` parameters bound, even ones irrelevant to the queried attribute
+## D-026: A nested step whose definition has an unbound, mandatory `in` parameter breaks attribute evaluation on the whole part usage, even for an unrelated attribute
 
-Found building Chapter 4's own re-derivation (PASS4-004): nesting `ApplyHeat` as an
-actual step of `ToastBread` (`action def ApplyHeat { in bread : Bread; in energy :
-ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`, kept as typed, valueless
-functional input slots per DL-030/DL-031's rulings) makes `model.eval()` fail on
-*any* attribute of a `Toaster` part usage that transitively owns/performs that
-action graph, not only on expressions that touch `ApplyHeat` itself.
-`ToasterDemo::slow.cycleTime` (a directly-overridden literal, `200.0 [SI::s]`,
-with no relation to `ApplyHeat`, `bread`, `energy` or `duration` at all) raises
-`unbound parameter: action ApplyHeat: input parameter bread is bound by no
-argument`, and so does `ToasterDemo::timely(ToasterDemo::slow)` (the expression
+Found building Chapter 4's own re-derivation (PASS4-004), corrected after independent
+review re-probing (round 2, Opus 5.5): nesting `ApplyHeat` as an actual step of
+`ToastBread` (`action def ApplyHeat { in bread : Bread; in energy : ISQ::EnergyValue;
+in duration : ISQ::DurationValue; ... }`, kept as typed, valueless functional input
+slots per DL-030/DL-031's rulings) makes `model.eval()` fail on *any* attribute of a
+`Toaster` part usage that transitively owns or performs that action graph, not only
+on expressions that touch `ApplyHeat` itself. `ToasterDemo::slow.cycleTime` (a
+directly-overridden literal, `200.0 [SI::s]`, with no relation to `ApplyHeat`,
+`bread`, `energy` or `duration` at all) raises `unbound parameter: action ApplyHeat:
+input parameter bread is bound by no argument`, and so does
+`ToasterDemo::timely(ToasterDemo::slow)` (the expression
 `src/toaster/conformance.py::satisfaction_claims_evaluated` and Chapter 3's own
-notebooks both use). Confirmed for two distinct nesting idioms: a sequenced step
-(`first start; then action applyHeat : ApplyHeat; then done;`, the contract's own
-suggested syntax) and a bare owned action usage with no succession and no
-`perform` (`action applyHeat : ApplyHeat;`) — both fail identically, so the
-trigger is reachability/ownership within the part's action graph, not the
-succession or `perform` machinery specifically (this rules out one hypothesis
-tried before filing: it is not the executable-step machinery that causes it, mere
-ownership is enough). Binding the unbound input to another feature that is
-itself unbound changes the error to `no value for feature ...`, still failing;
-only binding every quantity-typed `in` parameter to an actual concrete literal
-value avoids it, which would contradict the layer ruling that keeps `energy` and
-`duration` valueless in this chapter. A trivial owned action with no nested
-reference to a separate parameterized action definition (`first start; then
-done;`) does not trigger this: `slow.cycleTime` evaluates cleanly in that case,
-confirming the failure needs both a *referenced, separate* action definition and
-at least one of its `in` parameters left genuinely unbound.
+notebooks both use).
 
-**Workaround:** none technical that preserves the valueless-slot design DL-030
-and DL-031 require. `models/ch04-cumulative.sysml` keeps the nesting and the
-valueless slots as ruled; `src/toaster/conformance.py::satisfaction_claims_evaluated`
-already treats any `model.eval` exception as a distinguishable, reported finding
-rather than a silent skip or an uncaught crash, so the resulting evaluation
-failure on `slow`'s Chapter-3-established `assert not satisfy timely by slow;`
-claim is surfaced honestly (`tests/test_conformance.py::
+**The precise trigger, isolated:** a nested step whose definition has an `in`
+parameter of **mandatory multiplicity** (the SysML default, SysML v2.0
+formal/2026-03-02 §7.6.3) left unbound. Six variants were probed against the same
+minimal model (`Toaster :> ToastingSystem { perform action toastBread : ToastBread
+{ action applyHeat : <variant>; } }`, `slow.cycleTime` evaluated):
+
+| Variant | Result |
+|---|---|
+| `action def ApplyHeat { out toast : Toast; ... }` (only `out` parameters) | evaluates cleanly |
+| `action applyHeat : ApplyHeat;` (mandatory `in bread`, sequenced with `first`/`then`) | fails |
+| `action applyHeat : ApplyHeat;` (mandatory `in bread`, bare ownership, no succession, no `perform`) | fails identically |
+| `ref action applyHeat : ApplyHeat;` | fails |
+| `abstract action def ApplyHeat { ... }` | fails |
+| `action applyHeat : ApplyHeat[0..*];` (multiplicity on the *usage*, not the parameter) | fails |
+| `in bread : Bread[0..1];` (multiplicity `[0..1]` on the **parameter itself**) | evaluates cleanly |
+
+So the trigger is neither "any owned action" (only-`out` is fine) nor "the
+`perform`/succession machinery" (`ref action`, bare ownership and `perform action`
+all fail the same way) nor "any reference to a separate definition" (an
+abstract/multiplicity-`[0..*]` reference still fails) — it is specifically an `in`
+parameter whose declared multiplicity is mandatory (`[1..1]`, the default when none
+is stated) and which has no binding.
+
+**Internal inconsistency (the clearest evidence this is a tool defect, not a
+deliberate rule):** `ToastBread`'s own top-level `in bread : Bread;` is *also*
+mandatory and unbound, exactly the same shape, and the tool tolerates it fine:
+`slow.cycleTime` evaluates cleanly when `ToastBread`'s body is `first start; then
+done;` with no nested reference to a separate action definition at all. Only the
+*nested* case — one level deeper, where the mandatory unbound parameter belongs to
+a definition reached through another action usage rather than being the directly
+performed action's own parameter — triggers the failure. Per KerML 1.1 Beta 2
+§9.2.8.2.6 (`FeatureReadEvaluation`), a feature read's result is scoped to "the
+values of `accessedFeature` of `onOccurrence`" — nothing in the read semantics
+singles out a *nested* unbound feature for different treatment than a top-level
+one, so this asymmetry is not something either spec citation explains.
+
+**`[0..1]` is a real technical workaround, considered and rejected.** Declaring the
+three `in` parameters `[0..1]` does avoid the tool error (confirmed above). It is
+**not used** as the fix: `[0..1]` changes what the model *claims* — it asserts
+`bread`/`energy`/`duration` are genuinely optional inputs to `ApplyHeat`, which is
+false. The action needs all three to mean anything; they are simply not yet bound
+to a value at this stage of decomposition, the same "typed slot, no value" shape
+`Toaster.cycleTime` itself has before DL-018's fix (a mandatory result deliberately
+left unvalued, not an attribute that may legitimately be absent). Using `[0..1]` to
+silence the tool would misstate the model to make the tool happy, which AGENTS.md
+1.9 forbids.
+
+**Binding one mandatory parameter does not fix the others.** Binding `applyHeat`'s
+`bread` to `ToastBread::bread` (itself unbound, but now a real reference rather
+than nothing) removes `bread` from the unbound-parameter check entirely — the
+error simply moves to the next unbound mandatory parameter, `energy`
+(`unbound parameter: action ApplyHeat: input parameter energy is bound by no
+argument`). This is a real, if partial, improvement (Chapter 4's own re-derivation
+now wires `bread` from the parent, the one flow actually available at that level);
+it does not resolve the gap, since `energy` and `duration` remain genuinely
+unbound (no energy source exists anywhere in the model yet).
+
+**Workaround:** none technical that preserves the valueless-slot design DL-030 and
+DL-031 require. `models/ch04-cumulative.sysml` keeps the nesting and the mandatory,
+valueless `energy`/`duration` slots as ruled (binding only `bread`, per the reason
+above); `src/toaster/conformance.py::satisfaction_claims_evaluated` already treats
+any `model.eval` exception as a distinguishable, reported finding rather than a
+silent skip or an uncaught crash, so the resulting evaluation failure on `slow`'s
+Chapter-3-established `assert not satisfy timely by slow;` claim is surfaced
+honestly (`tests/test_conformance.py::
 test_satisfaction_claims_evaluated_scheduled_reports_execution_error_on_ch04`)
 rather than hidden or worked around.
-**Resolution:** upstream fix so attribute evaluation only executes the
-sub-graph an expression actually depends on (lazy evaluation), so an unrelated
-attribute of a part usage stays queryable while a genuinely undecided child
-action (typed flows, no value, because no mechanism has been chosen yet) stays
+**Resolution:** upstream fix so attribute evaluation only executes the sub-graph an
+expression actually depends on (lazy evaluation), so an unrelated attribute of a
+part usage stays queryable while a genuinely undecided child action (typed,
+mandatory flows with no value, because no mechanism has been chosen yet) stays
 undecided; or a documented capability to mark such a slot as "intentionally
 unresolved, skip if irrelevant" for `run`-engine evaluation.
 **Upstream issue:** not filed — Draft 10 (`decisions/gap-issue-drafts.md`), citing
-the exact reproduction above, is drafted and held for Z's review.
+the exact reproduction, isolation table and spec citations above, is drafted and
+held for Z's review.
 **Toaster issue:** not filed
