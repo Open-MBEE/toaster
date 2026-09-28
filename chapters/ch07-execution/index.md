@@ -1,30 +1,30 @@
-# Chapter 7 — Execution and Experiments
+# Chapter 7: Execution and Experiments
 
 ## Purpose
 
-This chapter asks: does the toaster model behave correctly when we execute it, and does the HeatingSystem deliver enough energy across the operating range?
+This chapter asks: what does the model actually do when it is executed, and what does the design space `HeatGenerationReq` opens actually deliver?
 
-After completing this chapter, the cumulative model has a `state Cycle` that captures the toaster's discrete operating modes, a sympy-bound energy expression checked against the 67200 J reference value, and a matplotlib figure showing energy vs. heater power with the design threshold marked.
+After completing this chapter, the cumulative model has `DeliveredEnergy`, a calc def on `HeatGenerator` bounded by a real efficiency constraint, and `Cycle`, a state def `Toaster` exhibits, with a `heating` state whose `do action` generates heat and transitions that return `ready` and `cancelled` to `idle`.
 
 ## Ingredients
 
 | Notebook | Concept |
 |---|---|
-| [01 — Symbolic energy binding](01-calc-energy.ipynb) | Bind `DeliveredEnergy` to a sympy expression; verify the 67200 J reference value with lambdify and `model.eval()`. |
-| [02 — State machine traces](02-state-traces.ipynb) | Introduce `state Cycle` with transitions (construct 13); simulate normal and cancel scenarios with `execute_state`. |
-| [03 — Parameter sweep](03-param-sweep.ipynb) | Sweep heater power with `sweep_1d`; plot energy vs. power and mark the design threshold. |
+| [01: Delivered energy on the heat generator](01-calc-energy.ipynb) | Add a bounded `efficiency` and `calc def DeliveredEnergy` to `HeatGenerator`; query the relation and the bound through `model.eval` and `verify_constraint`. |
+| [02: The toaster's own operating cycle](02-state-traces.ipynb) | Rebuild `Cycle` as a real `state def`; have `Toaster` exhibit it; give `heating` a `do action`; add transitions that return `ready` and `cancelled` to `idle`; trace the result with `execute_state`. |
+| [03: Sweeping the design space HeatGenerationReq opens](03-param-sweep.ipynb) | Sweep `HeatGenerator::power`, evaluating `DeliveredEnergy` at each point through the model, and mark `HeatGenerationReq`'s own 600 W threshold, read from the model. |
 
 ## Equipment
 
-See [docs/setup.md](../../docs/setup.md) for environment setup. Chapter 7 requires `sympy`, `numpy`, and `matplotlib` (all in `pyproject.toml`).
+See [docs/setup.md](../../docs/setup.md) for environment setup. Chapter 7 requires `numpy` and `matplotlib` (both in `pyproject.toml`).
 
 ## Method
 
-Notebook 01 establishes the sympy binding and reference value — the anchor for all downstream numerical claims. Notebook 02 introduces the state machine and shows that `execute_state` correctly routes two distinct event sequences. Notebook 03 uses the established binding with `sweep_1d` to produce simulation evidence for the energy requirement.
+Notebook 01 gives `HeatGenerator` the energy relation Chapter 3 removed from the functional layer: a bounded `efficiency` slot and a `calc def DeliveredEnergy` that characterizes what the carrier actually delivers. Notebook 02 gives `Cycle` an owner, a `heating` state that performs a real function, and transitions that complete what the chapter's own name promises. Notebook 03 connects the two: it sweeps the design space `HeatGenerationReq` opens and checks it against the relation notebook 01 built.
 
 ## Expected result
 
-After running all three notebooks, `model.find("ToasterDemo::Cycle")` returns a symbol with `kind='stateDef'` or equivalent. `execute_state(cycle.id, events=['Start', 'Finish'])` returns `states_visited=['idle', 'heating', 'ready']`. `Q_fn(800.0, 120.0, 0.7)` returns 67200.0. The parameter sweep figure shows the energy curve crossing the threshold between 590 W and 600 W.
+After running all three notebooks, `model.eval("ToasterDemo::HeatGenerator::DeliveredEnergy(800.0 [SI::W], 120.0 [SI::s], 0.7)")` returns 67200 J; `model.find("ToasterDemo::Toaster::cycle")` returns a `stateUsage`, the usage `Toaster` exhibits; `model.execute_state("ToasterDemo::Cycle", events=["Start", "Finish"])` returns `states_visited=['idle', 'heating', 'ready', 'idle']`; and the parameter sweep's figure marks `HeatGenerationReq`'s own 600 W threshold, read from the model rather than invented in Python.
 
 ## Experiment
 

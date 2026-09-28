@@ -10,6 +10,6 @@ The chapter answers its engineering question for one branch: `GenerateHeat` is a
 
 ## What comes next
 
-Chapter 7 asks how the model behaves at runtime. It binds `DeliveredEnergy` to sympy, evaluates it numerically, and runs `execute_state` to trace normal and cancel scenarios through the toaster's state machine.
+Chapter 7 asks how the model behaves at runtime. It builds `DeliveredEnergy` as a calc def on `HeatGenerator`, with a bounded `efficiency` slot, queried through `model.eval` rather than a symbolic binding; gives `Toaster`'s state machine, `Cycle`, a `heating` state that performs `GenerateHeat` and transitions that complete a full run; and sweeps `HeatGenerator::power` against `HeatGenerationReq`'s own threshold.
 
 **Exercise:** The [Chapter 6 exercise](../../exercises/ch06/exercise.ipynb) asks you to decompose `BrewUnit` into an `Impeller` and a `FilterBasket`, add a `BrewReq` requirement for minimum water throughput, and write an `asserted_inference` record claiming the decomposition is complete with `premises` referencing your Chapter 5 allocation exercise result.
