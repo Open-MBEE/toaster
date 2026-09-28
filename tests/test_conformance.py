@@ -220,20 +220,64 @@ def test_port_type_check_scheduled(ch08, mismatch) -> None:
     assert cf.evaluate(scheduled, mismatch, (2, 1)).status == "failed"
 
 
-def test_port_type_check_passes_on_ch05_real_port_connection(ch05) -> None:
-    """PASS4-005 builds the model's first genuine port-typed connection (DurationPort,
-    between ControlSystem and HeatingSystem): unlike ch08's vacuous pass (no ports at
-    all), this is a real, non-empty port pair the check actually evaluates."""
-    from toaster.query import port_type_mismatches
+MISMATCHED_CONJUGATE_INTERFACE = """
+package MismatchedConjugate {
+  private import ScalarValues::*;
+  private import SI::*;
+  private import ISQ::*;
+  port def DurationPort { out duration : ISQ::DurationValue[0..*]; }
+  port def PressurePort { out pressure : Real; }
+  part def ControlSystem { port durationOut : DurationPort; }
+  part def HeatingSystem { port pressureIn : ~PressurePort; }
+  part def Toaster {
+    part control : ControlSystem;
+    part heating : HeatingSystem;
+    interface badInterface connect control.durationOut to heating.pressureIn;
+  }
+}
+"""
 
-    els = cf.query.ApiIndex(ch05).elements
-    ports = [e for e in els if e.get("@type") == "PortUsage"]
-    assert len(ports) == 2  # ControlSystem::durationOut, HeatingSystem::durationIn
+
+def test_port_type_check_passes_on_ch05_real_port_connection(ch05) -> None:
+    """PASS4-005 builds the model's first genuine port-typed connection
+    (`durationInterface`, between ControlSystem and HeatingSystem): unlike ch08's
+    vacuous pass (no ports at all), this is a real, non-empty port pair the check
+    actually evaluates. Asserts the connector's actual ends resolve to the two
+    declared, named ports (not an inner feature or the interface's own synthetic
+    end features, confirmed present but excluded from this identity check) and
+    that a genuinely mismatched conjugated-port pair is still caught (not vacuous
+    in either direction)."""
+    from toaster.query import find_connectors, port_type_mismatches
+
+    conns = find_connectors(ch05, "InterfaceUsage")
+    assert len(conns) == 1
+    ends = {p[-1] for p in conns[0]["ends"]}
+    assert ends == {
+        "ToasterDemo::ControlSystem::durationOut",
+        "ToasterDemo::HeatingSystem::durationIn",
+    }
+
     assert port_type_mismatches(ch05) == []
     rep = cf.report(ch05, (5, 3))
     assert rep["project"][0].check_id == "port-type"
     assert rep["project"][0].status == "passed"
     assert rep["project"][0].findings == []
+
+
+def test_port_type_check_catches_a_real_conjugated_port_mismatch(conn) -> None:
+    """The check is not vacuous: a genuinely mismatched pair connected through the
+    same `interface`/conjugated-port idiom this chapter introduces (DurationPort
+    on one side, an unrelated PressurePort's conjugate on the other) is flagged."""
+    m = conn.load_from_content(MISMATCHED_CONJUGATE_INTERFACE, strict=False)
+    assert m.ok
+    from toaster.query import port_type_mismatches
+
+    findings = port_type_mismatches(m)
+    assert len(findings) == 1
+    assert findings[0]["ends"] == [
+        "MismatchedConjugate::ControlSystem::durationOut",
+        "MismatchedConjugate::HeatingSystem::pressureIn",
+    ]
 
 
 def test_blocked_for_unscheduled_check_on_language_failure(conn) -> None:

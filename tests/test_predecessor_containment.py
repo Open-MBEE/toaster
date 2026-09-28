@@ -133,6 +133,7 @@ def test_ch05_to_ch06_reports_the_known_dropped_elements(cc, conn):
         "ToasterDemo::ControlSystem::durationOut",
         "ToasterDemo::DurationPort",
         "ToasterDemo::DurationPort::duration",
+        "ToasterDemo::Toaster::durationInterface",
         "ToasterDemo::heatAllocation",
     ):
         assert qname in joined, f"expected {qname} to be reported missing"
