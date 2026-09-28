@@ -146,6 +146,15 @@ No executable cells. Pure navigation and framing.
 
 No executable cells.
 
+**"What comes next" is a forward claim about a chapter that has not been re-derived yet, and it
+goes stale the moment the next chapter's own re-derivation changes what it actually contains.**
+Found live 2026-09-27: Chapter 2's conclusion.md named specific constructs for Chapter 3
+(`calc def`, a specific `assert satisfy` idiom) that Chapter 3's own audit findings may not
+match once that chapter is rebuilt. Standing rule (`decisions/next-passes.md`): re-checking the
+*previous* chapter's "What comes next" against what actually got built is a required step of
+*every* chapter's own re-derivation contract, not an optional cleanup pass done only when
+someone happens to reread it.
+
 ## Size limits (A6 review criteria)
 
 - Prose: ≤600 words across markdown cells
