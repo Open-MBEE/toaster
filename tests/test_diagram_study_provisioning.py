@@ -1,5 +1,22 @@
 # tests/test_diagram_study_provisioning.py
-from scripts.diagram_study.provision_check import compare_pinned_versions, PINNED
+import importlib.util
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_PATH = ROOT / "scripts" / "diagram_study" / "provision_check.py"
+
+
+def _load_script():
+    """Import scripts/diagram_study/provision_check.py as a module (it is a script, not a package)."""
+    spec = importlib.util.spec_from_file_location("provision_check_under_test", SCRIPT_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_provision_check = _load_script()
+compare_pinned_versions = _provision_check.compare_pinned_versions
+PINNED = _provision_check.PINNED
 
 
 def test_matching_versions_report_no_mismatches():
