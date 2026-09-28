@@ -104,7 +104,7 @@ def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dic
     ``subject`` to be negated about in the first place. Callers that need positive claims only
     (coverage: has anyone claimed this requirement is actually met) must check both ``subject``
     and ``is_negated``; a negative claim is real evidence about a candidate, not coverage of the
-    requirement (``decisions/audits/ch06-layer-audit.md`` F-... , fixed PASS4-009 round 2).
+    requirement (``decisions/audits/ch06-layer-audit.md`` F-1, fixed PASS4-009 round 2).
     """
     idx = index or ApiIndex(model)
     return [{"id": e.get("qualifiedName"),
