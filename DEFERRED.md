@@ -526,14 +526,17 @@ held for Z's review.
 **Found:** PASS4-005 (Chapter 5 re-derivation), while probing whether a definition
 could be extended across two separate declarations sharing one name (a pattern
 briefly considered, then not used, for spreading `HeatingSystem`'s construction
-across two notebooks). Independently reproduced by the reviewer.
+across two notebooks). Independently reproduced by the reviewer, who caught that
+an earlier draft of this repro was missing the import `Real` needs and so
+actually failed with `ok=False` (`unresolved: Real`), a different error than the
+one this entry documents; the corrected repro below was re-verified directly.
 
-**Observed.** `package P { part def X; part def X { attribute a : Real; } }`
-(two owned members of the same package sharing the name `X`) loads with
-`model.ok == True` and two `severity='warning'`, `code='name-conflict'`
-diagnostics ("Duplicate of other owned member name"), one per declaration.
-`model.find("P::X")` returns a single resolved symbol. Calling
-`model.to_api_json()` on the same loaded model raises `ConversionError:
+**Observed.** `package P { private import ScalarValues::*; part def X; part def
+X { attribute a : Real; } }` (two owned members of the same package sharing the
+name `X`) loads with `model.ok == True` and two `severity='warning'`,
+`code='name-conflict'` diagnostics ("Duplicate of other owned member name"),
+one per declaration. `model.find("P::X")` returns a single resolved symbol.
+Calling `model.to_api_json()` on the same loaded model raises `ConversionError:
 cannot convert the duplicate declaration of "X" at <content>:L:C: a name
 identifies an element in the graph, so two members of one namespace cannot
 share it`, not a diagnostic on the model itself.
