@@ -141,55 +141,81 @@ Resolved during Pass 1, no issue needed: **G2** (a bare `perform ToastBread;` na
 
 **Headline.** `in energy : ISQ::EnergyValue;` (no multiplicity written) and `in energy : ISQ::EnergyValue[0..*];` (the multiplicity SysML v2.0's own default already gives the first form — see Reference below) are spec-identical declarations. Both load (`model.ok == True`), but only the second keeps a model containing it evaluable: the first raises on evaluating an attribute that has no relation to it at all.
 
-**Observed.** `part def Toaster { attribute cycleTime : ISQ::DurationValue; }`, with `attribute :>> cycleTime = 200.0 [SI::s];` on a usage (`slow`), where `Toaster` also (transitively, through an abstract supertype's `perform action toastBread : ToastBread;`) owns an action graph whose `ToastBread` step contains a nested action typed by a separate action definition with an unbound `in` parameter declared with no multiplicity (`action def ApplyHeat { in bread : Bread; in energy : ISQ::EnergyValue; in duration : ISQ::DurationValue; ... }`): `model.eval("...::slow.cycleTime")` raises `unbound parameter: action ApplyHeat: input parameter bread is bound by no argument`, even though `cycleTime` has no relation whatsoever to `ApplyHeat`, `bread`, `energy` or `duration`. Writing `in energy : ISQ::EnergyValue[0..*];` (nothing else changed) makes the identical expression evaluate normally.
+**Observed.** `part def Toaster { attribute cycleTime : ISQ::DurationValue; }`, with `attribute :>> cycleTime = 200.0 [SI::s];` on a usage (`slow`), where `Toaster` also (transitively, through an abstract supertype's `perform action toastBread : ToastBread;`) owns an action graph whose `ToastBread` step contains a nested action typed by a separate action definition with an unbound `in` parameter declared with no multiplicity: `model.eval("...::slow.cycleTime")` raises `unbound parameter: action ApplyHeat: input parameter <name> is bound by no argument`, even though `cycleTime` has no relation whatsoever to `ApplyHeat` or any of its parameters. Writing that parameter's declaration as `[0..*]` (nothing else changed) makes the identical expression evaluate normally — even though `[0..*]` is, per the spec reading below, the exact multiplicity the bare declaration already has by default.
 
-**Isolating the precise trigger.** Eight variants were probed against the same minimal model (below), each substituted for `ApplyHeat`/its nested step, evaluating `slow.cycleTime`:
+**Isolating the precise trigger, in two separate experiments.**
+
+*Experiment 1 — which construction reaches the parameter at all.* Six variants, each varying only how `ApplyHeat` is referenced, tested on the same single parameter (`in bread : Bread;`, no multiplicity written) against the same minimal model, evaluating `slow.cycleTime`:
 
 | Variant | Result |
 |---|---|
-| Only `out` parameters (`action def ApplyHeat { out toast : Toast; ... }`) | evaluates cleanly |
+| Only `out` parameters (`action def ApplyHeat { out toast : Toast; ... }`, no `in` at all) | evaluates cleanly |
 | `in bread`, no declared multiplicity, sequenced (`first start; then action applyHeat : ApplyHeat; then done;`) | fails |
 | `in bread`, no declared multiplicity, bare ownership (`action applyHeat : ApplyHeat;`, no succession, no `perform`) | fails identically |
 | `ref action applyHeat : ApplyHeat;` | fails |
 | `abstract action def ApplyHeat { ... }` | fails |
-| `action applyHeat : ApplyHeat[0..*];` (multiplicity on the usage) | fails |
-| `in bread : Bread[0..1];` (explicit `[0..1]`, narrower than the spec default) | evaluates cleanly |
-| `in energy : ISQ::EnergyValue[0..*];` (explicit `[0..*]`, the **same** value as the spec's own implicit default) | evaluates cleanly |
+| `action applyHeat : ApplyHeat[0..*];` (multiplicity on the usage, not the parameter) | fails |
 
-The last row is the headline finding: `[0..*]` written out is not a narrower or looser claim than the bare form — per the spec reading below it is the identical claim — and the tool still treats it differently. So the trigger is not "any owned action" (only-`out` is fine), not the `perform`/succession machinery (`ref action`, bare ownership, and `perform action` all fail the same way), not merely "any reference to a separate definition" (the only-`out` variant is such a reference too, and it is fine), and not really multiplicity in any semantic sense: the `[0..*]` row shows the tool does not key on what the multiplicity *means*, it keys on whether a multiplicity token is *present in the source text*.
+So the trigger is not "any owned action" (only-`out` is fine), not the `perform`/succession machinery (`ref action`, bare ownership, and `perform action` all fail the same way), and not merely "any reference to a separate definition" (the only-`out` variant is such a reference too, and it is fine).
+
+*Experiment 2 — what about the parameter's own declared multiplicity matters.* With the nesting held fixed at the failing shape above, one parameter's declared multiplicity was varied in isolation (the model's only unresolved `in` parameter in each run):
+
+| Declared multiplicity | Result |
+|---|---|
+| none written (the bare, implicit form) | fails |
+| `[1..1]` | fails |
+| `[1]` | fails |
+| `[1..*]` | fails |
+| `[2..*]` | fails |
+| `[0..*]` (spec-identical to the implicit default — see Reference below) | evaluates cleanly |
+| `[0..1]` | evaluates cleanly |
+| `[0..2]` | evaluates cleanly |
+| `[*]` | evaluates cleanly |
+
+The rule this supports: the tool applies a `[1..1]`-shaped default to a bare `in` parameter (see Reference — this is the spec's default for attribute/item/port usages, not for a keyword-less reference usage, which is what a bare `in` parameter actually is), then raises whenever a nested step's parameter has an unbound value and an effective lower bound of 1 or more. That is a coherent, if wrong, rule — it is not that "any multiplicity token being present" avoids the failure regardless of what it states: explicit `[1..1]` is a token, with lower bound 1, and it fails identically to the bare form.
 
 **The clearest evidence, an internal inconsistency:** `ToastBread`'s own top-level `in bread : Bread;` has the identical shape — no declared multiplicity, unbound — and the tool tolerates it fine: `slow.cycleTime` evaluates cleanly when `ToastBread`'s body is `first start; then done;`, with no nested reference to a separate action definition at all. Only the *nested* case (one level deeper) triggers the failure, for the identical parameter shape.
 
 A second, smaller inconsistency corroborates the first: `model.find("...::ApplyHeat::bread").kind` (and the same for `energy`, `duration`) reports `attributeUsage`, while the same feature's API-JSON export types it `ReferenceUsage`. Whichever is correct, the tool's two own surfaces for asking what kind of feature this is disagree with each other.
 
-An explicit `[1..1]` fails identically to the undeclared case (confirmed: `in bread : Bread[1..1];`, otherwise unbound, raises the same "bound by no argument" error) — further evidence against a coherent multiplicity rule, since `[1..1]` is the one multiplicity that would spec-accurately state these parameters mean exactly one value, not yet known, and it does not help either. Only a multiplicity token being present at all (`[0..*]` or `[0..1]`) avoids the failure, regardless of what it states.
-
 **Reference.** KerML 1.1 Beta 2 §9.2.8.2.6 (`FeatureReadEvaluation`): a feature read's result is scoped to "the values of `accessedFeature` of `onOccurrence`" — nothing here distinguishes a nested unbound feature from a top-level one, so the internal inconsistency above is not explained by this rule. SysML v2.0 formal/2026-03-02 §7.6.3 (implicit multiplicity defaults): its tighter `[1..1]` default applies only to "an attribute usage, an item usage, ..., or a port usage" — a usage declared with a kind keyword. `in bread : Bread;` (and `in energy`, `in duration`) have none: per the grammar they are `DefaultReferenceUsage : ReferenceUsage` (§8.2.2.6.3), and §7.6.4 defines a reference usage as exactly "a usage that is declared without any kind keyword." So they do not meet §7.6.3's condition for `[1..1]`; the spec's own default for them is the general, unbounded `[0..*]` (KerML 1.1 Beta 2 agrees, calling this "the usual default") — exactly the value we write explicitly to work around this gap. SysML v2.0 formal/2026-03-02 §8.3.17.14 / §8.4.13.11 (`PerformActionUsage`): its only additional constraints concern specialization and reference typing, nothing about parameter binding — consistent with the bare-ownership probe (no `perform` at all) failing identically to the `perform`-based one, and confirming `perform` itself adds nothing relevant to this behavior.
 
-**Request.** Please confirm whether it is by design that OpenSysML v0.9.0 treats an implicit multiplicity and its spec-identical explicit spelling-out (`[0..*]` on a bare reference usage) differently for attribute evaluation, and if so, what governs the distinction — since it is not the multiplicity's declared meaning (the `[0..*]` row above rules that out), not the `perform`/succession machinery (the bare-ownership row rules that out), and not depth alone (the top-level `ToastBread::bread` case, identically shaped, is tolerated). If unintended: we would welcome either (a) honoring the implicit default the same as its explicit spelling, or (b) a documented lazy-evaluation fix so only the sub-graph a queried expression actually depends on needs full binding — so an unrelated attribute of a part usage stays queryable while a genuinely undecided child action (a functional-decomposition step whose flows are typed but deliberately not yet valued, because no mechanism has been chosen at this stage of a model's development) stays undecided.
+**Request.** Our best-supported reading, from Experiment 2, is that a bare `in` parameter is
+given an implicit `[1..1]`-shaped default (the default §7.6.3 reserves for attribute/item/
+port usages, not for a keyword-less reference usage — see Reference), and evaluation then
+raises whenever a *nested* step's parameter is unbound with an effective lower bound of 1
+or more, regardless of depth beyond one level or of `perform`/succession (Experiment 1
+rules both out) or of whether the multiplicity is written or implied (Experiment 2's
+`[0..*]`-vs-bare pair, and the `[1..1]` row, rule that out too). Please confirm whether this
+matches the implementation, and separately, whether it is intended that an implicit
+multiplicity and its spec-identical explicit spelling-out are treated differently at all —
+under any reading of the spec sections above, they should mean the same thing. If
+unintended: we would welcome either (a) honoring the implicit default the same as its
+explicit spelling (the more surgical fix, given our reading of the actual mechanism), or
+(b) a documented lazy-evaluation fix so only the sub-graph a queried expression actually
+depends on needs full binding — so an unrelated attribute of a part usage stays queryable
+while a genuinely undecided child action (a functional-decomposition step whose flows are
+typed but deliberately not yet valued, because no mechanism has been chosen at this stage
+of a model's development) stays undecided.
 
-**Repro.**
+**Repro.** Isolated to a single `in` parameter (`energy`), so toggling the one commented
+line is the entire difference between the failing and evaluating runs. The tutorial's
+real `ApplyHeat` has three such parameters (`bread`, `energy`, `duration`), all
+independently unbound; each needs the same treatment (explicit `[0..*]`, or otherwise
+resolved) before the model is fully evaluable — changing only one while the others stay
+bare still fails, now naming whichever of the others is unresolved.
 ```
 package Probe {
     private import ScalarValues::*;
     private import SI::*;
     private import ISQ::*;
-    item def Bread;
     item def Toast;
     action def ApplyHeat {
-        in bread : Bread;
         in energy : ISQ::EnergyValue;          // implicit [0..*]: fails
         // in energy : ISQ::EnergyValue[0..*];  // explicit, spec-identical: evaluates cleanly
-        in duration : ISQ::DurationValue;
         out toast : Toast;
-        out delivered : ISQ::EnergyValue;
-        out loss : ISQ::EnergyValue;
-        assert constraint balance {
-            delivered >= 0.0 [SI::J] and loss >= 0.0 [SI::J] and delivered + loss <= energy
-        }
     }
     action def ToastBread {
-        in bread : Bread;
         out toast : Toast;
         action applyHeat : ApplyHeat;   // or: first start; then action applyHeat : ApplyHeat; then done;
     }
