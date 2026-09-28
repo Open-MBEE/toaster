@@ -163,6 +163,28 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             ],
         },
     ],
+    6: [
+        {
+            "path": "chapters/ch06-recursive-decomp/01-subsystem-requirements.ipynb",
+            # HeatingAssembly :> HeatingSystem (ch05); ApplyHeat's rewritten body
+            # references Bread/Toast (ch01/ch04). GenerateHeat, EnergyPort and
+            # HeatGenerator are declared by this notebook's own fragment.
+            "context_stubs": [
+                "item def Bread;",
+                "item def Toast;",
+                "abstract part def HeatingSystem;",
+            ],
+        },
+        {
+            "path": "chapters/ch06-recursive-decomp/02-second-level.ipynb",
+            # ResistanceCoil :> HeatGenerator (nb01); HeatGenerationReq's subject
+            # is HeatGenerator, and rated/weak are typed by ResistanceCoil, this
+            # notebook's own fragment.
+            "context_stubs": [
+                "abstract part def HeatGenerator { attribute power : ISQ::PowerValue; }",
+            ],
+        },
+    ],
     7: [
         {
             "path": "chapters/ch07-execution/02-state-traces.ipynb",
