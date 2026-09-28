@@ -187,12 +187,35 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     ],
     7: [
         {
+            "path": "chapters/ch07-execution/01-calc-energy.ipynb",
+            # HeatGenerator is reprinted in full with efficiency/DeliveredEnergy added
+            # (Ch6); rated is reprinted in full with its new efficiency value (Ch6),
+            # referencing ResistanceCoil and heatGenerationReq (both Ch6).
+            "context_stubs": [
+                "action def GenerateHeat;",
+                "port def EnergyPort;",
+                "part def ResistanceCoil :> HeatGenerator { attribute :>> power default = 800.0 [SI::W]; }",
+                "requirement def HeatGenerationReq { subject heatGen : HeatGenerator; require constraint { heatGen.power >= 600.0 [SI::W] } }",
+                "requirement heatGenerationReq : HeatGenerationReq;",
+            ],
+        },
+        {
             "path": "chapters/ch07-execution/02-state-traces.ipynb",
-            # transitions accept Start/Finish/Cancel item defs (defined in Ch4)
+            # Cycle's do action references GenerateHeat (Ch6); Toaster is reprinted in
+            # full with the new exhibit line, referencing ToastingSystem, HeatingSystem,
+            # ControlSystem and DurationPort (Ch1/Ch5). Start/Finish/Cancel (Ch4) are
+            # accepted triggers OpenSysML does not resolve at load time (D-023), so a
+            # stub for them is not required for this fragment to validate, but they are
+            # kept for documentation: the accept clauses are still real references.
             "context_stubs": [
                 "item def Start;",
                 "item def Finish;",
                 "item def Cancel;",
+                "action def GenerateHeat;",
+                "abstract part def ToastingSystem;",
+                "port def DurationPort;",
+                "abstract part def HeatingSystem { port durationIn : ~DurationPort; }",
+                "part def ControlSystem { port durationOut : DurationPort; }",
             ],
         },
     ],
