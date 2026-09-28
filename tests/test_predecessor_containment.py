@@ -245,22 +245,23 @@ def test_ch09_has_no_cumulative_fixture(cc):
 def test_ch08_to_ch09_predecessor_containment_is_a_noop_by_design(cc, conn, monkeypatch):
     """check_predecessor_containment(9, ...) returns no failures, but not because
     ch08->ch09 containment was genuinely checked and found clean: it is a no-op,
-    guarded by the function's own "both paths must exist" check, since chapter 9
-    has no cumulative fixture to compare against ch08's (see
-    test_ch09_has_no_cumulative_fixture). Proved here, not just asserted: conn's
-    own load_from_content is monkeypatched to raise, so if the guard were ever
-    bypassed and the function actually tried to load anything for chapter 9 (it
-    should never even reach ch08's own real fixture, since the guard checks
-    BOTH paths before loading either), this test would fail loudly instead of
-    silently returning [] for an unrelated reason. Documented separately from the
-    real, checked "clean" results above so the two are never conflated."""
+    guarded by the function's own early return when chapter 9's OWN cumulative
+    fixture doesn't exist (CUMULATIVE_FILES has no entry for 9 at all -- see
+    test_ch09_has_no_cumulative_fixture). That early return fires before the
+    function ever calls _nearest_predecessor_fixture to look for a predecessor,
+    let alone loads anything. Proved here, not just asserted: conn's own
+    load_from_content is monkeypatched to raise, so if that early return were
+    ever bypassed, this test would fail loudly instead of silently returning []
+    for an unrelated reason. Documented separately from the real, checked
+    "clean" results above so the two are never conflated."""
 
     def _must_not_be_called(*args, **kwargs):
         raise AssertionError(
             "check_predecessor_containment(9, ...) must never call "
-            "load_from_content at all: chapter 9 has no cumulative fixture, so "
-            "its own 'both paths must exist' guard must return before loading "
-            "either file, including ch08's own real one."
+            "load_from_content at all: chapter 9 has no cumulative fixture of "
+            "its own, so the function's early return on its own cur_path check "
+            "must fire before it ever looks for a predecessor, let alone loads "
+            "either file."
         )
 
     monkeypatch.setattr(conn, "load_from_content", _must_not_be_called)
@@ -291,15 +292,20 @@ def test_nearest_predecessor_fixture_skips_ch09_and_finds_ch08(cc):
 
 
 def test_nearest_predecessor_fixture_general_fallback_skips_a_gap(cc, tmp_path, monkeypatch):
-    """The fallback is general, not special-cased to chapter 9: a sentinel gap (chapter 96
-    missing entirely from CUMULATIVE_FILES, between a real 95 and a real 97) is also
-    skipped, landing on 95, not merely on "the nearest key present"."""
+    """The fallback is general, not special-cased to chapter 9, and skips BOTH real ways a
+    gap can occur, walking through both before landing on a real fixture: chapter 97, a key
+    genuinely absent from CUMULATIVE_FILES (confirmed with `not in`, not merely assumed),
+    and chapter 96, a key that IS present but whose file does not exist on disk (a stale
+    dict entry). Only chapter 95, with a real, existing file, is returned."""
+    assert 97 not in cc.CUMULATIVE_FILES
+    stale_96 = tmp_path / "ch96-does-not-exist.sysml"
+    assert not stale_96.exists()
     fixture_95 = tmp_path / "ch95.sysml"
     fixture_95.write_text("package Test95 {\n}\n")
+    monkeypatch.setitem(cc.CUMULATIVE_FILES, 96, stale_96)
     monkeypatch.setitem(cc.CUMULATIVE_FILES, 95, fixture_95)
-    monkeypatch.delitem(cc.CUMULATIVE_FILES, 96, raising=False)
 
-    found = cc._nearest_predecessor_fixture(97)
+    found = cc._nearest_predecessor_fixture(98)
 
     assert found == (95, fixture_95)
 
