@@ -240,12 +240,25 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     # check_predecessor_containment(9, ...) is a documented no-op
     # (tests/test_predecessor_containment.py::test_ch08_to_ch09_predecessor_containment_is_a_noop_by_design).
     9: [],
+    # PASS4-010 (Chapter 10, Traceability and Sign-off): also no construct-
+    # introducing notebook. A traceability graph, a judgment ledger and a
+    # sign-off synthesis over the model exactly as Chapter 8 left it add no
+    # new named model element, the same design choice Chapter 9 made. Unlike
+    # Chapter 9, this chapter DOES commit its own models/ch10-cumulative.sysml
+    # (byte-identical in body to ch08's, see that file's own header comment),
+    # specifically so check_predecessor_containment's own nearest-earlier-
+    # fixture fallback (below) has a real ch10 file to compare ch08's named
+    # elements against, resolving decisions/next-passes.md item 21: without
+    # this fixture, or without the fallback, ch08->ch10 containment would
+    # never actually be checked at all, silently, the same gap item 21 named.
+    10: [],
 }
 
 CUMULATIVE_FILES = {
     ch: REPO_ROOT / f"models/ch0{ch}-cumulative.sysml"
     for ch in range(1, 9)
 }
+CUMULATIVE_FILES[10] = REPO_ROOT / "models/ch10-cumulative.sysml"
 
 # Standard package preamble for wrapping fragments during validation.
 # {stubs} is replaced with the notebook's declared context_stubs (may be empty).
@@ -361,23 +374,54 @@ def _named_elements(index: "query.ApiIndex") -> dict[str, str]:
     }
 
 
-def check_predecessor_containment(chapter: int, conn: opensysml.Connection) -> list[str]:
-    """For ch{chapter}, verify every NAMED element of ch{chapter-1} is still present, same @type.
+def _nearest_predecessor_fixture(chapter: int) -> tuple[int, Path] | None:
+    """Walk backward from ``chapter - 1`` to the nearest earlier chapter whose cumulative
+    fixture actually exists on disk, skipping any chapter that has none.
 
-    Only runs when chapter > 1 and both ch{chapter-1} and ch{chapter} cumulative fixtures
-    exist. Identity is by qualified name via the API-JSON export (`toaster.query.ApiIndex`),
-    restricted to named elements (see `_named_elements`). Loads both fixtures fresh on the
-    given connection rather than reusing a model `check_chapter` may already have loaded,
-    so this function also works standalone (e.g. from a test or a one-off script).
+    Chapter 9 is an analysis-only chapter (decisions/pass4-run-009.md) that added no
+    ``models/ch09-cumulative.sysml`` at all. Without this fallback,
+    ``check_predecessor_containment(10, ...)`` would look only at ``CUMULATIVE_FILES[9]``,
+    find nothing, and silently return ``[]``: a vacuous no-op indistinguishable from a
+    genuine clean pass, exactly the gap ``decisions/next-passes.md`` item 21 named. This
+    walks past any such gap to the nearest real predecessor (ch08, for ch10) so containment
+    is still actually checked, not skipped. Returns ``None`` if no earlier chapter has a
+    fixture at all (e.g. chapter 1, or a chapter number below the earliest fixture).
+    """
+    for candidate in range(chapter - 1, 0, -1):
+        path = CUMULATIVE_FILES.get(candidate)
+        if path and path.exists():
+            return candidate, path
+    return None
+
+
+def check_predecessor_containment(chapter: int, conn: opensysml.Connection) -> list[str]:
+    """For ch{chapter}, verify every NAMED element of its nearest earlier chapter with a
+    real cumulative fixture is still present, same @type.
+
+    "Nearest earlier chapter" is not always ``chapter - 1``: an analysis-only chapter (like
+    Chapter 9) adds no cumulative fixture of its own, so a chapter immediately after one
+    falls back to the nearest earlier chapter that does have a real fixture
+    (``_nearest_predecessor_fixture``, resolving ``decisions/next-passes.md`` item 21)
+    rather than silently no-opping against a nonexistent immediate predecessor. Only runs
+    when chapter > 1, ch{chapter}'s own fixture exists, and some earlier chapter has a real
+    fixture to compare against. Identity is by qualified name via the API-JSON export
+    (`toaster.query.ApiIndex`), restricted to named elements (see `_named_elements`). Loads
+    both fixtures fresh on the given connection rather than reusing a model `check_chapter`
+    may already have loaded, so this function also works standalone (e.g. from a test or a
+    one-off script).
     """
     failures: list[str] = []
     if chapter <= 1:
         return failures
 
-    prev_path = CUMULATIVE_FILES.get(chapter - 1)
     cur_path = CUMULATIVE_FILES.get(chapter)
-    if not prev_path or not cur_path or not prev_path.exists() or not cur_path.exists():
+    if not cur_path or not cur_path.exists():
         return failures
+
+    found = _nearest_predecessor_fixture(chapter)
+    if found is None:
+        return failures
+    prev_chapter, prev_path = found
 
     prev_model = conn.load_from_content(prev_path.read_text(), strict=False)
     cur_model = conn.load_from_content(cur_path.read_text(), strict=False)
@@ -389,7 +433,7 @@ def check_predecessor_containment(chapter: int, conn: opensysml.Connection) -> l
     prev_named = _named_elements(query.ApiIndex(prev_model))
     cur_named = _named_elements(query.ApiIndex(cur_model))
 
-    prev_label = f"ch{chapter - 1:02d}-cumulative.sysml"
+    prev_label = f"ch{prev_chapter:02d}-cumulative.sysml"
     cur_label = f"ch{chapter:02d}-cumulative.sysml"
     for qn in sorted(prev_named):
         prev_type = prev_named[qn]
@@ -439,7 +483,7 @@ def check_chapter(chapter: int, conn: opensysml.Connection) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify construction zone consistency.")
     parser.add_argument("--check", action="store_true", required=True)
-    parser.add_argument("--chapter", type=int, default=None, help="Check one chapter (1–9)")
+    parser.add_argument("--chapter", type=int, default=None, help="Check one chapter (1-10)")
     args = parser.parse_args()
 
     chapters = [args.chapter] if args.chapter else sorted(CONSTRUCTION_NOTEBOOKS.keys())
