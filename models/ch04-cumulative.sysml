@@ -12,8 +12,8 @@ package ToasterDemo {
 
     action def ApplyHeat {
         in bread : Bread;
-        in energy : ISQ::EnergyValue;
-        in duration : ISQ::DurationValue {
+        in energy : ISQ::EnergyValue[0..*];
+        in duration : ISQ::DurationValue[0..*] {
             doc /* Signal from a control function: how long to apply heat.
              * No control function is modeled in this chapter, so this input
              * is declared and typed but not yet connected to a value. */
