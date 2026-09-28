@@ -73,7 +73,7 @@ re-derivation lands (a rhythm recorded starting with PASS4-002,
   carries is present in ch07-cumulative.sysml with the same `@type`, plus
   Chapter 7's own new `deliveredEnergy`, `efficiency` and `efficiencyBounded`
   on `HeatGenerator`, `rated`'s own efficiency value, and `Cycle` rebuilt as a
-  real `state def` that `Toaster` exhibits. `ch08-cumulative.sysml` is not
+  real `state def` that `ToastingSystem` exhibits, inherited and executable through `Toaster`. `ch08-cumulative.sysml` is not
   touched by PASS4-007 (a non-goal) and was built against the old, stale ch07
   fixture (`state Cycle` as an undifferentiated package-level usage with no
   owner, no `do` action and no return-to-idle transitions, and none of Chapter
@@ -127,7 +127,7 @@ def test_ch07_to_ch08_reports_the_known_dropped_elements(cc, conn):
     `HeatingAssembly::heatGen`, `heatGenAllocation`, `HeatGenerationReq`/
     `heatGenerationReq` and `rated`) plus its own new `deliveredEnergy`,
     `efficiency` and `efficiencyBounded` on `HeatGenerator`, and `Cycle` rebuilt
-    as a real `state def` that `Toaster` exhibits. `ch08-cumulative.sysml` is not
+    as a real `state def` that `ToastingSystem` exhibits, inherited and executable through `Toaster`. `ch08-cumulative.sysml` is not
     touched by PASS4-007 (a non-goal) and was built against the old, stale ch07
     fixture, so it drops all of these. `weak` and `ResistanceCoil` are not part
     of this drop: ch08-cumulative.sysml already carries its own same-named,
@@ -190,7 +190,7 @@ def test_ch07_to_ch08_reports_the_known_dropped_elements(cc, conn):
         "ToasterDemo::HeatGenerator::deliveredEnergy",
         "ToasterDemo::HeatGenerator::deliveredEnergy::power",
         "ToasterDemo::HeatGenerator::deliveredEnergy::duration",
-        "ToasterDemo::Toaster::cycle",
+        "ToasterDemo::ToastingSystem::cycle",
         "ToasterDemo::Cycle::heating::@0::generateHeat",
     ):
         assert qname in joined, f"expected {qname} to be reported missing"

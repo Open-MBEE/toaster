@@ -188,7 +188,7 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     7: [
         {
             "path": "chapters/ch07-execution/01-calc-energy.ipynb",
-            # HeatGenerator is reprinted in full with efficiency/DeliveredEnergy added
+            # HeatGenerator is reprinted in full with efficiency/deliveredEnergy added
             # (Ch6); rated is reprinted in full with its new efficiency value (Ch6),
             # referencing ResistanceCoil and heatGenerationReq (both Ch6).
             "context_stubs": [
@@ -201,21 +201,20 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
         },
         {
             "path": "chapters/ch07-execution/02-state-traces.ipynb",
-            # Cycle's do action references GenerateHeat (Ch6); Toaster is reprinted in
-            # full with the new exhibit line, referencing ToastingSystem, HeatingSystem,
-            # ControlSystem and DurationPort (Ch1/Ch5). Start/Finish/Cancel (Ch4) are
-            # accepted triggers OpenSysML does not resolve at load time (D-023), so a
-            # stub for them is not required for this fragment to validate, but they are
-            # kept for documentation: the accept clauses are still real references.
+            # Cycle's do action references GenerateHeat (Ch6); ToastingSystem (the
+            # abstract subject, Ch1) is reprinted in full with the new exhibit line,
+            # referencing its own existing perform (ToastBread, Ch4). Toaster itself is
+            # not touched: the exhibit lives on ToastingSystem, inherited by Toaster and
+            # any usage of it (DL-019/DL-044). Start/Finish/Cancel (Ch4) are accepted
+            # triggers OpenSysML does not resolve at load time (D-023), so a stub for
+            # them is not required for this fragment to validate, but they are kept for
+            # documentation: the accept clauses are still real references.
             "context_stubs": [
                 "item def Start;",
                 "item def Finish;",
                 "item def Cancel;",
                 "action def GenerateHeat;",
-                "abstract part def ToastingSystem;",
-                "port def DurationPort;",
-                "abstract part def HeatingSystem { port durationIn : ~DurationPort; }",
-                "part def ControlSystem { port durationOut : DurationPort; }",
+                "action def ToastBread;",
             ],
         },
     ],

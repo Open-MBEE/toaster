@@ -47,6 +47,7 @@ package ToasterDemo {
 
     abstract part def ToastingSystem {
         perform action toastBread : ToastBread;
+        exhibit state cycle : Cycle;
     }
 
     port def DurationPort {
@@ -69,7 +70,6 @@ package ToasterDemo {
         part heating : HeatingSystem;
         part control : ControlSystem;
         interface durationInterface connect control.durationOut to heating.durationIn;
-        exhibit state cycle : Cycle;
     }
 
     requirement def TimelyToast {
