@@ -31,6 +31,16 @@ def test_unknown_root_returns_empty_list(ch06_model):
     assert result == []
 
 
+def test_unrecognized_relation_raises_value_error(ch06_model):
+    with pytest.raises(ValueError, match=r"unknown relation kind: 'compositon'"):
+        containment_subgraph(ch06_model, "ToasterDemo::Toaster", relations=("compositon",))
+
+
+def test_negative_depth_raises_value_error(ch06_model):
+    with pytest.raises(ValueError, match=r"depth must be >= 0 or None, got -1"):
+        containment_subgraph(ch06_model, "ToasterDemo::Toaster", depth=-1)
+
+
 def test_depth_zero_returns_only_the_root(ch06_model):
     result = containment_subgraph(ch06_model, "ToasterDemo::Toaster", depth=0)
     assert _qnames(result) == {"ToasterDemo::Toaster"}

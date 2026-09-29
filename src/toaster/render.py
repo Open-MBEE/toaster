@@ -72,6 +72,13 @@ def containment_subgraph(
     model itself, so it cannot silently drift the way a hand-authored
     diagram-intent file can (see decisions/log.md DL-055).
     """
+    valid_relations = {"composition", "typing"}
+    for r in relations:
+        if r not in valid_relations:
+            raise ValueError(f"unknown relation kind: {r!r}")
+    if depth is not None and depth < 0:
+        raise ValueError(f"depth must be >= 0 or None, got {depth}")
+
     by_qname = {}
     for e in model.query():
         d = e.as_dict()
