@@ -1,0 +1,25 @@
+// kind: state
+// stated: no view declared; rendering ToasterDemo::Cycle directly
+// layout: dot
+digraph {
+  graph [fontname="Helvetica"];
+  node [shape=box, style=filled, fillcolor=white, color="#181818", fontname="Helvetica", fontsize=14, penwidth=0.5];
+  edge [color="#181818", fontname="Helvetica", fontsize=13, penwidth=1];
+  subgraph "cluster_n0" {
+    label=<<b>Cycle</b><br/><font point-size="10"><i>«state def»</i></font>>;
+    color=black;
+    penwidth=0.5;
+    "n0" [shape=point, style=invis, width=0, height=0, label=""];
+    "n5" [shape=point, fillcolor=black, label=""];
+    "n1" [style="rounded,filled", label=<<b>idle</b><br/><font point-size="10"><i>«state»</i></font><br/>initial>];
+    "n2" [style="rounded,filled", label=<<b>heating</b><br/><font point-size="10"><i>«state»</i></font><br/>do>];
+    "n3" [style="rounded,filled", label=<<b>ready</b><br/><font point-size="10"><i>«state»</i></font>>];
+    "n4" [style="rounded,filled", label=<<b>cancelled</b><br/><font point-size="10"><i>«state»</i></font>>];
+  }
+  "n5" -> "n1";
+  "n1" -> "n2" [label="accept Start"];
+  "n2" -> "n3" [label="accept Finish"];
+  "n2" -> "n4" [label="accept Cancel"];
+  "n3" -> "n1";
+  "n4" -> "n1";
+}

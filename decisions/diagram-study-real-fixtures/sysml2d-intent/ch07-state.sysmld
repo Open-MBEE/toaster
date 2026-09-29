@@ -1,0 +1,376 @@
+{
+  "$schema": "../../schemas/sysmld.schema.json",
+  "version": "0.1",
+  "mode": "model_based",
+  "model_files": [
+    "ch07.sysml"
+  ],
+  "aliases": {
+    "cycle": "ToasterDemo::Cycle",
+    "idle": "ToasterDemo::Cycle::idle",
+    "heating": "ToasterDemo::Cycle::heating",
+    "ready": "ToasterDemo::Cycle::ready",
+    "cancelled": "ToasterDemo::Cycle::cancelled",
+    "start": "ToasterDemo::Start",
+    "finish": "ToasterDemo::Finish",
+    "cancel": "ToasterDemo::Cancel"
+  },
+  "diagram": {
+    "id": "ch07-state",
+    "kind": "StateView",
+    "name": "Ch7 Toasting Cycle (Real Fixture)",
+    "canvas": {
+      "width": 1044,
+      "height": 457,
+      "background": "#FFFFFF"
+    },
+    "frame": {
+      "visible": true
+    },
+    "elements": [
+      {
+        "id": "boundary",
+        "model_ref": "cycle",
+        "symbol": "boundary",
+        "layout": {
+          "x": 109,
+          "y": 89,
+          "width": 895,
+          "height": 328,
+          "z": 0
+        },
+        "compartments": {
+          "attributes": false,
+          "ports": false,
+          "actions": false
+        },
+        "style": "boundary.system"
+      },
+      {
+        "id": "initial",
+        "symbol": "initial_state",
+        "layout": {
+          "x": 145,
+          "y": 211,
+          "width": 20,
+          "height": 20,
+          "z": 10
+        },
+        "style": "initial_state"
+      },
+      {
+        "id": "idle",
+        "symbol": "state_usage",
+        "layout": {
+          "x": 318,
+          "y": 191,
+          "width": 130,
+          "height": 60,
+          "z": 10
+        },
+        "model_ref": "idle",
+        "label": "Idle",
+        "style": "state.default"
+      },
+      {
+        "id": "heating",
+        "symbol": "state_usage",
+        "layout": {
+          "x": 546,
+          "y": 191,
+          "width": 130,
+          "height": 60,
+          "z": 10
+        },
+        "model_ref": "heating",
+        "label": "Heating",
+        "style": "state.default"
+      },
+      {
+        "id": "ready",
+        "symbol": "state_usage",
+        "layout": {
+          "x": 774,
+          "y": 125,
+          "width": 130,
+          "height": 60,
+          "z": 10
+        },
+        "model_ref": "ready",
+        "label": "Ready",
+        "style": "state.default"
+      },
+      {
+        "id": "cancelled",
+        "symbol": "state_usage",
+        "layout": {
+          "x": 774,
+          "y": 257,
+          "width": 130,
+          "height": 60,
+          "z": 10
+        },
+        "model_ref": "cancelled",
+        "label": "Cancelled",
+        "style": "state.default"
+      }
+    ],
+    "connections": [
+      {
+        "id": "initial--idle",
+        "model_ref": "cycle",
+        "source": {
+          "element": "initial",
+          "anchor": {
+            "side": "right",
+            "offset": 0.5
+          }
+        },
+        "target": {
+          "element": "idle",
+          "anchor": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "route": {
+          "kind": "orthogonal",
+          "waypoints": []
+        },
+        "labels": [],
+        "style": "transition"
+      },
+      {
+        "id": "idle--heating",
+        "model_ref": "start",
+        "source": {
+          "element": "idle",
+          "anchor": {
+            "side": "right",
+            "offset": 0.5
+          }
+        },
+        "target": {
+          "element": "heating",
+          "anchor": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "route": {
+          "kind": "orthogonal",
+          "waypoints": []
+        },
+        "labels": [
+          {
+            "text": "Start",
+            "position": {
+              "segment": 0,
+              "offset": 0.5,
+              "placement": "centerline"
+            }
+          }
+        ],
+        "style": "transition"
+      },
+      {
+        "id": "heating--ready",
+        "model_ref": "finish",
+        "source": {
+          "element": "heating",
+          "anchor": {
+            "side": "right",
+            "offset": 0.3333
+          }
+        },
+        "target": {
+          "element": "ready",
+          "anchor": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "route": {
+          "kind": "orthogonal",
+          "waypoints": [
+            {
+              "x": 709,
+              "y": 211
+            },
+            {
+              "x": 709,
+              "y": 155
+            }
+          ]
+        },
+        "labels": [
+          {
+            "text": "Finish",
+            "position": {
+              "segment": 1,
+              "offset": 0.5,
+              "placement": "centerline"
+            }
+          }
+        ],
+        "style": "transition"
+      },
+      {
+        "id": "heating--cancelled",
+        "model_ref": "cancel",
+        "source": {
+          "element": "heating",
+          "anchor": {
+            "side": "right",
+            "offset": 0.6667
+          }
+        },
+        "target": {
+          "element": "cancelled",
+          "anchor": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "route": {
+          "kind": "orthogonal",
+          "waypoints": [
+            {
+              "x": 741,
+              "y": 231
+            },
+            {
+              "x": 741,
+              "y": 287
+            }
+          ]
+        },
+        "labels": [
+          {
+            "text": "Cancel",
+            "position": {
+              "segment": 1,
+              "offset": 0.5,
+              "placement": "centerline"
+            }
+          }
+        ],
+        "style": "transition"
+      },
+      {
+        "id": "ready-back-idle",
+        "model_ref": "cycle",
+        "source": {
+          "element": "ready",
+          "anchor": {
+            "side": "right",
+            "offset": 0.3333
+          }
+        },
+        "target": {
+          "element": "idle",
+          "anchor": {
+            "side": "bottom",
+            "offset": 0.3333
+          }
+        },
+        "route": {
+          "kind": "orthogonal",
+          "waypoints": [
+            {
+              "x": 968,
+              "y": 145
+            },
+            {
+              "x": 968,
+              "y": 381
+            },
+            {
+              "x": 361,
+              "y": 381
+            }
+          ]
+        },
+        "labels": [],
+        "style": "transition"
+      },
+      {
+        "id": "cancelled-back-idle",
+        "model_ref": "cycle",
+        "source": {
+          "element": "cancelled",
+          "anchor": {
+            "side": "right",
+            "offset": 0.6667
+          }
+        },
+        "target": {
+          "element": "idle",
+          "anchor": {
+            "side": "bottom",
+            "offset": 0.6667
+          }
+        },
+        "route": {
+          "kind": "orthogonal",
+          "waypoints": [
+            {
+              "x": 940,
+              "y": 297
+            },
+            {
+              "x": 940,
+              "y": 353
+            },
+            {
+              "x": 405,
+              "y": 353
+            }
+          ]
+        },
+        "labels": [],
+        "style": "transition"
+      }
+    ],
+    "annotations": [],
+    "styles": {
+      "boundary.system": {
+        "fill": "#FFFFFF",
+        "stroke": "#334155",
+        "stroke_width": 2,
+        "corner_radius": 12
+      },
+      "state.default": {
+        "fill": "#EFF6FF",
+        "stroke": "#1D4ED8",
+        "stroke_width": 2,
+        "corner_radius": 16
+      },
+      "initial_state": {
+        "fill": "#1E293B",
+        "stroke": "#1E293B",
+        "stroke_width": 1
+      },
+      "final_state": {
+        "fill": "#1E293B",
+        "stroke": "#1E293B",
+        "stroke_width": 2
+      },
+      "transition": {
+        "stroke": "#1D4ED8",
+        "stroke_width": 1.5,
+        "corner_radius": 8,
+        "marker_end": "arrow"
+      },
+      "state.composite": {
+        "fill": "#EFF6FF",
+        "stroke": "#1D4ED8",
+        "stroke_width": 2,
+        "corner_radius": 16,
+        "label_position": "top",
+        "container": true
+      }
+    },
+    "subject": "cycle"
+  }
+}

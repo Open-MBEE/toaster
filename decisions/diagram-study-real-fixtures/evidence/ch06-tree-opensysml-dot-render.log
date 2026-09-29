@@ -1,0 +1,7 @@
+$ dot -Tsvg decisions/diagram-study-real-fixtures/evidence/ch06-tree-opensysml-dot.dot -o decisions/diagram-study-real-fixtures/evidence/ch06-tree-opensysml-dot.svg
+exit_code=0 elapsed_seconds=0.081
+
+--- stdout ---
+
+--- stderr ---
+

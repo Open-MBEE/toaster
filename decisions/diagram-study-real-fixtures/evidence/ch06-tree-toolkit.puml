@@ -1,0 +1,16 @@
+@startuml
+hide empty members
+class "Toaster" as n1 <<part def>> {
+  cycleTime
+}
+class "heating : HeatingSystem" as n2 <<part>>
+class "control : ControlSystem" as n3 <<part>>
+class "durationInterface" as n4 <<interface>>
+class "(port)" as n5 <<port>>
+class "(port)" as n6 <<port>>
+n1 *-- n2
+n1 *-- n3
+n4 o-- n5
+n4 o-- n6
+n1 *-- n4
+@enduml

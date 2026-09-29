@@ -1,0 +1,15 @@
+@startuml
+state "Cycle" as n1 <<state def>> {
+  state "idle" as n2 <<state>>
+  state "heating" as n3 <<state>>
+  n3 : do / generateHeat : GenerateHeat
+  state "ready" as n4 <<state>>
+  state "cancelled" as n5 <<state>>
+  [*] --> n2
+  n2 --> n3 : Start
+  n3 --> n4 : Finish
+  n3 --> n5 : Cancel
+  n4 --> n2
+  n5 --> n2
+}
+@enduml
