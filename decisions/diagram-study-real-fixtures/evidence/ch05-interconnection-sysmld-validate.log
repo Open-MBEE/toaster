@@ -1,0 +1,14 @@
+$ (cwd=decisions/diagram-study-real-fixtures/sysml2d-intent) python3 -c from sysmld.cli import main; raise SystemExit(main()) validate ch05-interconnection.sysmld --strict
+exit_code=1 elapsed_seconds=0.054
+
+--- stdout ---
+ERROR SYSMLD-REF-002: unresolved model reference: conn-control-heating -> ToasterDemo::Toaster::durationInterface
+ERROR SYSMLD-REF-002: unresolved model reference: toaster -> ToasterDemo::Toaster
+ERROR SYSMLD-REF-002: unresolved model reference: control--heating--tgt -> control--heating--tgt
+ERROR SYSMLD-REF-002: unresolved model reference: control -> ToasterDemo::Toaster::control
+ERROR SYSMLD-REF-002: unresolved model reference: heating -> ToasterDemo::Toaster::heating
+ERROR SYSMLD-REF-002: unresolved model reference: control--heating--src -> control--heating--src
+6 errors, 0 warnings
+
+--- stderr ---
+

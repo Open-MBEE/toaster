@@ -1,0 +1,156 @@
+{
+  "$schema": "../../schemas/sysmld.schema.json",
+  "version": "0.1",
+  "mode": "model_based",
+  "model_files": [
+    "ch05.sysml"
+  ],
+  "aliases": {
+    "toaster": "ToasterDemo::Toaster",
+    "heating": "ToasterDemo::Toaster::heating",
+    "control": "ToasterDemo::Toaster::control",
+    "conn-control-heating": "ToasterDemo::Toaster::durationInterface"
+  },
+  "diagram": {
+    "id": "ch05-interconnection",
+    "kind": "InterconnectionView",
+    "name": "Ch5 Duration Interface (Real Fixture)",
+    "canvas": {
+      "width": 703,
+      "height": 232,
+      "background": "#FFFFFF"
+    },
+    "frame": {
+      "visible": true
+    },
+    "elements": [
+      {
+        "id": "boundary",
+        "model_ref": "toaster",
+        "symbol": "boundary",
+        "layout": {
+          "x": 40,
+          "y": 40,
+          "width": 623,
+          "height": 152,
+          "z": 0
+        },
+        "compartments": {
+          "attributes": false,
+          "ports": false,
+          "actions": false
+        },
+        "style": "boundary.system"
+      },
+      {
+        "id": "heating",
+        "model_ref": "heating",
+        "symbol": "part_usage",
+        "layout": {
+          "x": 432,
+          "y": 76,
+          "width": 195,
+          "height": 80,
+          "z": 10
+        },
+        "label": "heating : HeatingSystem",
+        "compartments": {
+          "attributes": false,
+          "ports": true,
+          "actions": false
+        },
+        "style": "part.mechanical"
+      },
+      {
+        "id": "control",
+        "model_ref": "control",
+        "symbol": "part_usage",
+        "layout": {
+          "x": 76,
+          "y": 76,
+          "width": 195,
+          "height": 80,
+          "z": 10
+        },
+        "label": "control : ControlSystem",
+        "compartments": {
+          "attributes": false,
+          "ports": true,
+          "actions": false
+        },
+        "style": "part.control"
+      },
+      {
+        "id": "control--heating--tgt",
+        "model_ref": "control--heating--tgt",
+        "symbol": "port",
+        "owner": "heating",
+        "placement": {
+          "side": "left",
+          "offset": 0.5
+        },
+        "label": ""
+      },
+      {
+        "id": "control--heating--src",
+        "model_ref": "control--heating--src",
+        "symbol": "port",
+        "owner": "control",
+        "placement": {
+          "side": "right",
+          "offset": 0.5
+        },
+        "label": ""
+      }
+    ],
+    "connections": [
+      {
+        "id": "conn-control-heating",
+        "model_ref": "conn-control-heating",
+        "source": {
+          "element": "control--heating--src",
+          "anchor": {
+            "side": "right",
+            "offset": 0.5
+          }
+        },
+        "target": {
+          "element": "control--heating--tgt",
+          "anchor": {
+            "side": "left",
+            "offset": 0.5
+          }
+        },
+        "route": {
+          "kind": "orthogonal",
+          "waypoints": []
+        },
+        "labels": [
+          {
+            "text": "duration",
+            "position": {
+              "offset": 0.5
+            }
+          }
+        ],
+        "style": "connector.default"
+      }
+    ],
+    "annotations": [],
+    "styles": {
+      "part.mechanical": {
+        "fill": "#E8F5E9",
+        "stroke": "#2E7D32",
+        "stroke_width": 2,
+        "corner_radius": 10
+      },
+      "part.control": {
+        "fill": "#E3F2FD",
+        "stroke": "#1565C0",
+        "stroke_width": 2,
+        "corner_radius": 10
+      }
+    },
+    "subject": "toaster"
+  }
+}

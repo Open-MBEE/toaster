@@ -1,0 +1,9 @@
+$ /private/tmp/functional-toaster-design/sysml decisions/diagram-study-real-fixtures/fixtures/ch08.sysml -render #tree:ToasterDemo::Toaster -render-form dot -o decisions/diagram-study-real-fixtures/evidence/ch08-tree-opensysml-dot.dot
+exit_code=0 elapsed_seconds=0.059
+
+--- stdout ---
+
+--- stderr ---
+✓ package ToasterDemo
+wrote decisions/diagram-study-real-fixtures/evidence/ch08-tree-opensysml-dot.dot (dot, 1044 bytes)
+

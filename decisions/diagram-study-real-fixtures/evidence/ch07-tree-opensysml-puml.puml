@@ -1,0 +1,54 @@
+@startuml
+' tree rendering (no view declared; rendering ToasterDemo::Toaster directly)
+<style>
+root {
+  BackGroundColor white
+  FontName SansSerif
+  FontSize 14
+  FontColor black
+  LineColor #181818
+  HorizontalAlignment left
+}
+element {
+  BackGroundColor white
+  LineColor #181818
+  LineThickness 0.5
+  RoundCorner 0
+  Shadowing 0.0
+}
+start, end, activityBar {
+  BackGroundColor black
+}
+arrow {
+  LineColor #181818
+  LineThickness 1
+  FontSize 13
+}
+note {
+  BackGroundColor #FEFFDD
+  FontSize 13
+}
+.usage {
+  RoundCorner 20
+}
+.package {
+  LineThickness 1.5
+}
+.region {
+  LineStyle 4
+}
+</style>
+skinparam wrapWidth 300
+hide stereotype
+hide circle
+hide empty members
+class "**Toaster**\n<size:10>//«part def»//</size>" as n0 <<part def>>
+class "**cycleTime : DurationValue**\n<size:10>//«attribute»//</size>" as n1 <<attribute>> <<usage>>
+n0 -- n1
+class "**heating : HeatingSystem**\n<size:10>//«part»//</size>" as n2 <<part>> <<usage>>
+n0 -- n2
+class "**control : ControlSystem**\n<size:10>//«part»//</size>" as n3 <<part>> <<usage>>
+n0 -- n3
+class "**durationInterface**\n<size:10>//«interface»//</size>" as n4 <<interface>> <<usage>>
+n0 -- n4
+@enduml
