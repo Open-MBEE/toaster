@@ -5,24 +5,41 @@ from pathlib import Path
 from typing import Any
 
 
-def model_to_dot(model: Any, title: str = "model") -> str:
-    """Generate DOT source for the part hierarchy from model.query() elements.
+def model_to_dot(
+    model: Any,
+    title: str = "model",
+    elements: list | None = None,
+    layout: dict | None = None,
+) -> str:
+    """Generate DOT source for the part hierarchy from model.query() elements,
+    or from a pre-selected `elements` list (typically containment_subgraph()'s
+    output) when the full, unscoped model is too large to be a legible
+    structure diagram.
 
-    WP-1 probe result: opensysml v0.9.0 has no native render-form DOT.
-    DOT is generated directly from model.query() output.
+    `elements=None` (the default) draws every model.query() element, exactly
+    as before this parameter existed -- still the right choice for a small
+    model where "everything" is itself a legible view. `elements=[]` is a
+    real, different, valid outcome (nothing in scope), not an error.
+
+    `layout` carries presentation-only overrides that never change which
+    elements or edges appear, only how they're drawn -- currently supports
+    `{"rankdir": "TB"|"LR"|"BT"|"RL"}`; defaults to "TB" (unchanged).
 
     Nodes: PartDefinition (dashed border if abstract).
     Edges: composition (diamond arrowhead from owner to usage),
            typing (dashed open arrow from usage to its PartDefinition type).
     """
+    layout = layout or {}
+    rankdir = layout.get("rankdir", "TB")
     lines = [
         f'digraph "{title}" {{',
-        "  rankdir=TB;",
+        f"  rankdir={rankdir};",
         '  graph [fontname="Helvetica"];',
         '  node [shape=box fontname="Helvetica"];',
         '  edge [fontname="Helvetica"];',
     ]
-    for e in model.query():
+    source = model.query() if elements is None else elements
+    for e in source:
         d = e.as_dict()
         etype = d.get("@type", "")
         qname = d.get("qualifiedName", d.get("@id", ""))
