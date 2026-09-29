@@ -194,3 +194,50 @@ def test_mutation_changes_diagram(flow_model):
         render_interconnection(intent1, out1)
         render_interconnection(intent2, out2)
         assert out1.read_text() != out2.read_text()
+
+
+NESTED_SOURCE = """
+package ToasterDemo {
+    private import ScalarValues::*;
+    item def Signal;
+    part def Inner {
+        part sensor : Signal;
+    }
+    part def Outer {
+        part inner : Inner;
+    }
+    part def Top {
+        part outer : Outer;
+    }
+}
+"""
+
+
+@pytest.fixture(scope="module")
+def nested_model():
+    import opensysml
+
+    conn = opensysml.connect(version="v0.9.0")
+    model = conn.load_from_content(NESTED_SOURCE, strict=False)
+    assert model.ok, f"Nested model failed: {model.diagnostics}"
+    yield model
+    conn.close()
+
+
+def test_default_depth_is_unchanged_direct_parts_only(nested_model):
+    intent = build_interconnection_intent(nested_model, "ToasterDemo::Top")
+    names = {p["name"] for p in intent["parts"]}
+    assert names == {"outer"}
+
+
+def test_depth_two_reaches_nested_composition(nested_model):
+    intent = build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=2)
+    names = {p["name"] for p in intent["parts"]}
+    assert "outer" in names
+    assert "inner" in names
+
+
+def test_depth_three_reaches_the_full_chain(nested_model):
+    intent = build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=3)
+    names = {p["name"] for p in intent["parts"]}
+    assert names == {"outer", "inner", "sensor"}
