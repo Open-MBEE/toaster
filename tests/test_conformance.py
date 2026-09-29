@@ -413,8 +413,8 @@ def test_allocate_between_definitions_middle_segment_flagged(conn) -> None:
     )
     assert model.ok
     findings = rule.check(model)
-    assert findings
-    assert all(f["rule"] == "allocate-between-definitions" for f in findings)
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "allocate-between-definitions"
     assert other_rule.check(model) == []
 
 
@@ -935,6 +935,7 @@ def test_allocate_connector_end_accessibility_library_package_qualified_not_flag
     )
     assert model.ok
     assert rule.check(model) == []
+    assert cf.language_gap_findings(model) == []
 
 
 ALLOCATE_LIBRARY_PACKAGE_IMPORT_TRUE_NEGATIVE = """
@@ -966,6 +967,7 @@ def test_allocate_connector_end_accessibility_library_package_import_not_flagged
     )
     assert model.ok
     assert rule.check(model) == []
+    assert cf.language_gap_findings(model) == []
 
 
 def test_gap_rule_negative_controls_are_isolated(conn) -> None:
