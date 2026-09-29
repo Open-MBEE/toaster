@@ -495,6 +495,102 @@ def _unresolved_transition_trigger(
     return findings
 
 
+_ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT = (
+    "KerML 1.1 Beta 2: canAccess 8.3.3.3.4 (p. 188), isFeaturedWithin (p. 190), "
+    "validateSubsettingFeaturingTypes (p. 204); 8.3.4.5.3 Connector "
+    "checkConnectorTypeFeaturing and defaultFeaturingType (pp. 214-215)"
+)
+
+
+def _allocate_connector_end_accessibility(
+    model: Any, index: "query.ApiIndex | None" = None
+) -> list[dict]:
+    """Rule (DL-058): an AllocationUsage connector end written as a bare qualified-name reference into a
+    Definition or Usage that is not the allocation's own owner.
+
+    DL-058 ruled that `allocate <Def>::<usage> to <Def>::<usage>;` at package level (the tutorial's own
+    ch05-ch08 fixtures, before this effort's fix) violates KerML's validateSubsettingFeaturingTypes (the
+    referenced feature must be accessible: `subsettingFeature.canAccess(subsettedFeature)`, which requires
+    `isFeaturedWithin` one of the end's featuringTypes) and checkConnectorTypeFeaturing (no featuringType in
+    common between the two definitions, so no implied TypeFeaturing rescues it either). OpenSysML v0.9.0 and
+    sysml-toolkit v0.9.1 both accept the construct with no diagnostic (DL-058's two tool holes); this rule is
+    the tutorial-supplied guard against a regression back into that non-conformant idiom.
+
+    An allocation end is written one of two ways once loaded and indexed via `ApiIndex`:
+
+    - **A dot-chain** (`toastBread.applyHeat`): `end_path` returns MULTIPLE segments
+      (`ownedReferenceSubsetting` -> `chainingFeature`). OpenSysML only accepts this when the chain actually
+      resolves through the current scope's own inherited feature, so a multi-segment end is already
+      structurally proven accessible by the tool's own parser, independent of this rule. Never flagged.
+    - **A bare qualified-name reference** (`ToastBread::applyHeat` or `P::doApply`): `end_path` returns
+      exactly ONE segment, the target's own `qualifiedName`. OpenSysML accepts ANY resolvable qualified name
+      here, whether or not it is a feature the allocation's own context can see — this is where the gap
+      lives.
+
+    For a single-segment end, the end's qualified name minus its last `::`-separated component is its
+    **declaring context**. Compare it against the AllocationUsage's own **owner** (`idx.qn(a["owner"])`, the
+    same field `perform_relationships` already reads on `PerformActionUsage`; confirmed present on
+    `AllocationUsage` too, empirically, not assumed):
+
+    - Declaring context IS the owner, or resolves to a plain `Package` (the ordinary top-level pattern,
+      `allocate P::doApply to P::heater;`, matching `tests/test_query.py`'s `UNNAMED_ALLOCATE` fixture) ->
+      NOT a violation.
+    - Declaring context resolves to anything else (a Definition or Usage that is not the allocation's own
+      owner) -> VIOLATION: the end reaches into another type's nested member by qualified name instead of
+      through an accessible feature chain rooted in the allocation's own context.
+    - Declaring context does not resolve to any element in this document's own export at all (an external
+      reference this rule cannot see into) -> cannot be judged either way, skipped rather than flagged, per
+      the same "skip rather than falsely flag" posture the other gap rules in this file already take (F4).
+
+    Empirically validated (this task) against `models/ch01-cumulative.sysml` through `ch10-cumulative.sysml`
+    (no ch09 fixture): zero findings on every one, all already fixed to the conformant idiom. Also validated
+    against `tests/test_interconnection.py`'s own inline fixtures: `FLOW_SOURCE`, `ALLOC_SOURCE` and
+    `NESTED_SOURCE` are clean, but `QUALIFIED_ALLOC_AND_INTERFACE_SOURCE`'s
+    `allocation heatAllocation allocate ApplyHeat to Toaster::heating;` DOES trip this rule (the
+    `Toaster::heating` end's declaring context is `ToasterDemo::Toaster`, a PartDefinition, not the
+    allocation's own owner `ToasterDemo` and not a Package) — flagged to the orchestrator as a real,
+    separate finding rather than silently weakened or worked around.
+    """
+    idx = index or query.ApiIndex(model)
+    findings = []
+    for a in idx.of_type("AllocationUsage"):
+        a_id = a.get("qualifiedName")
+        owner_qn = idx.qn(a["owner"]) if "owner" in a else None
+        for end_ref in a.get("connectorEnd", []):
+            try:
+                end = idx.end_path(end_ref)
+            except KeyError:
+                continue
+            if not end:
+                continue
+            if len(end) > 1:
+                continue  # dot-chain: already structurally proven accessible by the tool's own parser
+            target_qn = end[0]
+            if not target_qn or "::" not in target_qn:
+                continue  # no owning context to compare (e.g. a top-level, unqualified single name)
+            declaring_context = target_qn.rsplit("::", 1)[0]
+            if declaring_context == owner_qn:
+                continue
+            context_element = idx.by_qn.get(declaring_context)
+            if context_element is None:
+                continue  # cannot resolve the declaring context in this document: cannot judge (F4)
+            if context_element.get("@type") == "Package":
+                continue
+            findings.append(
+                {
+                    "rule": "allocate-connector-end-accessibility",
+                    "constraint": _ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT,
+                    "element": a_id,
+                    "message": (
+                        f"allocation {a_id} end {target_qn!r} reaches into "
+                        f"{context_element.get('@type')} {declaring_context}, which is "
+                        "neither the allocation's own owner nor a plain package"
+                    ),
+                }
+            )
+    return findings
+
+
 _ALLOCATE_BETWEEN_DEFINITIONS_CONTROL = """
 package P {
   action def ApplyHeat;
@@ -522,6 +618,25 @@ package P {
 }
 """
 
+# DL-058's own real-world pattern (a package-level allocate whose ends are qualified paths into a
+# feature nested in another definition), reduced to a minimal, isolated demonstration: `applyHeat`
+# and `control` are both Features (a PerformActionUsage and a PartUsage), not Definitions, so this
+# does NOT also trip `allocate-between-definitions` (confirmed:
+# `test_prove_negative_controls_are_isolated`); no item-typed part is involved either, so it does not
+# trip `part-typed-only-by-item-def`.
+_ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONTROL = """
+package P {
+  action def ApplyHeat;
+  part def ControlSystem {
+    perform action applyHeat : ApplyHeat;
+  }
+  part def Toaster {
+    part control : ControlSystem;
+  }
+  allocate ControlSystem::applyHeat to Toaster::control;
+}
+"""
+
 GAP_RULES: list[GapRule] = [
     GapRule(
         name="allocate-between-definitions",
@@ -546,6 +661,12 @@ GAP_RULES: list[GapRule] = [
         constraint=_UNRESOLVED_TRANSITION_TRIGGER_CONSTRAINT,
         check=_unresolved_transition_trigger,
         negative_control=_UNRESOLVED_TRANSITION_TRIGGER_CONTROL,
+    ),
+    GapRule(
+        name="allocate-connector-end-accessibility",
+        constraint=_ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT,
+        check=_allocate_connector_end_accessibility,
+        negative_control=_ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONTROL,
     ),
 ]
 

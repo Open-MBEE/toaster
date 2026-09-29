@@ -386,6 +386,115 @@ def test_part_typed_only_by_item_def_control_triggers_finding(conn) -> None:
     assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
 
 
+# --- allocate-connector-end-accessibility (DL-058) ---
+
+
+def test_allocate_connector_end_accessibility_control_triggers_finding(conn) -> None:
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(
+        f["rule"] == "allocate-connector-end-accessibility" for f in findings
+    )
+    assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
+
+
+ALLOCATE_DOT_CHAIN_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def ControlSystem {
+    perform action applyHeat : ApplyHeat;
+  }
+  part def Toaster {
+    part control : ControlSystem;
+    allocate control.applyHeat to control;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_dot_chain_not_flagged(conn) -> None:
+    """A dot-chain end (`control.applyHeat`) is already structurally proven accessible by the
+    tool's own parser (multi-segment `end_path`) and must never be flagged; the plain-name
+    `control` end here also resolves with declaring context equal to the allocation's own owner
+    (`P::Toaster`, since the allocate is nested inside `part def Toaster`)."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_DOT_CHAIN_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_TOP_LEVEL_QUALIFIED_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part heater : HeatingSystem;
+  allocate P::doApply to P::heater;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_top_level_qualified_name_not_flagged(
+    conn,
+) -> None:
+    """The ordinary top-level pattern (`tests/test_query.py`'s `UNNAMED_ALLOCATE` fixture),
+    written with the fully-qualified path spelled out (`P::doApply`, `P::heater`) rather than the
+    bare name: the declaring context resolves to `P`, a plain Package, so this is not a
+    violation even though the reference is a bare qualified name, not a dot-chain."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_TOP_LEVEL_QUALIFIED_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+
+
+@pytest.mark.parametrize(
+    "chapter",
+    ["ch01", "ch02", "ch03", "ch04", "ch05", "ch06", "ch07", "ch08", "ch10"],
+)
+def test_allocate_connector_end_accessibility_clean_on_every_real_fixture(
+    conn, chapter
+) -> None:
+    """DL-058's fix (Tasks 1-3 of this effort) rewrote every chapter's `allocate` to the
+    conformant nested/dot-chain idiom: zero findings on every real cumulative model fixture
+    (ch09 has no fixture). A finding here would mean either a regression in the model or a bug
+    in this rule, not something to suppress."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        (ROOT / "models" / f"{chapter}-cumulative.sysml").read_text(), strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+
+
+def test_gap_rule_negative_controls_are_isolated(conn) -> None:
+    """Each gap rule's negative control is a clean, isolated demonstration of ONLY that rule
+    (this file's existing convention): running the full `GAP_RULES` list against a control must
+    fire that control's own rule and no other."""
+    for control_rule in cf.GAP_RULES:
+        model = conn.load_from_content(control_rule.negative_control, strict=False)
+        assert model.ok
+        fired = {
+            rule.name for rule in cf.GAP_RULES if rule.check(model, cf.query.ApiIndex(model))
+        }
+        assert fired == {control_rule.name}, (
+            f"{control_rule.name}'s negative control fired {fired}, expected only "
+            f"{{{control_rule.name!r}}}"
+        )
+
+
 UNRESOLVED_TRANSITION_TRIGGER_CLEAN = """
 package P {
   item def Start;
@@ -1049,7 +1158,7 @@ def test_allocate_between_definitions_skips_end_without_reference_subsetting(con
     assert len(findings) == 1
 
 
-def test_prove_negative_control_covers_both_gap_rules(conn) -> None:
+def test_prove_negative_control_covers_all_gap_rules(conn) -> None:
     for rule in cf.GAP_RULES:
         model = conn.load_from_content(rule.negative_control, strict=False)
         assert model.ok
