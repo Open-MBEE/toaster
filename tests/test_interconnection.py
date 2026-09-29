@@ -1,4 +1,4 @@
-"""Tests for build_interconnection_intent and render_sysmld (WP-4)."""
+"""Tests for build_interconnection_intent and render_interconnection (WP-4)."""
 import json
 import sys
 import tempfile
@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from toaster.render import build_interconnection_intent, render_sysmld
+from toaster.render import build_interconnection_intent, render_interconnection
 
 FLOW_SOURCE = """
 package ToasterDemo {
@@ -127,21 +127,21 @@ def test_intent_allocs(alloc_model):
     assert "HeatingSystem" in targets
 
 
-def test_render_sysmld_produces_svg(flow_model):
+def test_render_interconnection_produces_svg(flow_model):
     intent = build_interconnection_intent(flow_model, "ToasterDemo::BreadHandling")
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "test.svg"
-        render_sysmld(intent, out)
+        render_interconnection(intent, out)
         assert out.exists()
         content = out.read_text()
         assert "<svg" in content
 
 
-def test_render_sysmld_svg_contains_parts(flow_model):
+def test_render_interconnection_svg_contains_parts(flow_model):
     intent = build_interconnection_intent(flow_model, "ToasterDemo::BreadHandling")
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "test.svg"
-        render_sysmld(intent, out)
+        render_interconnection(intent, out)
         content = out.read_text()
         assert "loader" in content
         assert "ejector" in content
@@ -168,7 +168,7 @@ def test_qualified_allocation_target_reuses_the_part_node(qualified_model):
     assert "heating" in part_names
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "test.svg"
-        render_sysmld(intent, out)
+        render_interconnection(intent, out)
         content = out.read_text()
         titles = [
             line.split(">")[1].split("<")[0]
@@ -191,6 +191,6 @@ def test_mutation_changes_diagram(flow_model):
     with tempfile.TemporaryDirectory() as tmp:
         out1 = Path(tmp) / "a.svg"
         out2 = Path(tmp) / "b.svg"
-        render_sysmld(intent1, out1)
-        render_sysmld(intent2, out2)
+        render_interconnection(intent1, out1)
+        render_interconnection(intent2, out2)
         assert out1.read_text() != out2.read_text()

@@ -123,7 +123,7 @@ def build_interconnection_intent(model: Any, fqn: str) -> dict:
     return {"title": fqn, "parts": parts, "flows": flows, "allocs": allocs}
 
 
-def render_sysmld(intent: dict | str | Path, out: str | Path) -> None:
+def render_interconnection(intent: dict | str | Path, out: str | Path) -> None:
     """Render an interconnection intent dict (or JSON file) to SVG via Graphviz DOT.
 
     SysMLD CLI is a pilot visualizer and not a build dependency; this function

@@ -24,7 +24,7 @@ The chapter begins with navigation: before adding new relationships, you need to
 
 Notebook 02 introduces `allocate`, which answers the question "which component is responsible for which function?" `HeatingSystem` becomes an abstract logical component that performs `ApplyHeat` (Chapter 4's function, nested inside `ToastBread`), and a named allocation usage connects the two directly.
 
-Notebook 03 introduces `port def` and `interface`, which answer "what connection point does each component expose, and how are they joined?" `HeatingSystem` and `ControlSystem` each get a port, joined by a named interface showing where the `duration` signal `ApplyHeat` has declared since Chapter 4 would flow, once something produces it. It closes with `build_interconnection_intent()` and `render_sysmld()`, which extract the connection from the model and render it as a displayed SVG diagram.
+Notebook 03 introduces `port def` and `interface`, which answer "what connection point does each component expose, and how are they joined?" `HeatingSystem` and `ControlSystem` each get a port, joined by a named interface showing where the `duration` signal `ApplyHeat` has declared since Chapter 4 would flow, once something produces it. It closes with `build_interconnection_intent()` and `render_interconnection()`, which extract the connection from the model and render it as a displayed SVG diagram.
 
 ## Expected result
 
