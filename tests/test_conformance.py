@@ -376,6 +376,48 @@ def test_allocate_between_definitions_control_triggers_finding(conn) -> None:
     assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
 
 
+# --- Task 7 (DL-059 ADDENDUM 3): F-1 (a Definition in the MIDDLE of a multi-segment chain,
+# invisible to every rule before this fix) ---
+
+ALLOCATE_MIDDLE_SEGMENT_DEFINITION_TRUE_POSITIVE = """
+package P {
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part def Inner { part heater; }
+    part inner : Inner;
+  }
+  part toaster : Toaster;
+  allocation a allocate doApply to toaster.Inner.heater;
+}
+"""
+
+
+def test_allocate_between_definitions_middle_segment_flagged(conn) -> None:
+    """F-1, pilot-confirmed rejected ("Couldn't resolve reference to Feature 'Inner'"): this
+    matches probes/rev6/r05_middle_def_chain.sysml. `toaster.Inner.heater` is a three-segment
+    dot-chain whose FIRST segment (`toaster`) is an accessible Feature and whose LAST segment
+    (`heater`) is a Feature too, but whose MIDDLE segment (`Inner`) resolves to a nested `part
+    def`, not a Feature. Before this fix, neither `allocate-connector-end-accessibility` (checked
+    only the first segment) nor `allocate-between-definitions` (checked only `end[-1]`) saw it;
+    OpenSysML accepted it with `ok=True` and zero findings from all four `GAP_RULES`. Now
+    `allocate-between-definitions` checks every segment and flags it; the chain's first segment
+    being an accessible Feature means `allocate-connector-end-accessibility` still reports
+    nothing for this end -- exactly one finding total, from `allocate-between-definitions`."""
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    other_rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_MIDDLE_SEGMENT_DEFINITION_TRUE_POSITIVE, strict=False
+    )
+    assert model.ok
+    findings = rule.check(model)
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "allocate-between-definitions"
+    assert other_rule.check(model) == []
+
+
 def test_part_typed_only_by_item_def_control_triggers_finding(conn) -> None:
     rule = next(r for r in cf.GAP_RULES if r.name == "part-typed-only-by-item-def")
     model = conn.load_from_content(rule.negative_control, strict=False)
@@ -384,6 +426,564 @@ def test_part_typed_only_by_item_def_control_triggers_finding(conn) -> None:
     assert findings
     assert all(f["rule"] == "part-typed-only-by-item-def" for f in findings)
     assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
+
+
+# --- allocate-connector-end-accessibility (DL-058) ---
+
+
+def test_allocate_connector_end_accessibility_control_triggers_finding(conn) -> None:
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(
+        f["rule"] == "allocate-connector-end-accessibility" for f in findings
+    )
+    assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
+
+
+ALLOCATE_DOT_CHAIN_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def ControlSystem {
+    perform action applyHeat : ApplyHeat;
+  }
+  part def Toaster {
+    part control : ControlSystem;
+    allocate control.applyHeat to control;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_dot_chain_not_flagged(conn) -> None:
+    """A dot-chain end (`control.applyHeat`) is already structurally proven accessible by the
+    tool's own parser (multi-segment `end_path`) and must never be flagged; the plain-name
+    `control` end here also resolves with declaring context equal to the allocation's own owner
+    (`P::Toaster`, since the allocate is nested inside `part def Toaster`)."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_DOT_CHAIN_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_TOP_LEVEL_QUALIFIED_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part heater : HeatingSystem;
+  allocate P::doApply to P::heater;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_top_level_qualified_name_not_flagged(
+    conn,
+) -> None:
+    """The ordinary top-level pattern (`tests/test_query.py`'s `UNNAMED_ALLOCATE` fixture),
+    written with the fully-qualified path spelled out (`P::doApply`, `P::heater`) rather than the
+    bare name: the declaring context resolves to `P`, a plain Package, so this is not a
+    violation even though the reference is a bare qualified name, not a dot-chain."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_TOP_LEVEL_QUALIFIED_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+
+
+@pytest.mark.parametrize(
+    "chapter",
+    ["ch01", "ch02", "ch03", "ch04", "ch05", "ch06", "ch07", "ch08", "ch10"],
+)
+def test_allocate_connector_end_accessibility_clean_on_every_real_fixture(
+    conn, chapter
+) -> None:
+    """DL-058's fix (Tasks 1-3 of this effort) rewrote every chapter's `allocate` to the
+    conformant nested/dot-chain idiom: zero findings on every real cumulative model fixture
+    (ch09 has no fixture). A finding here would mean either a regression in the model or a bug
+    in this rule, not something to suppress."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        (ROOT / "models" / f"{chapter}-cumulative.sysml").read_text(), strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+
+
+# --- Task 5 (DL-059 ADDENDUM): F1 (specialization/typing-aware accessibility) ---
+
+ALLOCATE_SPECIALIZED_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+  }
+  part def BetterToaster :> Toaster {
+    allocation a allocate doApply to heater;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_specialized_owner_not_flagged(conn) -> None:
+    """F1 false positive #1, pilot-confirmed accepted (exit 0): the allocation's owner
+    (`P::BetterToaster`) specializes `P::Toaster`, the declaring context of `heater`. The
+    referenced feature is accessible via the specialization, per canAccess/isFeaturedWithin --
+    must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_SPECIALIZED_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_TYPED_USAGE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+  }
+  part toaster : Toaster {
+    allocation a allocate doApply to heater;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_typed_usage_owner_not_flagged(conn) -> None:
+    """F1 false positive #2, pilot-confirmed accepted (exit 0): the allocation's owner
+    (`P::toaster`) is a PartUsage TYPED BY `P::Toaster` (no `:>` at all), the declaring context
+    of `heater`. KerML treats FeatureTyping as a kind of Specialization, so
+    `query.supertypes_transitively` already returns `P::Toaster` for `P::toaster` with no
+    separate typing-specific code path -- must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_TYPED_USAGE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_SAME_CONTEXT_QUALIFIED_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+    allocation a allocate doApply to Toaster::heater;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_same_context_qualified_end_not_flagged(
+    conn,
+) -> None:
+    """A qualified-path end (`Toaster::heater`, not a bare name) written INSIDE `part def
+    Toaster` itself: the end's declaring context (`P::Toaster`) equals the allocation's own
+    owner (`P::Toaster`) -- not a violation, regardless of the qualified spelling."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_SAME_CONTEXT_QUALIFIED_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+
+
+# --- Task 5 (DL-059 ADDENDUM): F2 (first segment of a dot-chain is not automatically safe) ---
+
+ALLOCATE_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+  }
+  allocation a allocate doApply to Toaster.heater;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_dot_chain_inaccessible_root_flagged(
+    conn,
+) -> None:
+    """F2 false negative #1, pilot-confirmed rejected ("Couldn't resolve reference to Feature
+    'Toaster'"): `Toaster.heater` is a dot-chain (`end_path` returns two segments), but its FIRST
+    segment, `Toaster`, is itself a Definition -- never an accessible Feature at all, regardless
+    of where it is declared. Task 5's fix (F2) made `allocate-connector-end-accessibility` flag
+    this case itself. Task 7 (F-1) found that this rule's chain-root Definition check was
+    redundant with `allocate-between-definitions` once THAT rule was extended to check every
+    segment of a chain, not only the last -- so Task 7 removed it from this rule, leaving the
+    finding to `allocate-between-definitions` alone (D-019's own job: "the referenced element
+    must be a Feature", checked against every segment). The pilot's rejection, and the total
+    finding count, are unchanged; only which rule reports it changed."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    other_rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-between-definitions"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+    findings = other_rule.check(model)
+    assert findings
+    assert all(f["rule"] == "allocate-between-definitions" for f in findings)
+
+
+ALLOCATE_QUALIFIED_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE = """
+package P {
+  action def ApplyHeat;
+  part def T;
+  part def Outer {
+    part def BoxDef {
+      part t : T;
+    }
+    part box : BoxDef;
+  }
+  action doApply : ApplyHeat;
+  allocation a allocate doApply to Outer::box.t;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_qualified_dot_chain_inaccessible_root_flagged(
+    conn,
+) -> None:
+    """F2 false negative #2, pilot-confirmed rejected ("Must be an accessible feature"): an
+    `Outer::box.t`-style qualified-then-dotted end. `end_path` returns two segments
+    (`P::Outer::box`, `P::Outer::BoxDef::t`); the first segment IS a Feature (a PartUsage, not a
+    Definition), but its own declaring context (`P::Outer`, a PartDefinition) is neither the
+    allocation's own owner (`P`, package-level) nor a package or supertype of it -- the same
+    accessibility test applied to a chain root, not just to a bare single-segment end."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_QUALIFIED_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE, strict=False
+    )
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(f["rule"] == "allocate-connector-end-accessibility" for f in findings)
+
+
+def test_allocate_connector_end_accessibility_skips_unresolvable_declaring_context(
+    conn,
+) -> None:
+    """F9: a declaring context that doesn't resolve in the export at all -- cannot be judged
+    either way, skipped rather than flagged (F4), not a crash. Simulated by removing the
+    declaring context's own element from a real, loaded model's index (the same technique
+    `test_allocate_between_definitions_skips_unresolvable_connector_end` uses for its own rule)."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    idx = cf.query.ApiIndex(model)
+    baseline = cf._allocate_connector_end_accessibility(model, index=idx)
+    assert len(baseline) == 2  # both ends of the control violate accessibility
+
+    del idx.by_qn["P::ControlSystem"]  # simulate: this end's declaring context is unresolvable
+    findings = cf._allocate_connector_end_accessibility(model, index=idx)
+    # the unresolvable end is skipped (not flagged, not crashed); the other, still-resolvable
+    # end's finding survives
+    assert len(findings) == 1
+    assert "Toaster::control" in findings[0]["message"]
+
+
+# --- Task 6 (DL-059 ADDENDUM, second independent hardening round): F-A (unnamed/redefining owner) ---
+
+ALLOCATE_NAMED_REDEFINE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part def Heater2 :> HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part heater2 : Heater2 :>> heater {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_named_redefine_owner_not_flagged(conn) -> None:
+    """F-A control, pilot-confirmed accepted (exit 0): the owner (`P::Better::heater2`) is a NAMED
+    redefining usage (`Heater2 :>> heater`), typed by `Heater2`. The declaring context of `coil`
+    (`P::Heater2`) is the owner's own declared type -- already resolvable via a NAMED specialization
+    graph even before this task's fix, but locked in here alongside its unnamed siblings below (this
+    is the fixture that first confirmed the pattern itself is pilot-valid)."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_NAMED_REDEFINE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_SHORTHAND_REDEFINE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part def Heater2 :> HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part :>> heater : Heater2 {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_shorthand_redefine_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner is an UNNAMED redefining
+    usage (`part :>> heater : Heater2 { ... }`, qualified name `P::Better::@0`, no declared name of
+    its own). `query.supertypes_transitively` (named-only, via `Symbol.specializations`) returns
+    `set()` for an unnamed element, so Task 5's fix wrongly flagged this; `supertypes_transitively_raw`
+    finds `P::Heater2` directly from the owner's own raw `type` field regardless of its name -- must
+    NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_SHORTHAND_REDEFINE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_ANONYMOUS_TYPED_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Rig {
+    part : Toaster {
+      allocation a allocate doApply to heater;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_anonymous_typed_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner is a completely anonymous
+    usage with no `:>`/`:>>` at all (`part : Toaster { ... }`, qualified name `P::Rig::@0`), typed
+    by `Toaster` via its raw `type` field. Must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_ANONYMOUS_TYPED_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_REDEFINE_SAME_TYPE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part redefines heater {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_redefine_same_type_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner (`part redefines heater
+    { ... }`, qualified name `P::Better::@0`) redefines `Toaster::heater` with NO explicit re-type at
+    all -- its own raw element carries only a `redefines` ref, no `type` field. The declaring context
+    of `coil` (`P::HeatingSystem`) is reached two hops out: `redefines` to `P::Toaster::heater`, then
+    that element's own `type` to `P::HeatingSystem` -- confirms the walk follows a redefined feature's
+    OWN type, not just the redefining usage's direct fields. Must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_REDEFINE_SAME_TYPE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_REDEFINE_RETYPE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part def Heater2 :> HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part redefines heater : Heater2 {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_redefine_retype_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner (`part redefines heater :
+    Heater2 { ... }`, qualified name `P::Better::@0`) is BOTH unnamed AND explicitly re-typed to
+    `Heater2` (a different type than the redefined feature's own `HeatingSystem`). The declaring
+    context of `coil` (`P::Heater2`) is the owner's own direct raw `type` field -- must NOT be
+    flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_REDEFINE_RETYPE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+# --- Task 6 (DL-059 ADDENDUM): F-B (single-segment end resolving to a NESTED Definition must not
+# double-flag alongside allocate-between-definitions) ---
+
+ALLOCATE_NESTED_DEFINITION_END_NOT_DOUBLE_FLAGGED = """
+package P {
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part def Inner;
+  }
+  allocation a allocate doApply to Toaster::Inner;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_nested_definition_end_not_double_flagged(
+    conn,
+) -> None:
+    """F-B fix, pilot-confirmed: the pilot gives exactly ONE error here ("Couldn't resolve reference
+    to Feature 'Toaster::Inner'"). The end (`Toaster::Inner`) resolves whole to a nested
+    PartDefinition, not a Feature -- `allocate-between-definitions` (D-019) already flags this on its
+    own (checked against `end[-1]`). Before this fix, `allocate-connector-end-accessibility` ALSO
+    flagged it: it computed the end's declaring context (`P::Toaster`, dropping the last `::`
+    segment) without first checking whether the end itself was a Definition; `P::Toaster` is neither
+    the allocation's own owner (`P`) nor a package or supertype of it, so it tripped too. Fixed by
+    checking the end's own resolved element for `len(end) == 1` before computing any declaring
+    context at all. Running the FULL `GAP_RULES` list must produce exactly one finding total, from
+    `allocate-between-definitions` only."""
+    model = conn.load_from_content(
+        ALLOCATE_NESTED_DEFINITION_END_NOT_DOUBLE_FLAGGED, strict=False
+    )
+    assert model.ok
+    idx = cf.query.ApiIndex(model)
+    by_rule = {rule.name: rule.check(model, idx) for rule in cf.GAP_RULES}
+    assert by_rule["allocate-between-definitions"] != []
+    assert by_rule["allocate-connector-end-accessibility"] == []
+    total = sum(len(fs) for fs in by_rule.values())
+    assert total == 1, by_rule
+
+
+# --- Task 7 (DL-059 ADDENDUM 3): F-2 (the Package exemption missed LibraryPackage) ---
+
+ALLOCATE_LIBRARY_PACKAGE_QUALIFIED_TRUE_NEGATIVE = """
+package P {
+  library package L {
+    part def HeatingSystem;
+    part heat : HeatingSystem;
+  }
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  allocation a allocate doApply to L::heat;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_library_package_qualified_not_flagged(
+    conn,
+) -> None:
+    """F-2, pilot-confirmed accepted (exit 0): matches probes/rev6/r17_library_package_end.sysml.
+    `L::heat` is a single-segment end whose declaring context (`P::L`) resolves to a
+    `LibraryPackage`, not a plain `Package`. The old exact-match check (`@type == "Package"`)
+    missed this, wrongly flagging it; `heat` is a Feature (a PartUsage), not a Definition, so
+    `allocate-between-definitions` was never involved. Must NOT be flagged by any rule."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_LIBRARY_PACKAGE_QUALIFIED_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+    assert cf.language_gap_findings(model) == []
+
+
+ALLOCATE_LIBRARY_PACKAGE_IMPORT_TRUE_NEGATIVE = """
+library package L {
+  part def HeatingSystem;
+  part heat : HeatingSystem;
+}
+package P {
+  private import L::*;
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  allocation a allocate doApply to heat;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_library_package_import_not_flagged(
+    conn,
+) -> None:
+    """F-2, pilot-confirmed accepted (exit 0): matches
+    probes/rev6/r20_toplevel_library_import.sysml. `heat` is imported into `P` via `private
+    import L::*;` and referenced unqualified; its own resolved qualified name's declaring
+    context is still `L`, a `LibraryPackage`. Must NOT be flagged by any rule."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_LIBRARY_PACKAGE_IMPORT_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+    assert cf.language_gap_findings(model) == []
+
+
+def test_gap_rule_negative_controls_are_isolated(conn) -> None:
+    """Each gap rule's negative control is a clean, isolated demonstration of ONLY that rule
+    (this file's existing convention): running the full `GAP_RULES` list against a control must
+    fire that control's own rule and no other."""
+    for control_rule in cf.GAP_RULES:
+        model = conn.load_from_content(control_rule.negative_control, strict=False)
+        assert model.ok
+        fired = {
+            rule.name for rule in cf.GAP_RULES if rule.check(model, cf.query.ApiIndex(model))
+        }
+        assert fired == {control_rule.name}, (
+            f"{control_rule.name}'s negative control fired {fired}, expected only "
+            f"{{{control_rule.name!r}}}"
+        )
 
 
 UNRESOLVED_TRANSITION_TRIGGER_CLEAN = """
@@ -1049,7 +1649,7 @@ def test_allocate_between_definitions_skips_end_without_reference_subsetting(con
     assert len(findings) == 1
 
 
-def test_prove_negative_control_covers_both_gap_rules(conn) -> None:
+def test_prove_negative_control_covers_all_gap_rules(conn) -> None:
     for rule in cf.GAP_RULES:
         model = conn.load_from_content(rule.negative_control, strict=False)
         assert model.ok
