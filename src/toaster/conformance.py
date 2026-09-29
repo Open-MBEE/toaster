@@ -505,8 +505,8 @@ _ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT = (
 def _allocate_connector_end_accessibility(
     model: Any, index: "query.ApiIndex | None" = None
 ) -> list[dict]:
-    """Rule (DL-058): an AllocationUsage connector end written as a bare qualified-name reference into a
-    Definition or Usage that is not the allocation's own owner.
+    """Rule (DL-058, hardened DL-059 ADDENDUM/Task 5): an AllocationUsage connector end that reaches into a
+    Definition or Usage the allocation's own owner cannot access.
 
     DL-058 ruled that `allocate <Def>::<usage> to <Def>::<usage>;` at package level (the tutorial's own
     ch05-ch08 fixtures, before this effort's fix) violates KerML's validateSubsettingFeaturingTypes (the
@@ -516,43 +516,83 @@ def _allocate_connector_end_accessibility(
     sysml-toolkit v0.9.1 both accept the construct with no diagnostic (DL-058's two tool holes); this rule is
     the tutorial-supplied guard against a regression back into that non-conformant idiom.
 
+    Task 4's first cut had two bugs, found by an independent review and confirmed against the OMG pilot
+    (ground truth) rather than merely re-derived, both fixed here:
+
+    **F1 (false positives — accessibility ignored specialization and typing).** `canAccess`/`isFeaturedWithin`
+    treat a featuring type as accessible not only when it IS the declaring context, but also when it
+    (transitively) SPECIALIZES that declaring context, or — for a Usage owner — is TYPED by it (KerML treats
+    FeatureTyping as a kind of Specialization). Task 4's check only ever compared the declaring context
+    against the owner's own qualified name by exact identity, so `part def BetterToaster :> Toaster { allocate
+    doApply to heater; }` and `part toaster : Toaster { allocate doApply to heater; }` were both wrongly
+    flagged (the pilot accepts both, exit 0). Fixed by additionally accepting a declaring context that appears
+    in `query.supertypes_transitively(model, owner_qn)` — confirmed empirically (this task) that this single
+    helper call already covers BOTH cases without any separate "resolve the owner's own type" branch: KerML's
+    own FeatureTyping-is-Specialization rule is already reflected in `Symbol.specializations`, so
+    `supertypes_transitively(model, "P::toaster")` (a PartUsage typed by `P::Toaster`, no `:>` at all) already
+    returns `{"P::Toaster"}`, identically to the `:>` specialization case.
+
+    **F2 (false negatives — a dot-chain's first segment isn't automatically safe).** Task 4's docstring and
+    D-032/DL-059 claimed a multi-segment end is "already structurally proven accessible by the tool's own
+    parser" — this is FALSE. OpenSysML accepts `Toaster.heater` (dot after a bare Definition name) and
+    `Outer::box.t` (dot after a qualified path into an inaccessible Usage) as loadable, multi-segment
+    `end_path` chains, but the pilot rejects both ("Couldn't resolve reference to Feature ..."). Fixed by
+    running the SAME accessibility test against the FIRST segment of every end, whether single- or
+    multi-segment — only the REMAINDER of a chain past its first segment (member existence and typing within
+    an already-accessible feature) is genuinely proven by successful loading; the first hop's accessibility
+    is not. A first segment whose own `@type` is itself a Definition (e.g. `Toaster` in `Toaster.heater`) is a
+    distinct failure from an inaccessible Feature: a Definition can never be an accessible Feature at all, so
+    it is flagged directly rather than falling through to the declaring-context comparison (which would
+    wrongly treat `Toaster`'s own owning Package as its "declaring context" and pass it) — this check applies
+    only to a CHAIN ROOT (`len(end) > 1`), not to an ordinary single-segment end resolving whole to a
+    Definition, which is `allocate-between-definitions`'s (D-019's) own job (checked against `end[-1]`); this
+    rule and that one must not double-flag the same construct.
+
     An allocation end is written one of two ways once loaded and indexed via `ApiIndex`:
 
-    - **A dot-chain** (`toastBread.applyHeat`): `end_path` returns MULTIPLE segments
-      (`ownedReferenceSubsetting` -> `chainingFeature`). OpenSysML only accepts this when the chain actually
-      resolves through the current scope's own inherited feature, so a multi-segment end is already
-      structurally proven accessible by the tool's own parser, independent of this rule. Never flagged.
+    - **A dot-chain** (`toastBread.applyHeat`, or the non-conformant `Toaster.heater` / `Outer::box.t`):
+      `end_path` returns MULTIPLE segments (`ownedReferenceSubsetting` -> `chainingFeature`). The first
+      segment is checked exactly as a single-segment end would be (see below); only the segments after it are
+      trusted to the tool's own parser.
     - **A bare qualified-name reference** (`ToastBread::applyHeat` or `P::doApply`): `end_path` returns
       exactly ONE segment, the target's own `qualifiedName`. OpenSysML accepts ANY resolvable qualified name
       here, whether or not it is a feature the allocation's own context can see — this is where the gap
       lives.
 
-    For a single-segment end, the end's qualified name minus its last `::`-separated component is its
-    **declaring context**. Compare it against the AllocationUsage's own **owner** (`idx.qn(a["owner"])`, the
-    same field `perform_relationships` already reads on `PerformActionUsage`; confirmed present on
-    `AllocationUsage` too, empirically, not assumed):
+    For the first segment, its qualified name minus its last `::`-separated component is its **declaring
+    context**. Compare it against the AllocationUsage's own **owner** (`idx.qn(a["owner"])`, the same field
+    `perform_relationships` already reads on `PerformActionUsage`; confirmed present on `AllocationUsage` too,
+    empirically, not assumed):
 
     - Declaring context IS the owner, or resolves to a plain `Package` (the ordinary top-level pattern,
       `allocate P::doApply to P::heater;`, matching `tests/test_query.py`'s `UNNAMED_ALLOCATE` fixture) ->
       NOT a violation.
-    - Declaring context resolves to anything else (a Definition or Usage that is not the allocation's own
-      owner) -> VIOLATION: the end reaches into another type's nested member by qualified name instead of
-      through an accessible feature chain rooted in the allocation's own context.
+    - Declaring context (transitively) specializes, or types, the owner (`query.supertypes_transitively`) ->
+      NOT a violation (F1 fix).
+    - Declaring context resolves to anything else (a Definition or Usage that is neither the allocation's own
+      owner nor one of its supertypes) -> VIOLATION: the end reaches into another type's nested member by
+      qualified name instead of through an accessible feature chain rooted in the allocation's own context.
     - Declaring context does not resolve to any element in this document's own export at all (an external
       reference this rule cannot see into) -> cannot be judged either way, skipped rather than flagged, per
       the same "skip rather than falsely flag" posture the other gap rules in this file already take (F4).
 
-    Empirically validated (this task) against `models/ch01-cumulative.sysml` through `ch10-cumulative.sysml`
-    (no ch09 fixture): zero findings on every one, all already fixed to the conformant idiom. Also validated
-    against `tests/test_interconnection.py`'s own inline fixtures: `FLOW_SOURCE`, `ALLOC_SOURCE` and
-    `NESTED_SOURCE` are clean, but `QUALIFIED_ALLOC_AND_INTERFACE_SOURCE`'s
-    `allocation heatAllocation allocate ApplyHeat to Toaster::heating;` DOES trip this rule (the
-    `Toaster::heating` end's declaring context is `ToasterDemo::Toaster`, a PartDefinition, not the
-    allocation's own owner `ToasterDemo` and not a Package) — flagged to the orchestrator as a real,
-    separate finding rather than silently weakened or worked around.
+    Empirically validated against `models/ch01-cumulative.sysml` through `ch10-cumulative.sysml` (no ch09
+    fixture): zero findings on every one, all already fixed to the conformant idiom. Also validated against
+    `tests/test_interconnection.py`'s own inline fixtures: `FLOW_SOURCE`, `ALLOC_SOURCE` and `NESTED_SOURCE`
+    are clean, but `QUALIFIED_ALLOC_AND_INTERFACE_SOURCE`'s (now rewritten, DL-059 ADDENDUM) previous
+    `allocate ApplyHeat to Toaster::heating;` DID trip this rule before its fixture fix.
     """
     idx = index or query.ApiIndex(model)
     findings = []
+    supertypes_cache: dict[str, set[str]] = {}
+
+    def owner_supertypes(owner_qn: str | None) -> set[str]:
+        if owner_qn is None:
+            return set()
+        if owner_qn not in supertypes_cache:
+            supertypes_cache[owner_qn] = query.supertypes_transitively(model, owner_qn)
+        return supertypes_cache[owner_qn]
+
     for a in idx.of_type("AllocationUsage"):
         a_id = a.get("qualifiedName")
         owner_qn = idx.qn(a["owner"]) if "owner" in a else None
@@ -563,12 +603,28 @@ def _allocate_connector_end_accessibility(
                 continue
             if not end:
                 continue
-            if len(end) > 1:
-                continue  # dot-chain: already structurally proven accessible by the tool's own parser
-            target_qn = end[0]
-            if not target_qn or "::" not in target_qn:
+            first_qn = end[0]
+            if not first_qn or "::" not in first_qn:
                 continue  # no owning context to compare (e.g. a top-level, unqualified single name)
-            declaring_context = target_qn.rsplit("::", 1)[0]
+            if len(end) > 1:
+                # Chain root: a Definition here can never be an accessible Feature at all (a distinct
+                # failure from an inaccessible-but-still-a-Feature declaring context, and distinct from
+                # `allocate-between-definitions`, which only checks the chain's LAST segment).
+                first_element = idx.by_qn.get(first_qn)
+                if first_element is not None and first_element.get("@type", "").endswith("Definition"):
+                    findings.append(
+                        {
+                            "rule": "allocate-connector-end-accessibility",
+                            "constraint": _ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT,
+                            "element": a_id,
+                            "message": (
+                                f"allocation {a_id} end chain {'.'.join(end)!r} starts at "
+                                f"{first_element.get('@type')} {first_qn}, not an accessible Feature"
+                            ),
+                        }
+                    )
+                    continue
+            declaring_context = first_qn.rsplit("::", 1)[0]
             if declaring_context == owner_qn:
                 continue
             context_element = idx.by_qn.get(declaring_context)
@@ -576,15 +632,17 @@ def _allocate_connector_end_accessibility(
                 continue  # cannot resolve the declaring context in this document: cannot judge (F4)
             if context_element.get("@type") == "Package":
                 continue
+            if declaring_context in owner_supertypes(owner_qn):
+                continue  # F1 fix: owner (trans.) specializes, or is typed by, the declaring context
             findings.append(
                 {
                     "rule": "allocate-connector-end-accessibility",
                     "constraint": _ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT,
                     "element": a_id,
                     "message": (
-                        f"allocation {a_id} end {target_qn!r} reaches into "
+                        f"allocation {a_id} end {first_qn!r} reaches into "
                         f"{context_element.get('@type')} {declaring_context}, which is "
-                        "neither the allocation's own owner nor a plain package"
+                        "neither the allocation's own owner nor a package or supertype of it"
                     ),
                 }
             )
@@ -622,8 +680,8 @@ package P {
 # feature nested in another definition), reduced to a minimal, isolated demonstration: `applyHeat`
 # and `control` are both Features (a PerformActionUsage and a PartUsage), not Definitions, so this
 # does NOT also trip `allocate-between-definitions` (confirmed:
-# `test_prove_negative_controls_are_isolated`); no item-typed part is involved either, so it does not
-# trip `part-typed-only-by-item-def`.
+# `test_gap_rule_negative_controls_are_isolated`); no item-typed part is involved either, so it does
+# not trip `part-typed-only-by-item-def`.
 _ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONTROL = """
 package P {
   action def ApplyHeat;
