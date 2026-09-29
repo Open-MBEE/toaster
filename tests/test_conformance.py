@@ -376,6 +376,48 @@ def test_allocate_between_definitions_control_triggers_finding(conn) -> None:
     assert all({"rule", "constraint", "element", "message"} <= f.keys() for f in findings)
 
 
+# --- Task 7 (DL-059 ADDENDUM 3): F-1 (a Definition in the MIDDLE of a multi-segment chain,
+# invisible to every rule before this fix) ---
+
+ALLOCATE_MIDDLE_SEGMENT_DEFINITION_TRUE_POSITIVE = """
+package P {
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part def Inner { part heater; }
+    part inner : Inner;
+  }
+  part toaster : Toaster;
+  allocation a allocate doApply to toaster.Inner.heater;
+}
+"""
+
+
+def test_allocate_between_definitions_middle_segment_flagged(conn) -> None:
+    """F-1, pilot-confirmed rejected ("Couldn't resolve reference to Feature 'Inner'"): this
+    matches probes/rev6/r05_middle_def_chain.sysml. `toaster.Inner.heater` is a three-segment
+    dot-chain whose FIRST segment (`toaster`) is an accessible Feature and whose LAST segment
+    (`heater`) is a Feature too, but whose MIDDLE segment (`Inner`) resolves to a nested `part
+    def`, not a Feature. Before this fix, neither `allocate-connector-end-accessibility` (checked
+    only the first segment) nor `allocate-between-definitions` (checked only `end[-1]`) saw it;
+    OpenSysML accepted it with `ok=True` and zero findings from all four `GAP_RULES`. Now
+    `allocate-between-definitions` checks every segment and flags it; the chain's first segment
+    being an accessible Feature means `allocate-connector-end-accessibility` still reports
+    nothing for this end -- exactly one finding total, from `allocate-between-definitions`."""
+    rule = next(r for r in cf.GAP_RULES if r.name == "allocate-between-definitions")
+    other_rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_MIDDLE_SEGMENT_DEFINITION_TRUE_POSITIVE, strict=False
+    )
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(f["rule"] == "allocate-between-definitions" for f in findings)
+    assert other_rule.check(model) == []
+
+
 def test_part_typed_only_by_item_def_control_triggers_finding(conn) -> None:
     rule = next(r for r in cf.GAP_RULES if r.name == "part-typed-only-by-item-def")
     model = conn.load_from_content(rule.negative_control, strict=False)
@@ -588,19 +630,27 @@ def test_allocate_connector_end_accessibility_dot_chain_inaccessible_root_flagge
     """F2 false negative #1, pilot-confirmed rejected ("Couldn't resolve reference to Feature
     'Toaster'"): `Toaster.heater` is a dot-chain (`end_path` returns two segments), but its FIRST
     segment, `Toaster`, is itself a Definition -- never an accessible Feature at all, regardless
-    of where it is declared. The old algorithm trusted any multi-segment end as "already
-    structurally proven accessible by the tool's own parser"; that claim is false, and this case
-    must now be flagged."""
+    of where it is declared. Task 5's fix (F2) made `allocate-connector-end-accessibility` flag
+    this case itself. Task 7 (F-1) found that this rule's chain-root Definition check was
+    redundant with `allocate-between-definitions` once THAT rule was extended to check every
+    segment of a chain, not only the last -- so Task 7 removed it from this rule, leaving the
+    finding to `allocate-between-definitions` alone (D-019's own job: "the referenced element
+    must be a Feature", checked against every segment). The pilot's rejection, and the total
+    finding count, are unchanged; only which rule reports it changed."""
     rule = next(
         r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    other_rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-between-definitions"
     )
     model = conn.load_from_content(
         ALLOCATE_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE, strict=False
     )
     assert model.ok
-    findings = rule.check(model)
+    assert rule.check(model) == []
+    findings = other_rule.check(model)
     assert findings
-    assert all(f["rule"] == "allocate-connector-end-accessibility" for f in findings)
+    assert all(f["rule"] == "allocate-between-definitions" for f in findings)
 
 
 ALLOCATE_QUALIFIED_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE = """
@@ -852,6 +902,70 @@ def test_allocate_connector_end_accessibility_nested_definition_end_not_double_f
     assert by_rule["allocate-connector-end-accessibility"] == []
     total = sum(len(fs) for fs in by_rule.values())
     assert total == 1, by_rule
+
+
+# --- Task 7 (DL-059 ADDENDUM 3): F-2 (the Package exemption missed LibraryPackage) ---
+
+ALLOCATE_LIBRARY_PACKAGE_QUALIFIED_TRUE_NEGATIVE = """
+package P {
+  library package L {
+    part def HeatingSystem;
+    part heat : HeatingSystem;
+  }
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  allocation a allocate doApply to L::heat;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_library_package_qualified_not_flagged(
+    conn,
+) -> None:
+    """F-2, pilot-confirmed accepted (exit 0): matches probes/rev6/r17_library_package_end.sysml.
+    `L::heat` is a single-segment end whose declaring context (`P::L`) resolves to a
+    `LibraryPackage`, not a plain `Package`. The old exact-match check (`@type == "Package"`)
+    missed this, wrongly flagging it; `heat` is a Feature (a PartUsage), not a Definition, so
+    `allocate-between-definitions` was never involved. Must NOT be flagged by any rule."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_LIBRARY_PACKAGE_QUALIFIED_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_LIBRARY_PACKAGE_IMPORT_TRUE_NEGATIVE = """
+library package L {
+  part def HeatingSystem;
+  part heat : HeatingSystem;
+}
+package P {
+  private import L::*;
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  allocation a allocate doApply to heat;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_library_package_import_not_flagged(
+    conn,
+) -> None:
+    """F-2, pilot-confirmed accepted (exit 0): matches
+    probes/rev6/r20_toplevel_library_import.sysml. `heat` is imported into `P` via `private
+    import L::*;` and referenced unqualified; its own resolved qualified name's declaring
+    context is still `L`, a `LibraryPackage`. Must NOT be flagged by any rule."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_LIBRARY_PACKAGE_IMPORT_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
 
 
 def test_gap_rule_negative_controls_are_isolated(conn) -> None:
