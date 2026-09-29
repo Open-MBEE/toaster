@@ -1,0 +1,7 @@
+$ /Users/z/Documents/GitHub/sysml-toolkit/target/release/sysmlv2 viz decisions/diagram-study-real-fixtures/fixtures/ch06.sysml --view tree --element ToasterDemo::Toaster -o decisions/diagram-study-real-fixtures/evidence/ch06-tree-toolkit.puml
+exit_code=0 elapsed_seconds=0.007
+
+--- stdout ---
+
+--- stderr ---
+
