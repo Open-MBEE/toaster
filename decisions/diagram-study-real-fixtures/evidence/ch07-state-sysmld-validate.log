@@ -1,0 +1,16 @@
+$ (cwd=decisions/diagram-study-real-fixtures/sysml2d-intent) python3 -c from sysmld.cli import main; raise SystemExit(main()) validate ch07-state.sysmld --strict
+exit_code=1 elapsed_seconds=0.046
+
+--- stdout ---
+ERROR SYSMLD-REF-002: unresolved model reference: heating -> ToasterDemo::Cycle::heating
+ERROR SYSMLD-REF-002: unresolved model reference: start -> ToasterDemo::Start
+ERROR SYSMLD-REF-002: unresolved model reference: cycle -> ToasterDemo::Cycle
+ERROR SYSMLD-REF-002: unresolved model reference: finish -> ToasterDemo::Finish
+ERROR SYSMLD-REF-002: unresolved model reference: cancelled -> ToasterDemo::Cycle::cancelled
+ERROR SYSMLD-REF-002: unresolved model reference: ready -> ToasterDemo::Cycle::ready
+ERROR SYSMLD-REF-002: unresolved model reference: cancel -> ToasterDemo::Cancel
+ERROR SYSMLD-REF-002: unresolved model reference: idle -> ToasterDemo::Cycle::idle
+8 errors, 0 warnings
+
+--- stderr ---
+
