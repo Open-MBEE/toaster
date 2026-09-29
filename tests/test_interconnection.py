@@ -40,6 +40,20 @@ package ToasterDemo {
 # ('Toaster::heating') while the owned-part extraction used the short name ('heating'),
 # so the two were drawn as separate nodes for the same model element. Also exercises
 # the InterfaceUsage recognition OQ-1 added (a connection whose ends are all ports).
+#
+# DL-059 ADDENDUM (Task 5, allocate-fix/task5-harden-guard): the original fixture's
+# `allocation heatAllocation allocate ApplyHeat to Toaster::heating;` carried BOTH a
+# pre-existing `allocate-between-definitions` (D-019) violation (`ApplyHeat` resolves to a
+# Definition, not a Feature) and the `allocate-connector-end-accessibility` (DL-058) violation
+# next-passes.md item 23 anticipated (`Toaster::heating`'s declaring context, `ToasterDemo::Toaster`,
+# is neither the allocation's own owner, `ToasterDemo`, nor a plain package). Item 24 in
+# next-passes.md asked whether a conformant rewrite exists without losing this fixture's own point
+# (a fully-qualified-path allocation end must dedup against the owned-part node); it does: promoting
+# a named `action doApply : ApplyHeat;` to package level fixes the source-is-a-Definition problem,
+# and nesting the allocation inside `Toaster` makes `Toaster::heating`'s declaring context equal the
+# allocation's own new owner (`ToasterDemo::Toaster`) -- both gap rules are now clean, and the
+# qualified-path target ('Toaster::heating') is unchanged, so the dedup-against-the-owned-part
+# behavior this fixture exists to exercise is still genuinely tested.
 QUALIFIED_ALLOC_AND_INTERFACE_SOURCE = """
 package ToasterDemo {
     private import ScalarValues::*;
@@ -52,12 +66,13 @@ package ToasterDemo {
         perform action applyHeat : ApplyHeat;
         port durationIn : ~DurationPort;
     }
+    action doApply : ApplyHeat;
     part def Toaster {
         part control : ControlSystem;
         part heating : HeatingSystem;
         interface durationInterface connect control.durationOut to heating.durationIn;
+        allocation heatAllocation allocate doApply to Toaster::heating;
     }
-    allocation heatAllocation allocate ApplyHeat to Toaster::heating;
 }
 """
 
