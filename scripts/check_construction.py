@@ -140,26 +140,34 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             "path": "chapters/ch05-architecture/02-allocate.ipynb",
             # HeatingSystem's `perform` references ApplyHeat (Ch4). It carries no
             # supertype (DL-019/DL-020: ToastingSystem is the subject, not something
-            # a logical component specializes). The allocation references
-            # ToastBread::applyHeat (Ch4, a nested action usage) and
-            # Toaster::heating (Ch1); this notebook's own fragment declares
-            # HeatingSystem itself, so it is not stubbed here.
+            # a logical component specializes). DL-058: the allocation is nested
+            # inside part def Toaster (this notebook's own fragment) and reaches
+            # `toastBread.applyHeat` via Toaster's inherited `toastBread` action
+            # (declared on ToastingSystem, Ch1) whose ApplyHeat member is nested
+            # inside ToastBread (Ch4), and `heating`, a sibling member Toaster
+            # declares in this same fragment. HeatingSystem and Toaster are both
+            # declared by this notebook's own fragment, so neither is stubbed here.
             "context_stubs": [
                 "action def ApplyHeat;",
                 "action def ToastBread { action applyHeat : ApplyHeat; }",
-                "part def Toaster { part heating; }",
+                "abstract part def ToastingSystem { perform action toastBread : ToastBread; }",
+                "part def ControlSystem;",
             ],
         },
         {
             "path": "chapters/ch05-architecture/03-interfaces.ipynb",
             # HeatingSystem's `perform` references ApplyHeat (Ch4) and carries no
-            # supertype (DL-019/DL-020). Toaster's own `:> ToastingSystem`
-            # (Ch1, unchanged) still needs the ToastingSystem stub. This
-            # notebook's own fragment declares DurationPort, HeatingSystem,
-            # ControlSystem and Toaster completely, so none of those is stubbed.
+            # supertype (DL-019/DL-020). DL-058: Toaster's restated body also
+            # carries nb02's nested allocation forward, so, like nb02, the
+            # ToastingSystem stub must expose the inherited `toastBread` action
+            # (whose ApplyHeat member is nested inside ToastBread, Ch4) for
+            # `toastBread.applyHeat` to resolve. This notebook's own fragment
+            # declares DurationPort, HeatingSystem, ControlSystem and Toaster
+            # completely, so none of those is stubbed.
             "context_stubs": [
-                "abstract part def ToastingSystem;",
                 "action def ApplyHeat;",
+                "action def ToastBread { action applyHeat : ApplyHeat; }",
+                "abstract part def ToastingSystem { perform action toastBread : ToastBread; }",
             ],
         },
     ],
@@ -169,10 +177,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             # HeatingAssembly :> HeatingSystem (ch05); ApplyHeat's rewritten body
             # references Bread/Toast (ch01/ch04). GenerateHeat, EnergyPort and
             # HeatGenerator are declared by this notebook's own fragment.
+            # heatGenAllocation now nests inside HeatingAssembly and allocates
+            # applyHeat.generateHeat (DL-058's fix): applyHeat must be a real,
+            # inherited feature of HeatingSystem for that chain to resolve, so
+            # the stub carries HeatingSystem's own perform (ch05), not a bare
+            # declaration.
             "context_stubs": [
                 "item def Bread;",
                 "item def Toast;",
-                "abstract part def HeatingSystem;",
+                "abstract part def HeatingSystem { perform action applyHeat : ApplyHeat; }",
             ],
         },
         {

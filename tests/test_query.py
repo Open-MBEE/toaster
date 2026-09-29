@@ -63,16 +63,16 @@ def test_find_allocations_sees_unnamed_allocate(conn) -> None:
 
 
 def test_find_allocations_sees_named_allocations(ch08) -> None:
-    """The real model's two allocations, both named per DL-039's fix of the old
-    definition-level `allocate` gap."""
+    """The real model's two allocations, both named and nested per DL-058's fix of the
+    package-level qualified-name non-conformance (see decisions/log.md DL-058)."""
     allocs = {a["id"]: a["ends"] for a in query.find_allocations(ch08)}
     assert allocs == {
-        "ToasterDemo::heatAllocation": [
-            ["ToasterDemo::ToastBread::applyHeat"],
+        "ToasterDemo::Toaster::heatAllocation": [
+            ["ToasterDemo::ToastingSystem::toastBread", "ToasterDemo::ToastBread::applyHeat"],
             ["ToasterDemo::Toaster::heating"],
         ],
-        "ToasterDemo::heatGenAllocation": [
-            ["ToasterDemo::ApplyHeat::generateHeat"],
+        "ToasterDemo::HeatingAssembly::heatGenAllocation": [
+            ["ToasterDemo::HeatingSystem::applyHeat", "ToasterDemo::ApplyHeat::generateHeat"],
             ["ToasterDemo::HeatingAssembly::heatGen"],
         ],
     }
@@ -86,11 +86,11 @@ package P {
   action doApply : ApplyHeat;
   part def Toaster {
     part heater : HeatingSystem;
+    allocation alloc allocate doApply to heater;
   }
   part def BetterToaster :> Toaster {
     part :>> heater : HeatingAssembly;
   }
-  allocation alloc allocate doApply to Toaster::heater;
 }
 """
 
@@ -101,9 +101,15 @@ def test_allocations_for_follows_supertypes(conn) -> None:
     non-conformant (KerML 8.3.3.3.9 ReferenceSubsetting requires a Feature, not a
     Definition; DL-039's own `allocate-between-definitions` gap rule flags exactly this,
     confirmed directly), reintroducing by accident the pattern this project's own
-    conformance checks exist to catch. This version allocates to a genuine usage
-    (`Toaster::heater`, a Feature) instead, and demonstrates `inherit=True` following a
-    redefinition (`BetterToaster`'s own `:>> heater`), a real, conformant supertype-chain
+    conformance checks exist to catch. A later version allocated to a genuine usage but
+    by a package-level qualified path (`allocate doApply to Toaster::heater;`), which
+    DL-058 later ruled non-conformant too (the `Toaster::heater` end reaches into
+    `Toaster`'s own nested feature with no featuring context making it accessible,
+    caught directly by `allocate-connector-end-accessibility`, DL-058/D-032). This
+    version nests the allocation inside `Toaster` itself, alongside `heater` (matching
+    the conformant idiom Tasks 1-3 of the DL-058 remediation established for the real
+    chapter models), and demonstrates `inherit=True` following a redefinition
+    (`BetterToaster`'s own `:>> heater`), a real, conformant supertype-chain
     relationship (confirmed: `model.ok` is True, `language_gap_findings` is empty), the
     same shape the real ch08 model's own allocations are usage-level (see
     test_allocations_for_on_ch08_usage_level_allocations below, where neither

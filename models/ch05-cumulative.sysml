@@ -62,6 +62,7 @@ package ToasterDemo {
         part heating : HeatingSystem;
         part control : ControlSystem;
         interface durationInterface connect control.durationOut to heating.durationIn;
+        allocation heatAllocation allocate toastBread.applyHeat to heating;
     }
 
     requirement def TimelyToast {
@@ -107,6 +108,4 @@ package ToasterDemo {
     item def Cancel {
         doc /* Signal requesting cancellation of an in-progress toasting cycle. */
     }
-
-    allocation heatAllocation allocate ToastBread::applyHeat to Toaster::heating;
 }
