@@ -24,7 +24,7 @@ The chapter carries one branch of the recursive step through all three layers at
 
 ## Expected result
 
-After running all three notebooks, `perform_relationships(model)` includes `HeatGenerator` performing `GenerateHeat`; `find_allocations(model)` includes `heatGenAllocation`, from `ApplyHeat::generateHeat` to `HeatingAssembly::heatGen`; `model.eval("ToasterDemo::heatGenerationReq(ToasterDemo::rated)")` is `True` and the same call on `weak` is `False`; and `validate_record()` returns `[]` for `AC-C06`, `AS-C06` and `AI-C06`.
+After running all three notebooks, `perform_relationships(model)` includes `HeatGenerator` performing `GenerateHeat`; `find_allocations(model)` includes `HeatingAssembly::heatGenAllocation`, nested in `HeatingAssembly` itself, with source end `['HeatingSystem::applyHeat', 'ApplyHeat::generateHeat']` (the inherited `applyHeat` usage, then its own nested `generateHeat` step) and target end `['HeatingAssembly::heatGen']`; `model.eval("ToasterDemo::heatGenerationReq(ToasterDemo::rated)")` is `True` and the same call on `weak` is `False`; and `validate_record()` returns `[]` for `AC-C06`, `AS-C06` and `AI-C06`.
 
 ## Experiment
 
