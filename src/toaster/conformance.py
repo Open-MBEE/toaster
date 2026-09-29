@@ -103,10 +103,24 @@ def evaluate(check: ConformanceCheck, model: Any, stage: Stage) -> Result:
 def _allocate_between_definitions(
     model: Any, index: "query.ApiIndex | None" = None
 ) -> list[dict]:
-    """Rule (DL-039): an AllocationUsage whose connector ends resolve to Definitions, not Features.
+    """Rule (DL-039, extended Task 7/DL-059 ADDENDUM 3): an AllocationUsage whose connector end
+    resolves, at ANY segment of its chain, to a Definition rather than a Feature.
 
-    KerML 8.3.3.3.9 ReferenceSubsetting requires the referenced element to be a Feature. OpenSysML v0.9.0
-    accepts `allocate ActionDef to PartDef;` (both ends definitions) with no diagnostic.
+    KerML 8.3.3.3.9 ReferenceSubsetting requires the referenced element to be a Feature. This is a
+    property of `ReferenceSubsetting::referencedFeature` on EVERY subsetting in a chained reference,
+    not only the chain's own final target. OpenSysML v0.9.0 accepts `allocate ActionDef to PartDef;`
+    (both ends definitions, a single-segment end) with no diagnostic; it also accepts a multi-segment
+    dot-chain end whose MIDDLE segment resolves to a Definition (e.g. `allocate doApply to
+    toaster.Inner.heater;` where `Inner` is a nested `part def`) with no diagnostic either, even
+    though the pilot rejects it ("Couldn't resolve reference to Feature 'Inner'"). Originally this
+    rule checked only `end[-1]` (the chain's last segment); Task 7 found that a middle segment was
+    invisible to every rule (`allocate-connector-end-accessibility` only ever checked the chain's
+    FIRST segment) and extended this rule to check every segment instead, since D-019's own
+    constraint ("the referenced element must be a Feature") applies uniformly regardless of a
+    segment's position in the chain. This also makes this rule the sole owner of the chain-ROOT-is-
+    a-Definition case that `allocate-connector-end-accessibility` used to check on its own (that
+    rule's now-redundant chain-root check was removed in the same fix, to avoid double-flagging: see
+    that rule's own docstring for the corrected division of labor).
 
     Resolves each connector end itself, one at a time, rather than through `query.find_allocations` (which
     resolves every end of every allocation in one list comprehension): a single end whose referenced element
@@ -125,23 +139,25 @@ def _allocate_between_definitions(
                 continue
             if not end:
                 continue
-            target_qn = end[-1]
-            target_type = idx.by_qn.get(target_qn, {}).get("@type", "")
-            if target_type.endswith("Definition"):
-                findings.append(
-                    {
-                        "rule": "allocate-between-definitions",
-                        "constraint": (
-                            "KerML 8.3.3.3.9 ReferenceSubsetting requires the "
-                            "referenced element to be a Feature"
-                        ),
-                        "element": a_id,
-                        "message": (
-                            f"allocation {a_id} end resolves to {target_type} "
-                            f"{target_qn}, not a Feature"
-                        ),
-                    }
-                )
+            for seg_qn in end:
+                seg_type = idx.by_qn.get(seg_qn, {}).get("@type", "")
+                if seg_type.endswith("Definition"):
+                    findings.append(
+                        {
+                            "rule": "allocate-between-definitions",
+                            "constraint": (
+                                "KerML 8.3.3.3.9 ReferenceSubsetting requires the "
+                                "referenced element to be a Feature"
+                            ),
+                            "element": a_id,
+                            "message": (
+                                f"allocation {a_id} end {'.'.join(end)!r} resolves "
+                                f"segment {seg_qn!r} to {seg_type}, not a Feature"
+                            ),
+                        }
+                    )
+                    break  # one finding per offending end, regardless of how many of its
+                    # segments are Definitions
     return findings
 
 
@@ -570,16 +586,44 @@ def _allocate_connector_end_accessibility(
     declaring context resolves to another Definition instead, which is not exempted, so it double-flagged.
     Fixed by checking the end's OWN resolved element for a single-segment end BEFORE computing its
     declaring context at all: if it is a Definition, this rule skips it unconditionally (package-level or
-    nested makes no difference), leaving it entirely to `allocate-between-definitions`. This is scoped
-    strictly to `len(end) == 1`; a chain root (`len(end) > 1`) already has its own, separate
-    Definition-check from Task 5's F2 fix, unchanged here.
+    nested makes no difference), leaving it entirely to `allocate-between-definitions`. At the time, this
+    was scoped to `len(end) == 1` only, since a chain root (`len(end) > 1`) had its own, separate
+    Definition-check from Task 5's F2 fix (see F-1 below for why that turned out to be incomplete).
+
+    **F-1 (Task 7; a Definition in the MIDDLE of a multi-segment chain was invisible to every rule).**
+    Task 5's chain-root check (`len(end) > 1` branch) only ever looked at the chain's FIRST segment;
+    `allocate-between-definitions` (D-019, before Task 7) only ever looked at the chain's LAST segment
+    (`end[-1]`). A middle segment resolving to a Definition (e.g. `allocate doApply to
+    toaster.Inner.heater;` where `Inner` is a nested `part def` between `toaster` and `heater`) was
+    checked by NEITHER rule — OpenSysML accepts it with `ok=True` and zero findings, but the pilot
+    rejects it ("Couldn't resolve reference to Feature 'Inner'"). Task 7 fixed this in
+    `allocate-between-definitions`, extending it to check every segment of `end`, not just the last
+    (D-019's own constraint — "the referenced element must be a Feature" — applies uniformly to every
+    segment of a chained reference, not only its final target). Since that extension also covers the
+    chain's FIRST segment being a Definition (the same case Task 5's `len(end) > 1` branch here used to
+    catch), Task 7 removed this rule's own chain-root Definition check as redundant — see the unified
+    skip below — to avoid the two rules double-flagging the same chain-root case. This rule's OWN,
+    remaining job is unchanged: not "is any segment a Feature vs. a Definition" (that's D-019's job on
+    every segment now), but "is the chain's entry point (its first segment) actually ACCESSIBLE from the
+    allocation's own context" — a distinct question from whether that entry point is a Definition at all.
+
+    **F-2 (Task 7; the Package exemption missed LibraryPackage).** The declaring-context exemption for
+    an ordinary top-level pattern compared `context_element.get("@type") == "Package"` by exact match,
+    so a `library package` (a distinct `@type` in the API-JSON export, e.g. `L::heat` where `library
+    package L { part heat : HeatingSystem; }`) was wrongly flagged even though the pilot accepts it (exit
+    0), both by direct qualified reference into the library package and via `private import L::*;`
+    followed by a bare unqualified reference. Fixed by matching `.endswith("Package")` instead of exact
+    equality, the same convention this file already uses elsewhere for metaclass-family checks (see
+    `_is_or_specializes_part_definition`).
 
     An allocation end is written one of two ways once loaded and indexed via `ApiIndex`:
 
     - **A dot-chain** (`toastBread.applyHeat`, or the non-conformant `Toaster.heater` / `Outer::box.t`):
       `end_path` returns MULTIPLE segments (`ownedReferenceSubsetting` -> `chainingFeature`). The first
       segment is checked exactly as a single-segment end would be (see below); only the segments after it are
-      trusted to the tool's own parser.
+      trusted to the tool's own parser (member existence and typing within an already-accessible feature is
+      proven by successful loading; a MIDDLE segment resolving to a Definition rather than a Feature is a
+      distinct question, now D-019's own job across every segment — see F-1 above).
     - **A bare qualified-name reference** (`ToastBread::applyHeat` or `P::doApply`): `end_path` returns
       exactly ONE segment, the target's own `qualifiedName`. OpenSysML accepts ANY resolvable qualified name
       here, whether or not it is a feature the allocation's own context can see — this is where the gap
@@ -590,12 +634,13 @@ def _allocate_connector_end_accessibility(
     `perform_relationships` already reads on `PerformActionUsage`; confirmed present on `AllocationUsage` too,
     empirically, not assumed):
 
-    - The end's own resolved element (single-segment case) is itself a Definition -> NOT this rule's
-      finding at all; skipped unconditionally, regardless of nesting depth (F-B fix; own job of
-      `allocate-between-definitions`).
-    - Declaring context IS the owner, or resolves to a plain `Package` (the ordinary top-level pattern,
-      `allocate P::doApply to P::heater;`, matching `tests/test_query.py`'s `UNNAMED_ALLOCATE` fixture) ->
-      NOT a violation.
+    - The end's own resolved element (first segment, single- or multi-segment alike) is itself a
+      Definition -> NOT this rule's finding at all; skipped unconditionally, regardless of nesting depth
+      or chain length (F-B fix, extended Task 7 to the chain-root case too; own job of
+      `allocate-between-definitions`, which now checks every segment of the chain — F-1).
+    - Declaring context IS the owner, or resolves to a `Package` or `LibraryPackage` (the ordinary
+      top-level pattern, `allocate P::doApply to P::heater;`, matching `tests/test_query.py`'s
+      `UNNAMED_ALLOCATE` fixture; or a reference into a `library package`, F-2) -> NOT a violation.
     - Declaring context (transitively) specializes, or types, the owner
       (`query.supertypes_transitively_raw`, F-A fix — named or unnamed alike) -> NOT a violation.
     - Declaring context resolves to anything else (a Definition or Usage that is neither the allocation's own
@@ -608,8 +653,9 @@ def _allocate_connector_end_accessibility(
     Empirically validated against `models/ch01-cumulative.sysml` through `ch10-cumulative.sysml` (no ch09
     fixture): zero findings on every one, all already fixed to the conformant idiom. Also validated against
     `tests/test_interconnection.py`'s own inline fixtures (`FLOW_SOURCE`, `ALLOC_SOURCE`, `NESTED_SOURCE`,
-    `QUALIFIED_ALLOC_AND_INTERFACE_SOURCE`), and against ~26 targeted probe fixtures built for this and the
-    prior hardening round, each verified against the OMG pilot as ground truth (allocate-fix/task6).
+    `QUALIFIED_ALLOC_AND_INTERFACE_SOURCE`), and against ~50 targeted probe fixtures built across this and
+    the prior hardening rounds, each verified against the OMG pilot as ground truth (allocate-fix/task6,
+    allocate-fix/task7).
     """
     idx = index or query.ApiIndex(model)
     findings = []
@@ -638,39 +684,22 @@ def _allocate_connector_end_accessibility(
             if not first_qn or "::" not in first_qn:
                 continue  # no owning context to compare (e.g. a top-level, unqualified single name)
             first_element = idx.by_qn.get(first_qn)
-            if len(end) > 1:
-                # Chain root: a Definition here can never be an accessible Feature at all (a distinct
-                # failure from an inaccessible-but-still-a-Feature declaring context, and distinct from
-                # `allocate-between-definitions`, which only checks the chain's LAST segment).
-                if first_element is not None and first_element.get("@type", "").endswith("Definition"):
-                    findings.append(
-                        {
-                            "rule": "allocate-connector-end-accessibility",
-                            "constraint": _ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT,
-                            "element": a_id,
-                            "message": (
-                                f"allocation {a_id} end chain {'.'.join(end)!r} starts at "
-                                f"{first_element.get('@type')} {first_qn}, not an accessible Feature"
-                            ),
-                        }
-                    )
-                    continue
-            else:
-                # F-B fix (Task 6): a single-segment end whose OWN resolved element is a Definition is
-                # `allocate-between-definitions`' own finding alone (D-019, checked against `end[-1]`,
-                # which for a single-segment end is the same element as `first_qn`) -- never this rule's,
-                # whether the Definition is package-level or nested. Skip before computing (or even
-                # considering) a declaring context at all, so the two rules never double-flag.
-                if first_element is not None and first_element.get("@type", "").endswith("Definition"):
-                    continue
+            # F-B fix (Task 6), extended Task 7 to the chain-root case too (F-1): the end's own
+            # resolved first segment being a Definition is `allocate-between-definitions`' own
+            # finding alone (D-019, which now checks every segment of the chain, not only the
+            # last) -- never this rule's, whether single- or multi-segment, package-level or
+            # nested. Skip before computing (or even considering) a declaring context at all, so
+            # the two rules never double-flag.
+            if first_element is not None and first_element.get("@type", "").endswith("Definition"):
+                continue
             declaring_context = first_qn.rsplit("::", 1)[0]
             if declaring_context == owner_qn:
                 continue
             context_element = idx.by_qn.get(declaring_context)
             if context_element is None:
                 continue  # cannot resolve the declaring context in this document: cannot judge (F4)
-            if context_element.get("@type") == "Package":
-                continue
+            if context_element.get("@type", "").endswith("Package"):
+                continue  # F-2 fix (Task 7): covers both plain `Package` and `LibraryPackage`
             if declaring_context in owner_supertypes(owner_qn):
                 continue  # F-A fix: owner (trans.) specializes, or is typed/subsetted/redefined via, the
                 # declaring context -- named or unnamed owner alike (query.supertypes_transitively_raw)
