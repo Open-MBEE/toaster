@@ -1,0 +1,24 @@
+{
+  "purpose": "DL-055 evidence: confirms every alias authored in ch05-interconnection.json and ch07-state.json is the factually correct fully-qualified name in the real fixture source, and that sysml2d model_index.py (pinned commit 1af88250d355f4e218f6653ef934e93ac8319cd6) cannot resolve the correctly-qualified form -- only a truncated, package-prefix-dropped form that would be a wrong qualified name if used as an alias target.",
+  "tool": "sysmld.model_index.build_model_index (pinned sysml2d commit 1af88250d355f4e218f6653ef934e93ac8319cd6)",
+  "root_cause": "build_model_index pops package_stack/def_stack on every line starting with \"}\", regardless of whether a tracked keyword (package/part def/state def/action/state/interaction/use case) opened it. Both ch05.sysml and ch07.sysml contain an untracked brace pair inside action def ApplyHeat (\"in duration : ISQ::DurationValue[0..*] { doc /* ... */ }\", lines 16-20), whose closing \"}\" pops the real ApplyHeat action frame one line early; a later \"assert constraint balance { ... }\" (kind matched by the regex but not in the push-eligible set) then pops package_stack itself on its own closing \"}\", erasing the ToasterDemo package prefix before any part def / state def is reached.",
+  "checks": {
+    "ch05.sysml": {
+      "ToasterDemo::Toaster": false,
+      "Toaster": true,
+      "ToasterDemo::Toaster::heating": false,
+      "Toaster::heating": true
+    },
+    "ch07.sysml": {
+      "ToasterDemo::Cycle": false,
+      "Cycle": true,
+      "ToasterDemo::Cycle::idle": false,
+      "Cycle::idle": true
+    }
+  },
+  "interpretation": {
+    "ch05.sysml": "ToasterDemo::Toaster and ToasterDemo::Toaster::heating (the real, correct qualified names) are NOT resolved; the indexer only resolves the truncated, incorrectly-qualified Toaster / Toaster::heating forms.",
+    "ch07.sysml": "ToasterDemo::Cycle and ToasterDemo::Cycle::idle (the real, correct qualified names) are NOT resolved; the indexer only resolves the truncated, incorrectly-qualified Cycle / Cycle::idle forms."
+  },
+  "conclusion": "The aliases authored in ch05-interconnection.json / ch07-state.json are correct. The render/validate failures recorded in ch05-interconnection-sysmld-render.log, ch05-interconnection-sysmld-validate.log, ch07-state-sysmld-render.log, and ch07-state-sysmld-validate.log are caused by this indexer bug, not by an authoring error. Per ACE ruling DL-055, this is the Phase 0 finding for SysMLD on real fixture content, not a blocker to fix by mangling alias values to a technically-incorrect but indexer-friendly form."
+}
