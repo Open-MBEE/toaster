@@ -241,3 +241,13 @@ def test_depth_three_reaches_the_full_chain(nested_model):
     intent = build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=3)
     names = {p["name"] for p in intent["parts"]}
     assert names == {"outer", "inner", "sensor"}
+
+
+def test_negative_depth_raises_value_error(nested_model):
+    with pytest.raises(ValueError):
+        build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=-1)
+
+
+def test_none_depth_raises_value_error(nested_model):
+    with pytest.raises(ValueError):
+        build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=None)

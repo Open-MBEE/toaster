@@ -174,6 +174,25 @@ def build_interconnection_intent(model: Any, fqn: str, depth: int = 1) -> dict:
     excluded from the returned parts list below, since fqn is the diagram's
     subject, not one of its own parts.
 
+    If `fqn` names a usage (a part instance) rather than a definition, depth
+    counts differently than the "1 = fqn's own direct owned parts" framing
+    above: a usage's own qualified name never owns anything (only its type
+    does, per containment_subgraph()'s semantics), so depth=1 from a usage
+    root returns zero parts. This matches this function's behavior before
+    `depth` existed (not a regression), and this tutorial's own call sites
+    always root at a definition or assembly, never a bare usage.
+
+    flows/allocs extraction below is unchanged by `depth` and stays
+    model-wide (via model.to_api_json(), not scoped to the expanded parts
+    set); its endpoint resolution and node-deduplication logic (see
+    render_interconnection()'s `normalize()`) assumes the depth=1 case, where
+    every part is a direct, unique owned child of `fqn`. At depth>1, a flow or
+    allocation between two nested parts several levels deep can be drawn
+    misleadingly (e.g. as a self-loop on their shared ancestor, since only the
+    first path segment is resolved) or against a node that looks duplicated.
+    Treat depth>1 diagrams' flows/allocs as exploratory until this is
+    addressed; the `parts` list itself is not affected by this limitation.
+
     Returns a dict with:
       title    — the qualified name
       parts    — list of {name, type} for owned PartUsage elements, to `depth`
@@ -185,6 +204,9 @@ def build_interconnection_intent(model: Any, fqn: str, depth: int = 1) -> dict:
     """
     import json as _json
     import warnings
+
+    if depth is None or depth < 0:
+        raise ValueError(f"depth must be an int >= 0, got {depth!r}")
 
     raw_depth = 2 * depth - 1 if depth >= 1 else 0
     expanded = containment_subgraph(
