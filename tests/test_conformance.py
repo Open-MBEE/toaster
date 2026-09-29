@@ -479,6 +479,191 @@ def test_allocate_connector_end_accessibility_clean_on_every_real_fixture(
     assert rule.check(model) == []
 
 
+# --- Task 5 (DL-059 ADDENDUM): F1 (specialization/typing-aware accessibility) ---
+
+ALLOCATE_SPECIALIZED_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+  }
+  part def BetterToaster :> Toaster {
+    allocation a allocate doApply to heater;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_specialized_owner_not_flagged(conn) -> None:
+    """F1 false positive #1, pilot-confirmed accepted (exit 0): the allocation's owner
+    (`P::BetterToaster`) specializes `P::Toaster`, the declaring context of `heater`. The
+    referenced feature is accessible via the specialization, per canAccess/isFeaturedWithin --
+    must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_SPECIALIZED_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_TYPED_USAGE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+  }
+  part toaster : Toaster {
+    allocation a allocate doApply to heater;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_typed_usage_owner_not_flagged(conn) -> None:
+    """F1 false positive #2, pilot-confirmed accepted (exit 0): the allocation's owner
+    (`P::toaster`) is a PartUsage TYPED BY `P::Toaster` (no `:>` at all), the declaring context
+    of `heater`. KerML treats FeatureTyping as a kind of Specialization, so
+    `query.supertypes_transitively` already returns `P::Toaster` for `P::toaster` with no
+    separate typing-specific code path -- must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_TYPED_USAGE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_SAME_CONTEXT_QUALIFIED_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+    allocation a allocate doApply to Toaster::heater;
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_same_context_qualified_end_not_flagged(
+    conn,
+) -> None:
+    """A qualified-path end (`Toaster::heater`, not a bare name) written INSIDE `part def
+    Toaster` itself: the end's declaring context (`P::Toaster`) equals the allocation's own
+    owner (`P::Toaster`) -- not a violation, regardless of the qualified spelling."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_SAME_CONTEXT_QUALIFIED_TRUE_NEGATIVE, strict=False
+    )
+    assert model.ok
+    assert rule.check(model) == []
+
+
+# --- Task 5 (DL-059 ADDENDUM): F2 (first segment of a dot-chain is not automatically safe) ---
+
+ALLOCATE_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+  }
+  allocation a allocate doApply to Toaster.heater;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_dot_chain_inaccessible_root_flagged(
+    conn,
+) -> None:
+    """F2 false negative #1, pilot-confirmed rejected ("Couldn't resolve reference to Feature
+    'Toaster'"): `Toaster.heater` is a dot-chain (`end_path` returns two segments), but its FIRST
+    segment, `Toaster`, is itself a Definition -- never an accessible Feature at all, regardless
+    of where it is declared. The old algorithm trusted any multi-segment end as "already
+    structurally proven accessible by the tool's own parser"; that claim is false, and this case
+    must now be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE, strict=False
+    )
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(f["rule"] == "allocate-connector-end-accessibility" for f in findings)
+
+
+ALLOCATE_QUALIFIED_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE = """
+package P {
+  action def ApplyHeat;
+  part def T;
+  part def Outer {
+    part def BoxDef {
+      part t : T;
+    }
+    part box : BoxDef;
+  }
+  action doApply : ApplyHeat;
+  allocation a allocate doApply to Outer::box.t;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_qualified_dot_chain_inaccessible_root_flagged(
+    conn,
+) -> None:
+    """F2 false negative #2, pilot-confirmed rejected ("Must be an accessible feature"): an
+    `Outer::box.t`-style qualified-then-dotted end. `end_path` returns two segments
+    (`P::Outer::box`, `P::Outer::BoxDef::t`); the first segment IS a Feature (a PartUsage, not a
+    Definition), but its own declaring context (`P::Outer`, a PartDefinition) is neither the
+    allocation's own owner (`P`, package-level) nor a package or supertype of it -- the same
+    accessibility test applied to a chain root, not just to a bare single-segment end."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(
+        ALLOCATE_QUALIFIED_DOT_CHAIN_INACCESSIBLE_ROOT_TRUE_POSITIVE, strict=False
+    )
+    assert model.ok
+    findings = rule.check(model)
+    assert findings
+    assert all(f["rule"] == "allocate-connector-end-accessibility" for f in findings)
+
+
+def test_allocate_connector_end_accessibility_skips_unresolvable_declaring_context(
+    conn,
+) -> None:
+    """F9: a declaring context that doesn't resolve in the export at all -- cannot be judged
+    either way, skipped rather than flagged (F4), not a crash. Simulated by removing the
+    declaring context's own element from a real, loaded model's index (the same technique
+    `test_allocate_between_definitions_skips_unresolvable_connector_end` uses for its own rule)."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(rule.negative_control, strict=False)
+    assert model.ok
+    idx = cf.query.ApiIndex(model)
+    baseline = cf._allocate_connector_end_accessibility(model, index=idx)
+    assert len(baseline) == 2  # both ends of the control violate accessibility
+
+    del idx.by_qn["P::ControlSystem"]  # simulate: this end's declaring context is unresolvable
+    findings = cf._allocate_connector_end_accessibility(model, index=idx)
+    # the unresolvable end is skipped (not flagged, not crashed); the other, still-resolvable
+    # end's finding survives
+    assert len(findings) == 1
+    assert "Toaster::control" in findings[0]["message"]
+
+
 def test_gap_rule_negative_controls_are_isolated(conn) -> None:
     """Each gap rule's negative control is a clean, isolated demonstration of ONLY that rule
     (this file's existing convention): running the full `GAP_RULES` list against a control must
