@@ -200,6 +200,75 @@ def supertypes_transitively(model: Any, qualified_name: str, kinds: set[str] | N
     return _closure(qualified_name, specialization_graph(model, kinds)[0])
 
 
+_RAW_SUPERTYPE_FIELDS = ("type", "subsets", "redefines", "specializes")
+
+
+def _raw_refs(value: Any) -> list[str]:
+    """Normalizes a raw API-JSON reference field to a list of ``@id``s. ``value`` may be a single dict
+    ref (``{"@id": ...}``), a list of dict refs, a bare id string, or absent (``None``, normalized to
+    ``[]``) -- confirmed empirically (2026-09-29, allocate-fix/task6): ``type`` is always a list even
+    with one element; ``subsets``, ``redefines`` and ``specializes`` are each a single ref, never a list.
+    """
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [_ref(v) for v in value]
+    return [_ref(value)]
+
+
+def supertypes_transitively_raw(
+    model: Any, qualified_name: str, index: ApiIndex | None = None
+) -> set[str]:
+    """Everything ``qualified_name`` (transitively) specializes, is typed by, subsets, or redefines --
+    walked directly over the raw API-JSON export's ``type``, ``subsets``, ``redefines`` and
+    ``specializes`` reference fields, rather than through ``Symbol.specializations``
+    (``specialization_graph``, the graph ``supertypes_transitively`` walks), which only sees NAMED
+    elements (built from ``model.query(select=["name"])``).
+
+    An allocation whose owner is anonymous, or a redefining usage with no declared name of its own (e.g.
+    ``part redefines heater { ... }``, qualified name like ``P::Better::@0``), still carries these
+    reference fields on its own raw element -- confirmed empirically (allocate-fix/task6, a second
+    independent hardening round on `conformance._allocate_connector_end_accessibility`): a typed usage
+    (``part x : B;``) carries ``"type": [{"@id": "P__B"}]`` (a list); a subsetted usage
+    (``part y :> x;``) carries ``"subsets": {"@id": "P__x"}`` (a single ref); a redefining usage
+    (``part redefines heater {...}`` or ``part :>> heater : Heater2 {...}``) carries
+    ``"redefines": {"@id": "P__Toaster__heater"}`` (a single ref) even when the usage itself is
+    completely unnamed; a Definition specializing another Definition (``part def B :> A;``) carries
+    ``"specializes": {"@id": "P__A"}`` (a single ref). The walk follows all four fields at every hop, so
+    a redefinition chain (a redefining usage whose own ``redefines`` target is itself a redefining usage)
+    or a multi-level subsetting/specialization chain is fully covered, not just one hop.
+
+    Confirmed empirically (same task) to reproduce ``supertypes_transitively``'s own results exactly on
+    every named case it already handles: a Definition specializing another Definition, a plain Usage
+    typed by a Definition (no ``:>`` at all), a subsetting Usage, and a two/three-level specialization
+    chain. This is a strict extension of that graph to unnamed elements, not a different algorithm, so a
+    caller needing an owner's transitive supertypes/types regardless of whether any element along the
+    way is named should prefer this over ``supertypes_transitively``.
+    """
+    idx = index or ApiIndex(model)
+    start = idx.by_qn.get(qualified_name)
+    if start is None:
+        return set()
+    seen_ids: set[str] = set()
+    todo = deque([start["@id"]])
+    result: set[str] = set()
+    while todo:
+        current_id = todo.popleft()
+        element = idx.by_id.get(current_id)
+        if element is None:
+            continue
+        for field in _RAW_SUPERTYPE_FIELDS:
+            for ref_id in _raw_refs(element.get(field)):
+                if ref_id in seen_ids:
+                    continue
+                seen_ids.add(ref_id)
+                todo.append(ref_id)
+                target = idx.by_id.get(ref_id)
+                if target and target.get("qualifiedName"):
+                    result.add(target["qualifiedName"])
+    return result
+
+
 def allocations_for(model: Any, qualified_name: str, inherit: bool = True, index: ApiIndex | None = None) -> list[dict]:
     """Allocations with ``qualified_name`` (or, with ``inherit``, any of its supertypes) at either end."""
     names = {qualified_name} | (supertypes_transitively(model, qualified_name) if inherit else set())

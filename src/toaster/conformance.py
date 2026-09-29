@@ -505,8 +505,8 @@ _ALLOCATE_CONNECTOR_END_ACCESSIBILITY_CONSTRAINT = (
 def _allocate_connector_end_accessibility(
     model: Any, index: "query.ApiIndex | None" = None
 ) -> list[dict]:
-    """Rule (DL-058, hardened DL-059 ADDENDUM/Task 5): an AllocationUsage connector end that reaches into a
-    Definition or Usage the allocation's own owner cannot access.
+    """Rule (DL-058, hardened DL-059 ADDENDUM Tasks 5-6): an AllocationUsage connector end that reaches
+    into a Definition or Usage the allocation's own owner cannot access.
 
     DL-058 ruled that `allocate <Def>::<usage> to <Def>::<usage>;` at package level (the tutorial's own
     ch05-ch08 fixtures, before this effort's fix) violates KerML's validateSubsettingFeaturingTypes (the
@@ -516,37 +516,63 @@ def _allocate_connector_end_accessibility(
     sysml-toolkit v0.9.1 both accept the construct with no diagnostic (DL-058's two tool holes); this rule is
     the tutorial-supplied guard against a regression back into that non-conformant idiom.
 
-    Task 4's first cut had two bugs, found by an independent review and confirmed against the OMG pilot
-    (ground truth) rather than merely re-derived, both fixed here:
+    Task 4's first cut had two bugs (F1, F2 below), found by an independent review and fixed in Task 5. A
+    SECOND independent review, also confirmed against the OMG pilot (ground truth) rather than merely
+    re-derived, found two more bugs in Task 5's own fix, both fixed here (F-A, F-B):
 
-    **F1 (false positives — accessibility ignored specialization and typing).** `canAccess`/`isFeaturedWithin`
-    treat a featuring type as accessible not only when it IS the declaring context, but also when it
-    (transitively) SPECIALIZES that declaring context, or — for a Usage owner — is TYPED by it (KerML treats
-    FeatureTyping as a kind of Specialization). Task 4's check only ever compared the declaring context
-    against the owner's own qualified name by exact identity, so `part def BetterToaster :> Toaster { allocate
-    doApply to heater; }` and `part toaster : Toaster { allocate doApply to heater; }` were both wrongly
-    flagged (the pilot accepts both, exit 0). Fixed by additionally accepting a declaring context that appears
-    in `query.supertypes_transitively(model, owner_qn)` — confirmed empirically (this task) that this single
-    helper call already covers BOTH cases without any separate "resolve the owner's own type" branch: KerML's
-    own FeatureTyping-is-Specialization rule is already reflected in `Symbol.specializations`, so
-    `supertypes_transitively(model, "P::toaster")` (a PartUsage typed by `P::Toaster`, no `:>` at all) already
-    returns `{"P::Toaster"}`, identically to the `:>` specialization case.
+    **F1 (Task 5; false positives — accessibility ignored specialization and typing).**
+    `canAccess`/`isFeaturedWithin` treat a featuring type as accessible not only when it IS the declaring
+    context, but also when it (transitively) SPECIALIZES that declaring context, or — for a Usage owner —
+    is TYPED by it (KerML treats FeatureTyping as a kind of Specialization). Task 4's check only ever
+    compared the declaring context against the owner's own qualified name by exact identity, so `part def
+    BetterToaster :> Toaster { allocate doApply to heater; }` and `part toaster : Toaster { allocate
+    doApply to heater; }` were both wrongly flagged (the pilot accepts both, exit 0). Task 5 fixed this by
+    additionally accepting a declaring context that (transitively) specializes or types the owner.
 
-    **F2 (false negatives — a dot-chain's first segment isn't automatically safe).** Task 4's docstring and
-    D-032/DL-059 claimed a multi-segment end is "already structurally proven accessible by the tool's own
-    parser" — this is FALSE. OpenSysML accepts `Toaster.heater` (dot after a bare Definition name) and
-    `Outer::box.t` (dot after a qualified path into an inaccessible Usage) as loadable, multi-segment
-    `end_path` chains, but the pilot rejects both ("Couldn't resolve reference to Feature ..."). Fixed by
-    running the SAME accessibility test against the FIRST segment of every end, whether single- or
-    multi-segment — only the REMAINDER of a chain past its first segment (member existence and typing within
-    an already-accessible feature) is genuinely proven by successful loading; the first hop's accessibility
-    is not. A first segment whose own `@type` is itself a Definition (e.g. `Toaster` in `Toaster.heater`) is a
-    distinct failure from an inaccessible Feature: a Definition can never be an accessible Feature at all, so
-    it is flagged directly rather than falling through to the declaring-context comparison (which would
-    wrongly treat `Toaster`'s own owning Package as its "declaring context" and pass it) — this check applies
-    only to a CHAIN ROOT (`len(end) > 1`), not to an ordinary single-segment end resolving whole to a
-    Definition, which is `allocate-between-definitions`'s (D-019's) own job (checked against `end[-1]`); this
-    rule and that one must not double-flag the same construct.
+    **F2 (Task 5; false negatives — a dot-chain's first segment isn't automatically safe).** Task 4's
+    docstring and D-032/DL-059 claimed a multi-segment end is "already structurally proven accessible by
+    the tool's own parser" — this is FALSE. OpenSysML accepts `Toaster.heater` (dot after a bare Definition
+    name) and `Outer::box.t` (dot after a qualified path into an inaccessible Usage) as loadable,
+    multi-segment `end_path` chains, but the pilot rejects both ("Couldn't resolve reference to Feature
+    ..."). Task 5 fixed this by running the SAME accessibility test against the FIRST segment of every
+    end, whether single- or multi-segment — only the REMAINDER of a chain past its first segment (member
+    existence and typing within an already-accessible feature) is genuinely proven by successful loading;
+    the first hop's accessibility is not.
+
+    **F-A (Task 6; false positives — accessibility blind to an UNNAMED owner's own supertypes/typing).**
+    Task 5's F1 fix used `query.supertypes_transitively`, which builds its graph from
+    `model.query(select=["name"])` — NAMED elements only. An allocation whose owner is anonymous or a
+    redefining usage with no declared name of its own (e.g. `part redefines heater { ... }` — the
+    redefining usage itself has a qualified name like `P::Better::@0`) got `supertypes_transitively(model,
+    "P::Better::@0") == set()` even when it clearly redefines/retypes an accessible declaring context: the
+    pilot accepts all of these (exit 0; confirmed directly), but Task 5's rule still wrongly flagged them.
+    Fixed by using `query.supertypes_transitively_raw` instead: it walks the raw API-JSON `type`,
+    `subsets`, `redefines` and `specializes` reference fields directly (each may be a single ref or a
+    list; see that function's docstring), which are present on an element's own raw JSON regardless of
+    whether the element — or anything it points to — has a declared name at all. Confirmed empirically
+    (this task) that this ONE helper call reproduces `supertypes_transitively`'s own results exactly on
+    every named case Task 5 already handled (a Definition specializing another, a Usage typed by a
+    Definition, a subsetting Usage, a two/three-level specialization chain), so this is a strict extension
+    of the same accessibility test, not a different algorithm; the raw walk is used unconditionally, with
+    no hybrid/fallback path, for every owner (named or not).
+
+    **F-B (Task 6; double-flagging with `allocate-between-definitions` on a NESTED Definition end).** A
+    single-segment end whose own resolved element is a Definition (e.g. `Toaster::Inner` where `part def
+    Toaster { part def Inner; }`) was correctly flagged by `allocate-between-definitions` (D-019: the end
+    resolves to a Definition, not a Feature — that rule's own job, checked against `end[-1]`), but Task 5's
+    rule ALSO flagged it: it computed the end's declaring context (dropping the last `::` segment,
+    `Toaster::Inner` -> `Toaster`) without first checking whether the end ITSELF was a Definition, and
+    `Toaster` (a nested Definition, not the allocation's own owner nor a package) tripped the
+    "reaches into ... neither owner nor supertype" branch too. The pilot gives exactly ONE error here
+    ("Couldn't resolve reference to Feature 'Toaster::Inner'"). This claim ("a package-level bare
+    Definition reference never double-flags") was true only because a PACKAGE-level bare Definition's
+    declaring context happens to resolve to a plain `Package` (already exempted) — a NESTED Definition's
+    declaring context resolves to another Definition instead, which is not exempted, so it double-flagged.
+    Fixed by checking the end's OWN resolved element for a single-segment end BEFORE computing its
+    declaring context at all: if it is a Definition, this rule skips it unconditionally (package-level or
+    nested makes no difference), leaving it entirely to `allocate-between-definitions`. This is scoped
+    strictly to `len(end) == 1`; a chain root (`len(end) > 1`) already has its own, separate
+    Definition-check from Task 5's F2 fix, unchanged here.
 
     An allocation end is written one of two ways once loaded and indexed via `ApiIndex`:
 
@@ -564,11 +590,14 @@ def _allocate_connector_end_accessibility(
     `perform_relationships` already reads on `PerformActionUsage`; confirmed present on `AllocationUsage` too,
     empirically, not assumed):
 
+    - The end's own resolved element (single-segment case) is itself a Definition -> NOT this rule's
+      finding at all; skipped unconditionally, regardless of nesting depth (F-B fix; own job of
+      `allocate-between-definitions`).
     - Declaring context IS the owner, or resolves to a plain `Package` (the ordinary top-level pattern,
       `allocate P::doApply to P::heater;`, matching `tests/test_query.py`'s `UNNAMED_ALLOCATE` fixture) ->
       NOT a violation.
-    - Declaring context (transitively) specializes, or types, the owner (`query.supertypes_transitively`) ->
-      NOT a violation (F1 fix).
+    - Declaring context (transitively) specializes, or types, the owner
+      (`query.supertypes_transitively_raw`, F-A fix — named or unnamed alike) -> NOT a violation.
     - Declaring context resolves to anything else (a Definition or Usage that is neither the allocation's own
       owner nor one of its supertypes) -> VIOLATION: the end reaches into another type's nested member by
       qualified name instead of through an accessible feature chain rooted in the allocation's own context.
@@ -578,9 +607,9 @@ def _allocate_connector_end_accessibility(
 
     Empirically validated against `models/ch01-cumulative.sysml` through `ch10-cumulative.sysml` (no ch09
     fixture): zero findings on every one, all already fixed to the conformant idiom. Also validated against
-    `tests/test_interconnection.py`'s own inline fixtures: `FLOW_SOURCE`, `ALLOC_SOURCE` and `NESTED_SOURCE`
-    are clean, but `QUALIFIED_ALLOC_AND_INTERFACE_SOURCE`'s (now rewritten, DL-059 ADDENDUM) previous
-    `allocate ApplyHeat to Toaster::heating;` DID trip this rule before its fixture fix.
+    `tests/test_interconnection.py`'s own inline fixtures (`FLOW_SOURCE`, `ALLOC_SOURCE`, `NESTED_SOURCE`,
+    `QUALIFIED_ALLOC_AND_INTERFACE_SOURCE`), and against ~26 targeted probe fixtures built for this and the
+    prior hardening round, each verified against the OMG pilot as ground truth (allocate-fix/task6).
     """
     idx = index or query.ApiIndex(model)
     findings = []
@@ -590,7 +619,9 @@ def _allocate_connector_end_accessibility(
         if owner_qn is None:
             return set()
         if owner_qn not in supertypes_cache:
-            supertypes_cache[owner_qn] = query.supertypes_transitively(model, owner_qn)
+            supertypes_cache[owner_qn] = query.supertypes_transitively_raw(
+                model, owner_qn, index=idx
+            )
         return supertypes_cache[owner_qn]
 
     for a in idx.of_type("AllocationUsage"):
@@ -606,11 +637,11 @@ def _allocate_connector_end_accessibility(
             first_qn = end[0]
             if not first_qn or "::" not in first_qn:
                 continue  # no owning context to compare (e.g. a top-level, unqualified single name)
+            first_element = idx.by_qn.get(first_qn)
             if len(end) > 1:
                 # Chain root: a Definition here can never be an accessible Feature at all (a distinct
                 # failure from an inaccessible-but-still-a-Feature declaring context, and distinct from
                 # `allocate-between-definitions`, which only checks the chain's LAST segment).
-                first_element = idx.by_qn.get(first_qn)
                 if first_element is not None and first_element.get("@type", "").endswith("Definition"):
                     findings.append(
                         {
@@ -624,6 +655,14 @@ def _allocate_connector_end_accessibility(
                         }
                     )
                     continue
+            else:
+                # F-B fix (Task 6): a single-segment end whose OWN resolved element is a Definition is
+                # `allocate-between-definitions`' own finding alone (D-019, checked against `end[-1]`,
+                # which for a single-segment end is the same element as `first_qn`) -- never this rule's,
+                # whether the Definition is package-level or nested. Skip before computing (or even
+                # considering) a declaring context at all, so the two rules never double-flag.
+                if first_element is not None and first_element.get("@type", "").endswith("Definition"):
+                    continue
             declaring_context = first_qn.rsplit("::", 1)[0]
             if declaring_context == owner_qn:
                 continue
@@ -633,7 +672,8 @@ def _allocate_connector_end_accessibility(
             if context_element.get("@type") == "Package":
                 continue
             if declaring_context in owner_supertypes(owner_qn):
-                continue  # F1 fix: owner (trans.) specializes, or is typed by, the declaring context
+                continue  # F-A fix: owner (trans.) specializes, or is typed/subsetted/redefined via, the
+                # declaring context -- named or unnamed owner alike (query.supertypes_transitively_raw)
             findings.append(
                 {
                     "rule": "allocate-connector-end-accessibility",

@@ -664,6 +664,196 @@ def test_allocate_connector_end_accessibility_skips_unresolvable_declaring_conte
     assert "Toaster::control" in findings[0]["message"]
 
 
+# --- Task 6 (DL-059 ADDENDUM, second independent hardening round): F-A (unnamed/redefining owner) ---
+
+ALLOCATE_NAMED_REDEFINE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part def Heater2 :> HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part heater2 : Heater2 :>> heater {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_named_redefine_owner_not_flagged(conn) -> None:
+    """F-A control, pilot-confirmed accepted (exit 0): the owner (`P::Better::heater2`) is a NAMED
+    redefining usage (`Heater2 :>> heater`), typed by `Heater2`. The declaring context of `coil`
+    (`P::Heater2`) is the owner's own declared type -- already resolvable via a NAMED specialization
+    graph even before this task's fix, but locked in here alongside its unnamed siblings below (this
+    is the fixture that first confirmed the pattern itself is pilot-valid)."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_NAMED_REDEFINE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_SHORTHAND_REDEFINE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part def Heater2 :> HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part :>> heater : Heater2 {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_shorthand_redefine_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner is an UNNAMED redefining
+    usage (`part :>> heater : Heater2 { ... }`, qualified name `P::Better::@0`, no declared name of
+    its own). `query.supertypes_transitively` (named-only, via `Symbol.specializations`) returns
+    `set()` for an unnamed element, so Task 5's fix wrongly flagged this; `supertypes_transitively_raw`
+    finds `P::Heater2` directly from the owner's own raw `type` field regardless of its name -- must
+    NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_SHORTHAND_REDEFINE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_ANONYMOUS_TYPED_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Rig {
+    part : Toaster {
+      allocation a allocate doApply to heater;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_anonymous_typed_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner is a completely anonymous
+    usage with no `:>`/`:>>` at all (`part : Toaster { ... }`, qualified name `P::Rig::@0`), typed
+    by `Toaster` via its raw `type` field. Must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_ANONYMOUS_TYPED_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_REDEFINE_SAME_TYPE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part redefines heater {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_redefine_same_type_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner (`part redefines heater
+    { ... }`, qualified name `P::Better::@0`) redefines `Toaster::heater` with NO explicit re-type at
+    all -- its own raw element carries only a `redefines` ref, no `type` field. The declaring context
+    of `coil` (`P::HeatingSystem`) is reached two hops out: `redefines` to `P::Toaster::heater`, then
+    that element's own `type` to `P::HeatingSystem` -- confirms the walk follows a redefined feature's
+    OWN type, not just the redefining usage's direct fields. Must NOT be flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_REDEFINE_SAME_TYPE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+ALLOCATE_REDEFINE_RETYPE_OWNER_TRUE_NEGATIVE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part def Heater2 :> HeatingSystem { part coil; }
+  action doApply : ApplyHeat;
+  part def Toaster { part heater : HeatingSystem; }
+  part def Better :> Toaster {
+    part redefines heater : Heater2 {
+      allocation a allocate doApply to coil;
+    }
+  }
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_redefine_retype_owner_not_flagged(conn) -> None:
+    """F-A false positive, pilot-confirmed accepted (exit 0): the owner (`part redefines heater :
+    Heater2 { ... }`, qualified name `P::Better::@0`) is BOTH unnamed AND explicitly re-typed to
+    `Heater2` (a different type than the redefined feature's own `HeatingSystem`). The declaring
+    context of `coil` (`P::Heater2`) is the owner's own direct raw `type` field -- must NOT be
+    flagged."""
+    rule = next(
+        r for r in cf.GAP_RULES if r.name == "allocate-connector-end-accessibility"
+    )
+    model = conn.load_from_content(ALLOCATE_REDEFINE_RETYPE_OWNER_TRUE_NEGATIVE, strict=False)
+    assert model.ok
+    assert rule.check(model) == []
+
+
+# --- Task 6 (DL-059 ADDENDUM): F-B (single-segment end resolving to a NESTED Definition must not
+# double-flag alongside allocate-between-definitions) ---
+
+ALLOCATE_NESTED_DEFINITION_END_NOT_DOUBLE_FLAGGED = """
+package P {
+  action def ApplyHeat;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part def Inner;
+  }
+  allocation a allocate doApply to Toaster::Inner;
+}
+"""
+
+
+def test_allocate_connector_end_accessibility_nested_definition_end_not_double_flagged(
+    conn,
+) -> None:
+    """F-B fix, pilot-confirmed: the pilot gives exactly ONE error here ("Couldn't resolve reference
+    to Feature 'Toaster::Inner'"). The end (`Toaster::Inner`) resolves whole to a nested
+    PartDefinition, not a Feature -- `allocate-between-definitions` (D-019) already flags this on its
+    own (checked against `end[-1]`). Before this fix, `allocate-connector-end-accessibility` ALSO
+    flagged it: it computed the end's declaring context (`P::Toaster`, dropping the last `::`
+    segment) without first checking whether the end itself was a Definition; `P::Toaster` is neither
+    the allocation's own owner (`P`) nor a package or supertype of it, so it tripped too. Fixed by
+    checking the end's own resolved element for `len(end) == 1` before computing any declaring
+    context at all. Running the FULL `GAP_RULES` list must produce exactly one finding total, from
+    `allocate-between-definitions` only."""
+    model = conn.load_from_content(
+        ALLOCATE_NESTED_DEFINITION_END_NOT_DOUBLE_FLAGGED, strict=False
+    )
+    assert model.ok
+    idx = cf.query.ApiIndex(model)
+    by_rule = {rule.name: rule.check(model, idx) for rule in cf.GAP_RULES}
+    assert by_rule["allocate-between-definitions"] != []
+    assert by_rule["allocate-connector-end-accessibility"] == []
+    total = sum(len(fs) for fs in by_rule.values())
+    assert total == 1, by_rule
+
+
 def test_gap_rule_negative_controls_are_isolated(conn) -> None:
     """Each gap rule's negative control is a clean, isolated demonstration of ONLY that rule
     (this file's existing convention): running the full `GAP_RULES` list against a control must
