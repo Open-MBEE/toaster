@@ -177,10 +177,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             # HeatingAssembly :> HeatingSystem (ch05); ApplyHeat's rewritten body
             # references Bread/Toast (ch01/ch04). GenerateHeat, EnergyPort and
             # HeatGenerator are declared by this notebook's own fragment.
+            # heatGenAllocation now nests inside HeatingAssembly and allocates
+            # applyHeat.generateHeat (DL-058's fix): applyHeat must be a real,
+            # inherited feature of HeatingSystem for that chain to resolve, so
+            # the stub carries HeatingSystem's own perform (ch05), not a bare
+            # declaration.
             "context_stubs": [
                 "item def Bread;",
                 "item def Toast;",
-                "abstract part def HeatingSystem;",
+                "abstract part def HeatingSystem { perform action applyHeat : ApplyHeat; }",
             ],
         },
         {
