@@ -1,0 +1,3 @@
+$ sysmlv2 viz --help (v0.9.1, commit af839f0d22723772676e509213c65756d1e08ef2)
+Possible --view values: tree, interconnection, state, action, sequence, case, mixed
+No allocation or requirement view kind exists in this CLI.
