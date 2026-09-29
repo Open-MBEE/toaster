@@ -63,16 +63,16 @@ def test_find_allocations_sees_unnamed_allocate(conn) -> None:
 
 
 def test_find_allocations_sees_named_allocations(ch08) -> None:
-    """The real model's two allocations, both named per DL-039's fix of the old
-    definition-level `allocate` gap."""
+    """The real model's two allocations, both named and nested per DL-058's fix of the
+    package-level qualified-name non-conformance (see decisions/log.md DL-058)."""
     allocs = {a["id"]: a["ends"] for a in query.find_allocations(ch08)}
     assert allocs == {
-        "ToasterDemo::heatAllocation": [
-            ["ToasterDemo::ToastBread::applyHeat"],
+        "ToasterDemo::Toaster::heatAllocation": [
+            ["ToasterDemo::ToastingSystem::toastBread", "ToasterDemo::ToastBread::applyHeat"],
             ["ToasterDemo::Toaster::heating"],
         ],
-        "ToasterDemo::heatGenAllocation": [
-            ["ToasterDemo::ApplyHeat::generateHeat"],
+        "ToasterDemo::HeatingAssembly::heatGenAllocation": [
+            ["ToasterDemo::HeatingSystem::applyHeat", "ToasterDemo::ApplyHeat::generateHeat"],
             ["ToasterDemo::HeatingAssembly::heatGen"],
         ],
     }
