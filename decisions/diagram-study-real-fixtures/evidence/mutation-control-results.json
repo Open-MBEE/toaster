@@ -1,0 +1,54 @@
+[
+  {
+    "tool": "opensysml-puml",
+    "baseline_rendered": true,
+    "svg_changed": false,
+    "verdict": "STALE: picture unchanged after a real model edit",
+    "fixture": "ch05-interconnection",
+    "annotation": "unchanged because this view never draws port names (confirmed in Task 4's element-presence check), not the same class of finding as SysMLD's silent staleness -- this is a known coverage limitation, not a picture-goes-stale-while-claiming-correspondence risk."
+  },
+  {
+    "tool": "opensysml-dot",
+    "baseline_rendered": true,
+    "svg_changed": false,
+    "verdict": "STALE: picture unchanged after a real model edit",
+    "fixture": "ch05-interconnection",
+    "annotation": "unchanged because this view never draws port names (confirmed in Task 4's element-presence check), not the same class of finding as SysMLD's silent staleness -- this is a known coverage limitation, not a picture-goes-stale-while-claiming-correspondence risk."
+  },
+  {
+    "tool": "toolkit",
+    "baseline_rendered": true,
+    "svg_changed": true,
+    "verdict": "reflects the mutation",
+    "fixture": "ch05-interconnection"
+  },
+  {
+    "tool": "opensysml-puml",
+    "baseline_rendered": true,
+    "svg_changed": true,
+    "verdict": "reflects the mutation",
+    "fixture": "ch07-state"
+  },
+  {
+    "tool": "opensysml-dot",
+    "baseline_rendered": true,
+    "svg_changed": true,
+    "verdict": "reflects the mutation",
+    "fixture": "ch07-state"
+  },
+  {
+    "tool": "toolkit",
+    "baseline_rendered": true,
+    "svg_changed": true,
+    "verdict": "reflects the mutation",
+    "fixture": "ch07-state"
+  },
+  {
+    "tool": "pilot",
+    "verdict": "not runnable: baseline render failed (exit_code=1 on all real fixtures, per Task 4 -- allocation syntax parse error, see ch05-tree-pilot-emit.log)"
+  },
+  {
+    "tool": "sysmld",
+    "verdict": "not runnable: baseline render failed (see decisions/diagram-study-real-fixtures/evidence/ch05-interconnection-sysmld-render.log / ch07-state-sysmld-render.log and sysmld-indexer-probe.json)"
+  }
+]
