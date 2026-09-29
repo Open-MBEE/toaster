@@ -145,9 +145,8 @@ package ToasterDemo {
 
     part def HeatingAssembly :> HeatingSystem {
         part heatGen : HeatGenerator;
+        allocation heatGenAllocation allocate applyHeat.generateHeat to heatGen;
     }
-
-    allocation heatGenAllocation allocate ApplyHeat::generateHeat to HeatingAssembly::heatGen;
 
     requirement def HeatGenerationReq {
         doc /*
