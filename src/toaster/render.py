@@ -48,6 +48,68 @@ def model_to_dot(model: Any, title: str = "model") -> str:
     return "\n".join(lines)
 
 
+def containment_subgraph(
+    model: Any,
+    root: str,
+    *,
+    relations: tuple[str, ...] = ("composition", "typing"),
+    depth: int | None = None,
+) -> list:
+    """Elements reachable from `root` by the given relationship kinds, to
+    `depth` hops (None = unbounded, 0 = the root only).
+
+    "composition" follows owner->usage edges: the same ones model_to_dot()
+    draws as diamond arrows (a PartUsage whose `owner` field is the current
+    frontier element's own qualified name). "typing" follows a usage's own
+    `type` field to its definition: the same ones model_to_dot() draws as
+    dashed arrows. Each hop explores both requested relations for every
+    element in the current frontier before advancing; an element discovered
+    via composition on one hop has its own typing edge (if any) explored on
+    the NEXT hop, not the same one.
+
+    This queries model.query() fresh every call. It never reads or maintains
+    a list of element names -- the selection is only ever as current as the
+    model itself, so it cannot silently drift the way a hand-authored
+    diagram-intent file can (see decisions/log.md DL-055).
+    """
+    by_qname = {}
+    for e in model.query():
+        d = e.as_dict()
+        qname = d.get("qualifiedName", d.get("@id", ""))
+        by_qname[qname] = e
+
+    if root not in by_qname:
+        return []
+
+    result = {root: by_qname[root]}
+    frontier = {root}
+    hops = 0
+    while frontier and (depth is None or hops < depth):
+        next_frontier = set()
+        for qname in frontier:
+            d = by_qname[qname].as_dict()
+            if "composition" in relations:
+                for other_qname, other_elem in by_qname.items():
+                    if other_qname in result:
+                        continue
+                    other_d = other_elem.as_dict()
+                    if (
+                        other_d.get("@type") == "PartUsage"
+                        and other_d.get("owner") == qname
+                    ):
+                        result[other_qname] = other_elem
+                        next_frontier.add(other_qname)
+            if "typing" in relations:
+                part_type = d.get("type")
+                if part_type and part_type in by_qname and part_type not in result:
+                    result[part_type] = by_qname[part_type]
+                    next_frontier.add(part_type)
+        frontier = next_frontier
+        hops += 1
+
+    return list(result.values())
+
+
 def render_dot(src: str | Path, out: str | Path) -> None:
     """Render a DOT source file or string to SVG via Graphviz.
 
