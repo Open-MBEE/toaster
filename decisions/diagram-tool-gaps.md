@@ -3,13 +3,18 @@
 A living register of confirmed capability gaps and bugs in rendering tools
 considered for this tutorial's diagrams, distinct from `DEFERRED.md` (which
 stays scoped, per `decisions/log.md` `DL-055`, to gaps in constructs or
-dependencies this tutorial actually adopts). Both entries below are about
-tools this tutorial does **not** adopt -- see `decisions/diagram-study-real-fixtures.md`
+dependencies this tutorial actually adopts). G-D002 is about a tool this
+tutorial does **not** adopt -- see `decisions/diagram-study-real-fixtures.md`
 and `docs/superpowers/specs/2026-09-29-diagram-generation-strategy-design.md`
-for why. They're recorded here so the findings aren't lost, and so a drafted
-upstream issue (`decisions/gap-issue-drafts.md`'s existing discipline: draft,
-hold for Z's review, file only on instruction) has a durable source to draw
-from once a gap's picture is complete enough to be worth filing.
+for why. G-D001 does **not** fit that framing: it is kept here as the
+rendering-study finding that exposed both a non-conformant fixture and two
+enforcement holes in tools this tutorial *does* adopt (OpenSysML,
+sysml-toolkit); its own follow-up is tracked via `decisions/log.md`'s `DL-058`,
+not as a `DEFERRED.md` entry drafted from this register. They're recorded here
+so the findings aren't lost, and so a drafted upstream issue
+(`decisions/gap-issue-drafts.md`'s existing discipline: draft, hold for Z's
+review, file only on instruction) has a durable source to draw from once a
+gap's picture is complete enough to be worth filing.
 
 ## G-D001: Fixtures ch05-ch08 violate KerML connector-end accessibility in their `allocate` targets; the pilot is the only pinned tool that reports it
 
