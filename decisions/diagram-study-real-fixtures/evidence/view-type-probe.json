@@ -1,0 +1,22 @@
+{
+  "sysml-toolkit": {
+    "allocation": false,
+    "requirement": false,
+    "source": "toolkit-view-help.log (v0.9.1 --help, seven view kinds, neither present)"
+  },
+  "opensysml": {
+    "allocation": false,
+    "requirement": false,
+    "source": "opensysml-help.log (sysml -help, pinned v0.9.0 binary at /private/tmp/functional-toaster-design/sysml): the 'Rendering views' section documents -render <view> against a declared View element (e.g. Views::vehicleView) with no fixed view-kind enum; no 'allocation' or 'requirement' kind/flag appears anywhere in the help text"
+  },
+  "pilot": {
+    "allocation": false,
+    "requirement": false,
+    "source": "pilot-help.log (PilotRender.java zero-arg -> s.help(\"viz\")): the seven <VIEW> candidates listed are DEFAULT, TREE, INTERCONNECTION, STATE, ACTION, SEQUENCE, MIXED; neither ALLOCATION nor REQUIREMENT is present"
+  },
+  "sysmld": {
+    "allocation": true,
+    "requirement": true,
+    "source": "sysml2d/src/sysmld/allocation_view.py and requirement_view.py exist; see Task 6 for why Phase 0 does not author real-fixture intent for either (scoped out \u2014 see Review Focus item 5 in the plan)"
+  }
+}

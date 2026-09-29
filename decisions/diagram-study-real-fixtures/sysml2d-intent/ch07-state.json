@@ -1,0 +1,35 @@
+{
+  "diagram": "ch07-state",
+  "kind": "StateView",
+  "name": "Ch7 Toasting Cycle (Real Fixture)",
+  "subject": "cycle",
+  "model_files": ["ch07.sysml"],
+  "direction": "left-right",
+  "default_w": 130,
+  "default_h": 60,
+  "aliases": {
+    "cycle": "ToasterDemo::Cycle",
+    "idle": "ToasterDemo::Cycle::idle",
+    "heating": "ToasterDemo::Cycle::heating",
+    "ready": "ToasterDemo::Cycle::ready",
+    "cancelled": "ToasterDemo::Cycle::cancelled",
+    "start": "ToasterDemo::Start",
+    "finish": "ToasterDemo::Finish",
+    "cancel": "ToasterDemo::Cancel"
+  },
+  "states": {
+    "initial": {"initial": true},
+    "idle": {"label": "Idle", "model_ref": "idle"},
+    "heating": {"label": "Heating", "model_ref": "heating"},
+    "ready": {"label": "Ready", "model_ref": "ready"},
+    "cancelled": {"label": "Cancelled", "model_ref": "cancelled"}
+  },
+  "transitions": [
+    {"from": "initial", "to": "idle", "label": ""},
+    {"from": "idle", "to": "heating", "label": "Start", "model_ref": "start"},
+    {"from": "heating", "to": "ready", "label": "Finish", "model_ref": "finish"},
+    {"from": "heating", "to": "cancelled", "label": "Cancel", "model_ref": "cancel"},
+    {"from": "ready", "to": "idle", "label": ""},
+    {"from": "cancelled", "to": "idle", "label": ""}
+  ]
+}

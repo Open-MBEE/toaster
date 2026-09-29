@@ -1,0 +1,16 @@
+$ (cwd=decisions/diagram-study-real-fixtures/sysml2d-intent) python3 -c from sysmld.cli import main; raise SystemExit(main()) render ch05-interconnection.sysmld
+exit_code=1 elapsed_seconds=0.057
+
+--- stdout ---
+
+--- stderr ---
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from sysmld.cli import main; raise SystemExit(main())
+                                                  ~~~~^^
+  File "/private/tmp/toaster-diagram-study/sysml2d/src/sysmld/cli.py", line 172, in main
+    target = render_svg(Path(args.path), output_path=output, strict=strict)
+  File "/private/tmp/toaster-diagram-study/sysml2d/src/sysmld/render_svg.py", line 46, in render_svg
+    raise ValueError(f"Cannot render strict-invalid diagram: {messages}")
+ValueError: Cannot render strict-invalid diagram: SYSMLD-REF-002: unresolved model reference: heating -> ToasterDemo::Toaster::heating; SYSMLD-REF-002: unresolved model reference: control -> ToasterDemo::Toaster::control; SYSMLD-REF-002: unresolved model reference: control--heating--tgt -> control--heating--tgt; SYSMLD-REF-002: unresolved model reference: control--heating--src -> control--heating--src; SYSMLD-REF-002: unresolved model reference: toaster -> ToasterDemo::Toaster; SYSMLD-REF-002: unresolved model reference: conn-control-heating -> ToasterDemo::Toaster::durationInterface
+
