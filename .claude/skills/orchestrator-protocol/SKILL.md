@@ -49,6 +49,20 @@ When building chapter notebooks:
 
 Route the chapter to A3 first. Open A4 work in parallel only for cells that do not depend on the model file (index.md, conclusion.md, exercise stubs, context cells).
 
+## Plan-driven non-chapter work
+
+Not all work is a chapter WP. A `docs/superpowers/plans/*.md` implementation plan (written by the `writing-plans` skill, approved by Z) is executed through the same generic mechanism as chapter work — the work-contract template, `builder`, `reviewer`, the ACE, and the states and merge gate in `decisions/task-states.md` — without needing an entry in the WP table above, because none of that mechanism is chapter-specific: blast zone, acceptance criteria and model all come from the contract, not from a pre-registered matrix.
+
+- **One contract per plan task**, or a sensible grouping of a few tightly sequential tasks when splitting them would leave a contract with no independently checkable deliverable (the plan document itself says which; when it doesn't, keep the plan's own task boundaries).
+- **Blast zone and acceptance criteria come directly from the plan's own "Files" and step text** for that task — copy them into the contract rather than re-deriving them, since the plan already specified exact paths and runnable checks.
+- **Sequencing follows the plan's own stated dependencies.** Where the plan says a task's evidence feeds the next task (a fixture file, a resolved tool path, a prior task's evidence JSON), run those tasks in series, not in parallel, even though nothing here prevents parallel dispatch for tasks the plan does not say depend on each other.
+- **Review checks what the plan's own step 2/3/4-style "run and verify" instructions say to check** — a passing test, a real (non-empty, non-placeholder) evidence file, an exit code the plan says is expected — in addition to the reviewer's usual diff/blast-zone/boundary-case checks.
+
+**Escalation triggers specific to this class of work** (route to the ACE the same way as any other escalation, in the `ESCALATE-TO-ACE` form in `decisions/task-states.md`):
+- A pinned external tool or version named in the plan cannot be (re)provisioned in the environment, and the plan names no fallback for it.
+- A builder or reviewer produces a real finding that contradicts an assumption the approved spec or plan states as settled (for example, a mutation-control verdict coming out the opposite of what the plan expected) — this is evidence for the ACE and Z to see, not something a subagent or the orchestrator resolves by picking a reading.
+- A scope question the plan did not anticipate (for example, whether to add back a tool or view type the plan explicitly named out of scope).
+
 ## What A1 must never do
 
 - Edit files

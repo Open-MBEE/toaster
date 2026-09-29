@@ -1,0 +1,7 @@
+$ /opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home/bin/java -Djava.awt.headless=true -jar /opt/homebrew/opt/plantuml/libexec/plantuml.jar -tsvg decisions/diagram-study-real-fixtures/evidence/ch06-tree-opensysml-puml.puml
+exit_code=0 elapsed_seconds=0.932
+
+--- stdout ---
+
+--- stderr ---
+
