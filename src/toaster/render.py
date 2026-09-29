@@ -158,12 +158,45 @@ def render_dot(src: str | Path, out: str | Path) -> None:
         raise subprocess.CalledProcessError(r.returncode, "dot", stderr=r.stderr)
 
 
-def build_interconnection_intent(model: Any, fqn: str) -> dict:
+def build_interconnection_intent(model: Any, fqn: str, depth: int = 1) -> dict:
     """Extract interconnection data from model for a composite part or assembly.
+
+    `depth` counts levels of part nesting (1 = fqn's own direct owned parts,
+    the default and unchanged from before this parameter existed; 2 = those
+    parts' own owned parts too; and so on) -- not raw traversal hops. Reaching
+    one further nesting level costs a `typing` hop (a usage to its own type
+    definition) plus a `composition` hop (that definition to its own owned
+    usages): a usage's qualified name never itself owns anything, only its
+    type does. So level N costs `2*N - 1` raw hops through
+    containment_subgraph(relations=("composition", "typing")), except level 1,
+    which is the root's own single composition hop. fqn itself is included in
+    the traversal (containment_subgraph() always includes its root) but
+    excluded from the returned parts list below, since fqn is the diagram's
+    subject, not one of its own parts.
+
+    If `fqn` names a usage (a part instance) rather than a definition, depth
+    counts differently than the "1 = fqn's own direct owned parts" framing
+    above: a usage's own qualified name never owns anything (only its type
+    does, per containment_subgraph()'s semantics), so depth=1 from a usage
+    root returns zero parts. This matches this function's behavior before
+    `depth` existed (not a regression), and this tutorial's own call sites
+    always root at a definition or assembly, never a bare usage.
+
+    flows/allocs extraction below is unchanged by `depth` and stays
+    model-wide (via model.to_api_json(), not scoped to the expanded parts
+    set); its endpoint resolution and node-deduplication logic (see
+    render_interconnection()'s `normalize()`) assumes the depth=1 case, where
+    every part is a direct, unique owned child of `fqn`. At depth>1, a flow or
+    allocation between two nested parts several levels deep can be drawn
+    misleadingly (e.g. as a self-loop on their shared ancestor, since only the
+    first path segment is resolved) or against a node that looks duplicated.
+    Treat depth>1 diagrams' flows/allocs as exploratory until this is
+    addressed; the `parts` list itself is not affected by this limitation.
 
     Returns a dict with:
       title    — the qualified name
-      parts    — list of {name, type} for owned PartUsage elements
+      parts    — list of {name, type} for owned PartUsage elements, to `depth`
+                 levels of nesting
       flows    — list of {source, target} using sysx:sourceText from FlowUsage,
                  InterfaceUsage or ConnectionUsage ends (a connection whose ends
                  are ports is an interface, SysML v2 formal/2026-03-02 §7.14.1)
@@ -172,11 +205,17 @@ def build_interconnection_intent(model: Any, fqn: str) -> dict:
     import json as _json
     import warnings
 
-    # Owned parts via model.query() PartUsage
+    if depth is None or depth < 0:
+        raise ValueError(f"depth must be an int >= 0, got {depth!r}")
+
+    raw_depth = 2 * depth - 1 if depth >= 1 else 0
+    expanded = containment_subgraph(
+        model, fqn, relations=("composition", "typing"), depth=raw_depth
+    )
     parts = []
-    for e in model.query():
+    for e in expanded:
         d = e.as_dict()
-        if d.get("@type") == "PartUsage" and d.get("owner") == fqn:
+        if d.get("@type") == "PartUsage" and d.get("qualifiedName", d.get("@id", "")) != fqn:
             parts.append({
                 "name": d.get("declaredName") or d.get("name", ""),
                 "type": (d.get("type") or "").split("::")[-1],
