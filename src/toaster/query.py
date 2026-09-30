@@ -114,6 +114,137 @@ def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dic
             for e in idx.of_type("SatisfyRequirementUsage")]
 
 
+_REQUIREMENT_OWNER_TYPES = ("RequirementDefinition", "RequirementUsage")
+
+# The four reference fields this check reads, chosen deliberately, not as a claim of
+# completeness: `subsets`/`redefines`/`references` on a Feature (a `require constraint c
+# :> target;`, a redefining usage, or a `ref ... references target;`), and `referent` on a
+# `FeatureReferenceExpression` (a bare `require target;`/`assume target;` or a body
+# expression that just names the constraint directly, e.g. `require constraint { target }`
+# -- confirmed empirically, fix/ch10-widget-search: this shape loads cleanly in OpenSysML,
+# sysml-toolkit and the OMG pilot alike, and `referent` never appears on any element type
+# other than `FeatureReferenceExpression` in the real ch10 model). This is a SMALL, FIXED,
+# NAMED field list, not an attempt at an exhaustive scan of every relationship shape SysML
+# v2 offers (see `requirement_ties`'s docstring for what is deliberately out of scope): it
+# covers a tie made directly, FROM WITHIN a requirement's own body, by subsetting,
+# redefinition, reference or bare naming. It does not cover `satisfy`, which names its
+# subject via a different field (`subject`) and is covered separately below (Check A).
+_TIE_FIELDS = ("subsets", "redefines", "references", "referent")
+
+
+def _nearest_requirement_owner(element: dict, idx: ApiIndex) -> str | None:
+    """Walks ``element``'s own raw ``owner`` chain upward, inclusive of ``element`` itself, and
+    returns the qualified name of the nearest ancestor whose ``@type`` is EXACTLY
+    ``RequirementDefinition`` or ``RequirementUsage`` (no metaclass-subtype closure: a
+    ``ConcernUsage``, ``ViewpointUsage`` or ``SatisfyRequirementUsage`` owner is deliberately NOT
+    treated as a requirement owner here, by design -- see `requirement_ties`'s docstring), or
+    ``None`` if no ancestor (or ``element`` itself) is one."""
+    seen: set[str] = set()
+    current: dict | None = element
+    while current is not None and current["@id"] not in seen:
+        seen.add(current["@id"])
+        if current.get("@type") in _REQUIREMENT_OWNER_TYPES:
+            return current.get("qualifiedName") or current["@id"]
+        owner_id = _ref(current["owner"]) if "owner" in current else None
+        current = idx.by_id.get(owner_id) if owner_id else None
+    return None
+
+
+def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | None = None) -> list[dict]:
+    """Two small, explicitly-named, narrowly-scoped checks for a tie from ``target_qualified_name``
+    to a requirement, as ``{tying_element, field, requirement}`` rows (``requirement`` is ``None``
+    if a tie is found but is not owned by a requirement). This is NOT an attempt at a general or
+    exhaustive search: after three rounds of broadening an open-ended "find every way a tie can
+    exist" search (a fixed field list that missed `assert satisfy ... by ...`; then a field-agnostic
+    scan of every element field, which still missed connection-ends and raised an unresolved
+    question about sibling `dependency`/`allocate`/`metadata` relationships), Z decided to stop
+    broadening and replace it with exactly two named mechanisms instead:
+
+    **Check A -- satisfy-by-subject.** Is the target ever named as the SUBJECT of a real,
+    POSITIVE ``assert satisfy <requirement> by <target>;`` relationship (a
+    ``SatisfyRequirementUsage`` whose own ``subject`` field is the target's id, and whose own
+    ``is_negated`` is False)? This is the tutorial's own primary traceability idiom. Built directly
+    on ``satisfy_relationships`` (itself built on the already-tested ``get_satisfy_relationships``),
+    not on new low-level element scanning: ``requirement`` is whatever that satisfy relationship's
+    own ``requirement`` names. An ``assert not satisfy ... by target;`` does NOT count as a tie
+    here: it is a claim that the target does NOT meet the requirement, which reinforces "untied"
+    rather than establishing a real connection -- the same polarity distinction
+    ``satisfy_relationships`` itself already documents and every other coverage-style check in this
+    module already makes (``requirement_coverage``'s own ``satisfied_by``/``failed_by`` split).
+
+    **Check B -- direct reference from within a requirement's own body.** Does any element owned
+    (at any nesting depth, via ``_nearest_requirement_owner``'s owner-chain walk) by a
+    ``RequirementDefinition`` or ``RequirementUsage`` (EXACT type match only) have its own
+    ``subsets``/``redefines``/``references``/``referent`` field (``_TIE_FIELDS``) pointing at the
+    target's id?
+
+    ``tied_to_any_requirement`` is ``True`` if either check finds something owned by a requirement.
+
+    **Explicitly, plainly OUT of scope by design** (not by oversight -- each was found by an earlier
+    round's broader search and deliberately dropped when the design was narrowed):
+
+    - Connection-ends (``end e1 ::> target;`` / ``::=`` port or connector typing).
+    - A ``dependency``/``allocate``/``metadata about``/``connection``/``#derivation``-style
+      relationship naming the target and a requirement as two SIBLING elements, where neither owns
+      the other (the genuine, unresolved scope question this round's escalation raised -- Z decided
+      this does not count as a "tie" for this check).
+    - ``Concern``/``Viewpoint`` ownership (a ``ConcernUsage``/``ViewpointUsage`` owner does not
+      count as a requirement owner here, even though both are real metaclass subtypes of
+      ``RequirementUsage``).
+    - A transitive chain through an intermediate element that is itself not owned by a requirement
+      (e.g. ``constraint mid :> target;`` sitting outside any requirement, with a requirement's own
+      constraint then subsetting ``mid``).
+    - Any other relationship shape not named above (an invocation expression naming the target as a
+      function, a ``bind`` connector, etc).
+    - A NEGATED satisfy claim (``assert not satisfy ... by target;``) does not count as a tie under
+      Check A: it asserts the target does NOT meet the requirement, which does not establish the
+      kind of real connection this check looks for.
+
+    This is a deliberate, narrow pair of checks, not an attempt at completeness: it says exactly
+    what it checks and nothing more.
+
+    Raises ``KeyError`` if ``target_qualified_name`` does not resolve to a real element in the
+    model, rather than silently reporting an empty result for a typo'd or renamed target.
+    """
+    idx = index or ApiIndex(model)
+    target = idx.by_qn.get(target_qualified_name)
+    if target is None:
+        raise KeyError(
+            f"requirement_ties: {target_qualified_name!r} does not resolve to any element in the model"
+        )
+    target_id = target["@id"]
+    out = []
+    # Check A: satisfy-by-subject. A negated claim (assert not satisfy ... by target;) does
+    # NOT count: it says the target does not meet the requirement, which reinforces "untied"
+    # rather than establishing a real connection.
+    for s in satisfy_relationships(model, idx):
+        if s["subject"] == target_qualified_name and not s["is_negated"]:
+            out.append({"tying_element": s["id"], "field": "subject", "requirement": s["requirement"]})
+    # Check B: direct reference (subsets/redefines/references/referent) from within a
+    # requirement's own body (exact-type owner only).
+    for element in idx.elements:
+        for field in _TIE_FIELDS:
+            if field in element and target_id in _raw_refs(element[field]):
+                out.append({
+                    "tying_element": element.get("qualifiedName") or element["@id"],
+                    "field": field,
+                    "requirement": _nearest_requirement_owner(element, idx),
+                })
+    return out
+
+
+def tied_to_any_requirement(model: Any, target_qualified_name: str, index: ApiIndex | None = None) -> bool:
+    """True if `requirement_ties` finds at least one match owned by a requirement: either
+    satisfy-by-subject (Check A) or a direct `subsets`/`redefines`/`references`/`referent` reference
+    from within a `RequirementDefinition`/`RequirementUsage`'s own body, exact-type owner only
+    (Check B). See `requirement_ties`'s docstring for exactly what this does and does not cover --
+    it is a deliberately narrow pair of checks, not a general or exhaustive search. Raises
+    ``KeyError`` (via `requirement_ties`) if `target_qualified_name` does not resolve to a real
+    element in the model."""
+    idx = index or ApiIndex(model)
+    return any(t["requirement"] is not None for t in requirement_ties(model, target_qualified_name, idx))
+
+
 def perform_relationships(model: Any, index: ApiIndex | None = None) -> list[dict]:
     """``{performer, action}`` for each perform action usage: the owner performs the typed or referenced action."""
     idx = index or ApiIndex(model)
@@ -207,7 +338,10 @@ def _raw_refs(value: Any) -> list[str]:
     """Normalizes a raw API-JSON reference field to a list of ``@id``s. ``value`` may be a single dict
     ref (``{"@id": ...}``), a list of dict refs, a bare id string, or absent (``None``, normalized to
     ``[]``) -- confirmed empirically (2026-09-29, allocate-fix/task6): ``type`` is always a list even
-    with one element; ``subsets``, ``redefines`` and ``specializes`` are each a single ref, never a list.
+    with one element; ``subsets``, ``redefines`` and ``specializes`` are each usually a single ref, but
+    ``subsets`` (at least) is exported as a LIST when a constraint subsets more than one thing (e.g.
+    ``require constraint c :> other, target;`` -- confirmed empirically, fix/ch10-widget-search round
+    2), so callers must handle both shapes; this function already does.
     """
     if value is None:
         return []
