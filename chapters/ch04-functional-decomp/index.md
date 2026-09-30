@@ -32,4 +32,4 @@ The Python side carries an `asserted_inference` ReviewRecord (`AI-C04`) with a n
 
 ## Experiment
 
-The [chapter exercise](../../exercises/ch04/exercise.ipynb) asks you to define a `Brew` action def for your coffee maker, name its flows with `item def`, and write an `asserted_inference` record. Work through it after completing all three notebooks.
+The [chapter exercise](../../exercises/ch04/exercise.ipynb) asks you to define a new action def for your coffee maker's `BrewUnit` (not `action def Brew` — Chapter 1 already declares that at package level), whose usage nests inside `Brew`'s reopened body; name three signal item defs; probe the balance constraint against three usages to confirm it is real and evaluable; and write an honestly scoped `asserted_inference` record about that one nested action. Work through it after completing all three notebooks.
