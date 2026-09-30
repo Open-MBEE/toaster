@@ -16,4 +16,4 @@ Chapter 10 builds the full traceability graph this chapter's coverage report onl
 
 ## Exercise
 
-See `exercises/ch09/exercise.ipynb`: it asks you to produce a coverage table for the bread-handling requirements, using the query-and-join pattern notebook 01 builds.
+See `exercises/ch09/exercise.ipynb`: it asks you to produce a coverage report over your own coffee-maker model from Chapters 1-8 (notebook 01's own join), then apply the same sufficiency reading (notebook 02) and staleness check, at scale (notebook 03), to two of your own already-built judgment records.
