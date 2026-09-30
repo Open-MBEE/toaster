@@ -116,19 +116,19 @@ def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dic
 
 _REQUIREMENT_OWNER_TYPES = ("RequirementDefinition", "RequirementUsage")
 
-# Every DIRECT reference-field shape SysML v2 uses for a tie from some element to a
-# constraint it names: `subsets`/`redefines`/`references` on a Feature (a `require
-# constraint c :> target;`, a redefining usage, or a `ref ... references target;`), and
-# `referent` on a `FeatureReferenceExpression` (a bare `require target;`/`assume target;`
-# or a body expression that just names the constraint directly, e.g. `require constraint
-# { target }` -- confirmed empirically, fix/ch10-widget-search: this shape loads cleanly in
-# OpenSysML, sysml-toolkit and the OMG pilot alike, and `referent` never appears on any
-# element type other than `FeatureReferenceExpression` in the real ch10 model). This is a
-# SMALL, FIXED, NAMED field list, not an attempt at an exhaustive scan of every relationship
-# shape SysML v2 offers (see `requirement_ties`'s docstring for what is deliberately out of
-# scope): it covers a tie made directly, FROM WITHIN a requirement's own body, by subsetting,
-# redefinition, reference or bare naming. It does not cover `satisfy`, which names its subject
-# via a different field (`subject`) and is covered separately below (Check A).
+# The four reference fields this check reads, chosen deliberately, not as a claim of
+# completeness: `subsets`/`redefines`/`references` on a Feature (a `require constraint c
+# :> target;`, a redefining usage, or a `ref ... references target;`), and `referent` on a
+# `FeatureReferenceExpression` (a bare `require target;`/`assume target;` or a body
+# expression that just names the constraint directly, e.g. `require constraint { target }`
+# -- confirmed empirically, fix/ch10-widget-search: this shape loads cleanly in OpenSysML,
+# sysml-toolkit and the OMG pilot alike, and `referent` never appears on any element type
+# other than `FeatureReferenceExpression` in the real ch10 model). This is a SMALL, FIXED,
+# NAMED field list, not an attempt at an exhaustive scan of every relationship shape SysML
+# v2 offers (see `requirement_ties`'s docstring for what is deliberately out of scope): it
+# covers a tie made directly, FROM WITHIN a requirement's own body, by subsetting,
+# redefinition, reference or bare naming. It does not cover `satisfy`, which names its
+# subject via a different field (`subject`) and is covered separately below (Check A).
 _TIE_FIELDS = ("subsets", "redefines", "references", "referent")
 
 
@@ -160,12 +160,17 @@ def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | N
     question about sibling `dependency`/`allocate`/`metadata` relationships), Z decided to stop
     broadening and replace it with exactly two named mechanisms instead:
 
-    **Check A -- satisfy-by-subject.** Is the target ever named as the SUBJECT of a real
-    ``assert satisfy <requirement> by <target>;`` relationship (a ``SatisfyRequirementUsage`` whose
-    own ``subject`` field is the target's id)? This is the tutorial's own primary traceability
-    idiom. Built directly on ``satisfy_relationships`` (itself built on the already-tested
-    ``get_satisfy_relationships``), not on new low-level element scanning: ``requirement`` is
-    whatever that satisfy relationship's own ``requirement`` names.
+    **Check A -- satisfy-by-subject.** Is the target ever named as the SUBJECT of a real,
+    POSITIVE ``assert satisfy <requirement> by <target>;`` relationship (a
+    ``SatisfyRequirementUsage`` whose own ``subject`` field is the target's id, and whose own
+    ``is_negated`` is False)? This is the tutorial's own primary traceability idiom. Built directly
+    on ``satisfy_relationships`` (itself built on the already-tested ``get_satisfy_relationships``),
+    not on new low-level element scanning: ``requirement`` is whatever that satisfy relationship's
+    own ``requirement`` names. An ``assert not satisfy ... by target;`` does NOT count as a tie
+    here: it is a claim that the target does NOT meet the requirement, which reinforces "untied"
+    rather than establishing a real connection -- the same polarity distinction
+    ``satisfy_relationships`` itself already documents and every other coverage-style check in this
+    module already makes (``requirement_coverage``'s own ``satisfied_by``/``failed_by`` split).
 
     **Check B -- direct reference from within a requirement's own body.** Does any element owned
     (at any nesting depth, via ``_nearest_requirement_owner``'s owner-chain walk) by a
@@ -191,6 +196,9 @@ def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | N
       constraint then subsetting ``mid``).
     - Any other relationship shape not named above (an invocation expression naming the target as a
       function, a ``bind`` connector, etc).
+    - A NEGATED satisfy claim (``assert not satisfy ... by target;``) does not count as a tie under
+      Check A: it asserts the target does NOT meet the requirement, which does not establish the
+      kind of real connection this check looks for.
 
     This is a deliberate, narrow pair of checks, not an attempt at completeness: it says exactly
     what it checks and nothing more.
@@ -206,9 +214,11 @@ def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | N
         )
     target_id = target["@id"]
     out = []
-    # Check A: satisfy-by-subject.
+    # Check A: satisfy-by-subject. A negated claim (assert not satisfy ... by target;) does
+    # NOT count: it says the target does not meet the requirement, which reinforces "untied"
+    # rather than establishing a real connection.
     for s in satisfy_relationships(model, idx):
-        if s["subject"] == target_qualified_name:
+        if s["subject"] == target_qualified_name and not s["is_negated"]:
             out.append({"tying_element": s["id"], "field": "subject", "requirement": s["requirement"]})
     # Check B: direct reference (subsets/redefines/references/referent) from within a
     # requirement's own body (exact-type owner only).
