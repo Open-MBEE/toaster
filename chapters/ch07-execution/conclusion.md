@@ -14,4 +14,4 @@ Chapter 8 checks the model's own claims against its own values: `verify_satisfac
 
 ## Exercise
 
-See `exercises/ch07/exercise.ipynb`: bind the coffee maker's brew energy formula to sympy, add a `BrewCycle` state machine, sweep duration, and find the minimum duration that meets a 40000 J threshold.
+See `exercises/ch07/exercise.ipynb`: add a bounded `transferEfficiency` slot and `deliveredMass` calc to the coffee maker's `WaterMover`, add a `BrewCycle` state machine, and sweep `deliveredMass`'s `throughput` argument against `BrewReq`'s own threshold, read from the model.
