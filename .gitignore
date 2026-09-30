@@ -44,3 +44,4 @@ glossary/sources/local/*
 # relative, portable location, not the system tempdir, so committed notebook output stays
 # reproducible across machines: see chapters/ch08-checking/02-violation-witness.ipynb)
 chapters/*/companion-check-scratch/
+exercises/*/companion-check-scratch/
