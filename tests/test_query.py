@@ -372,3 +372,96 @@ def test_requirement_ties_mutation_old_narrow_check_misses_real_tie(conn, ch10) 
     old_check_result = lemma["@id"] in satisfy_targets
     assert old_check_result is False
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_REFERENT_TIE = """
+package TieFixture3 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq3 {
+        subject t : Toaster;
+        require deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_referent(conn, ch10) -> None:
+    """F1 (round-2 review): a bare `require target;` (a requirement reference to an
+    already-existing constraint, not declaring a new one) exports as a `FeatureReferenceExpression`
+    whose own `referent` field holds the target's id directly -- a different shape from
+    `subsets`/`redefines`/`references`, which the pre-round-2 search never looked at, and which
+    `require deliveredEnergyBoundedBySupply;` (as opposed to `require constraint c :>
+    deliveredEnergyBoundedBySupply;`, already covered by the `subsets` control above) is confirmed
+    to produce. Confirm the search now finds it, owned by `TieFixture3::EnergyReq3` (walking up
+    through the `FeatureReferenceExpression`'s own owning `ConstraintUsage`)."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + REQUIREMENT_REFERENT_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert len(ties) == 1
+    assert ties[0]["field"] == "referent"
+    assert ties[0]["requirement"] == "TieFixture3::EnergyReq3"
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_REDEFINES_TIE = """
+package TieFixture4 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq4 {
+        subject t : Toaster;
+        require constraint c :>> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_redefines(conn, ch10) -> None:
+    """F3 (round-2 review): the reviewer's own confirmed-working `redefines` construct
+    (`require constraint c :>> deliveredEnergyBoundedBySupply;`) was a real, working code path in
+    `requirement_ties` with no test of its own. Confirm it is found via `c`'s own `redefines`
+    field, owned by `TieFixture4::EnergyReq4`."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + REQUIREMENT_REDEFINES_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture4::EnergyReq4::c", "field": "redefines", "requirement": "TieFixture4::EnergyReq4"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_USAGE_DIRECT_TIE = """
+package TieFixture5 {
+    private import ToasterDemo::*;
+    requirement r :> deliveredEnergyBoundedBySupply;
+}
+"""
+
+
+def test_requirement_ties_positive_control_usage_is_tying_element_itself(conn, ch10) -> None:
+    """F3 (round-2 review): the reviewer's own confirmed-working construct where the tying
+    element is ITSELF a `RequirementUsage` (not a constraint nested inside one):
+    `requirement r :> deliveredEnergyBoundedBySupply;` puts `subsets` directly on `r`, a
+    `RequirementUsage`. `_nearest_requirement_owner`'s inclusive walk must find `r` as its own
+    nearest requirement ancestor, not `None`."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + REQUIREMENT_USAGE_DIRECT_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture5::r", "field": "subsets", "requirement": "TieFixture5::r"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+def test_requirement_ties_raises_on_unknown_target(ch10) -> None:
+    """F4: a target that does not resolve to any real element in the model must raise loudly,
+    not silently report an empty result -- the same "passes for the wrong reason" shape the
+    original bug had, just at a different layer. This also demonstrates the fix actually catches
+    a hypothetical future typo/rename of the lemma: confirm the real target exists first, then
+    confirm a nonexistent one raises."""
+    idx = query.ApiIndex(ch10)
+    assert idx.by_qn.get(LEMMA) is not None
+    with pytest.raises(KeyError):
+        query.requirement_ties(ch10, "ToasterDemo::NonexistentThing", idx)
+    with pytest.raises(KeyError):
+        query.tied_to_any_requirement(ch10, "ToasterDemo::NonexistentThing", idx)
