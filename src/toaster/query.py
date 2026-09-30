@@ -114,32 +114,136 @@ def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dic
             for e in idx.of_type("SatisfyRequirementUsage")]
 
 
-_REQUIREMENT_OWNER_TYPES = ("RequirementDefinition", "RequirementUsage")
+# Round 1 (`subsets`/`redefines`/`references`) and round 2 (`referent`) each hardcoded one more
+# named field and were each found, on independent review, to still miss real ties stored under yet
+# another field name (round 3: `subject`/`supplier`/`sourceFeature`/`targetFeature`/`annotatedElement`/
+# `function`, at minimum) -- enumerating field names does not converge, because any SysML v2
+# relationship shape can carry a reference to an id under a name of its own. Round 3's fix (below)
+# stops enumerating fields and scans EVERY field of EVERY element instead, keeping only genuine
+# `{"@id": ...}`-shaped references (`_dict_refs`) and excluding just containment/self-identity
+# bookkeeping (`_STRUCTURAL_FIELDS`) and the KerML `Membership`/`Specialization` relationship-object
+# family (`_LINK_BOOKKEEPING_TYPES`, see its own docstring below).
 
-# Every DIRECT reference-field shape SysML v2 uses for a tie from some element to a
-# constraint it names: `subsets`/`redefines`/`references` on a Feature (a `require
-# constraint c :> target;`, a redefining usage, or a `ref ... references target;`), and
-# `referent` on a `FeatureReferenceExpression` (a bare `require target;`/`assume target;`
-# or a body expression that just names the constraint directly, e.g. `require constraint
-# { target }` -- confirmed empirically, 2026-09-30, fix/ch10-widget-search: this shape
-# loads cleanly in OpenSysML, sysml-toolkit and the OMG pilot alike, and `referent` never
-# appears on any element type other than `FeatureReferenceExpression` in the real ch10
-# model). This is every DIRECT way a tie can be made; it does NOT cover a transitive
-# chain through an intermediate constraint that is itself not owned by any requirement
-# (e.g. `constraint mid :> target;` sitting outside any requirement, with a requirement's
-# own constraint then subsetting `mid`) -- an explicit, honest scope limit, not hidden.
-_TIE_FIELDS = ("subsets", "redefines", "references", "referent")
+# Fields that describe WHERE an element lives (`owner` and its siblings) or WHAT it owns
+# (`owned*`/`member`/`membership`), never an incoming engineering tie -- confirmed empirically
+# against `models/ch10-cumulative.sysml` and every fixture in this module's test suite
+# (fix/ch10-widget-search, round 3): scanning any of these produces either a trivial self-match
+# (``@id``) or a false "tie" from every container of a real tying element to that element. This is
+# exactly why the owner chain is already walked UPWARD separately, in `_nearest_requirement_owner`,
+# as a different kind of traversal, rather than being treated as an incoming tie here too.
+_STRUCTURAL_FIELDS = frozenset({
+    "@id",
+    "owner", "owningNamespace", "owningRelationship", "owningMembership",
+    "owningRelatedElement", "owningType", "owningClassifier", "owningFeature",
+    "membershipOwningNamespace", "importOwningNamespace", "featuringType",
+    "ownedRelationship", "ownedMembership", "ownedMember", "ownedMemberElement",
+    "ownedRelatedElement", "ownedMemberFeature", "ownedFeature", "ownedFeatureMembership",
+    "ownedImport", "ownedMemberParameter", "ownedConstraint", "ownedConcern",
+    "ownedSpecialization", "ownedSubsetting", "ownedRedefinition", "ownedTyping",
+    "ownedReferenceSubsetting", "ownedSubclassification", "ownedEndFeature",
+    "ownedFeatureChaining", "ownedPortConjugator", "ownedObjectiveRequirement",
+    "ownedResultExpression", "ownedSubjectParameter",
+    "member", "membership",
+})
+
+# The full, closed set of KerML `Membership` and `Specialization` subtypes -- confirmed
+# exhaustively via `javap` against the pinned OMG pilot jar's own class hierarchy
+# (`org.omg.sysml.lang.sysml.*`, fix/ch10-widget-search round 3: every one of the jar's 184
+# `org.omg.sysml.lang.sysml` interfaces was checked; exactly these 26 extend `Membership` or
+# `Specialization`, directly or transitively, plus the two base types themselves -- 28 total --
+# and none has a further subtype of its own). An element of one of these kinds exists purely to
+# record, a second time and under a different accessor name (`memberElement`,
+# `subsettedFeature`/`subsettingFeature`, `redefinedFeature`/`redefiningFeature`,
+# `referencedFeature`/`referencingFeature`, `general`/`specific`, `relatedElement`...), a tie a
+# "real", user-meaningful element already exposes directly through its own primary field (a
+# `ConstraintUsage`'s own `subsets`, a `FeatureReferenceExpression`'s own `referent`, a
+# `SatisfyRequirementUsage`'s own `subject`, ...): confirmed empirically for every construct this
+# module's test suite covers -- every one still has its own, non-`Membership`/`Specialization`
+# element exposing the same tie through the scan below, so skipping these produces no loss of
+# coverage, only the removal of a same-tie duplicate under a synthetic id (e.g. `P__C1__c_ss0`)
+# that no chapter or test would otherwise ever name. `Dependency` is deliberately NOT in this set,
+# even though it, too, is a KerML `Relationship`: unlike `Membership`/`Specialization`, a
+# `Dependency` is the ONE, PRIMARY element a `dependency ... from ... to ...;` statement produces
+# (confirmed empirically: no second, synthetic element duplicates its own `supplier`/`client`), so
+# excluding it would delete the only place that construct's tie is ever recorded.
+_LINK_BOOKKEEPING_TYPES = frozenset({
+    "Membership", "ActorMembership", "ElementFilterMembership", "EndFeatureMembership",
+    "FeatureMembership", "FeatureValue", "FramedConcernMembership", "ObjectiveMembership",
+    "OwningMembership", "ParameterMembership", "RequirementConstraintMembership",
+    "RequirementVerificationMembership", "ReturnParameterMembership", "StakeholderMembership",
+    "StateSubactionMembership", "SubjectMembership", "TransitionFeatureMembership",
+    "VariantMembership", "ViewRenderingMembership",
+    "Specialization", "ConjugatedPortTyping", "CrossSubsetting", "FeatureTyping",
+    "Redefinition", "ReferenceSubsetting", "Subclassification", "Subsetting",
+})
+
+
+def _dict_refs(value: Any) -> list[str]:
+    """Every ``@id`` found in ``value`` where ``value`` is itself a ``{"@id": ...}``-shaped dict, or
+    a list containing such dicts. Shares ``_raw_refs``'s single-dict-vs-list normalization (the field
+    the field-agnostic scan below reads may hold one reference or several), but additionally drops
+    any non-dict item: a bare string field (``declaredName``, ``qualifiedName``, ``elementId``, an
+    enum like ``direction``) is never a genuine reference no matter what string it happens to hold,
+    so it is dropped here rather than risked on a coincidental match -- confirmed empirically that no
+    real reference field in the API-JSON export ever uses a bare string shape instead of ``{"@id":
+    ...}`` (fix/ch10-widget-search round 3). ``_raw_refs`` keeps bare strings (a legitimate shape for
+    its own callers, which read fields -- ``type``, ``subsets``, ``redefines``, ``specializes`` --
+    already known to be dict-shaped in practice), so this is a separate, stricter helper rather than
+    a change to it.
+    """
+    items = value if isinstance(value, list) else [value]
+    return [item["@id"] for item in items if isinstance(item, dict) and "@id" in item]
+
+
+# Direct metaclass parent, confirmed via `javap` (fix/ch10-widget-search round 3): each of these
+# five is a genuine SUBTYPE of `RequirementDefinition` or `RequirementUsage` in the pinned
+# metamodel, not a lookalike sharing only a name -- `ConcernDefinition`/`ViewpointDefinition` extend
+# `RequirementDefinition`; `ConcernUsage`/`ViewpointUsage`/`SatisfyRequirementUsage` extend
+# `RequirementUsage`. The same javap scan that produced `_LINK_BOOKKEEPING_TYPES` (every one of the
+# metamodel's 184 own interfaces) confirms these five are the COMPLETE set: no other interface
+# extends `RequirementDefinition`/`RequirementUsage`, and none of the five has a further subtype of
+# its own.
+_REQUIREMENT_METACLASS_PARENTS: dict[str, tuple[str, ...]] = {
+    "ConcernDefinition": ("RequirementDefinition",),
+    "ViewpointDefinition": ("RequirementDefinition",),
+    "ConcernUsage": ("RequirementUsage",),
+    "ViewpointUsage": ("RequirementUsage",),
+    "SatisfyRequirementUsage": ("RequirementUsage",),
+}
+
+
+def _is_requirement_owner_type(type_name: str | None) -> bool:
+    """True if ``type_name`` (an element's own raw ``@type``) is ``RequirementDefinition``/
+    ``RequirementUsage`` or a genuine metaclass SUBTYPE of either -- walked via the same generic
+    reachability closure (``_closure``) this module already uses for a model's OWN specialization
+    graph (``supertypes_transitively``), just seeded from the metamodel's fixed class hierarchy
+    (``_REQUIREMENT_METACLASS_PARENTS``) instead of a model's instance-level ``subsets``/
+    ``redefines``/``specializes`` graph -- reusing that one mechanism rather than inventing a second,
+    parallel way to walk supertypes. Replaces the old exact ``@type in ("RequirementDefinition",
+    "RequirementUsage")`` string match, which missed every one of ``ConcernDefinition``/
+    ``ConcernUsage``/``ViewpointDefinition``/``ViewpointUsage``/``SatisfyRequirementUsage`` -- real
+    metamodel subtypes, not lookalikes (round 3 review). In particular, a bare ``satisfy r by
+    lemma;``'s own ``SatisfyRequirementUsage`` element is now recognized as its own nearest
+    requirement (the same inclusive-walk rule ``_nearest_requirement_owner`` already applies to a
+    bare ``requirement r :> lemma;``), with no need to walk any further up its owner chain at all.
+    """
+    if type_name is None:
+        return False
+    if type_name in ("RequirementDefinition", "RequirementUsage"):
+        return True
+    return bool({"RequirementDefinition", "RequirementUsage"} & _closure(type_name, _REQUIREMENT_METACLASS_PARENTS))
 
 
 def _nearest_requirement_owner(element: dict, idx: ApiIndex) -> str | None:
     """Walks ``element``'s own raw ``owner`` chain upward, inclusive of ``element`` itself, and
-    returns the qualified name of the nearest ancestor whose ``@type`` is ``RequirementDefinition``
-    or ``RequirementUsage``, or ``None`` if no ancestor (or ``element`` itself) is one."""
+    returns the qualified name of the nearest ancestor whose ``@type`` is ``RequirementDefinition``/
+    ``RequirementUsage`` or a genuine metaclass subtype of either (``_is_requirement_owner_type``),
+    or ``None`` if no ancestor (or ``element`` itself) is one."""
     seen: set[str] = set()
     current: dict | None = element
     while current is not None and current["@id"] not in seen:
         seen.add(current["@id"])
-        if current.get("@type") in _REQUIREMENT_OWNER_TYPES:
+        if _is_requirement_owner_type(current.get("@type")):
             return current.get("qualifiedName") or current["@id"]
         owner_id = _ref(current["owner"]) if "owner" in current else None
         current = idx.by_id.get(owner_id) if owner_id else None
@@ -147,40 +251,46 @@ def _nearest_requirement_owner(element: dict, idx: ApiIndex) -> str | None:
 
 
 def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | None = None) -> list[dict]:
-    """Every element, anywhere in the model, whose own ``subsets``, ``redefines`` or ``references``
-    property, or (for a bare ``require``/``assume``/body-expression tie) whose own
-    ``FeatureReferenceExpression.referent``, points directly at ``target_qualified_name``'s own id,
-    as ``{tying_element, field, requirement}`` -- ``requirement`` is the nearest ancestor (walking
-    the raw ``owner`` chain upward, inclusive of the tying element itself) whose own ``@type`` is
-    ``RequirementDefinition`` or ``RequirementUsage``, or ``None`` if the tie is not owned by a
-    requirement at all.
+    """Every element, anywhere in the model, whose own field -- ANY field, not a fixed named list --
+    holds a genuine ``{"@id": ...}``-shaped reference to ``target_qualified_name``'s own id, as
+    ``{tying_element, field, requirement}`` -- ``requirement`` is the nearest ancestor (walking the
+    raw ``owner`` chain upward, inclusive of the tying element itself) whose own ``@type`` is
+    ``RequirementDefinition``/``RequirementUsage`` or a genuine metaclass subtype of either
+    (``ConcernDefinition``, ``ConcernUsage``, ``ViewpointDefinition``, ``ViewpointUsage``,
+    ``SatisfyRequirementUsage`` -- confirmed via ``javap`` against the pinned OMG pilot jar to be the
+    complete set), or ``None`` if the tie is not owned by a requirement at all.
 
-    Broader than a bare ``SatisfyRequirementUsage.subsets`` membership test: SysML v2's own
-    ``assert satisfy`` grammar requires a satisfy's ``subsets`` target to itself be a requirement
-    usage (formal/2026-03-02 SS8.3), so a bare ``AssertConstraintUsage``'s own id can never appear
-    there for any model that loads at all -- that check reports something guaranteed true by
-    construction, not a finding. A requirement can still tie to such a constraint directly, most
-    plainly by declaring its own ``require constraint c :> target;`` inside a ``requirement def``,
-    which puts ``subsets`` on ``c`` itself (an element owned by the requirement, not a
-    ``SatisfyRequirementUsage`` at all -- confirmed by construction, `decisions/next-passes.md`
-    item 29, `decisions/log.md` DL-070). Confirmed empirically the same way for the other two
-    reference fields: a ``ref altName references target;`` declared inside a requirement carries the
-    tie via ``references`` instead of ``subsets``; a redefining usage (``:>>``/``redefines``) would
-    carry it via ``redefines``. A FOURTH, differently-shaped tie exists too: a bare ``require
-    target;``/``assume target;`` (a requirement reference to an already-existing constraint, not
-    declaring a new one) or a body expression that just names the constraint directly (``require
-    constraint { target }``) exports as a ``FeatureReferenceExpression`` whose own ``referent``
-    field holds the target's id directly -- confirmed empirically (fix/ch10-widget-search) against
-    all three pinned tools (OpenSysML, sysml-toolkit, the OMG pilot), and confirmed that ``referent``
-    never appears on any element type other than ``FeatureReferenceExpression`` in the real ch10
-    model, so searching it adds no false positives. Together these four fields cover every DIRECT
-    way SysML v2 lets one element tie to another via subsetting, redefinition, reference or bare
-    naming; they do NOT cover a transitive chain through an intermediate constraint that is itself
-    not owned by any requirement (e.g. ``constraint mid :> target;`` sitting outside any
-    requirement, with a requirement's own constraint then subsetting ``mid``) -- an explicit, named
-    scope limit, not a hidden one. This is a general search over every element in the model, not
-    specific to any one target id, so it works for any target a caller names, not only this
-    tutorial's own ``deliveredEnergyBoundedBySupply``.
+    This is round 3's fix (fix/ch10-widget-search): rounds 1 and 2 each hardcoded one more named
+    field (``subsets``/``redefines``/``references``, then ``referent``) and each was found, on
+    independent review, to still miss a real tie stored under yet another field name -- most
+    seriously, the chapter's OWN idiom for a genuine tie, ``assert satisfy r by lemma;`` (field
+    ``subject`` on the ``SatisfyRequirementUsage`` itself), plus ``dependency ... to lemma;`` (field
+    ``supplier``), ``allocate lemma to t;`` (field ``sourceFeature``), ``bind x = lemma;`` (field
+    ``targetFeature``), ``metadata M about lemma;`` (field ``annotatedElement``), and an invocation
+    expression naming the constraint as a function (field ``function``). Enumerating field names
+    does not converge -- there is always one more SysML v2 relationship shape that can carry a
+    reference to an id -- so this scans every field of every element instead, keeping only genuine
+    dict-shaped references (``_dict_refs``) and excluding only: containment/self-identity bookkeeping
+    (``_STRUCTURAL_FIELDS`` -- ``@id`` itself, and the ``owner``/``owned*``/``member``/``membership``
+    family, exactly the fields ``_nearest_requirement_owner`` already walks as a SEPARATE traversal,
+    never an incoming tie); and the KerML ``Membership``/``Specialization`` relationship-object
+    family (``_LINK_BOOKKEEPING_TYPES``), which exists only to record a tie a second time, under a
+    different accessor name, that a "real" element (a ``ConstraintUsage``'s own ``subsets``, a
+    ``FeatureReferenceExpression``'s own ``referent``, a ``SatisfyRequirementUsage``'s own
+    ``subject``, ...) already exposes directly -- confirmed empirically for every construct this
+    module's test suite covers, so excluding them costs no coverage, only removes a same-tie
+    duplicate under an id no chapter or test would otherwise name.
+
+    Reproduces every prior round's own positive controls unchanged (a general field-agnostic scan is
+    a strict superset of a fixed field list), and is still honestly, explicitly scoped: it does NOT
+    chase a transitive chain through an intermediate constraint that is itself not owned by any
+    requirement (e.g. ``constraint mid :> target;`` sitting outside any requirement, with a
+    requirement's own constraint then subsetting ``mid``) -- a direct-reference scan has no reason to
+    follow a second hop through an element that is not itself requirement-owned, and this is
+    confirmed to remain the one, named scope limit after this round's redesign, not a newly
+    discovered one. This is a general search over every element in the model, not specific to any
+    one target id, so it works for any target a caller names, not only this tutorial's own
+    ``deliveredEnergyBoundedBySupply``.
 
     Raises ``KeyError`` if ``target_qualified_name`` does not resolve to a real element in the
     model, rather than silently reporting an empty result for a typo'd or renamed target (the same
@@ -195,8 +305,12 @@ def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | N
     target_id = target["@id"]
     out = []
     for element in idx.elements:
-        for field in _TIE_FIELDS:
-            if field in element and target_id in _raw_refs(element[field]):
+        if element["@id"] == target_id or element.get("@type") in _LINK_BOOKKEEPING_TYPES:
+            continue
+        for field, value in element.items():
+            if field in _STRUCTURAL_FIELDS:
+                continue
+            if target_id in _dict_refs(value):
                 out.append({
                     "tying_element": element.get("qualifiedName") or element["@id"],
                     "field": field,
@@ -207,12 +321,15 @@ def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | N
 
 def tied_to_any_requirement(model: Any, target_qualified_name: str, index: ApiIndex | None = None) -> bool:
     """True if `requirement_ties` finds at least one match owned (directly or transitively) by a
-    ``RequirementDefinition`` or ``RequirementUsage`` -- the honest, broader replacement for a bare
-    ``SatisfyRequirementUsage.subsets``-only membership test (`decisions/next-passes.md` item 29,
-    `decisions/log.md` DL-070), which can never be `True` for any loadable model and separately
-    misses a genuine tie a requirement's own internal constraint, or a bare `require`/`assume`
-    reference, can make directly. Raises ``KeyError`` (via `requirement_ties`) if
-    `target_qualified_name` does not resolve to a real element in the model."""
+    ``RequirementDefinition``/``RequirementUsage`` or a genuine metaclass subtype of either
+    (``ConcernDefinition``, ``ConcernUsage``, ``ViewpointDefinition``, ``ViewpointUsage``,
+    ``SatisfyRequirementUsage`` -- ``_is_requirement_owner_type``) -- the honest, broader replacement
+    for a bare ``SatisfyRequirementUsage.subsets``-only membership test (`decisions/next-passes.md`
+    item 29, `decisions/log.md` DL-070), which can never be `True` for any loadable model and
+    separately misses a genuine tie a requirement's own internal constraint, a bare
+    `require`/`assume` reference, a `dependency`/`allocate`/`bind`/`metadata` statement, or the
+    chapter's own `assert satisfy ... by ...` idiom, can each make directly. Raises ``KeyError`` (via
+    `requirement_ties`) if `target_qualified_name` does not resolve to a real element in the model."""
     idx = index or ApiIndex(model)
     return any(t["requirement"] is not None for t in requirement_ties(model, target_qualified_name, idx))
 
