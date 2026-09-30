@@ -28,4 +28,4 @@ After running all three notebooks, `perform_relationships(model)` includes `Heat
 
 ## Experiment
 
-Try the [Chapter 6 exercise](../../exercises/ch06/exercise.ipynb): decompose `BrewUnit` into an `Impeller` and a `FilterBasket`, add a `BrewReq` requirement, and write an `asserted_inference` record claiming the decomposition is complete.
+Try the [Chapter 6 exercise](../../exercises/ch06/exercise.ipynb): decompose `BrewUnit` into an `Impeller` and a `GroundsBasket` (not `FilterBasket` — Chapter 5's own exercise already uses that name for a real, distinct water-line component), add a `BrewReq` requirement, record a measure-framing and a mechanism-selection judgment the requirement raises, and write an honestly scoped `asserted_inference` record stating what the decomposition establishes and does not.
