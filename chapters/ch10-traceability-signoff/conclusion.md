@@ -18,4 +18,4 @@ This is the tutorial's last chapter. What continues from here is not another cha
 
 ## Exercise
 
-See `exercises/ch10/exercise.ipynb`: it asks you to extend the traceability graph built in notebook 01 to include the bread-handling allocation links.
+See `exercises/ch10/exercise.ipynb`: it asks you to build this same traceability graph, judgment ledger and sign-off synthesis over your own coffee-maker model.
