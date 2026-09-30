@@ -114,6 +114,74 @@ def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dic
             for e in idx.of_type("SatisfyRequirementUsage")]
 
 
+_REQUIREMENT_OWNER_TYPES = ("RequirementDefinition", "RequirementUsage")
+_TIE_FIELDS = ("subsets", "redefines", "references")
+
+
+def _nearest_requirement_owner(element: dict, idx: ApiIndex) -> str | None:
+    """Walks ``element``'s own raw ``owner`` chain upward, inclusive of ``element`` itself, and
+    returns the qualified name of the nearest ancestor whose ``@type`` is ``RequirementDefinition``
+    or ``RequirementUsage``, or ``None`` if no ancestor (or ``element`` itself) is one."""
+    seen: set[str] = set()
+    current: dict | None = element
+    while current is not None and current["@id"] not in seen:
+        seen.add(current["@id"])
+        if current.get("@type") in _REQUIREMENT_OWNER_TYPES:
+            return current.get("qualifiedName") or current["@id"]
+        owner_id = _ref(current["owner"]) if "owner" in current else None
+        current = idx.by_id.get(owner_id) if owner_id else None
+    return None
+
+
+def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | None = None) -> list[dict]:
+    """Every element, anywhere in the model, whose own ``subsets``, ``redefines`` or ``references``
+    property points directly at ``target_qualified_name``'s own id, as ``{tying_element, field,
+    requirement}`` -- ``requirement`` is the nearest ancestor (walking the raw ``owner`` chain
+    upward, inclusive of the tying element itself) whose own ``@type`` is ``RequirementDefinition``
+    or ``RequirementUsage``, or ``None`` if the tie is not owned by a requirement at all.
+
+    Broader than a bare ``SatisfyRequirementUsage.subsets`` membership test: SysML v2's own
+    ``assert satisfy`` grammar requires a satisfy's ``subsets`` target to itself be a requirement
+    usage (formal/2026-03-02 SS8.3), so a bare ``AssertConstraintUsage``'s own id can never appear
+    there for any model that loads at all -- that check reports something guaranteed true by
+    construction, not a finding. A requirement can still tie to such a constraint directly, most
+    plainly by declaring its own ``require constraint c :> target;`` inside a ``requirement def``,
+    which puts ``subsets`` on ``c`` itself (an element owned by the requirement, not a
+    ``SatisfyRequirementUsage`` at all -- confirmed by construction, `decisions/next-passes.md`
+    item 29, `decisions/log.md` DL-070). Confirmed empirically the same way for the other two
+    fields: a ``ref altName references target;`` declared inside a requirement carries the tie via
+    ``references`` instead of ``subsets``; a redefining usage (``:>>``/``redefines``) would carry it
+    via ``redefines``. This is a general search over every element in the model, not specific to any
+    one target id, so it works for any target a caller names, not only this tutorial's own
+    ``deliveredEnergyBoundedBySupply``.
+    """
+    idx = index or ApiIndex(model)
+    target = idx.by_qn.get(target_qualified_name)
+    if target is None:
+        return []
+    target_id = target["@id"]
+    out = []
+    for element in idx.elements:
+        for field in _TIE_FIELDS:
+            if field in element and target_id in _raw_refs(element[field]):
+                out.append({
+                    "tying_element": element.get("qualifiedName") or element["@id"],
+                    "field": field,
+                    "requirement": _nearest_requirement_owner(element, idx),
+                })
+    return out
+
+
+def tied_to_any_requirement(model: Any, target_qualified_name: str, index: ApiIndex | None = None) -> bool:
+    """True if `requirement_ties` finds at least one match owned (directly or transitively) by a
+    ``RequirementDefinition`` or ``RequirementUsage`` -- the honest, broader replacement for a bare
+    ``SatisfyRequirementUsage.subsets``-only membership test (`decisions/next-passes.md` item 29,
+    `decisions/log.md` DL-070), which can never be `True` for any loadable model and separately
+    misses a genuine tie a requirement's own internal constraint can make directly."""
+    idx = index or ApiIndex(model)
+    return any(t["requirement"] is not None for t in requirement_ties(model, target_qualified_name, idx))
+
+
 def perform_relationships(model: Any, index: ApiIndex | None = None) -> list[dict]:
     """``{performer, action}`` for each perform action usage: the owner performs the typed or referenced action."""
     idx = index or ApiIndex(model)
