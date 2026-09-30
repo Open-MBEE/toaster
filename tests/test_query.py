@@ -257,3 +257,118 @@ def test_port_type_check_flags_only_the_unrelated_pair(conn) -> None:
 
 def test_port_type_check_is_clean_on_ch08(ch08) -> None:
     assert query.port_type_mismatches(ch08) == []
+
+
+@pytest.fixture(scope="module")
+def ch10(conn):
+    m = conn.load_from_content((ROOT / "models" / "ch10-cumulative.sysml").read_text(), strict=False)
+    assert m.ok
+    return m
+
+
+LEMMA = "ToasterDemo::deliveredEnergyBoundedBySupply"
+
+
+def test_requirement_ties_negative_control_real_model(ch10) -> None:
+    """decisions/next-passes.md item 29 / decisions/log.md DL-070: the real, current model has
+    no genuine tie from any requirement to `deliveredEnergyBoundedBySupply`. Confirm this is for
+    the right reason -- a real, exhaustive search over every element's own `subsets`/`redefines`/
+    `references` field found nothing -- not because the search itself is narrow."""
+    idx = query.ApiIndex(ch10)
+    assert query.requirement_ties(ch10, LEMMA, idx) == []
+    assert query.tied_to_any_requirement(ch10, LEMMA, idx) is False
+
+
+REQUIREMENT_SUBSETS_TIE = """
+package TieFixture {
+    private import ToasterDemo::*;
+    requirement def EnergyReq {
+        subject t : Toaster;
+        require constraint c :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_subsets(conn, ch10) -> None:
+    """A `requirement def`'s own `require constraint c :> deliveredEnergyBoundedBySupply;` is a
+    real, constructible tie the old `SatisfyRequirementUsage.subsets`-only check could never see
+    (its target is a bare `ConstraintUsage`, not a `SatisfyRequirementUsage` at all): confirm the
+    broader search finds it, via `c`'s own `subsets` field, owned by `TieFixture::EnergyReq`."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + REQUIREMENT_SUBSETS_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture::EnergyReq::c", "field": "subsets", "requirement": "TieFixture::EnergyReq"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_REFERENCES_AND_USAGE_TIE = """
+package TieFixture2 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq2 {
+        subject t : Toaster;
+        ref altName references deliveredEnergyBoundedBySupply;
+    }
+    requirement usageTie : EnergyReq2 {
+        require constraint c2 :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_references_and_usage_owner(conn, ch10) -> None:
+    """The search also covers the `references` field (a `ref ... references target;` inside a
+    requirement) and a `RequirementUsage` (not just a `RequirementDefinition`) as the owning
+    requirement -- both real, distinct ways a tie can be made that a `subsets`-only,
+    `SatisfyRequirementUsage`-only search would miss."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + REQUIREMENT_REFERENCES_AND_USAGE_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
+    assert ties == {
+        ("TieFixture2::EnergyReq2::altName", "references"): "TieFixture2::EnergyReq2",
+        ("TieFixture2::usageTie::c2", "subsets"): "TieFixture2::usageTie",
+    }
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+NON_REQUIREMENT_TIE = """
+package NonReqTie {
+    private import ToasterDemo::*;
+    part def Widget {
+        constraint c3 :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_reports_none_when_not_requirement_owned(conn, ch10) -> None:
+    """A `subsets` tie owned by an unrelated part (not any requirement) is found by the search,
+    but reported with `requirement=None`, and `tied_to_any_requirement` stays `False`: a tie is
+    only a traceability tie when a requirement actually owns it."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + NON_REQUIREMENT_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "NonReqTie::Widget::c3", "field": "subsets", "requirement": None}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+def test_requirement_ties_mutation_old_narrow_check_misses_real_tie(conn, ch10) -> None:
+    """Mutation test: the OLD, narrow check (does the lemma's own id ever appear as any
+    `SatisfyRequirementUsage`'s own `subsets` target?) still reports `False` against the fixture
+    above, which contains a genuine, constructed tie -- proving the old check is blind to it, and
+    that the new, broader `requirement_ties`/`tied_to_any_requirement` is not itself vacuous."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + REQUIREMENT_SUBSETS_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    satisfy_targets = {s["subsets"]["@id"] for s in idx.of_type("SatisfyRequirementUsage") if "subsets" in s}
+    lemma = idx.by_qn[LEMMA]
+    old_check_result = lemma["@id"] in satisfy_targets
+    assert old_check_result is False
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
