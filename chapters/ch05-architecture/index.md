@@ -32,4 +32,4 @@ After running all three notebooks, the cumulative model contains the complete Ch
 
 ## Experiment
 
-Try the [Chapter 5 exercise](../../exercises/ch05/exercise.ipynb): allocate your coffee maker's `Brew` action to its `BrewUnit`, then add a `CoffeeFlow` assembly with `pump` and `filter` parts connected by a flow, and render the interconnection diagram.
+Try the [Chapter 5 exercise](../../exercises/ch05/exercise.ipynb): allocate your coffee maker's `Brew` action to its `BrewUnit`, then add a `CoffeeFlow` assembly with `pump` and `filterUnit` parts joined by a named, port-typed interface, confirm the port types are compatible, and render the interconnection diagram.
