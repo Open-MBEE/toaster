@@ -28,4 +28,4 @@ After running all three notebooks, `model.eval("ToasterDemo::rated.deliveredEner
 
 ## Experiment
 
-Try the [Chapter 7 exercise](../../exercises/ch07/exercise.ipynb): adapt the symbolic binding and sweep for the coffee maker's brew energy formula.
+Try the [Chapter 7 exercise](../../exercises/ch07/exercise.ipynb): add a bounded `transferEfficiency` slot and `deliveredMass` calc to the coffee maker's `WaterMover`, add a `BrewCycle` state machine, and sweep `deliveredMass`'s `throughput` argument against `BrewReq`'s own threshold, read from the model.
