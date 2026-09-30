@@ -115,7 +115,20 @@ def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dic
 
 
 _REQUIREMENT_OWNER_TYPES = ("RequirementDefinition", "RequirementUsage")
-_TIE_FIELDS = ("subsets", "redefines", "references")
+
+# Every DIRECT reference-field shape SysML v2 uses for a tie from some element to a
+# constraint it names: `subsets`/`redefines`/`references` on a Feature (a `require
+# constraint c :> target;`, a redefining usage, or a `ref ... references target;`), and
+# `referent` on a `FeatureReferenceExpression` (a bare `require target;`/`assume target;`
+# or a body expression that just names the constraint directly, e.g. `require constraint
+# { target }` -- confirmed empirically, 2026-09-30, fix/ch10-widget-search: this shape
+# loads cleanly in OpenSysML, sysml-toolkit and the OMG pilot alike, and `referent` never
+# appears on any element type other than `FeatureReferenceExpression` in the real ch10
+# model). This is every DIRECT way a tie can be made; it does NOT cover a transitive
+# chain through an intermediate constraint that is itself not owned by any requirement
+# (e.g. `constraint mid :> target;` sitting outside any requirement, with a requirement's
+# own constraint then subsetting `mid`) -- an explicit, honest scope limit, not hidden.
+_TIE_FIELDS = ("subsets", "redefines", "references", "referent")
 
 
 def _nearest_requirement_owner(element: dict, idx: ApiIndex) -> str | None:
@@ -135,10 +148,12 @@ def _nearest_requirement_owner(element: dict, idx: ApiIndex) -> str | None:
 
 def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | None = None) -> list[dict]:
     """Every element, anywhere in the model, whose own ``subsets``, ``redefines`` or ``references``
-    property points directly at ``target_qualified_name``'s own id, as ``{tying_element, field,
-    requirement}`` -- ``requirement`` is the nearest ancestor (walking the raw ``owner`` chain
-    upward, inclusive of the tying element itself) whose own ``@type`` is ``RequirementDefinition``
-    or ``RequirementUsage``, or ``None`` if the tie is not owned by a requirement at all.
+    property, or (for a bare ``require``/``assume``/body-expression tie) whose own
+    ``FeatureReferenceExpression.referent``, points directly at ``target_qualified_name``'s own id,
+    as ``{tying_element, field, requirement}`` -- ``requirement`` is the nearest ancestor (walking
+    the raw ``owner`` chain upward, inclusive of the tying element itself) whose own ``@type`` is
+    ``RequirementDefinition`` or ``RequirementUsage``, or ``None`` if the tie is not owned by a
+    requirement at all.
 
     Broader than a bare ``SatisfyRequirementUsage.subsets`` membership test: SysML v2's own
     ``assert satisfy`` grammar requires a satisfy's ``subsets`` target to itself be a requirement
@@ -149,16 +164,34 @@ def requirement_ties(model: Any, target_qualified_name: str, index: ApiIndex | N
     which puts ``subsets`` on ``c`` itself (an element owned by the requirement, not a
     ``SatisfyRequirementUsage`` at all -- confirmed by construction, `decisions/next-passes.md`
     item 29, `decisions/log.md` DL-070). Confirmed empirically the same way for the other two
-    fields: a ``ref altName references target;`` declared inside a requirement carries the tie via
-    ``references`` instead of ``subsets``; a redefining usage (``:>>``/``redefines``) would carry it
-    via ``redefines``. This is a general search over every element in the model, not specific to any
-    one target id, so it works for any target a caller names, not only this tutorial's own
-    ``deliveredEnergyBoundedBySupply``.
+    reference fields: a ``ref altName references target;`` declared inside a requirement carries the
+    tie via ``references`` instead of ``subsets``; a redefining usage (``:>>``/``redefines``) would
+    carry it via ``redefines``. A FOURTH, differently-shaped tie exists too: a bare ``require
+    target;``/``assume target;`` (a requirement reference to an already-existing constraint, not
+    declaring a new one) or a body expression that just names the constraint directly (``require
+    constraint { target }``) exports as a ``FeatureReferenceExpression`` whose own ``referent``
+    field holds the target's id directly -- confirmed empirically (fix/ch10-widget-search) against
+    all three pinned tools (OpenSysML, sysml-toolkit, the OMG pilot), and confirmed that ``referent``
+    never appears on any element type other than ``FeatureReferenceExpression`` in the real ch10
+    model, so searching it adds no false positives. Together these four fields cover every DIRECT
+    way SysML v2 lets one element tie to another via subsetting, redefinition, reference or bare
+    naming; they do NOT cover a transitive chain through an intermediate constraint that is itself
+    not owned by any requirement (e.g. ``constraint mid :> target;`` sitting outside any
+    requirement, with a requirement's own constraint then subsetting ``mid``) -- an explicit, named
+    scope limit, not a hidden one. This is a general search over every element in the model, not
+    specific to any one target id, so it works for any target a caller names, not only this
+    tutorial's own ``deliveredEnergyBoundedBySupply``.
+
+    Raises ``KeyError`` if ``target_qualified_name`` does not resolve to a real element in the
+    model, rather than silently reporting an empty result for a typo'd or renamed target (the same
+    "passes for the wrong reason" shape the original bug had, just at a different layer).
     """
     idx = index or ApiIndex(model)
     target = idx.by_qn.get(target_qualified_name)
     if target is None:
-        return []
+        raise KeyError(
+            f"requirement_ties: {target_qualified_name!r} does not resolve to any element in the model"
+        )
     target_id = target["@id"]
     out = []
     for element in idx.elements:
@@ -177,7 +210,9 @@ def tied_to_any_requirement(model: Any, target_qualified_name: str, index: ApiIn
     ``RequirementDefinition`` or ``RequirementUsage`` -- the honest, broader replacement for a bare
     ``SatisfyRequirementUsage.subsets``-only membership test (`decisions/next-passes.md` item 29,
     `decisions/log.md` DL-070), which can never be `True` for any loadable model and separately
-    misses a genuine tie a requirement's own internal constraint can make directly."""
+    misses a genuine tie a requirement's own internal constraint, or a bare `require`/`assume`
+    reference, can make directly. Raises ``KeyError`` (via `requirement_ties`) if
+    `target_qualified_name` does not resolve to a real element in the model."""
     idx = index or ApiIndex(model)
     return any(t["requirement"] is not None for t in requirement_ties(model, target_qualified_name, idx))
 
@@ -275,7 +310,10 @@ def _raw_refs(value: Any) -> list[str]:
     """Normalizes a raw API-JSON reference field to a list of ``@id``s. ``value`` may be a single dict
     ref (``{"@id": ...}``), a list of dict refs, a bare id string, or absent (``None``, normalized to
     ``[]``) -- confirmed empirically (2026-09-29, allocate-fix/task6): ``type`` is always a list even
-    with one element; ``subsets``, ``redefines`` and ``specializes`` are each a single ref, never a list.
+    with one element; ``subsets``, ``redefines`` and ``specializes`` are each usually a single ref, but
+    ``subsets`` (at least) is exported as a LIST when a constraint subsets more than one thing (e.g.
+    ``require constraint c :> other, target;`` -- confirmed empirically, fix/ch10-widget-search round
+    2), so callers must handle both shapes; this function already does.
     """
     if value is None:
         return []
