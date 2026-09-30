@@ -695,6 +695,21 @@ hits this parser gap. The construct itself is real, committed content in
 the separate, deeper reason this construct is a hand-restated lemma rather than a
 solver-checked reference to `HeatGenerator`'s own `efficiencyBounded` and
 `deliveredEnergy`, which is a real limit of this toolchain, not only a parser gap.
+
+**Confirmed to also apply to `models/ch10-cumulative.sysml`** (found during the
+Chapter 10 tie-remediation work, `decisions/log.md` DL-071/DL-072): this file
+carries the same `assert satisfy`/`assert not satisfy` declarations forward, so
+`verify_holds` cannot run against it directly either. The gap is not scoped to any
+one constraint: `_LINE_RE`'s own failure fires on the FIRST `satisfies
+<requirement>`-annotated verdict line anywhere in the file (in practice,
+`timely`'s own auto-generated required-constraint line, since it appears earliest),
+before ever reaching whichever constraint a caller actually wanted to check (e.g.
+Chapter 10's own `energyConservationReq`'s required constraint `c`). So a targeted
+look-up of one specific, unrelated constraint's own verdict is not enough to avoid
+this gap — any `assert satisfy` anywhere earlier in the same file trips it first.
+The workaround used in Chapter 10's own notebook: call the real `sysmlv2 verify
+--solve` CLI directly via `subprocess` and read its raw output, rather than going
+through `toaster.modelcheck.verify_holds`'s own line parser at all.
 **Resolution:** widen `_LINE_RE` (or add a second pattern) to accept an optional
 `, satisfies <requirement>` segment inside the kind parenthetical (no `not`
 variant exists, per the correction above), verified against the real CLI's exact
