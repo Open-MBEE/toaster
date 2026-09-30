@@ -237,9 +237,32 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             # deliveredEnergyBoundedBySupply references a fresh usage of HeatGenerator
             # (Ch6/Ch7), stubbed here with just the two features (power, efficiency) the
             # fragment itself reads; nb02 and nb03 introduce no new construct (analysis
-            # only), so chapter 8 has exactly one construct-introducing notebook.
+            # only).
             "context_stubs": [
                 "abstract part def HeatGenerator { attribute power : ISQ::PowerValue; attribute efficiency : DimensionOneValue; }",
+            ],
+        },
+        {
+            # CONTRACT ENERGY-TIE-08: EnergyConservationReq's own require constraint
+            # subsets deliveredEnergyBoundedBySupply (nb01), and is typed by HeatGenerator
+            # (Ch6/Ch7) via its subject; both are stubbed minimally here so this
+            # notebook's own fragment parses standalone. The bare `constraint
+            # deliveredEnergyBoundedBySupply;` stub stands in for nb01's real, doc'd
+            # lemma: only its name needs to resolve for `:>` to subset it.
+            "path": "chapters/ch08-checking/04-energy-conservation-req.ipynb",
+            "context_stubs": [
+                "abstract part def HeatGenerator;",
+                "constraint deliveredEnergyBoundedBySupply;",
+            ],
+        },
+        {
+            # EnergyConservationTest's objective verifies energyConservationReq (nb04),
+            # a usage of EnergyConservationReq, itself typed by HeatGenerator.
+            "path": "chapters/ch08-checking/05-verification-case.ipynb",
+            "context_stubs": [
+                "abstract part def HeatGenerator;",
+                "requirement def EnergyConservationReq { subject heatGen : HeatGenerator; }",
+                "requirement energyConservationReq : EnergyConservationReq;",
             ],
         },
     ],
