@@ -857,3 +857,12 @@ Confirmed empirically: `part 'filter' : FilterBasket;` (escaping the reserved wo
 **Resolution:** upstream fix in OpenSysML alone (diagnose a reserved-word-as-identifier collision at parse time, matching sysml-toolkit's and the pilot's own behavior); re-test once available.
 **Upstream issue:** not yet filed.
 **Toaster issue:** not filed
+
+## D-035: sysml-toolkit reports an `assert satisfy`/`assert not satisfy` naming an undeclared requirement as a warning, not an error; OpenSysML and the pilot both reject it outright
+
+Found while re-deriving the Chapter 9 exercise (exercise-track re-derivation, DL-062). Chapter 9's own negative control (`chapters/ch09-coverage-sufficiency/01-requirement-coverage.ipynb` cell `9bae63f2`, mirrored in the exercise) asserts that a `satisfy` claim naming a requirement the model never declares fails to load — confirmed correct against OpenSysML v0.9.0 (`bad.ok == False`) and the OMG pilot 0.62.0-SNAPSHOT (`hasErrors=true`, "Couldn't resolve reference to Feature", "Must reference a constraint", "Must reference a requirement"). sysml-toolkit v0.9.1, run against the identical fixture via `sysmlv2 check --lib ...`, instead reports `warning: unresolved reference 'missingReq'` and exits 0 — the same construct that two of three pinned tools treat as a hard load failure, the third tool treats as a non-fatal warning. This is the same three-way disagreement shape as D-032/D-033/D-034 (one pinned tool disagrees with the other two on a real construct's validity), but in the OPPOSITE direction from all three of those: there, OpenSysML alone was the outlier tolerating something the other two correctly rejected; here, sysml-toolkit alone is the outlier, MORE permissive than the other two, not less.
+
+**Workaround:** this tutorial's own negative controls (Chapter 9's own, and the exercise's mirror) assert against OpenSysML's behavior only, matching the pattern real Chapter 9 notebook 01 already uses (`bad.ok == False`); a control written to also assert against sysml-toolkit's exit code alone would need to check the warning text, not the exit code, to catch this class of error, since exit 0 alone doesn't distinguish a clean load from this one.
+**Resolution:** upstream fix in sysml-toolkit (report an unresolved reference in a `satisfy` claim's own `subsets` as an error, matching OpenSysML's and the pilot's own behavior); re-test once available.
+**Upstream issue:** not yet filed.
+**Toaster issue:** not filed
