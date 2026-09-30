@@ -270,14 +270,13 @@ LEMMA = "ToasterDemo::deliveredEnergyBoundedBySupply"
 
 
 def test_requirement_ties_negative_control_real_model(ch10) -> None:
-    """decisions/next-passes.md item 29 / decisions/log.md DL-070: the real, current model has
-    no genuine tie from any requirement to `deliveredEnergyBoundedBySupply`. Confirm this is for
-    the right reason -- a real, field-agnostic search over every one of the model's ~949 elements'
-    own fields (excluding only containment/self-identity bookkeeping and the KerML
-    `Membership`/`Specialization` relationship-object family, `_STRUCTURAL_FIELDS` and
-    `_LINK_BOOKKEEPING_TYPES`) found nothing -- not because the search itself is narrow, or because
-    something is silently excluded that shouldn't be (round 3: confirmed empirically that every
-    exclusion here costs no coverage on any construct this module's own test suite covers)."""
+    """decisions/next-passes.md item 29 / decisions/log.md DL-070/DL-071: the real, current model
+    has no tie from `deliveredEnergyBoundedBySupply` to any requirement, under this module's NARROW,
+    two-check design (satisfy-by-subject, Check A; a direct `subsets`/`redefines`/`references`/
+    `referent` reference from within a requirement's own body, Check B -- see `requirement_ties`'s
+    own docstring for exactly what is and is not covered). This is not a claim that no tie could
+    exist by any conceivable mechanism -- only that neither of these two specific, named checks
+    finds one."""
     idx = query.ApiIndex(ch10)
     assert query.requirement_ties(ch10, LEMMA, idx) == []
     assert query.tied_to_any_requirement(ch10, LEMMA, idx) is False
@@ -465,24 +464,32 @@ package TieFixture6 {
 """
 
 
-def test_requirement_ties_satisfy_by_lemma_the_chapter_own_idiom(conn, ch10) -> None:
-    """Round 3 (most important finding): `assert satisfy R by C;` is this tutorial's OWN idiom for a
-    genuine tie -- the exact pattern already used elsewhere in the real model for `rated`/`weak`
-    against `heatGenerationReq` (`models/ch10-cumulative.sysml` lines 211/215) -- yet the round-2
-    search still missed it entirely: a `SatisfyRequirementUsage`'s own `subject` field (which is
-    where SysML v2 records "this is the candidate that satisfies the requirement") was never in the
-    fixed `_TIE_FIELDS` list. Confirm the field-agnostic search finds it via `subject`, and that the
-    `SatisfyRequirementUsage` is correctly recognized as its own nearest requirement owner (it IS a
-    genuine `RequirementUsage` subtype -- `_is_requirement_owner_type` -- so the inclusive owner walk
-    stops immediately, the same rule already applied to a bare `requirement r :> lemma;`)."""
+def test_requirement_ties_satisfy_by_subject_the_chapter_own_idiom(conn, ch10) -> None:
+    """Check A, and round 2's most important finding, now fixed for real: `assert satisfy R by C;`
+    is this tutorial's OWN idiom for a genuine tie -- the exact pattern already used elsewhere in
+    the real model for `rated`/`weak` against `heatGenerationReq` (`models/ch10-cumulative.sysml`
+    lines 211/215) -- yet round 2's fixed-field-list search never looked at a
+    `SatisfyRequirementUsage`'s own `subject` field at all. This round's Check A is built directly
+    on `satisfy_relationships` (itself built on the already-tested `get_satisfy_relationships`): is
+    the lemma ever the `subject` of a real satisfy relationship? Confirm it is found here, correctly
+    attributed to the REAL, NAMED requirement (`heatGenerationReq`), not to the anonymous
+    `SatisfyRequirementUsage` itself. Check B also fires on this same fixture, but attributes
+    `requirement=None`: `assert satisfy R by C;` additionally exports a synthetic
+    `FeatureReferenceExpression` for its own `by` clause, whose `referent` field also names the
+    lemma directly (`_TIE_FIELDS` includes `referent`) -- but that synthetic element's owner chain
+    passes through the `SatisfyRequirementUsage` itself, which is NOT an exact
+    `RequirementDefinition`/`RequirementUsage` match (Check B's exact-type rule, by design), so
+    Check B alone cannot attribute this tie to a requirement. `tied_to_any_requirement` is `True`
+    because Check A alone already finds it -- this is exactly the point of keeping Check A as its
+    own, separate mechanism rather than folding it into Check B's field list."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + SATISFY_BY_LEMMA_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
     assert ties == {
-        ("TieFixture6::@1", "subject"): "TieFixture6::@1",
-        ("TieFixture6___401_subject_pvalue", "referent"): "TieFixture6::@1",
+        ("TieFixture6::@1", "subject"): "ToasterDemo::heatGenerationReq",
+        ("TieFixture6___401_subject_pvalue", "referent"): None,
     }
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
@@ -498,18 +505,20 @@ package TieFixture7 {
 """
 
 
-def test_requirement_ties_dependency_construct(conn, ch10) -> None:
-    """Round 3: `dependency d from t to lemma;` carries the tie via `Dependency.supplier`, a field
-    the round-2 search never looked at. `Dependency` is a real, primary, user-visible element (not
-    a `Membership`/`Specialization` bookkeeping duplicate), so this is the ONLY place the tie is
-    recorded, and the search must find it there directly."""
+def test_requirement_ties_does_not_detect_sibling_dependency_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `dependency d from t to lemma;` names the lemma and the
+    requirement's subject as two SIBLING elements (the `Dependency`'s own `supplier` field), neither
+    owning the other. This is the genuine, unresolved scope question this round's own escalation
+    raised, which Z decided does NOT count as a "tie" for this narrow design -- Check A only covers
+    `satisfy`, and Check B's fixed field list (`subsets`/`redefines`/`references`/`referent`) does
+    not include `supplier`, so neither check fires. Confirm the search finds nothing at all for this
+    construct, not merely that it fails to attribute a requirement."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + DEPENDENCY_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture7::EnergyReq7::d", "field": "supplier", "requirement": "TieFixture7::EnergyReq7"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert query.requirement_ties(m, LEMMA, idx) == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
 
 
 ALLOCATE_TIE = """
@@ -523,21 +532,17 @@ package TieFixture8 {
 """
 
 
-def test_requirement_ties_allocate_construct(conn, ch10) -> None:
-    """Round 3: `allocate lemma to t;` carries the tie via `AllocationUsage.sourceFeature` (and via
-    `Connector.relatedFeature`, the generic both-ends echo every connector-shaped usage carries on
-    itself -- a second, real hit on the SAME primary element, not a synthetic duplicate, so both are
-    reported)."""
+def test_requirement_ties_does_not_detect_sibling_allocate_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `allocate lemma to t;` is the same sibling-relationship
+    shape as `dependency` (the tie lives on `AllocationUsage.sourceFeature`/`relatedFeature`, neither
+    of which is in Check B's fixed field list, and this is not a `satisfy`), so it is out of scope by
+    design. Confirm the search finds nothing at all."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + ALLOCATE_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
-    assert ties == {
-        ("TieFixture8::EnergyReq8::@1", "relatedFeature"): "TieFixture8::EnergyReq8",
-        ("TieFixture8::EnergyReq8::@1", "sourceFeature"): "TieFixture8::EnergyReq8",
-    }
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert query.requirement_ties(m, LEMMA, idx) == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
 
 
 BIND_TIE = """
@@ -552,19 +557,16 @@ package TieFixture9 {
 """
 
 
-def test_requirement_ties_bind_construct(conn, ch10) -> None:
-    """Round 3: `bind x = lemma;` carries the tie via `BindingConnectorAsUsage.targetFeature` (and,
-    like allocate, via the same generic `relatedFeature` echo on that same primary element)."""
+def test_requirement_ties_does_not_detect_bind_connector_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `bind x = lemma;` carries the tie via
+    `BindingConnectorAsUsage.targetFeature`/`relatedFeature`, neither of which is in Check B's fixed
+    field list, and this is not a `satisfy`. Confirm the search finds nothing at all."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + BIND_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
-    assert ties == {
-        ("TieFixture9::EnergyReq9::@2", "relatedFeature"): "TieFixture9::EnergyReq9",
-        ("TieFixture9::EnergyReq9::@2", "targetFeature"): "TieFixture9::EnergyReq9",
-    }
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert query.requirement_ties(m, LEMMA, idx) == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
 
 
 METADATA_TIE = """
@@ -579,16 +581,16 @@ package TieFixture10 {
 """
 
 
-def test_requirement_ties_metadata_about_construct(conn, ch10) -> None:
-    """Round 3: `metadata Trace10 about lemma;` carries the tie via `MetadataUsage.annotatedElement`,
-    a field the round-2 search never looked at."""
+def test_requirement_ties_does_not_detect_metadata_about_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `metadata Trace10 about lemma;` carries the tie via
+    `MetadataUsage.annotatedElement`, a field outside Check B's fixed list, and this is not a
+    `satisfy`. Confirm the search finds nothing at all."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + METADATA_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture10::EnergyReq10::@1", "field": "annotatedElement", "requirement": "TieFixture10::EnergyReq10"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert query.requirement_ties(m, LEMMA, idx) == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
 
 
 INVOCATION_TIE = """
@@ -602,19 +604,18 @@ package TieFixture11 {
 """
 
 
-def test_requirement_ties_invocation_expression_construct(conn, ch10) -> None:
-    """Round 3: a body expression that INVOKES the constraint as a function
+def test_requirement_ties_does_not_detect_invocation_expression_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: a body expression that INVOKES the constraint as a function
     (`deliveredEnergyBoundedBySupply()`, as opposed to just naming it bare) carries the tie via
-    `InvocationExpression.function` -- a different shape from `referent` (round 2), which only
-    covers a bare name, not a call. Only checked via OpenSysML in round 3's own review; re-verified
-    against sysml-toolkit and the OMG pilot for this round (see this task's own report)."""
+    `InvocationExpression.function`, a field outside Check B's fixed list -- a different shape from
+    `referent` (a bare name, which IS covered, see `test_requirement_ties_positive_control_referent`).
+    Confirm the search finds nothing at all for the invocation shape."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + INVOCATION_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture11::EnergyReq11::@1::@0", "field": "function", "requirement": "TieFixture11::EnergyReq11"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert query.requirement_ties(m, LEMMA, idx) == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
 
 
 CONCERN_OWNER_TIE = """
@@ -628,19 +629,19 @@ package TieFixture12 {
 """
 
 
-def test_requirement_ties_concern_definition_as_owner(conn, ch10) -> None:
-    """Round 3: `ConcernDefinition` is a genuine metaclass SUBTYPE of `RequirementDefinition`
-    (confirmed via `javap`), not merely a lookalike -- the round-2 owner-walk's exact
-    `@type in ("RequirementDefinition", "RequirementUsage")` string match missed it entirely,
-    reporting `requirement=None` for a tie that IS requirement-owned. Only checked via OpenSysML in
-    round 3's own review; re-verified against sysml-toolkit and the OMG pilot for this round."""
+def test_requirement_ties_does_not_attribute_concern_definition_ownership_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `ConcernDefinition` is a genuine metaclass SUBTYPE of
+    `RequirementDefinition`, but Check B's owner-walk uses an EXACT `@type` match only, by design
+    (no metaclass-subtype closure): a `ConcernDefinition` owner does not count. The `subsets` tie
+    itself IS still found (Check B's field scan is not type-filtered), but `requirement` is `None`
+    because `C12` is not an exact match and no further exact-match ancestor exists above it."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + CONCERN_OWNER_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture12::C12::c", "field": "subsets", "requirement": "TieFixture12::C12"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert ties == [{"tying_element": "TieFixture12::C12::c", "field": "subsets", "requirement": None}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
 
 
 VIEWPOINT_OWNER_TIE = """
@@ -654,17 +655,49 @@ package TieFixture13 {
 """
 
 
-def test_requirement_ties_viewpoint_definition_as_owner(conn, ch10) -> None:
-    """Round 3: `ViewpointDefinition` is likewise a genuine metaclass subtype of
-    `RequirementDefinition`. Only checked via OpenSysML in round 3's own review; re-verified against
-    sysml-toolkit and the OMG pilot for this round."""
+def test_requirement_ties_does_not_attribute_viewpoint_definition_ownership_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `ViewpointDefinition` is likewise a genuine metaclass
+    subtype of `RequirementDefinition`, and likewise deliberately NOT treated as a requirement owner
+    by Check B's exact-type rule. Same shape as the `ConcernDefinition` case above: the tie is found,
+    but `requirement` is `None`."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + VIEWPOINT_OWNER_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture13::V13::c", "field": "subsets", "requirement": "TieFixture13::V13"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert ties == [{"tying_element": "TieFixture13::V13::c", "field": "subsets", "requirement": None}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+CONNECTION_END_TIE = """
+package TieFixtureConnEnd {
+    private import ToasterDemo::*;
+    requirement def EnergyReqConnEnd {
+        subject t : Toaster;
+        connector c2 {
+            end e1 ::> deliveredEnergyBoundedBySupply;
+            end e2 ::> t;
+        }
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_connection_end_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `end e1 ::> lemma;` types a connector end by reference
+    subsetting (`::>`). The tie lives on a `ReferenceSubsetting` relationship object's own
+    `referencedFeature` field, not on the connector end feature's own `subsets`/`redefines`/
+    `references`/`referent` field directly -- a different shape Check B's fixed field list does not
+    reach, and this is not a `satisfy`. This is exactly the gap round 3's field-agnostic scan itself
+    still missed (its `ReferenceSubsetting` relationship-object exclusion list happened to be the tie's
+    only carrier), which is part of why this round replaced that design rather than patching it
+    further. Confirm the search finds nothing at all."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + CONNECTION_END_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    assert query.requirement_ties(m, LEMMA, idx) == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
 
 
 REQ_REQUIRES_REQ_TIE = """
@@ -682,11 +715,11 @@ package TieFixture14 {
 
 
 def test_requirement_ties_requirement_requires_requirement(conn, ch10) -> None:
-    """Round 3: a chain where one requirement (`B14`) requires another requirement usage (`a14`),
-    which is itself typed by a definition (`A14`) that directly ties to the lemma. The direct tie
-    (`A14::c`'s own `subsets`) is found and correctly attributed to `A14`, regardless of `B14`'s
-    further, separate `require a14;` -- this is a DIRECT tie on `A14`, not the transitive-chain case
-    this module's search still, honestly, does not chase."""
+    """A chain where one requirement (`B14`) requires another requirement usage (`a14`), which is
+    itself typed by a definition (`A14`) that directly ties to the lemma. The direct tie (`A14::c`'s
+    own `subsets`) is found and correctly attributed to `A14`, regardless of `B14`'s further,
+    separate `require a14;` -- this is a DIRECT tie on `A14`, not the transitive-chain case this
+    module's search still, honestly, does not chase."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + REQ_REQUIRES_REQ_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
@@ -709,10 +742,10 @@ package TieFixture15 {
 
 
 def test_requirement_ties_multi_subsets_list_shaped_field(conn, ch10) -> None:
-    """Round 3: `require constraint c :> other15, deliveredEnergyBoundedBySupply;` subsets TWO
-    things at once, so `c`'s own `subsets` field is exported as a LIST of two refs, not a single
-    dict -- confirms `_dict_refs` correctly finds the lemma's id inside a list-shaped field, and
-    reports exactly one entry (not two) for the single `(element, field)` pair that matched."""
+    """`require constraint c :> other15, deliveredEnergyBoundedBySupply;` subsets TWO things at
+    once, so `c`'s own `subsets` field is exported as a LIST of two refs, not a single dict --
+    confirms `_raw_refs` correctly finds the lemma's id inside a list-shaped field, and reports
+    exactly one entry (not two) for the single `(element, field)` pair that matched."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + MULTI_SUBSETS_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
@@ -734,17 +767,20 @@ package TieFixture16 {
 """
 
 
-def test_requirement_ties_frame_concern_construct(conn, ch10) -> None:
-    """Round 3: `frame concern k :> lemma;` puts `subsets` directly on `k`, a `ConcernUsage` --
-    itself a genuine metaclass subtype of `RequirementUsage` (confirmed via `javap`), so the
-    inclusive owner walk finds `k` as its own nearest requirement owner, the same rule already
-    applied to a bare `requirement r :> lemma;` (`test_requirement_ties_positive_control_usage_is_tying_element_itself`)."""
+def test_requirement_ties_frame_concern_owned_by_a_real_requirement_still_found(conn, ch10) -> None:
+    """`frame concern k :> lemma;` puts `subsets` directly on `k`, a `ConcernUsage`. Check B's
+    exact-type owner-walk does NOT stop at `k` itself (a `ConcernUsage` is not an exact
+    `RequirementDefinition`/`RequirementUsage` match, by design), but `k` is nested inside a genuine
+    `RequirementDefinition` (`EnergyReq16`), so the walk continues past `k` and correctly attributes
+    the tie to the enclosing requirement. This is still IN scope: the exclusion is about a
+    `Concern`/`Viewpoint` DEFINITION being the tie's direct owner (see the `_as_owner` tests above),
+    not about a `ConcernUsage` appearing somewhere inside a real requirement's own body."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + FRAME_CONCERN_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture16::EnergyReq16::k", "field": "subsets", "requirement": "TieFixture16::EnergyReq16::k"}]
+    assert ties == [{"tying_element": "TieFixture16::EnergyReq16::k", "field": "subsets", "requirement": "TieFixture16::EnergyReq16"}]
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -760,16 +796,16 @@ package TieFixture17 {
 """
 
 
-def test_requirement_ties_transitive_chain_through_unowned_intermediate_stays_undetected(conn, ch10) -> None:
-    """The one, honest, named scope limit, confirmed to survive the round-3 redesign unchanged:
-    `mid17` (a constraint outside any requirement) directly subsets the lemma -- found, but
-    `requirement=None` since `mid17` itself is not requirement-owned. `EnergyReq17`'s own `c :>
-    mid17;` is a SEPARATE, one-hop tie from `c` to `mid17`, not to the lemma at all, so it produces
-    no entry of its own here. A field-agnostic DIRECT-reference scan has no reason to chase a second
-    hop through an element that is not itself requirement-owned; `tied_to_any_requirement` stays
-    `False`, and `tied_to_any_requirement(model, "TieFixture17::mid17")` (checked separately, not
-    asserted here) would find `EnergyReq17::c` -- confirming this is a genuine one-hop-at-a-time
-    scope limit, not a search that misses `mid17` altogether."""
+def test_requirement_ties_does_not_detect_transitive_chain_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `mid17` (a constraint outside any requirement) directly
+    subsets the lemma -- found by Check B, but `requirement=None` since `mid17` itself is not
+    requirement-owned. `EnergyReq17`'s own `c :> mid17;` is a SEPARATE, one-hop tie from `c` to
+    `mid17`, not to the lemma at all, so it produces no entry of its own here. A direct-reference
+    scan has no mechanism to chase a second hop through an element that is not itself
+    requirement-owned; `tied_to_any_requirement` stays `False`, and
+    `tied_to_any_requirement(model, "TieFixture17::mid17")` (checked separately, not asserted here)
+    would find `EnergyReq17::c` -- confirming this is a genuine one-hop-at-a-time scope limit, not a
+    search that misses `mid17` altogether."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + TRANSITIVE_CHAIN_NOT_DETECTED
     m = conn.load_from_content(source, strict=False)
     assert m.ok
