@@ -334,7 +334,7 @@ def test_ch08_to_ch10_predecessor_containment_via_fallback_is_real_not_vacuous(c
 
     truncated = original_source.replace(
         "    part rated : ResistanceCoil {\n"
-        "        attribute :>> efficiency = 0.7;\n"
+        "        attribute :>> efficiency = 0.7 [MeasurementReferences::one];\n"
         "        assert satisfy heatGenerationReq by rated;\n"
         "    }\n",
         "",

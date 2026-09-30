@@ -207,7 +207,7 @@ package ToasterDemo {
     }
 
     part rated : ResistanceCoil {
-        attribute :>> efficiency = 0.7;
+        attribute :>> efficiency = 0.7 [MeasurementReferences::one];
         assert satisfy heatGenerationReq by rated;
     }
     part weak : ResistanceCoil {
