@@ -213,10 +213,19 @@ def test_requirement_coverage_excludes_verification_case_objective(ch08) -> None
     unnamed `RequirementUsage` (`ToasterDemo::TimelyToastTest::@2`, no `declaredName`):
     the objective's own auto-synthesized wrapper, not a design requirement. It must not
     appear in the coverage report at all (a bare bookkeeping artifact reported as an
-    uncovered requirement would be noise, not a finding)."""
+    uncovered requirement would be noise, not a finding). CONTRACT ENERGY-TIE-08 added a
+    fourth named requirement usage, `energyConservationReq`, which correctly appears here too
+    (it is a real, named `RequirementUsage`, unlike the verification case's own unnamed
+    objective wrapper this test is about) -- and its own `EnergyConservationTest::objective`
+    wrapper is excluded by the same `declaredName is None` mechanism as `TimelyToastTest`'s."""
     reqs = {c["requirement"] for c in query.requirement_coverage(ch08)}
-    assert reqs == {"ToasterDemo::timely", "ToasterDemo::heatGenerationReq"}
+    assert reqs == {
+        "ToasterDemo::timely",
+        "ToasterDemo::heatGenerationReq",
+        "ToasterDemo::energyConservationReq",
+    }
     assert not any(r.startswith("ToasterDemo::TimelyToastTest") for r in reqs)
+    assert not any(r.startswith("ToasterDemo::EnergyConservationTest") for r in reqs)
 
 
 def test_satisfy_relationships_reports_is_negated(ch08) -> None:
@@ -268,18 +277,40 @@ def ch10(conn):
 
 LEMMA = "ToasterDemo::deliveredEnergyBoundedBySupply"
 
+# CONTRACT ENERGY-TIE-08 (2026-09-30, decisions/log.md DL-072): Z decided
+# `deliveredEnergyBoundedBySupply` should be tied to a real, stated requirement rather than
+# serve as the "unjustified widget" pedagogical example (decisions/next-passes.md item 29 /
+# decisions/log.md DL-070/DL-071 -- that finding was about the SEARCH LOGIC, not a claim that
+# this lemma could never legitimately be tied). `models/ch08-cumulative.sysml` (and
+# `models/ch10-cumulative.sysml`, synced to stay byte-identical in body, see that file's own
+# header comment) now carries `requirement def EnergyConservationReq`, whose own `require
+# constraint energyConserved :> deliveredEnergyBoundedBySupply;` is a genuine Check B tie --
+# see `chapters/ch08-checking/04-energy-conservation-req.ipynb`. Every fixture below is built
+# on top of `ch10-cumulative.sysml`, so `requirement_ties`/`tied_to_any_requirement` now always
+# finds this ONE base-model tie in addition to whatever each fixture's own construct adds.
+# Naming it here lets every test below assert it explicitly, rather than re-deriving it, and
+# keeps it from being mistaken for something a given fixture's own construct produced.
+ENERGY_CONSERVATION_TIE = {
+    "tying_element": "ToasterDemo::EnergyConservationReq::energyConserved",
+    "field": "subsets",
+    "requirement": "ToasterDemo::EnergyConservationReq",
+}
 
-def test_requirement_ties_negative_control_real_model(ch10) -> None:
-    """decisions/next-passes.md item 29 / decisions/log.md DL-070/DL-071: the real, current model
-    has no tie from `deliveredEnergyBoundedBySupply` to any requirement, under this module's NARROW,
-    two-check design (satisfy-by-subject, Check A; a direct `subsets`/`redefines`/`references`/
-    `referent` reference from within a requirement's own body, Check B -- see `requirement_ties`'s
-    own docstring for exactly what is and is not covered). This is not a claim that no tie could
-    exist by any conceivable mechanism -- only that neither of these two specific, named checks
-    finds one."""
+
+def test_requirement_ties_real_model_now_tied_via_energy_conservation_req(ch10) -> None:
+    """CONTRACT ENERGY-TIE-08 (2026-09-30, decisions/log.md DL-072) supersedes this test's own
+    prior finding (formerly `test_requirement_ties_negative_control_real_model`,
+    decisions/next-passes.md item 29 / decisions/log.md DL-070/DL-071): the real, current model
+    NOW HAS a tie from `deliveredEnergyBoundedBySupply` to a real requirement,
+    `ToasterDemo::EnergyConservationReq`, found by Check B (a direct `subsets` reference from
+    within that requirement's own body -- see `ENERGY_CONSERVATION_TIE` above). The SEARCH LOGIC
+    this prior finding was about (`requirement_ties`/`tied_to_any_requirement`, DL-070/DL-071) is
+    unchanged; only the real model's own content changed. Chapter 10's own follow-on contract
+    replaces the pedagogical "unjustified widget" example with a freshly constructed,
+    genuinely-unjustified fixture of its own, not this lemma."""
     idx = query.ApiIndex(ch10)
-    assert query.requirement_ties(ch10, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(ch10, LEMMA, idx) is False
+    assert query.requirement_ties(ch10, LEMMA, idx) == [ENERGY_CONSERVATION_TIE]
+    assert query.tied_to_any_requirement(ch10, LEMMA, idx) is True
 
 
 REQUIREMENT_SUBSETS_TIE = """
@@ -303,7 +334,10 @@ def test_requirement_ties_positive_control_subsets(conn, ch10) -> None:
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture::EnergyReq::c", "field": "subsets", "requirement": "TieFixture::EnergyReq"}]
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture::EnergyReq::c", "field": "subsets", "requirement": "TieFixture::EnergyReq"},
+    ]
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -332,6 +366,7 @@ def test_requirement_ties_positive_control_references_and_usage_owner(conn, ch10
     idx = query.ApiIndex(m)
     ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
     assert ties == {
+        ("ToasterDemo::EnergyConservationReq::energyConserved", "subsets"): "ToasterDemo::EnergyConservationReq",
         ("TieFixture2::EnergyReq2::altName", "references"): "TieFixture2::EnergyReq2",
         ("TieFixture2::usageTie::c2", "subsets"): "TieFixture2::usageTie",
     }
@@ -350,15 +385,21 @@ package NonReqTie {
 
 def test_requirement_ties_reports_none_when_not_requirement_owned(conn, ch10) -> None:
     """A `subsets` tie owned by an unrelated part (not any requirement) is found by the search,
-    but reported with `requirement=None`, and `tied_to_any_requirement` stays `False`: a tie is
-    only a traceability tie when a requirement actually owns it."""
+    but reported with `requirement=None`: a tie is only a traceability tie when a requirement
+    actually owns it. CONTRACT ENERGY-TIE-08: `tied_to_any_requirement` is now `True` because the
+    base model carries `ENERGY_CONSERVATION_TIE` unconditionally, not because of this fixture's
+    own construct -- `NonReqTie::Widget::c3`'s own entry is still correctly `requirement=None`,
+    which is what actually demonstrates this fixture's own point."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + NON_REQUIREMENT_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "NonReqTie::Widget::c3", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "NonReqTie::Widget::c3", "field": "subsets", "requirement": None},
+    ]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 def test_requirement_ties_mutation_old_narrow_check_misses_real_tie(conn, ch10) -> None:
@@ -402,9 +443,12 @@ def test_requirement_ties_positive_control_referent(conn, ch10) -> None:
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert len(ties) == 1
-    assert ties[0]["field"] == "referent"
-    assert ties[0]["requirement"] == "TieFixture3::EnergyReq3"
+    # CONTRACT ENERGY-TIE-08: len is now 2, not 1 -- the base model's own ENERGY_CONSERVATION_TIE
+    # plus this fixture's referent tie.
+    assert len(ties) == 2
+    assert ties[0] == ENERGY_CONSERVATION_TIE
+    assert ties[1]["field"] == "referent"
+    assert ties[1]["requirement"] == "TieFixture3::EnergyReq3"
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -429,7 +473,10 @@ def test_requirement_ties_positive_control_redefines(conn, ch10) -> None:
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture4::EnergyReq4::c", "field": "redefines", "requirement": "TieFixture4::EnergyReq4"}]
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture4::EnergyReq4::c", "field": "redefines", "requirement": "TieFixture4::EnergyReq4"},
+    ]
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -452,7 +499,10 @@ def test_requirement_ties_positive_control_usage_is_tying_element_itself(conn, c
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture5::r", "field": "subsets", "requirement": "TieFixture5::r"}]
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture5::r", "field": "subsets", "requirement": "TieFixture5::r"},
+    ]
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -488,6 +538,7 @@ def test_requirement_ties_satisfy_by_subject_the_chapter_own_idiom(conn, ch10) -
     idx = query.ApiIndex(m)
     ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
     assert ties == {
+        ("ToasterDemo::EnergyConservationReq::energyConserved", "subsets"): "ToasterDemo::EnergyConservationReq",
         ("TieFixture6::@1", "subject"): "ToasterDemo::heatGenerationReq",
         ("TieFixture6___401_subject_pvalue", "referent"): None,
     }
@@ -506,14 +557,19 @@ def test_requirement_ties_negated_satisfy_does_not_count_as_a_tie(conn, ch10) ->
     """Check A only counts a POSITIVE satisfy claim: `assert not satisfy R by C;` says C does NOT
     meet R, which is evidence reinforcing "untied", not a real connection. Confirm Check A finds
     nothing attributable to a requirement for this fixture (Check B's own `referent` hit on the
-    synthetic `by`-clause expression still has `requirement=None`, same as the positive case)."""
+    synthetic `by`-clause expression still has `requirement=None`, same as the positive case).
+    CONTRACT ENERGY-TIE-08: the base model now carries `ENERGY_CONSERVATION_TIE` unconditionally,
+    so `tied_to_any_requirement` is `True` for a reason unrelated to this fixture -- the filtered
+    assertion below, over this fixture's OWN ties only, is what actually shows the negated satisfy
+    claim itself still contributes no attributable tie."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + NEGATED_SATISFY_NOT_A_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert all(t["requirement"] is None for t in ties), ties
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    own_ties = [t for t in ties if t != ENERGY_CONSERVATION_TIE]
+    assert all(t["requirement"] is None for t in own_ties), own_ties
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 DEPENDENCY_TIE = """
@@ -534,13 +590,15 @@ def test_requirement_ties_does_not_detect_sibling_dependency_by_design(conn, ch1
     raised, which Z decided does NOT count as a "tie" for this narrow design -- Check A only covers
     `satisfy`, and Check B's fixed field list (`subsets`/`redefines`/`references`/`referent`) does
     not include `supplier`, so neither check fires. Confirm the search finds nothing at all for this
-    construct, not merely that it fails to attribute a requirement."""
+    construct beyond the base model's own unconditional `ENERGY_CONSERVATION_TIE` (CONTRACT
+    ENERGY-TIE-08) -- the equality check below confirms this fixture's own dependency construct
+    adds no additional entry, not merely that it fails to attribute a requirement."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + DEPENDENCY_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert query.requirement_ties(m, LEMMA, idx) == [ENERGY_CONSERVATION_TIE]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 ALLOCATE_TIE = """
@@ -558,13 +616,14 @@ def test_requirement_ties_does_not_detect_sibling_allocate_by_design(conn, ch10)
     """Scope boundary, not a missed bug: `allocate lemma to t;` is the same sibling-relationship
     shape as `dependency` (the tie lives on `AllocationUsage.sourceFeature`/`relatedFeature`, neither
     of which is in Check B's fixed field list, and this is not a `satisfy`), so it is out of scope by
-    design. Confirm the search finds nothing at all."""
+    design. Confirm the search finds nothing at all beyond the base model's own unconditional
+    `ENERGY_CONSERVATION_TIE` (CONTRACT ENERGY-TIE-08)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + ALLOCATE_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert query.requirement_ties(m, LEMMA, idx) == [ENERGY_CONSERVATION_TIE]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 BIND_TIE = """
@@ -582,13 +641,14 @@ package TieFixture9 {
 def test_requirement_ties_does_not_detect_bind_connector_by_design(conn, ch10) -> None:
     """Scope boundary, not a missed bug: `bind x = lemma;` carries the tie via
     `BindingConnectorAsUsage.targetFeature`/`relatedFeature`, neither of which is in Check B's fixed
-    field list, and this is not a `satisfy`. Confirm the search finds nothing at all."""
+    field list, and this is not a `satisfy`. Confirm the search finds nothing at all beyond the
+    base model's own unconditional `ENERGY_CONSERVATION_TIE` (CONTRACT ENERGY-TIE-08)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + BIND_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert query.requirement_ties(m, LEMMA, idx) == [ENERGY_CONSERVATION_TIE]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 METADATA_TIE = """
@@ -606,13 +666,14 @@ package TieFixture10 {
 def test_requirement_ties_does_not_detect_metadata_about_by_design(conn, ch10) -> None:
     """Scope boundary, not a missed bug: `metadata Trace10 about lemma;` carries the tie via
     `MetadataUsage.annotatedElement`, a field outside Check B's fixed list, and this is not a
-    `satisfy`. Confirm the search finds nothing at all."""
+    `satisfy`. Confirm the search finds nothing at all beyond the base model's own unconditional
+    `ENERGY_CONSERVATION_TIE` (CONTRACT ENERGY-TIE-08)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + METADATA_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert query.requirement_ties(m, LEMMA, idx) == [ENERGY_CONSERVATION_TIE]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 INVOCATION_TIE = """
@@ -631,13 +692,14 @@ def test_requirement_ties_does_not_detect_invocation_expression_by_design(conn, 
     (`deliveredEnergyBoundedBySupply()`, as opposed to just naming it bare) carries the tie via
     `InvocationExpression.function`, a field outside Check B's fixed list -- a different shape from
     `referent` (a bare name, which IS covered, see `test_requirement_ties_positive_control_referent`).
-    Confirm the search finds nothing at all for the invocation shape."""
+    Confirm the search finds nothing at all for the invocation shape beyond the base model's own
+    unconditional `ENERGY_CONSERVATION_TIE` (CONTRACT ENERGY-TIE-08)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + INVOCATION_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert query.requirement_ties(m, LEMMA, idx) == [ENERGY_CONSERVATION_TIE]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 CONCERN_OWNER_TIE = """
@@ -656,14 +718,20 @@ def test_requirement_ties_does_not_attribute_concern_definition_ownership_by_des
     `RequirementDefinition`, but Check B's owner-walk uses an EXACT `@type` match only, by design
     (no metaclass-subtype closure): a `ConcernDefinition` owner does not count. The `subsets` tie
     itself IS still found (Check B's field scan is not type-filtered), but `requirement` is `None`
-    because `C12` is not an exact match and no further exact-match ancestor exists above it."""
+    because `C12` is not an exact match and no further exact-match ancestor exists above it.
+    CONTRACT ENERGY-TIE-08: `tied_to_any_requirement` is now `True` because the base model
+    carries `ENERGY_CONSERVATION_TIE` unconditionally, not because of `C12`'s own tie, which is
+    still correctly unattributed (`requirement=None`)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + CONCERN_OWNER_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture12::C12::c", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture12::C12::c", "field": "subsets", "requirement": None},
+    ]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 VIEWPOINT_OWNER_TIE = """
@@ -681,14 +749,19 @@ def test_requirement_ties_does_not_attribute_viewpoint_definition_ownership_by_d
     """Scope boundary, not a missed bug: `ViewpointDefinition` is likewise a genuine metaclass
     subtype of `RequirementDefinition`, and likewise deliberately NOT treated as a requirement owner
     by Check B's exact-type rule. Same shape as the `ConcernDefinition` case above: the tie is found,
-    but `requirement` is `None`."""
+    but `requirement` is `None`. CONTRACT ENERGY-TIE-08: `tied_to_any_requirement` is now `True`
+    because the base model carries `ENERGY_CONSERVATION_TIE` unconditionally, not because of
+    `V13`'s own tie, which is still correctly unattributed (`requirement=None`)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + VIEWPOINT_OWNER_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture13::V13::c", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture13::V13::c", "field": "subsets", "requirement": None},
+    ]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 CONNECTION_END_TIE = """
@@ -713,13 +786,14 @@ def test_requirement_ties_does_not_detect_connection_end_by_design(conn, ch10) -
     reach, and this is not a `satisfy`. This is exactly the gap round 3's field-agnostic scan itself
     still missed (its `ReferenceSubsetting` relationship-object exclusion list happened to be the tie's
     only carrier), which is part of why this round replaced that design rather than patching it
-    further. Confirm the search finds nothing at all."""
+    further. Confirm the search finds nothing at all beyond the base model's own unconditional
+    `ENERGY_CONSERVATION_TIE` (CONTRACT ENERGY-TIE-08)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + CONNECTION_END_TIE
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert query.requirement_ties(m, LEMMA, idx) == [ENERGY_CONSERVATION_TIE]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
 REQ_REQUIRES_REQ_TIE = """
@@ -747,7 +821,10 @@ def test_requirement_ties_requirement_requires_requirement(conn, ch10) -> None:
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture14::A14::c", "field": "subsets", "requirement": "TieFixture14::A14"}]
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture14::A14::c", "field": "subsets", "requirement": "TieFixture14::A14"},
+    ]
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -773,7 +850,10 @@ def test_requirement_ties_multi_subsets_list_shaped_field(conn, ch10) -> None:
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture15::EnergyReq15::c", "field": "subsets", "requirement": "TieFixture15::EnergyReq15"}]
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture15::EnergyReq15::c", "field": "subsets", "requirement": "TieFixture15::EnergyReq15"},
+    ]
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -802,7 +882,10 @@ def test_requirement_ties_frame_concern_owned_by_a_real_requirement_still_found(
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture16::EnergyReq16::k", "field": "subsets", "requirement": "TieFixture16::EnergyReq16"}]
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture16::EnergyReq16::k", "field": "subsets", "requirement": "TieFixture16::EnergyReq16"},
+    ]
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
@@ -827,14 +910,20 @@ def test_requirement_ties_does_not_detect_transitive_chain_by_design(conn, ch10)
     requirement-owned; `tied_to_any_requirement` stays `False`, and
     `tied_to_any_requirement(model, "TieFixture17::mid17")` (checked separately, not asserted here)
     would find `EnergyReq17::c` -- confirming this is a genuine one-hop-at-a-time scope limit, not a
-    search that misses `mid17` altogether."""
+    search that misses `mid17` altogether. CONTRACT ENERGY-TIE-08: `tied_to_any_requirement` is
+    now `True` for the LEMMA target because the base model carries `ENERGY_CONSERVATION_TIE`
+    unconditionally, not because of `mid17`'s own one-hop tie, which is still correctly
+    unattributed (`requirement=None`)."""
     source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + TRANSITIVE_CHAIN_NOT_DETECTED
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
     ties = query.requirement_ties(m, LEMMA, idx)
-    assert ties == [{"tying_element": "TieFixture17::mid17", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert ties == [
+        ENERGY_CONSERVATION_TIE,
+        {"tying_element": "TieFixture17::mid17", "field": "subsets", "requirement": None},
+    ]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
     # Confirm the scope limit is specifically about the SECOND hop, not a blind spot on `mid17`
     # itself: `EnergyReq17::c` DOES directly tie to `mid17` and IS found when `mid17` is the target.
     mid_ties = query.requirement_ties(m, "TieFixture17::mid17", idx)
