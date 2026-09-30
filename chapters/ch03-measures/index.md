@@ -33,4 +33,4 @@ The Python side carries an `asserted_context` ReviewRecord (`AC-C03`) recording 
 
 ## Experiment
 
-The [chapter exercise](../../exercises/ch03/exercise.ipynb) asks you to add a requirement usage, fold a negated satisfaction claim into a deliberately faulty candidate only, record both an `asserted_context` framing judgment and an `asserted_solution` record, and close the requirement's anatomy with a `verification def`, to your coffee maker model. Work through it after completing all four notebooks.
+The [chapter exercise](../../exercises/ch03/exercise.ipynb) asks you to add a requirement usage, record an `asserted_context` framing judgment (MoE or MoP), evaluate a negated satisfaction claim folded into a deliberately faulty candidate only, write an `asserted_solution` record for that claim, and close the requirement's anatomy with a `verification def`, to your coffee maker model. Work through it after completing all four notebooks.
