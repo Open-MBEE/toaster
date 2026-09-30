@@ -494,6 +494,28 @@ def test_requirement_ties_satisfy_by_subject_the_chapter_own_idiom(conn, ch10) -
     assert query.tied_to_any_requirement(m, LEMMA, idx) is True
 
 
+NEGATED_SATISFY_NOT_A_TIE = """
+package TieFixture6b {
+    private import ToasterDemo::*;
+    assert not satisfy heatGenerationReq by deliveredEnergyBoundedBySupply;
+}
+"""
+
+
+def test_requirement_ties_negated_satisfy_does_not_count_as_a_tie(conn, ch10) -> None:
+    """Check A only counts a POSITIVE satisfy claim: `assert not satisfy R by C;` says C does NOT
+    meet R, which is evidence reinforcing "untied", not a real connection. Confirm Check A finds
+    nothing attributable to a requirement for this fixture (Check B's own `referent` hit on the
+    synthetic `by`-clause expression still has `requirement=None`, same as the positive case)."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text() + NEGATED_SATISFY_NOT_A_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert all(t["requirement"] is None for t in ties), ties
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
 DEPENDENCY_TIE = """
 package TieFixture7 {
     private import ToasterDemo::*;
@@ -674,7 +696,7 @@ package TieFixtureConnEnd {
     private import ToasterDemo::*;
     requirement def EnergyReqConnEnd {
         subject t : Toaster;
-        connector c2 {
+        connection c2 {
             end e1 ::> deliveredEnergyBoundedBySupply;
             end e2 ::> t;
         }
