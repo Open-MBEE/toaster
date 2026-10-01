@@ -269,17 +269,78 @@ def ch10(conn):
 LEMMA = "ToasterDemo::deliveredEnergyBoundedBySupply"
 
 
-def test_requirement_ties_negative_control_real_model(ch10) -> None:
-    """decisions/next-passes.md item 29 / decisions/log.md DL-070/DL-071: the real, current model
-    has no tie from `deliveredEnergyBoundedBySupply` to any requirement, under this module's NARROW,
-    two-check design (satisfy-by-subject, Check A; a direct `subsets`/`redefines`/`references`/
-    `referent` reference from within a requirement's own body, Check B -- see `requirement_ties`'s
-    own docstring for exactly what is and is not covered). This is not a claim that no tie could
-    exist by any conceivable mechanism -- only that neither of these two specific, named checks
-    finds one."""
+# Convention for every test below: each builds its own model as `ch10-cumulative.sysml`'s own
+# text plus one small, uniquely-packaged fixture. The real, committed base model now carries its
+# own PERMANENT requirement_ties() hit for LEMMA (see
+# test_requirement_ties_real_model_now_tied_via_remediation just below for what it is and why), so
+# requirement_ties(m, LEMMA, idx) against any of these combined models always contains that
+# base-model entry mixed in with whatever the fixture itself contributes. A test that checks "does
+# my own fixture's own construct get detected" filters the result down to entries owned by that
+# fixture's own package with `_ties_for_fixture` below, rather than exact-matching the whole list --
+# so a future, unrelated tie added elsewhere in the base model does not break every test in this
+# file again.
+
+
+def _ties_for_fixture(ties: list[dict], package: str) -> list[dict]:
+    """Keep only the entries of a requirement_ties() result whose own `tying_element` belongs to
+    one fixture package -- either the package name itself (a top-level usage like
+    `TieFixture5::r`), a member nested inside it with a real qualified name (`Package::Member`),
+    or one of opensysml's own synthesized element ids for an anonymous sub-expression (a `by`-clause
+    or `require`-reference's own synthetic feature), which replace a qualified name's `::`
+    separators with `__`/`___` instead (e.g. `TieFixture6___401_subject_pvalue`,
+    `TieFixture3__EnergyReq3___401_pcondition`). Checking for a `::` OR `__` delimiter right after
+    the package name (not just any prefix match) is what keeps `TieFixture` from also matching
+    `TieFixture2`'s own members -- every fixture package in this file is unique, so that is enough
+    to isolate a test's own construct from the base model's own permanent tie."""
+    out = []
+    for t in ties:
+        elem = t["tying_element"]
+        if elem == package:
+            out.append(t)
+            continue
+        rest = elem[len(package):] if elem.startswith(package) else ""
+        if rest.startswith("::") or rest.startswith("__"):
+            out.append(t)
+    return out
+
+
+def _fixture_tied_to_any_requirement(fixture_ties: list[dict]) -> bool:
+    """`tied_to_any_requirement`'s own rule (at least one entry owned by a requirement), applied to
+    an already fixture-filtered `requirement_ties()` list (`_ties_for_fixture`'s own output)
+    instead of the whole combined model. The real, unfiltered `query.tied_to_any_requirement(m,
+    LEMMA, idx)` is now unconditionally `True` for every model built in this file -- the base
+    model's own permanent tie (`test_requirement_ties_real_model_now_tied_via_remediation`) already
+    satisfies it on its own -- so it can no longer answer "did THIS fixture's own construct produce
+    an attributable tie"; this scoped equivalent can."""
+    return any(t["requirement"] is not None for t in fixture_ties)
+
+
+def test_requirement_ties_real_model_now_tied_via_remediation(ch10) -> None:
+    """decisions/next-passes.md item 29 / decisions/log.md DL-070/DL-071/DL-072: this test used to
+    be `test_requirement_ties_negative_control_real_model`, asserting the real, unmodified model had
+    NO tie from `deliveredEnergyBoundedBySupply` to any requirement -- a real gap ch10's own
+    traceability search found (the lemma really was untied). That gap is now closed: the final,
+    reconciled design (two independently-built candidate designs, reconciled -- see
+    `docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md`) adds
+    `EnergyConservationReq`/`energyConservationReq` to `models/ch10-cumulative.sysml`, restating the
+    lemma's own Z3-proved conservation property (ch08) as a stakeholder-facing requirement, with its
+    own `require constraint c :> deliveredEnergyBoundedBySupply;` subsetting the lemma directly from
+    within the requirement DEFINITION's own body (Check B) -- and deliberately NO
+    `assert satisfy energyConservationReq by deliveredEnergyBoundedBySupply;` (Check A): direct
+    testing against `model.verify_satisfaction()` found that construct errors identically regardless
+    of its own binding (`require condition evaluation failed: no value for feature
+    heatGenCheck.efficiency`), because the requirement's own required constraint never references
+    its subject at all, so satisfying it by any candidate does no evaluative work; separately,
+    `sysmlv2 verify --solve` generates no check at all for a bare subsetting reference, confirmed
+    directly in notebook 01. The real model therefore carries exactly ONE entry for the lemma --
+    Check B's own `subsets` hit, attributed to the DEFINITION (`requirement=EnergyConservationReq`),
+    not the usage -- and `tied_to_any_requirement` is `True`."""
     idx = query.ApiIndex(ch10)
-    assert query.requirement_ties(ch10, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(ch10, LEMMA, idx) is False
+    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(ch10, LEMMA, idx)}
+    assert ties == {
+        ("ToasterDemo::EnergyConservationReq::c", "subsets"): "ToasterDemo::EnergyConservationReq",
+    }
+    assert query.tied_to_any_requirement(ch10, LEMMA, idx) is True
 
 
 REQUIREMENT_SUBSETS_TIE = """
@@ -302,9 +363,9 @@ def test_requirement_ties_positive_control_subsets(conn, ch10) -> None:
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture")
     assert ties == [{"tying_element": "TieFixture::EnergyReq::c", "field": "subsets", "requirement": "TieFixture::EnergyReq"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(ties) is True
 
 
 REQUIREMENT_REFERENCES_AND_USAGE_TIE = """
@@ -330,12 +391,13 @@ def test_requirement_ties_positive_control_references_and_usage_owner(conn, ch10
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
+    fixture_ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture2")
+    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in fixture_ties}
     assert ties == {
         ("TieFixture2::EnergyReq2::altName", "references"): "TieFixture2::EnergyReq2",
         ("TieFixture2::usageTie::c2", "subsets"): "TieFixture2::usageTie",
     }
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(fixture_ties) is True
 
 
 NON_REQUIREMENT_TIE = """
@@ -356,9 +418,9 @@ def test_requirement_ties_reports_none_when_not_requirement_owned(conn, ch10) ->
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "NonReqTie")
     assert ties == [{"tying_element": "NonReqTie::Widget::c3", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 def test_requirement_ties_mutation_old_narrow_check_misses_real_tie(conn, ch10) -> None:
@@ -401,11 +463,11 @@ def test_requirement_ties_positive_control_referent(conn, ch10) -> None:
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture3")
     assert len(ties) == 1
     assert ties[0]["field"] == "referent"
     assert ties[0]["requirement"] == "TieFixture3::EnergyReq3"
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(ties) is True
 
 
 REQUIREMENT_REDEFINES_TIE = """
@@ -428,9 +490,9 @@ def test_requirement_ties_positive_control_redefines(conn, ch10) -> None:
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture4")
     assert ties == [{"tying_element": "TieFixture4::EnergyReq4::c", "field": "redefines", "requirement": "TieFixture4::EnergyReq4"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(ties) is True
 
 
 REQUIREMENT_USAGE_DIRECT_TIE = """
@@ -451,9 +513,9 @@ def test_requirement_ties_positive_control_usage_is_tying_element_itself(conn, c
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture5")
     assert ties == [{"tying_element": "TieFixture5::r", "field": "subsets", "requirement": "TieFixture5::r"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(ties) is True
 
 
 SATISFY_BY_LEMMA_TIE = """
@@ -486,12 +548,13 @@ def test_requirement_ties_satisfy_by_subject_the_chapter_own_idiom(conn, ch10) -
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(m, LEMMA, idx)}
+    fixture_ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture6")
+    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in fixture_ties}
     assert ties == {
         ("TieFixture6::@1", "subject"): "ToasterDemo::heatGenerationReq",
         ("TieFixture6___401_subject_pvalue", "referent"): None,
     }
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(fixture_ties) is True
 
 
 NEGATED_SATISFY_NOT_A_TIE = """
@@ -511,9 +574,9 @@ def test_requirement_ties_negated_satisfy_does_not_count_as_a_tie(conn, ch10) ->
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture6b")
     assert all(t["requirement"] is None for t in ties), ties
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 DEPENDENCY_TIE = """
@@ -539,8 +602,9 @@ def test_requirement_ties_does_not_detect_sibling_dependency_by_design(conn, ch1
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture7")
+    assert ties == []
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 ALLOCATE_TIE = """
@@ -563,8 +627,9 @@ def test_requirement_ties_does_not_detect_sibling_allocate_by_design(conn, ch10)
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture8")
+    assert ties == []
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 BIND_TIE = """
@@ -587,8 +652,9 @@ def test_requirement_ties_does_not_detect_bind_connector_by_design(conn, ch10) -
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture9")
+    assert ties == []
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 METADATA_TIE = """
@@ -611,8 +677,9 @@ def test_requirement_ties_does_not_detect_metadata_about_by_design(conn, ch10) -
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture10")
+    assert ties == []
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 INVOCATION_TIE = """
@@ -636,8 +703,9 @@ def test_requirement_ties_does_not_detect_invocation_expression_by_design(conn, 
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture11")
+    assert ties == []
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 CONCERN_OWNER_TIE = """
@@ -661,9 +729,9 @@ def test_requirement_ties_does_not_attribute_concern_definition_ownership_by_des
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture12")
     assert ties == [{"tying_element": "TieFixture12::C12::c", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 VIEWPOINT_OWNER_TIE = """
@@ -686,9 +754,9 @@ def test_requirement_ties_does_not_attribute_viewpoint_definition_ownership_by_d
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture13")
     assert ties == [{"tying_element": "TieFixture13::V13::c", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 CONNECTION_END_TIE = """
@@ -718,8 +786,9 @@ def test_requirement_ties_does_not_detect_connection_end_by_design(conn, ch10) -
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    assert query.requirement_ties(m, LEMMA, idx) == []
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixtureConnEnd")
+    assert ties == []
+    assert _fixture_tied_to_any_requirement(ties) is False
 
 
 REQ_REQUIRES_REQ_TIE = """
@@ -746,9 +815,9 @@ def test_requirement_ties_requirement_requires_requirement(conn, ch10) -> None:
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture14")
     assert ties == [{"tying_element": "TieFixture14::A14::c", "field": "subsets", "requirement": "TieFixture14::A14"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(ties) is True
 
 
 MULTI_SUBSETS_TIE = """
@@ -772,9 +841,9 @@ def test_requirement_ties_multi_subsets_list_shaped_field(conn, ch10) -> None:
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture15")
     assert ties == [{"tying_element": "TieFixture15::EnergyReq15::c", "field": "subsets", "requirement": "TieFixture15::EnergyReq15"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(ties) is True
 
 
 FRAME_CONCERN_TIE = """
@@ -801,9 +870,9 @@ def test_requirement_ties_frame_concern_owned_by_a_real_requirement_still_found(
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture16")
     assert ties == [{"tying_element": "TieFixture16::EnergyReq16::k", "field": "subsets", "requirement": "TieFixture16::EnergyReq16"}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+    assert _fixture_tied_to_any_requirement(ties) is True
 
 
 TRANSITIVE_CHAIN_NOT_DETECTED = """
@@ -832,9 +901,9 @@ def test_requirement_ties_does_not_detect_transitive_chain_by_design(conn, ch10)
     m = conn.load_from_content(source, strict=False)
     assert m.ok
     idx = query.ApiIndex(m)
-    ties = query.requirement_ties(m, LEMMA, idx)
+    ties = _ties_for_fixture(query.requirement_ties(m, LEMMA, idx), "TieFixture17")
     assert ties == [{"tying_element": "TieFixture17::mid17", "field": "subsets", "requirement": None}]
-    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    assert _fixture_tied_to_any_requirement(ties) is False
     # Confirm the scope limit is specifically about the SECOND hop, not a blind spot on `mid17`
     # itself: `EnergyReq17::c` DOES directly tie to `mid17` and IS found when `mid17` is the target.
     mid_ties = query.requirement_ties(m, "TieFixture17::mid17", idx)
