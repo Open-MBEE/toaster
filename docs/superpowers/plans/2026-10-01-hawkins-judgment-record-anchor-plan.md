@@ -971,6 +971,33 @@ git commit -m "DL-0NN: close DL-075 -- Hawkins judgment records now anchored to 
 
 ---
 
+## Task 15: Retrofit `exercises/` so completing them correctly still validates clean
+
+**Why this task exists (added after Task 1's independent review, not in the original spec):** the design spec and this plan's original Tasks 1–9 scoped only `chapters/`. Task 1's reviewer found, by an AST scan of every `ReviewRecord(` call site in the repo, that `exercises/ch03`, `ch04`, `ch06`, `ch08`, `ch09`, `ch10` each build a `-EX`-suffixed mirror of a real chapter record (e.g. `AS-C08-EX` mirrors `AS-C08`, same subject), and `exercises/ch02` is a pure fill-in-the-blank template (every field, including `model_ref`, is a `"# ..."` comment placeholder the learner must replace, not executable as committed). Without this task, a learner who correctly completes `ch03`/`ch04`/`ch06`/`ch08`/`ch09`/`ch10`'s exercise by mirroring the chapter notebook exactly (the exercises' own stated intent) would hit a new, unexplained `subject_ref is empty` validation error that no exercise instruction mentions — a real regression this plan would otherwise silently introduce, not a pre-existing gap. (`exercises/ch08` and `exercises/ch02` also have pre-existing, unrelated breakage — a typo'd constraint name in ch08, comment placeholders by design in ch02 — neither is this task's concern; this task only prevents the *new* breakage this plan's own schema change would cause.)
+
+**Depends on:** Tasks 4, 6, 7, 8, 9 (needs each chapter's final `subject_ref` value decided — reuse those exact values, do not re-derive).
+
+**Files:**
+- Modify: `exercises/ch03/exercise.ipynb` (`AC-C03-EX` → `"ToasterDemo::timely"`, `AS-C03-EX` → `"ToasterDemo::timely"`)
+- Modify: `exercises/ch04/exercise.ipynb` (`AI-C04-EX` → `"ToasterDemo::ApplyHeat"`)
+- Modify: `exercises/ch06/exercise.ipynb` (`AC-C06-EX` → `"ToasterDemo::heatGenerationReq"`, `AS-C06-EX` → `"ToasterDemo::ResistanceCoil"`, `AI-C06-EX` → `"ToasterDemo::HeatingAssembly::heatGen"`)
+- Modify: `exercises/ch08/exercise.ipynb` (`AS-C08-EX` → `"ToasterDemo::deliveredEnergyBoundedBySupply"`; its own empty-identifier negative control gets the same fix pattern as Task 7 Step 4 — add this same `subject_ref` so it keeps demonstrating exactly `["identifier is empty"]`)
+- Modify: `exercises/ch09/exercise.ipynb` (`AS-BAD-EX` → `"ToasterDemo::ResistanceCoil"`; `AS-C06-EX` → `"ToasterDemo::ResistanceCoil"`; `AS-C08-EX` → `"ToasterDemo::deliveredEnergyBoundedBySupply"`; `AS-PLACEHOLDER-EX` → `"ToasterDemo::ResistanceCoil"` (must stay `[]`, same reasoning as Task 8); its own empty-identifier negative control → same `subject_ref` as the `AS-C08-EX` fix, same single-error reasoning)
+- Modify: `exercises/ch10/exercise.ipynb` (`AC-C10-EX` → `"ToasterDemo::EnergyConservationReq"`; `AI-BAD-EX` → `"ToasterDemo::HeatingAssembly::heatGen"`; `AS-C06-EX` → `"ToasterDemo::ResistanceCoil"`; `AS-C08-EX` → `"ToasterDemo::deliveredEnergyBoundedBySupply"`; `AI-C06-EX` → `"ToasterDemo::HeatingAssembly::heatGen"`; `AI-C10-DRAFT-EX` and `AI-C10-EX` → check the premises-non-empty exemption exactly as Task 9 Step 4 does for the non-`-EX` versions, same logic, same conclusion expected)
+- Modify (markdown only, one sentence): `exercises/ch02/exercise.ipynb` — add `subject_ref` to the field list the learner is asked to fill in (its own `AC-C02` record is `kind="asserted_context"`, so it needs a non-empty `subject_ref` once completed; add a `# Qualified name of the model element this assumption is directly about` placeholder line, matching the file's own existing placeholder-comment style, immediately after the existing `claim=` placeholder line).
+
+- [ ] **Step 1:** For each notebook above (except `ch02`), add `subject_ref=<value>` to each affected `ReviewRecord(...)` call, exactly mirroring the corresponding chapter task's own value.
+- [ ] **Step 2:** For `exercises/ch02/exercise.ipynb`, add the one placeholder line described above.
+- [ ] **Step 3:** For every notebook that actually executes as committed today (`ch03`, `ch04`, `ch06`, `ch09`, `ch10` — confirm which ones currently run clean end-to-end before this change, since `ch08`'s own pre-existing typo already blocks full execution regardless of this task), run it end to end (`uv run jupyter nbconvert --to notebook --execute <path> --output /tmp/<name>.ipynb` or equivalent) and confirm every `validate_record(...)` call in it produces exactly the error list its own markdown/assert cells expect — no new, unexplained `subject_ref` error anywhere.
+- [ ] **Step 4:** `uv run pytest -q` — no regressions (exercises aren't covered by the pytest suite, so this is a sanity check only, not the real acceptance gate for this task — Step 3's notebook execution is).
+- [ ] **Step 5:** Commit:
+```bash
+git add exercises/ch02/exercise.ipynb exercises/ch03/exercise.ipynb exercises/ch04/exercise.ipynb exercises/ch06/exercise.ipynb exercises/ch08/exercise.ipynb exercises/ch09/exercise.ipynb exercises/ch10/exercise.ipynb
+git commit -m "Retrofit exercises/ with subject_ref, mirroring each chapter's own value"
+```
+
+---
+
 ## Task 14: Full verification sweep
 
 **Depends on:** every prior task.
@@ -1039,13 +1066,43 @@ conn.close()
 EOF
 ```
 
-- [ ] **Step 6:** Contradiction sweep — grep for stale references to the pre-retrofit state:
+- [ ] **Step 6 (added after Task 1's independent review found this gap — F1):** Execute every judgment-record notebook end to end and confirm zero unexpected errors. Neither `pytest` nor this repo's current CI executes notebooks (notebook execution is still a placeholder pending WP-8), so this is the only check in the whole plan that would actually catch a retrofit step silently missed in Tasks 3–9 or 15 — treat it as load-bearing, not optional:
+
+```bash
+for nb in \
+  chapters/ch02-requirements/03-judgment-context.ipynb \
+  chapters/ch03-measures/01-moe-definition.ipynb \
+  chapters/ch03-measures/03-threshold-judgment.ipynb \
+  chapters/ch04-functional-decomp/03-completeness-check.ipynb \
+  chapters/ch06-recursive-decomp/02-second-level.ipynb \
+  chapters/ch06-recursive-decomp/03-stopping-judgment.ipynb \
+  chapters/ch08-checking/02-violation-witness.ipynb \
+  chapters/ch08-checking/03-revision-flow.ipynb \
+  chapters/ch09-coverage-sufficiency/02-evidence-completeness.ipynb \
+  chapters/ch09-coverage-sufficiency/03-stale-detection.ipynb \
+  chapters/ch10-traceability-signoff/01-traceability-graph.ipynb \
+  chapters/ch10-traceability-signoff/02-judgment-synthesis.ipynb \
+  chapters/ch10-traceability-signoff/03-engineering-signoff.ipynb \
+  exercises/ch03/exercise.ipynb \
+  exercises/ch04/exercise.ipynb \
+  exercises/ch06/exercise.ipynb \
+  exercises/ch09/exercise.ipynb \
+  exercises/ch10/exercise.ipynb \
+; do
+  echo "=== $nb ==="
+  uv run jupyter nbconvert --to notebook --execute "$nb" --output /tmp/_verify_$(basename "$nb") --output-dir /tmp || echo "FAILED: $nb"
+done
+```
+
+`exercises/ch08/exercise.ipynb` and `exercises/ch02/exercise.ipynb` are deliberately excluded from this loop — both have pre-existing breakage unrelated to this plan (a typo'd constraint name in `ch08`; comment placeholders by design in `ch02`) that predates and is out of scope for this work; Task 15 Step 3 already covers confirming no *new* `subject_ref`-shaped error in whichever of those two notebooks can run far enough to reach its `validate_record` call. Every notebook in the loop above must execute with no cell raising an unhandled exception. Any `AssertionError` whose message contains `subject_ref` is a retrofit step that was missed — go back and fix the specific record named in the traceback, in whichever Task (3–9, 15) owns that chapter, then re-run this whole step from the top (a missed retrofit in one notebook does not block checking the others — run the full loop, collect every failure, then fix them all before re-running).
+
+- [ ] **Step 7:** Contradiction sweep — grep for stale references to the pre-retrofit state:
 ```bash
 grep -rn "validate_record(record)\s*$\|validate_record(r)\s*$" chapters/ --include=*.ipynb
 ```
 Review every hit by hand: a bare one-argument `validate_record` call on an `asserted_context`/`asserted_solution` record, or an `asserted_inference` record with empty premises, is a sign a retrofit step in Tasks 4–9 was missed (it would now report a `subject_ref`-required error that no markdown cell explains).
 
-- [ ] **Step 7:** Report results. No commit for this task (verification only) unless a fix is needed, in which case fix forward with its own commit and re-run this task's steps.
+- [ ] **Step 8:** Report results. No commit for this task (verification only) unless a fix is needed, in which case fix forward with its own commit and re-run this task's steps.
 
 ---
 
@@ -1054,6 +1111,7 @@ Review every hit by hand: a bare one-argument `validate_record` call on an `asse
 - **Tasks 1 and 2 may run in parallel** (independent files, no shared blast zone).
 - **Tasks 3 through 9 must run strictly in series**, even though the records themselves don't logically depend on each other, because every one of them edits the same shared set of `models/chNN-cumulative.sysml` files — parallel branches would conflict at integration. This is exactly the "shared blast zone forces serial dispatch" case `orchestrator-protocol` already describes.
 - **Tasks 10, 11, and 12 may run in parallel with Tasks 4–9** (and with each other) once Task 3 is merged — they touch skill files and the glossary only, no shared cumulative-model blast zone.
-- **Task 13 depends on Task 9** (needs the retrofit done to describe truthfully) but not on Tasks 10–12.
-- **Task 14 depends on everything.**
+- **Task 15 depends on Tasks 4, 6, 7, 8, 9** (needs each chapter's final `subject_ref` value decided) but not on Tasks 10–13; it may run in parallel with those once Task 9 lands.
+- **Task 13 depends on Task 9** (needs the retrofit done to describe truthfully) but not on Tasks 10–12 or 15.
+- **Task 14 depends on everything, including Task 15** — added after Task 1's own independent review found two gaps in the original plan (not in the spec): no task covered `exercises/` (now Task 15), and no task actually executed any notebook end to end, so a missed retrofit step would otherwise go undetected by `pytest`/CI alone (now Task 14 Step 6). Both gaps are fixed in this version of the plan; if anyone resumes from an earlier printed/cached copy of this document, re-read this section before trusting it's complete.
 - Each task above is sized to be one `builder`/`reviewer` work contract under `orchestrator-protocol`'s "Plan-driven non-chapter work" mechanism. Route escalations (a stub that won't validate, a qualified name that doesn't resolve as expected, a negative control whose exact current field values don't match what this plan assumed) through the normal chain — builder to orchestrator to ACE — rather than guessing past them; the ACE rules or escalates to Z per its own protocol, and logs either way.
