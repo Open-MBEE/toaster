@@ -82,12 +82,14 @@ Sources
 
 ## assurance claim point (ACP)
 
-The place in the safety argument where an assertion is made; a confidence argument is developed for each.
+This tutorial's own narrowed Assurance Claim Point: a single checkable qualified name a judgment record is about, anchored by subject_ref in Python and a ReviewRecordRef tag in the model.
 
 Sources
 
 - Idea
   - Hawkins et al. 2011, Sec. 3, p. 8
+- Tutorial
+  - This tutorial's gloss refines Hawkins et al. 2011.
 
 ## assurance deficit
 

@@ -69,6 +69,17 @@ glid:def-hawkins--assurance-claim-point
     gl:term glid:term-assurance-claim-point ;
     gl:text "The place in the safety argument where an assertion is made; a confidence argument is developed for each." .
 
+glid:def-tutorial--subject-ref
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:gloss "This tutorial's own narrowed Assurance Claim Point: a single checkable qualified name a judgment record is about, anchored by subject_ref in Python and a ReviewRecordRef tag in the model." ;
+    gl:locator "src/toaster/evidence.py ReviewRecord.subject_ref; models/*.sysml ReviewRecordRef" ;
+    gl:refines glid:def-hawkins--assurance-claim-point ;
+    gl:source glid:src-tutorial ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-assurance-claim-point ;
+    gl:text "This tutorial's own narrowed analog of an Assurance Claim Point: a single, checkable qualified name a judgment record is directly about, anchored on both the Python side (subject_ref) and the model side (a ReviewRecordRef metadata tag), without importing GSN's argument-graph apparatus." .
+
 glid:def-hawkins--assurance-deficit
     a gl:Definition ;
     gl:confirmedBy "Z" ;
