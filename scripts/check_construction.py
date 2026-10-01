@@ -103,9 +103,12 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     3: [
         {
             "path": "chapters/ch03-measures/01-moe-definition.ipynb",
-            # timely : TimelyToast requires the requirement def from Chapter 2
+            # timely : TimelyToast requires the requirement def from Chapter 2;
+            # acC03Tag's `about timely` requires ReviewRecordRef (carried forward
+            # from Chapter 2) in scope.
             "context_stubs": [
                 "requirement def TimelyToast;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
         {
@@ -116,6 +119,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
                 "part def Toaster { attribute cycleTime : ISQ::DurationValue; }",
                 "requirement def TimelyToast { subject toaster : Toaster; require constraint { toaster.cycleTime <= 180.0 [SI::s] } }",
                 "requirement timely : TimelyToast;",
+            ],
+        },
+        {
+            "path": "chapters/ch03-measures/03-threshold-judgment.ipynb",
+            # asC03Tag's `about timely` requires timely (nb01) as a named element
+            # in scope, and ReviewRecordRef (carried forward from Chapter 2).
+            "context_stubs": [
+                "requirement timely;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
         {

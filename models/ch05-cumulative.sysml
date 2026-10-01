@@ -82,6 +82,14 @@ package ToasterDemo {
 
     requirement timely : TimelyToast;
 
+    metadata acC03Tag : ReviewRecordRef about timely {
+        identifier = "AC-C03";
+    }
+
+    metadata asC03Tag : ReviewRecordRef about timely {
+        identifier = "AS-C03";
+    }
+
     part nominal : Toaster;
     metadata ac001Tag : ReviewRecordRef about nominal {
         identifier = "AC-001";
