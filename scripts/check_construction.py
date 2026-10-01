@@ -90,6 +90,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
                 "part def Toaster { attribute cycleTime : ISQ::DurationValue default = 120.0 [SI::s]; }",
             ],
         },
+        {
+            "path": "chapters/ch02-requirements/03-judgment-context.ipynb",
+            # ac001Tag's `about nominal` requires nominal (nb01) to be a named element
+            # in scope; ReviewRecordRef itself is introduced by this notebook's own
+            # fragment, so it is not stubbed.
+            "context_stubs": [
+                "part nominal;",
+            ],
+        },
     ],
     3: [
         {

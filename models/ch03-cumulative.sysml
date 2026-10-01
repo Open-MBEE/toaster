@@ -3,6 +3,10 @@
 // Source: notebook cell-02 TOASTER_INCREMENT in chapter 3's construct-introducing notebooks.
 
 package ToasterDemo {
+    metadata def ReviewRecordRef {
+        attribute identifier : ScalarValues::String;
+    }
+
     private import ScalarValues::*;
     private import SI::*;
     private import ISQ::*;
@@ -43,6 +47,10 @@ package ToasterDemo {
     requirement timely : TimelyToast;
 
     part nominal : Toaster;
+    metadata ac001Tag : ReviewRecordRef about nominal {
+        identifier = "AC-001";
+    }
+
     part slow : Toaster {
         attribute :>> cycleTime = 200.0 [SI::s];
         assert not satisfy timely by slow;
