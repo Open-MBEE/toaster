@@ -16,6 +16,16 @@ glid:def-tutorial--allocation
     gl:term glid:term-allocation ;
     gl:text "Assigning one element of the model to another so that the target takes responsibility for it: functions to logical components, and logical components to parts. SEBoK gives the idea (requirements assigned to the next level down), SysML v2 gives the checkable form (the allocate relationship between usages, which is what the model uses), and Douglas gives the story (functions grouped into components). They describe the same assigning from different angles." .
 
+glid:def-tutorial--assurance-claim-point
+    a gl:Definition ;
+    gl:gloss "This tutorial's narrowed analog of an Assurance Claim Point: one checkable qualified name a judgment is about, without GSN's argument-graph apparatus." ;
+    gl:locator "src/toaster/evidence.py ReviewRecord.subject_ref; models/*.sysml ReviewRecordRef" ;
+    gl:refines glid:def-hawkins--assurance-claim-point ;
+    gl:source glid:src-tutorial ;
+    gl:status gl:proposed ;
+    gl:term glid:term-assurance-claim-point ;
+    gl:text "This tutorial's own narrowed analog of an Assurance Claim Point: a single, checkable qualified name a judgment record is directly about, anchored on both the Python side (subject_ref) and the model side (a ReviewRecordRef metadata tag), without importing GSN's argument-graph apparatus." .
+
 glid:def-tutorial--behavior
     a gl:Definition ;
     gl:confirmedBy "Z" ;
