@@ -26,4 +26,4 @@ An executable tutorial on recursive system decomposition using SysML v2 and Open
 | 9: Coverage and Sufficiency | Are all requirements covered? | requirement coverage, evidence sufficiency, stale detection at scale |
 | 10: Traceability and Sign-off | Is the argument complete? | traceability graph, judgment ledger, asserted_inference synthesis |
 
-[Setup and installation](setup.md) | [Glossary](glossary.md) | [References](references.md)
+[Setup and installation](setup.md) | [Glossary](glossary.md) | [References](references.md) | [Case studies](case-studies/)
