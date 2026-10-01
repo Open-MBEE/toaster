@@ -1,18 +1,41 @@
 // GENERATED FIXTURE: do not edit directly.
 // Run: python scripts/check_construction.py --check   (to verify)
-// Source: unchanged from models/ch08-cumulative.sysml. Chapter 10 (Traceability and
-// Sign-off) adds no new named model element: its own notebooks build a traceability
-// graph and a judgment ledger over the model exactly as Chapter 8 left it, the same
-// deliberate design choice Chapter 9 made (decisions/pass4-run-009.md), not a fixture
-// that would carry nothing new. Unlike Chapter 9, this chapter DOES commit its own
-// models/ch10-cumulative.sysml (byte-identical in body to ch08's, only this header
-// comment differs), so that scripts/check_construction.py's own predecessor-
-// containment check has a real ch10 file of its own to compare ch08's named elements
-// against, resolving decisions/next-passes.md item 21 (check_predecessor_containment
-// falls back to the nearest earlier chapter with a real fixture -- ch08 -- when the
-// immediate predecessor, ch09, has none), and so this chapter's own notebooks have a
-// current, committed fixture of their own to name rather than reaching back across a
-// chapter boundary to cite ch08's file directly.
+// Source: originally unchanged from models/ch08-cumulative.sysml. Chapter 10
+// (Traceability and Sign-off) adds a traceability graph and a judgment ledger over
+// the model exactly as Chapter 8 left it, the same deliberate design choice Chapter 9
+// made (decisions/pass4-run-009.md), not a fixture that would carry nothing new.
+// Unlike Chapter 9, this chapter DOES commit its own models/ch10-cumulative.sysml,
+// so that scripts/check_construction.py's own predecessor-containment check has a
+// real ch10 file of its own to compare ch08's named elements against, resolving
+// decisions/next-passes.md item 21 (check_predecessor_containment falls back to the
+// nearest earlier chapter with a real fixture -- ch08 -- when the immediate
+// predecessor, ch09, has none), and so this chapter's own notebooks have a current,
+// committed fixture of their own to name rather than reaching back across a chapter
+// boundary to cite ch08's file directly.
+//
+// This file is no longer byte-identical in body to ch08's: notebook 01's own
+// traceability graph found a real gap in the model itself, not just in the check that
+// searches it -- deliveredEnergyBoundedBySupply (Chapter 8's Z3-proved conservation
+// lemma) was tied to no requirement at all. This chapter's own analysis found that
+// gap, so this chapter closes it, rather than leaving it stated and unaddressed: one
+// new requirement, EnergyConservationReq/energyConservationReq, added at the end of
+// the package below, restates the lemma as a stakeholder-facing requirement by
+// subsetting it directly from within the requirement's own body (SysML v2
+// formal/2026-03-02 SS7.21.2). Deliberately NO
+// `assert satisfy energyConservationReq by deliveredEnergyBoundedBySupply;`:
+// `docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md` records the
+// full reconciliation of two independently-built designs for this tie -- one
+// (reverted, commit 85b7778) added that line against an incorrectly-typed declared
+// subject, a real SS7.21.1 violation; the other added it against the correct,
+// subject-less default, but direct testing found that construct makes
+// model.verify_satisfaction() error identically regardless of its own binding, not
+// pass, because this requirement's own required constraint never references its
+// subject at all. See that document and this chapter's own AC-C10 judgment record
+// (notebook 01) for the full account. This is the one named model element this
+// chapter adds, and it exists only because this chapter's own traceability analysis
+// found the gap it closes (see notebook 01's own remediation cells, and
+// index.md/conclusion.md for why this one exception to "no new model element" is
+// warranted).
 
 package ToasterDemo {
     private import ScalarValues::*;
@@ -265,4 +288,35 @@ package ToasterDemo {
         implies (heatGenCheck.power * heatGenCheckDuration * heatGenCheck.efficiency)
                 <= heatGenCheck.power * heatGenCheckDuration
     }
+
+    requirement def EnergyConservationReq {
+        doc /* A heat generator shall never deliver more energy than it is supplied:
+             * energy conservation, a physical law any real heat generator design
+             * must obey, independent of any one proof of it. No subject type is
+             * declared here: the satisfying feature this requirement would be
+             * checked against (deliveredEnergyBoundedBySupply, a constraint, not a
+             * HeatGenerator usage) must conform to whatever this requirement's own
+             * subject is typed as (SysML v2 formal/2026-03-02 SS7.21.1), so the
+             * subject is left to inherit RequirementCheck's own default,
+             * `subject subj : Anything[1]` (Systems Library/Requirements.sysml).
+             * Deliberately no `assert satisfy` line: this requirement's own
+             * required constraint never references its subject anywhere -- it is a
+             * closed, already-proved proposition over its own free-standing
+             * elements, so the subject carries no distinguishing value and binding
+             * anything to it changes nothing about whether the constraint evaluates
+             * true. Confirmed directly, not merely argued: attempting
+             * `assert satisfy energyConservationReq by
+             * deliveredEnergyBoundedBySupply;` makes model.verify_satisfaction()
+             * error identically no matter what is bound as the satisfying feature
+             * ("require condition evaluation failed: no value for feature
+             * heatGenCheck.efficiency"), not pass -- demonstrated directly as a
+             * negative control in notebook 01, and recorded in full in
+             * docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md.
+             * See AC-C10 (this chapter's own judgment record, notebook 01) for how
+             * this requirement's own need was actually identified, and for the
+             * honest distinction between a tie and a solver-level proof. */
+        require constraint c :> deliveredEnergyBoundedBySupply;
+    }
+
+    requirement energyConservationReq : EnergyConservationReq;
 }
