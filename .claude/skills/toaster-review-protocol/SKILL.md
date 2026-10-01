@@ -45,8 +45,9 @@ metadata ac001Tag : ReviewRecordRef about nominal {
 The `about` clause binds the usage's inherited `annotatedElement` feature to the named subject — a
 real, queryable model relationship, not a string a reader has to trust. `subject_ref` is required
 for `asserted_context` and `asserted_solution`; for `asserted_inference` it may stay empty only
-when `premises` is non-empty (the pure cross-record synthesis case — `AI-C10` is the one record in
-this tutorial that uses this exemption). `src/toaster/query.py`'s `get_review_record_refs()` is the
+when `premises` is non-empty (the pure cross-record synthesis case — `AI-C10` is the one original
+record that actually relies on this exemption rather than carrying a real anchor anyway; negative
+controls such as `AI-C10-DRAFT` rely on it too). `src/toaster/query.py`'s `get_review_record_refs()` is the
 model-to-Python direction: given a loaded model, it finds every `ReviewRecordRef` tag and what it's
 about, independent of any notebook's own Python objects. `validate_record` cross-checks both
 directions automatically whenever a `model` is passed and a tag already exists for that record's
