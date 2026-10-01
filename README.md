@@ -6,7 +6,8 @@ measures, functions, structure, and executable behavior for a domestic toaster.
 
 No site is published yet; deployment stays off until the tutorial has complete, end-to-end content ready to publish. See [docs/setup.md](docs/setup.md) to run the tutorial or build the book locally.
 
-Adapted from Brian Douglas's [Systems Engineering Part 3](https://www.mathworks.com/videos/systems-engineering-part-3-the-benefits-of-functional-architectures-1602837771665.html).
+Adapted from Brian Douglas's [Systems Engineering Part 3](https://www.mathworks.com/videos/systems-engineering-part-3-the-benefits-of-functional-architectures-1602837771665.html)
+and [Part 4](https://www.mathworks.com/videos/systems-engineering-part-4-an-introduction-to-requirements-1603872564696.html).
 Engineering judgment records follow Hawkins et al. 2011 §§3.1–3.4.
 
 ## Quick start
@@ -21,9 +22,9 @@ uv run python scripts/check-tools.py
 # Run tests
 uv run pytest tests/ -v
 
-# Build the site
+# Preview the book locally (starts a dev server at localhost:3000)
 npm install
-npx mystmd build --execute
+npx mystmd start --execute
 ```
 
 See [docs/setup.md](docs/setup.md) for full setup instructions and the fork-and-exercise workflow.
@@ -34,7 +35,7 @@ See [docs/setup.md](docs/setup.md) for full setup instructions and the fork-and-
 chapters/   — worked example notebooks (10 chapters, read-only for exercises)
 exercises/  — parallel exercise notebooks (fork and work here)
 models/     — SysML stage model snapshots
-src/toaster/— Python package (bootstrap, connect, query, check, evidence, simulate, render, report)
+src/toaster/— Python package (bootstrap, connect, query, check, conformance, evidence, modelcheck, simulate, render, report)
 tests/      — pytest suite
 docs/       — setup, glossary, references, reproducibility statement
 scripts/    — pre-flight and build utilities
