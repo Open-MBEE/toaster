@@ -1,7 +1,8 @@
 # Case study: tying a proved lemma to a stated requirement
 
 **Date:** 2026-09-30
-**Status:** resolved — direction adopted (B, revised), implementation pending integration
+**Status:** resolved — direction adopted (B, revised); `assert satisfy` drop confirmed by direct
+test, not argument alone; implementation pending integration
 **Related:** `decisions/next-passes.md` item 29; `decisions/log.md` DL-070, DL-071, DL-072 (and the entry recording this decision); SysML v2 formal/2026-03-02 §7.20–7.21, §7.24
 
 ## Why this document exists
@@ -172,6 +173,42 @@ is not the same evidence as a construct doing the job its own specification says
 construct to close one gap, in a way the construct's own spec semantics do not support, would be
 a second, quieter instance of the same failure mode in reverse.
 
+**Empirical confirmation, not just argument.** Z was not convinced by the argument above on its
+own — correctly: an abstract claim that a construct "does no evaluative work" deserves to be
+checked against the tool, not just read off the spec text. Two things were verified directly
+rather than asserted.
+
+First, the base library itself settles where subject-dependence actually comes from.
+`Systems Library/Requirements.sysml`'s own `RequirementCheck` defines `result =
+allTrue(assumptions()) implies allTrue(constraints())` — a pure function of the requirement's own
+nested constraint features. `subj` is not referenced anywhere in that computation; a requirement's
+truth depends on its subject *only if* one of its own required or assumed constraints happens to
+reference the subject's own features (exactly what the spec's worked example, `massLimit`, does
+via `:>> mass = massActual`, and exactly what `EnergyConservationReq`'s own `require constraint c
+:> deliveredEnergyBoundedBySupply` does not do).
+
+Second, this was tested directly against `model.verify_satisfaction()` — the tool's own
+point-evaluation engine, the same one a reader would reach for expecting confirmation, the same
+way `heatGenerationReq`'s own real `assert satisfy ... by rated` / `by weak` claims are confirmed
+elsewhere in this model. Three variants of `assert satisfy energyConservationReq by X;` were built
+and run with `X` bound to the lemma itself, to a totally unrelated part, and to `heatGenCheck`
+itself. **All three produced the identical verdict — not a pass, an error:**
+`require condition evaluation failed: no value for feature heatGenCheck.efficiency`. The binding
+is not merely logically inert; the construct cannot be evaluated at all, for the structural reason
+already named above (`heatGenCheck`/`heatGenCheckDuration` are deliberately left free, since the
+whole point of the Z3 proof is that it holds for every value, not one). A reader who tries to
+confirm this claim the way the tutorial has already taught them to — by running
+`verify_satisfaction()` — gets an error, not the pass a skim of the model would suggest.
+
+This also sharpens what `AC-C10`'s own cited evidence (`requirement_coverage(...)` reporting
+`covered=True`) actually is. `requirement_coverage()` (`src/toaster/query.py:258`) never runs the
+constraint at all — it checks only whether a non-negated `SatisfyRequirementUsage` node *exists* in
+the API-JSON export. `AC-C10` already describes this carefully as "a point-evaluation claim about
+the assert satisfy declaration's own success, not the same claim as the solver output," which is
+honest, but the test above shows it is thinner still: it is not evaluating the declaration's
+success, only the declaration's existence and polarity. The one thing in this whole model that
+actually *runs* the check errors out identically no matter what is bound.
+
 **And the honest residual: is the tie itself circular?** Dropping Check A does not touch this
 question, which is Approach B's own real contribution via `AC-C10`: `EnergyConservationReq`'s
 *need* was identified after Chapter 8's proof already existed, specifically to close the gap
@@ -182,16 +219,38 @@ the timing of *noticing* the need is retroactive; the law's own validity is not.
 separate judgment call from the `satisfy`-by-constraint question, and it is the one genuinely
 assurance-deficit-shaped question this whole episode leaves open, named rather than resolved.
 
+## The strongest case for keeping it, considered and set aside
+
+Before settling this, the steelman for keeping `assert satisfy ... by deliveredEnergyBoundedBySupply`
+was given its own hearing, not dismissed by default: it is a legible, standard-idiom pointer
+("here is what satisfies this requirement") that a skim of the model would find immediately, and
+it keeps `EnergyConservationReq` stylistically consistent with its siblings (`heatGenerationReq`,
+`timely`), which both do get an explicit `assert satisfy ... by ...`. Both points are real.
+
+They are outweighed by what the empirical test shows: a reader who treats this `satisfy` line the
+way the tutorial has already taught them to treat its siblings — by running
+`verify_satisfaction()` to confirm it — gets an error, not a pass, and gets the identical error no
+matter what is bound as the satisfying feature. A construct that looks, on a skim, like the same
+kind of claim as `heatGenerationReq`'s real, checkable ones, but silently behaves differently the
+moment it is actually exercised, is a worse outcome than the construct's absence. The legitimate
+part of the stylistic-consistency instinct — that an omission should be legible, not silent — is
+kept, just by a doc comment instead of a claim that does not hold up when run.
+
 ## The decision
 
 Adopt Approach B, revised: keep the subject-less `EnergyConservationReq` (§7.21.1's own
 explicitly sanctioned degenerate case), keep the `require constraint :> deliveredEnergyBoundedBySupply`
 subsetting (§7.21.2's own sanctioned reuse idiom), **drop** the `assert satisfy
-energyConservationReq by deliveredEnergyBoundedBySupply;` line as unnecessary and semantically
-vacuous for the reasons above, keep Chapter 10 as the placement (fix the gap where it is found),
-keep `AC-C10` (revised to no longer lean on Check A as part of the tie), and keep the exercise
-mirror in sync. Approach A's branch (already merged) is to be reconciled against this — the
-subject-type defect and the unnecessary verification case both need to come out.
+energyConservationReq by deliveredEnergyBoundedBySupply;` line — confirmed by direct test against
+`verify_satisfaction()`, not argument alone, to error identically regardless of its own binding —
+and in its place add one doc-comment sentence on `EnergyConservationReq` stating plainly why no
+`assert satisfy` is given: the requirement's subject carries no distinguishing value, and
+attempting to satisfy it produces an evaluation error, not a pass. Keep Chapter 10 as the
+placement (fix the gap where it is found), keep `AC-C10` (revised to no longer lean on Check A as
+part of the tie — its own evidence should cite the test above rather than `requirement_coverage()`'s
+thinner existence check), and keep the exercise mirror in sync. Approach A's branch (already
+merged) is to be reconciled against this — the subject-type defect and the unnecessary
+verification case both need to come out.
 
 ## What we learned (methodology, not just outcome)
 
@@ -214,3 +273,11 @@ subject-type defect and the unnecessary verification case both need to come out.
    tool-accepted, checker-satisfying construct be recognized as representationally wrong before it
    shipped. A model that only recorded the final answer would have looked identical to one that
    got here by accident.
+5. **An abstract argument that a construct "does no work" is not the same as having checked it.**
+   Z's own pushback on the first version of this document's conclusion was correct: the
+   semantic-vacuity argument was right, but it was still only an argument until it was run against
+   `verify_satisfaction()` directly. The test did not just confirm the argument, it found something
+   the argument alone understated — the construct does not merely add no information, it errors
+   when exercised the same way its own siblings are legitimately exercised elsewhere in this
+   model. When a judgment call is reachable by direct test, run the test; do not stop at a
+   convincing-sounding argument that a thirty-second script could have checked.
