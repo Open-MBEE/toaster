@@ -1,5 +1,7 @@
 """Diagram rendering helpers. WP-4 implements SysMLD exporter."""
 
+import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -310,6 +312,40 @@ def render_interconnection(intent: dict | str | Path, out: str | Path) -> None:
     render_dot("\n".join(lines), out)
 
 
+def _apply_interconnection_layout_fixes(puml_text: str) -> str:
+    """Presentation-only post-processing of sysml-toolkit's generated PlantUML source, applied
+    before rendering: orientation and label wrapping only, never a change to which elements or
+    edges appear (AGENTS.md: layout never carries engineering content).
+
+    sysml-toolkit's own default PlantUML layout draws the connector between two ports as a
+    straight diagonal line, which (confirmed by rendering and rasterizing the real Ch5 output)
+    runs directly through the near box's own `<<part>>` stereotype and title text -- exactly
+    the box label a reader needs to read. Inserting `skinparam linetype ortho` makes PlantUML
+    route that connector in axis-aligned segments along box edges instead of a corner-cutting
+    diagonal, which keeps it clear of both boxes' interiors.
+
+    Separately, a port's own auto-generated label (e.g. `durationIn : ~DurationPort`) is wide
+    enough, and close enough to the neighboring box, to overlap that box's own border in the
+    unwrapped, single-line form (also confirmed by rendering the real output). Rewriting each
+    port label's ` : ` to a line break (`durationIn` / `: ~DurationPort`, same text, same
+    information) shrinks its rendered width enough to clear the border. Only `port "..."`
+    declaration lines are rewritten -- a box's own title line (e.g. `"heating :
+    HeatingSystem"`) is left on one line, since it already has the whole box's width to sit in
+    and was never the defect being fixed.
+    """
+    if "\nskinparam linetype ortho" not in puml_text and "@startuml" in puml_text:
+        puml_text = puml_text.replace("@startuml", "@startuml\nskinparam linetype ortho", 1)
+
+    def _wrap_port_label(match: "re.Match[str]") -> str:
+        return f'{match.group(1)}{match.group(2)}\\n: {match.group(3)}{match.group(4)}'
+
+    return re.sub(
+        r'(port\s+")([^"\n]*?) : ([^"\n]*?)(")',
+        _wrap_port_label,
+        puml_text,
+    )
+
+
 class ToolkitRenderError(Exception):
     """Raised when `render_toolkit_interconnection()` could not render: a given `binary`,
     `lib`, `plantuml_jar` or `java` path does not exist, or either subprocess (sysml-toolkit's
@@ -352,29 +388,40 @@ def render_toolkit_interconnection(
     the `sysmlv2` executable, the PlantUML jar, and a working `java` executable. All four are
     required keyword arguments -- none is ever resolved from an environment variable or
     searched on PATH (unlike `modelcheck.py`'s optional `lib`/`binary`, every path here must
-    be passed explicitly). Each is checked to exist before either subprocess runs; a missing
-    one raises `ToolkitRenderError` naming which argument and path, not a bare
-    `FileNotFoundError`.
+    be passed explicitly). Each is checked, before either subprocess runs, against what this
+    function actually needs it to be (`lib` a directory; `binary`/`java` an executable file;
+    `plantuml_jar` a file) -- not merely `Path.exists()`, which an empty string or a directory
+    passed as `binary` would still satisfy and then fail later as a raw `PermissionError` or
+    `NotADirectoryError`. A path that fails its check raises `ToolkitRenderError` naming which
+    argument and path, not a bare `FileNotFoundError` or another subprocess-level exception.
 
     Shells out to `sysmlv2 viz <src> --lib <lib> --view interconnection --element <element>
-    -o <puml>`, then to `java -Djava.awt.headless=true -jar <plantuml_jar> -tsvg <puml>`,
-    which PlantUML writes next to `<puml>` as `<puml's stem>.svg`; that file is then moved to
-    `out`. The intermediate `.puml` is left on disk at `out` with its suffix replaced by
-    `.puml` (not a randomized temp name) so a caller -- or a test checking for real port-name
-    tokens, not just an exit code -- can read it after this function returns, matching
-    `render_dot()`/`render_interconnection()`'s own "write real files, return None" style.
+    -o <puml>`, applies presentation-only layout fixes to that generated PlantUML source (see
+    `_apply_interconnection_layout_fixes()`), then to `java -Djava.awt.headless=true -jar
+    <plantuml_jar> -tsvg <puml>`, which PlantUML writes next to `<puml>` as `<puml's
+    stem>.svg`; that file is then moved to `out`. The intermediate `.puml` (post-layout-fix) is
+    left on disk at `out` with its suffix replaced by `.puml` (not a randomized temp name) so a
+    caller -- or a test checking for real port-name tokens, not just an exit code -- can read
+    it after this function returns, matching `render_dot()`/`render_interconnection()`'s own
+    "write real files, return None" style.
     """
-    for argname, path in (
-        ("lib", lib),
-        ("binary", binary),
-        ("plantuml_jar", plantuml_jar),
-        ("java", java),
+    # Each path is checked against the real thing this function will actually try to do with
+    # it (a directory to search, a file to hand to -jar, a file to execute), not just
+    # Path.exists(): an empty string, a directory passed where a binary was expected, or a
+    # non-executable file would otherwise pass an exists()-only check and then surface a raw
+    # PermissionError or NotADirectoryError from the subprocess call below instead of this
+    # function's own named ToolkitRenderError.
+    for argname, path, check, what in (
+        ("lib", lib, lambda p: p.is_dir(), "a directory"),
+        ("binary", binary, lambda p: p.is_file() and os.access(p, os.X_OK), "an executable file"),
+        ("plantuml_jar", plantuml_jar, lambda p: p.is_file(), "a file"),
+        ("java", java, lambda p: p.is_file() and os.access(p, os.X_OK), "an executable file"),
     ):
-        if not Path(path).exists():
+        if not check(Path(path)):
             raise ToolkitRenderError(
-                f"{argname}={path!r} does not exist -- render_toolkit_interconnection() "
-                f"requires each of lib/binary/plantuml_jar/java as an explicit, existing "
-                f"path; none is resolved from an environment variable or PATH"
+                f"{argname}={path!r} is not {what} -- render_toolkit_interconnection() "
+                f"requires each of lib/binary/plantuml_jar/java as an explicit, existing, "
+                f"usable path; none is resolved from an environment variable or PATH"
             )
 
     out_path = Path(out)
@@ -400,6 +447,11 @@ def render_toolkit_interconnection(
             f"`{' '.join(viz_command)}` exited {r.returncode}: "
             f"{r.stderr.strip() or '(no stderr)'}"
         )
+
+    # Presentation-only layout fixes (orientation + label wrapping), applied to the generated
+    # .puml before PlantUML renders it -- see _apply_interconnection_layout_fixes()'s own
+    # docstring for why; never changes which elements or edges the file describes.
+    puml_path.write_text(_apply_interconnection_layout_fixes(puml_path.read_text()))
 
     plantuml_svg_path = puml_path.with_suffix(".svg")
     plantuml_command = [
