@@ -222,9 +222,23 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             "path": "chapters/ch06-recursive-decomp/02-second-level.ipynb",
             # ResistanceCoil :> HeatGenerator (nb01); HeatGenerationReq's subject
             # is HeatGenerator, and rated/weak are typed by ResistanceCoil, this
-            # notebook's own fragment.
+            # notebook's own fragment. acC06Tag's `about heatGenerationReq` and
+            # asC06Tag's `about ResistanceCoil` are both declared within this
+            # notebook's own TOASTER_INCREMENT; only ReviewRecordRef itself
+            # (carried forward from Chapter 2) needs stubbing.
             "context_stubs": [
                 "abstract part def HeatGenerator { attribute power : ISQ::PowerValue; }",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
+            ],
+        },
+        {
+            "path": "chapters/ch06-recursive-decomp/03-stopping-judgment.ipynb",
+            # aiC06Tag's `about HeatingAssembly::heatGen` requires HeatingAssembly
+            # (nb01) with its nested heatGen feature in scope, and ReviewRecordRef
+            # (carried forward from Chapter 2).
+            "context_stubs": [
+                "part def HeatingAssembly { part heatGen; }",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
     ],

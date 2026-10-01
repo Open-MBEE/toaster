@@ -167,6 +167,10 @@ package ToasterDemo {
         allocation heatGenAllocation allocate applyHeat.generateHeat to heatGen;
     }
 
+    metadata aiC06Tag : ReviewRecordRef about HeatingAssembly::heatGen {
+        identifier = "AI-C06";
+    }
+
     requirement def HeatGenerationReq {
         doc /*
          * A heat generator shall be rated for at least 600 W.
@@ -181,6 +185,10 @@ package ToasterDemo {
 
     requirement heatGenerationReq : HeatGenerationReq;
 
+    metadata acC06Tag : ReviewRecordRef about heatGenerationReq {
+        identifier = "AC-C06";
+    }
+
     part def ResistanceCoil :> HeatGenerator {
         doc /* An electrically switched resistive element: converts electrical
              * energy to heat by Joule heating. The mechanism selection this
@@ -189,6 +197,10 @@ package ToasterDemo {
              * two mechanisms work, not from anything the model connects. */
         attribute :>> power default = 800.0 [SI::W];
         attribute resistance : ISQ::ResistanceValue default = 12.0 [SI::ohm];
+    }
+
+    metadata asC06Tag : ReviewRecordRef about ResistanceCoil {
+        identifier = "AS-C06";
     }
 
     part rated : ResistanceCoil {
