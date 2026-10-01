@@ -13,11 +13,44 @@ description: Hawkins et al. 2011 judgment record fields, three ACP types, two ev
 
 ## Three judgment sites and ACP kinds
 
-| Site | Kind | Hawkins ref |
-|---|---|---|
-| Assumption or context used for a claim | `asserted_context` | §3.2 |
-| Child claims supporting a parent | `asserted_inference` | §3.1 |
-| Evidence supporting a conclusion | `asserted_solution` | §3.3 |
+| Site | Kind | Hawkins ref | `subject_ref` |
+|---|---|---|---|
+| Assumption or context used for a claim | `asserted_context` | §3.2 | required |
+| Child claims supporting a parent | `asserted_inference` | §3.1 | required unless `premises` is non-empty |
+| Evidence supporting a conclusion | `asserted_solution` | §3.3 | required |
+
+## `subject_ref`: this tutorial's narrowed Assurance Claim Point
+
+Hawkins' own Assurance Claim Point (ACP) is never free-floating: every confidence argument is
+anchored to one specific, located assertion in the argument (Hawkins 2011, Sec. 3, p. 8 —
+`glid:def-hawkins--assurance-claim-point`). `subject_ref` is this tutorial's own narrowed,
+single-element analog: the one qualified name the record's `claim` is directly about, checkable
+both from Python (`validate_record(record, model=model)` resolves it via `model.find()`) and from
+the model's own side, via a real SysML metadata tag (SysML v2 formal/2026-03-02 §7.27.2,
+MetadataDefinition):
+
+```sysml
+metadata def ReviewRecordRef {
+    attribute identifier : ScalarValues::String;
+}
+
+metadata ac001Tag : ReviewRecordRef about nominal {
+    identifier = "AC-001";
+}
+```
+
+(the committed text in `models/ch02-cumulative.sysml`, built in
+`chapters/ch02-requirements/03-judgment-context.ipynb`.)
+
+The `about` clause binds the usage's inherited `annotatedElement` feature to the named subject — a
+real, queryable model relationship, not a string a reader has to trust. `subject_ref` is required
+for `asserted_context` and `asserted_solution`; for `asserted_inference` it may stay empty only
+when `premises` is non-empty (the pure cross-record synthesis case — `AI-C10` is the one record in
+this tutorial that uses this exemption). `src/toaster/query.py`'s `get_review_record_refs()` is the
+model-to-Python direction: given a loaded model, it finds every `ReviewRecordRef` tag and what it's
+about, independent of any notebook's own Python objects. `validate_record` cross-checks both
+directions automatically whenever a `model` is passed and a tag already exists for that record's
+own `identifier`.
 
 ## ReviewRecord required fields
 
@@ -28,6 +61,7 @@ record = ReviewRecord(
     identifier="RR-001",
     kind="asserted_solution",
     claim="DeliveredEnergy >= 50000 J at nominal operating conditions",
+    subject_ref="ToasterDemo::HeatGenerator::deliveredEnergy",
     model_ref="models/ch07-snapshot.sysml",
     content_hash=hash_content(open("models/ch07-snapshot.sysml").read()),
     scope="nominal operating envelope: P=800W, t=120s, eta=0.7",
@@ -64,8 +98,9 @@ group of fields, narrate what it's for, print it, then assemble. Group by the qu
 Hawkins' taxonomy is answering, not by the dataclass's field order:
 
 ```
-[markdown] narration: what is being claimed, and about what
+[markdown] narration: what is being claimed, and what, specifically, it is about
 [code]     claim = "..."
+           subject_ref = "ToasterDemo::..."
            model_ref = "..."
 [markdown] narration: what standard the claim is checked against (appropriateness)
 [code]     scope = "..."
@@ -82,8 +117,8 @@ Hawkins' taxonomy is answering, not by the dataclass's field order:
 [code]     counterevidence = "..."
            residual_uncertainties = "..."
 [markdown] narration: assembling the record from the named parts above
-[code]     record = ReviewRecord(identifier=..., kind=..., claim=claim, model_ref=model_ref,
-               content_hash=hash_content(source), scope=scope, criteria=criteria,
+[code]     record = ReviewRecord(identifier=..., kind=..., claim=claim, subject_ref=subject_ref,
+               model_ref=model_ref, content_hash=hash_content(source), scope=scope, criteria=criteria,
                premises=premises, assumption_refs=assumption_refs,
                evidence_refs=evidence_refs, rationale=rationale,
                counterevidence=counterevidence,
