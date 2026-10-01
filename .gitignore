@@ -45,3 +45,6 @@ glossary/sources/local/*
 # reproducible across machines: see chapters/ch08-checking/02-violation-witness.ipynb)
 chapters/*/companion-check-scratch/
 exercises/*/companion-check-scratch/
+
+# Agent-managed git worktrees (builder/reviewer isolation during plan execution)
+.claude/worktrees/
