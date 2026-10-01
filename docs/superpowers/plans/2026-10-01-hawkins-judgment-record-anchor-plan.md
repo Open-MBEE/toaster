@@ -604,7 +604,7 @@ git commit -m "Retrofit AC-C03/AS-C03 with subject_ref and ReviewRecordRef tags 
 **Exact SysML text** (after `ApplyHeat`'s own declaration):
 
 ```sysml
-metadata aiC04Tag : ReviewRecordRef about applyHeat {
+metadata aiC04Tag : ReviewRecordRef about ApplyHeat {
     identifier = "AI-C04";
 }
 ```
