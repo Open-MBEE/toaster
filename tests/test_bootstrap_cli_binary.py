@@ -45,12 +45,24 @@ def test_ensure_cli_binary_is_idempotent_and_skips_network_on_cache_hit():
 def test_ensure_cli_binary_rejects_a_tampered_download(monkeypatch, tmp_path):
     """A SHA256 mismatch must raise, not silently install a wrong binary --
     simulated by pointing the cache dir at a scratch location and corrupting
-    the pin table for this one test only."""
+    the pin table for this one test only.
+
+    Corrupts the pin for THIS machine's own real platform (via
+    opensysml.binary.detect_platform(), the same lookup ensure_cli_binary()
+    itself performs), not a hardcoded ("darwin", "arm64") -- a hardcoded key
+    would silently not test anything on a different platform (e.g. a Linux CI
+    runner), since the code would look up and correctly verify against the
+    real, uncorrupted hash for ITS OWN platform instead. Found by independent
+    review (reviewer probe: flipping one byte of the real pin left the test
+    passing on darwin-arm64 but silently installing an untampered binary when
+    simulated on linux-amd64)."""
+    import opensysml.binary as ob
     import toaster.bootstrap as bootstrap_mod
 
+    this_platform = ob.detect_platform()
     monkeypatch.setattr(bootstrap_mod, "_cli_cache_dir", lambda: tmp_path)
     bad_sums = dict(bootstrap_mod._CLI_SUMS)
-    bad_sums[("darwin", "arm64")] = "0" * 64
+    bad_sums[this_platform] = "0" * 64
     monkeypatch.setattr(bootstrap_mod, "_CLI_SUMS", bad_sums)
     with pytest.raises(RuntimeError, match="sha256 mismatch"):
         ensure_cli_binary(version="v0.9.0")
