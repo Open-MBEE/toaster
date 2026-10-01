@@ -115,6 +115,51 @@ def test_model_to_dot_excludes_unreachable_elements_on_real_ch08_fixture():
     conn.close()
 
 
+def test_model_to_dot_excludes_requirement_subject_on_real_ch02_fixture():
+    """The real correctness bug this fix addresses: a requirement's declared
+    `subject` (TimelyToast's `subject toaster : Toaster`) is internally a
+    PartUsage owned by the RequirementDefinition, not real part composition.
+    Unscoped model_to_dot() must not draw it, or TimelyToast at all, while
+    still drawing the legitimate part-composition content of this fixture."""
+    conn = opensysml.connect(version="v0.9.0")
+    src = (REPO_ROOT / "models" / "ch02-cumulative.sysml").read_text()
+    model = conn.load_from_content(src, strict=False)
+    assert model.ok
+    dot = model_to_dot(model, title="Ch2")
+    conn.close()
+
+    assert "TimelyToast" not in dot
+    for present in ("Toaster", "nominal", "slow", "HeatingSystem", "ControlSystem"):
+        assert present in dot
+
+
+_COMPOSITION_SRC = """
+package CompositionProbe {
+    part def Outer {
+        part inner : Inner;
+    }
+    part def Inner;
+}
+"""
+
+
+def test_model_to_dot_real_composition_is_unaffected():
+    """Negative control: a PartUsage owned by a genuine PartDefinition must
+    still draw its composition diamond and typing dash -- the requirement-
+    subject fix must not over-correct and suppress real composition."""
+    conn = opensysml.connect(version="v0.9.0")
+    model = conn.load_from_content(_COMPOSITION_SRC, strict=False)
+    assert model.ok
+
+    dot = model_to_dot(model, title="CompositionProbe")
+    conn.close()
+
+    assert 'CompositionProbe::Outer" -> "CompositionProbe::Outer::inner"' in dot
+    assert "arrowhead=diamond" in dot
+    assert 'CompositionProbe::Outer::inner" -> "CompositionProbe::Inner"' in dot
+    assert "arrowhead=open" in dot
+
+
 def test_model_to_dot_layout_rankdir_override():
     conn = opensysml.connect(version="v0.9.0")
     model = conn.load_from_content(_SRC, strict=False)

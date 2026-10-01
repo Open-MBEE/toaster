@@ -30,6 +30,16 @@ def model_to_dot(
     Nodes: PartDefinition (dashed border if abstract).
     Edges: composition (diamond arrowhead from owner to usage),
            typing (dashed open arrow from usage to its PartDefinition type).
+
+    A `PartUsage` whose owner is a `RequirementDefinition` or `RequirementUsage`
+    is a requirement's declared `subject` (e.g. `requirement def TimelyToast {
+    subject toaster : Toaster; ... }`), not real part composition -- SysML v2
+    represents the subject binding as a `PartUsage` owned by the requirement,
+    but it is a reference/parameter binding, not ownership. Such a usage is
+    skipped entirely (neither its composition edge nor its typing edge is
+    drawn, and it does not appear in the diagram), since nothing else
+    references it once the composition edge is gone. Every other owner kind
+    (a real `PartDefinition` or `PartUsage`) is unaffected.
     """
     layout = layout or {}
     rankdir = layout.get("rankdir", "TB")
@@ -41,6 +51,18 @@ def model_to_dot(
         '  edge [fontname="Helvetica"];',
     ]
     source = model.query() if elements is None else elements
+    # Built once per call (not per element): every model element keyed by its
+    # own qualified name, so a PartUsage's `owner` string can be resolved to
+    # the owning element's own `@type` -- model.query() is always callable on
+    # `model` regardless of what `elements` was passed, since it queries the
+    # model object fresh and does not depend on any prior scoping.
+    by_qname = {}
+    for e in model.query():
+        od = e.as_dict()
+        oqname = od.get("qualifiedName", od.get("@id", ""))
+        by_qname[oqname] = od
+    REQUIREMENT_OWNER_TYPES = {"RequirementDefinition", "RequirementUsage"}
+
     for e in source:
         d = e.as_dict()
         etype = d.get("@type", "")
@@ -55,6 +77,9 @@ def model_to_dot(
         elif etype == "PartUsage":
             owner = d.get("owner", "")
             part_type = d.get("type", "")
+            owner_type = by_qname.get(owner, {}).get("@type", "")
+            if owner_type in REQUIREMENT_OWNER_TYPES:
+                continue
             if owner:
                 lines.append(
                     f'  "{owner}" -> "{qname}" [label="{dname}" arrowhead=diamond];'
