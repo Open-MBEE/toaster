@@ -100,8 +100,18 @@ Hawkins' taxonomy is answering, not by the dataclass's field order:
 
 ```
 [markdown] narration: what is being claimed, and what, specifically, it is about
+[code]     subject_ref = "ToasterDemo::..."
+           SOME_TAG = """\
+           metadata someTag : ReviewRecordRef about <subject> {
+               identifier = "..."
+           }
+           """
+           print(SOME_TAG)
+[markdown] narration: this fragment is the same text now committed in the cumulative model
+[code]     TOASTER_INCREMENT = SOME_TAG   # or assembled with any other new fragment this notebook adds
+           print(TOASTER_INCREMENT)
+[markdown] narration: the claim itself comes next
 [code]     claim = "..."
-           subject_ref = "ToasterDemo::..."
            model_ref = "..."
 [markdown] narration: what standard the claim is checked against (appropriateness)
 [code]     scope = "..."
@@ -126,13 +136,20 @@ Hawkins' taxonomy is answering, not by the dataclass's field order:
                residual_uncertainties=residual_uncertainties,
                disposition="pending", dependency_freshness="current",
                engineering_conclusion=..., record_kind="worked_example")
-           errors = validate_record(record)
+           errors = validate_record(record, model=model)
+           tag = next((t for t in get_review_record_refs(model) if t["identifier"] == record.identifier), None)
+           print(f"Model tag: {tag}")
            print(f"Validation errors: {errors}")
 ```
 
-Five groups, five narration cells, matching the model-fragment construction zone's pacing rule (no
-two code cells adjacent). Each `print`ed group is the record's own reflection, the same role a
-printed `TOASTER_INCREMENT` plays for a model fragment.
+Seven groups when the notebook is introducing a new tag (the two anchor groups above, then the five
+Hawkins-taxonomy groups); five when it is a Python-only reconstruction that cites an already-tagged
+identifier from an earlier chapter (no new SysML, so no anchor groups, but `model=model` and the
+`Model tag` lookup still run, exercising the cross-representation check against the already-committed
+tag). Every code cell is still followed by a markdown cell narrating what's next (no two code cells
+adjacent). Each printed group is its own reflection, the same role a printed `TOASTER_INCREMENT`
+plays for a model fragment — and `TOASTER_INCREMENT` here really is the Hawkins record's own model-
+side anchor, assembled and loaded the same way any other chapter's model increment is.
 
 **Size limit:** `toaster-recipe`'s ≤600 words / ≤50 lines budget is sized for a notebook whose main
 content is one model construct. A notebook whose construct is a judgment record may exceed it — the
