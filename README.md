@@ -27,7 +27,8 @@ npm install
 npx mystmd start --execute
 ```
 
-See [docs/setup.md](docs/setup.md) for full setup instructions and the fork-and-exercise workflow.
+See [docs/setup.md](docs/setup.md) for full setup instructions and the fork-and-exercise workflow,
+including what `uv` and `mystmd` are and why the quick start above uses them.
 
 ## Repository structure
 
@@ -41,3 +42,8 @@ docs/       — setup, glossary, references, reproducibility statement
 scripts/    — pre-flight and build utilities
 decisions/  — ACE decision log
 ```
+
+`AGENTS.md`, `CLAUDE.md`, and `DEFERRED.md` at the repo root are not learner material — they're
+this project's own working contract, for the AI agents and maintainers who build and review the
+tutorial's content. See [docs/contributor.md](docs/contributor.md) if you want to understand how
+the tutorial is actually built, tested, and reviewed, or to contribute to it yourself.

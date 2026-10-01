@@ -4,6 +4,44 @@ This page is for maintainers working on the tutorial itself, not learners workin
 It assumes you can read Python and SysML and that you have the environment from
 [Getting Started](setup.md) already set up.
 
+## How this repo is built, tested, and reviewed
+
+The tutorial's content — every chapter notebook, exercise, and model file — is built and
+reviewed through a small multi-agent harness that lives alongside the content itself. Three
+root files and two directories carry that harness, and they're worth knowing about before you
+touch anything, even if you never run an agent yourself:
+
+- **`AGENTS.md`** states what the tutorial teaches (the functional/logical/physical layering,
+  where its terms come from, how models are built and queried) and the legacy role roster that
+  used to own each file. It's the harness's own foundational reference, read first by every
+  agent role before it does anything else.
+- **`CLAUDE.md`** is the entry point: read order, the glossary CLI, and the skill index below.
+- **`DEFERRED.md`** tracks known gaps in the toolchain (OpenSysML, sysml-toolkit) that the
+  tutorial works around — what the workaround is, why it's needed, and the condition under
+  which it comes out once the upstream gap closes.
+- **`.claude/agents/`** defines the roles that do the work: an `orchestrator` that turns a
+  request into scoped contracts and integrates results; `builder`/`reviewer` pairs that
+  implement and independently check each change (always on different models, never the same
+  one reviewing its own work); a `layer-auditor` that classifies model elements against the
+  functional/logical/physical boundaries; a `simulated-learner` that executes a chapter as a
+  persona-assigned reader and reports what it found; and the `ace`, which triages questions
+  between the team and the tutorial's author, ruling where it can and escalating what it can't.
+- **`.claude/skills/`** holds the how-to for each kind of work — the sub-notebook template and
+  pacing rules (`toaster-recipe`), the boundary tests for classifying a model element
+  (`architecture-layers`), the glossary's own usage rules (`tutorial-glossary`), the simulated
+  learner protocol (`user-testing`), and more — each one a reference an agent (or a human
+  contributor) reads before doing that kind of work, not after.
+- **`decisions/`** is the record of what was decided and why: `log.md` (the running decision
+  log, one entry per substantive ruling or escalation), `work-contract-template.md` (the shape
+  of a task handed to a builder or reviewer), and `task-states.md` (what state a task is in and
+  what moves it to the next one).
+
+If you want to extend a chapter, clarify a definition, or review didactic content, the harness
+tools above are built for exactly that — start at `CLAUDE.md`'s own read order rather than
+improvising a workflow from scratch. The sections below cover specific maintenance tasks
+directly; none of them require running an agent, but all of them follow conventions the harness
+itself enforces (the recipe's pacing rule, the layer boundary tests, the review gate).
+
 ## Deployment status
 
 Deployment to GitHub Pages is deliberately disabled (`.github/workflows/ci.yml`, the `deploy`
