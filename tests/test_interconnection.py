@@ -266,3 +266,80 @@ def test_negative_depth_raises_value_error(nested_model):
 def test_none_depth_raises_value_error(nested_model):
     with pytest.raises(ValueError):
         build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=None)
+
+
+REPO_ROOT = Path(__file__).parent.parent
+
+
+@pytest.fixture(scope="module")
+def ch06_model():
+    import opensysml
+
+    conn = opensysml.connect(version="v0.9.0")
+    src = (REPO_ROOT / "models" / "ch06-cumulative.sysml").read_text()
+    model = conn.load_from_content(src, strict=False)
+    assert model.ok, f"Ch06 model failed: {model.diagnostics}"
+    yield model
+    conn.close()
+
+
+@pytest.fixture(scope="module")
+def ch05_model():
+    import opensysml
+
+    conn = opensysml.connect(version="v0.9.0")
+    src = (REPO_ROOT / "models" / "ch05-cumulative.sysml").read_text()
+    model = conn.load_from_content(src, strict=False)
+    assert model.ok, f"Ch05 model failed: {model.diagnostics}"
+    yield model
+    conn.close()
+
+
+def test_allocs_scoped_to_own_subtree_excludes_unrelated_owner(ch06_model):
+    """Cross-cutting bug (independent review of CONTRACT DIAGRAM-PHASE2-TASK7):
+    a HeatingAssembly-scoped interconnection diagram must not draw
+    `ToasterDemo::Toaster::heatAllocation` (owned by Toaster, a different,
+    unrelated element) just because one of its textual endpoints ('heating')
+    happens to coincide with a Toaster part's short name. Only the real,
+    in-scope `heatGenAllocation` (owned by HeatingAssembly itself) belongs
+    here."""
+    intent = build_interconnection_intent(
+        ch06_model, "ToasterDemo::HeatingAssembly", depth=1
+    )
+    allocs = intent["allocs"]
+    assert allocs == [{"source": "applyHeat.generateHeat", "target": "heatGen"}]
+    assert {"source": "toastBread.applyHeat", "target": "heating"} not in allocs
+    assert not any(a["target"] == "heating" for a in allocs)
+
+
+def test_allocs_in_scope_allocation_still_included(ch05_model):
+    """Negative control: an allocation that genuinely belongs to the diagram's
+    own root (`ToasterDemo::Toaster::heatAllocation`, owned by Toaster itself)
+    must be completely unaffected by the owner-scoping fix."""
+    intent = build_interconnection_intent(ch05_model, "ToasterDemo::Toaster", depth=1)
+    allocs = intent["allocs"]
+    assert {"source": "toastBread.applyHeat", "target": "heating"} in allocs
+
+
+def test_render_heatingassembly_excludes_heating_node_and_toaster_edge(ch06_model):
+    """Rendered-output confirmation of the same fix: the SVG for a
+    HeatingAssembly-scoped interconnection diagram must contain `heatGen` and
+    must not contain a `heating` node or any Toaster-owned allocation edge."""
+    intent = build_interconnection_intent(
+        ch06_model, "ToasterDemo::HeatingAssembly", depth=1
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "heatingassembly.svg"
+        render_interconnection(intent, out)
+        content = out.read_text()
+        titles = [
+            line.split(">")[1].split("<")[0]
+            for line in content.splitlines()
+            if "<title>" in line
+        ]
+        assert "heatGen" in titles
+        assert "heating" not in titles
+        assert "toastBread.applyHeat" not in titles
+        assert not any(
+            "toastBread.applyHeat" in t and "heating" in t for t in titles
+        )

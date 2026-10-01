@@ -184,16 +184,37 @@ def build_interconnection_intent(model: Any, fqn: str, depth: int = 1) -> dict:
     `depth` existed (not a regression), and this tutorial's own call sites
     always root at a definition or assembly, never a bare usage.
 
-    flows/allocs extraction below is unchanged by `depth` and stays
-    model-wide (via model.to_api_json(), not scoped to the expanded parts
-    set); its endpoint resolution and node-deduplication logic (see
-    render_interconnection()'s `normalize()`) assumes the depth=1 case, where
-    every part is a direct, unique owned child of `fqn`. At depth>1, a flow or
-    allocation between two nested parts several levels deep can be drawn
-    misleadingly (e.g. as a self-loop on their shared ancestor, since only the
-    first path segment is resolved) or against a node that looks duplicated.
-    Treat depth>1 diagrams' flows/allocs as exploratory until this is
-    addressed; the `parts` list itself is not affected by this limitation.
+    flows extraction below is unchanged by `depth` and stays model-wide (via
+    model.to_api_json(), not scoped to the expanded parts set); its endpoint
+    resolution and node-deduplication logic (see render_interconnection()'s
+    `normalize()`) assumes the depth=1 case, where every part is a direct,
+    unique owned child of `fqn`. At depth>1, a flow between two nested parts
+    several levels deep can be drawn misleadingly (e.g. as a self-loop on
+    their shared ancestor, since only the first path segment is resolved) or
+    against a node that looks duplicated. Treat depth>1 diagrams' flows as
+    exploratory until this is addressed; the `parts` list itself is not
+    affected by this limitation.
+
+    allocs extraction is scoped by OWNER, not merely by endpoint text: an
+    `AllocationUsage` is only included when its own owner is `fqn` itself or
+    something in `expanded` (the containment set already computed above).
+    Without this, an AllocationUsage belonging to a wholly different,
+    unrelated element (e.g. a sibling or ancestor's own allocation) would be
+    drawn simply because one of its textual endpoints happened to collide
+    with a part's short name here -- confirmed on the real Ch6 fixture, where
+    `ToasterDemo::Toaster::heatAllocation` (owned by `Toaster`, not by
+    `HeatingAssembly`) was drawn on a `HeatingAssembly`-scoped diagram next to
+    an orphan `heating` box. Owner identity is resolved entirely within
+    `to_api_json()`'s own payload: each AllocationUsage's `owner` field there
+    is a `{"@id": ...}` reference (not a comparable qualifiedName string, the
+    way `model.query()`'s `as_dict()` gives model_to_dot()'s own
+    requirement-subject fix), so this follows that `@id` to the owner's own
+    record in the same payload (`by_id`) and reads its qualifiedName there.
+    This also covers an anonymous `allocate X to Y;` statement with no
+    declared name, which `model.query()` does not surface at all (confirmed:
+    it is present in `to_api_json()`'s element list but absent from
+    `model.query()`'s) -- an owner index built from model.query() alone would
+    silently drop such an allocation's owner lookup and exclude it.
 
     Returns a dict with:
       title    — the qualified name
@@ -226,6 +247,14 @@ def build_interconnection_intent(model: Any, fqn: str, depth: int = 1) -> dict:
     flows: list[dict] = []
     allocs: list[dict] = []
 
+    # Containment set for scoping allocs to this diagram's own subtree: the
+    # qualified names of fqn itself plus everything already reachable in
+    # `expanded` (containment_subgraph() always includes its own root).
+    expanded_qnames = {
+        ed.get("qualifiedName", ed.get("@id", ""))
+        for ed in (x.as_dict() for x in expanded)
+    }
+
     # FlowUsage and AllocationUsage via to_api_json (experimental)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -245,6 +274,22 @@ def build_interconnection_intent(model: Any, fqn: str, depth: int = 1) -> dict:
         if etype in ("FlowUsage", "InterfaceUsage", "ConnectionUsage"):
             flows.append({"source": src_text, "target": tgt_text})
         elif etype == "AllocationUsage":
+            # Resolve this AllocationUsage's own owner by following its
+            # to_api_json() `owner` reference ({"@id": ...}) to that owner
+            # element's own record in the SAME to_api_json() payload (`by_id`)
+            # and reading its qualifiedName there. model.query()'s elements
+            # carry `owner` as a flat, directly-comparable qualifiedName
+            # string (the technique model_to_dot() uses for its
+            # requirement-subject fix), but model.query() does not surface
+            # every element to_api_json() does -- notably an anonymous
+            # `allocate X to Y;` statement with no declared name -- so
+            # resolving owner identity entirely within to_api_json()'s own
+            # data covers both named and anonymous allocations alike.
+            owner_ref = elem.get("owner") or {}
+            owner_id = owner_ref.get("@id", "") if isinstance(owner_ref, dict) else ""
+            owner_qname = by_id.get(owner_id, {}).get("qualifiedName", owner_id)
+            if owner_qname != fqn and owner_qname not in expanded_qnames:
+                continue
             allocs.append({"source": src_text, "target": tgt_text})
 
     return {"title": fqn, "parts": parts, "flows": flows, "allocs": allocs}
