@@ -1,21 +1,21 @@
-import pytest
 import opensysml
+import pytest
 
-from toaster.evidence import ReviewRecord, validate_record, hash_content
+from toaster.evidence import ReviewRecord, validate_record
 
 
 def _base_kwargs(**overrides):
-    kwargs = dict(
-        identifier="RR-TEST",
-        kind="asserted_solution",
-        claim="Test claim.",
-        model_ref="models/test.sysml",
-        content_hash="deadbeef",
-        scope="test scope",
-        criteria="test criteria",
-        rationale="test rationale",
-        counterevidence="test counterevidence",
-    )
+    kwargs = {
+        "identifier": "RR-TEST",
+        "kind": "asserted_solution",
+        "claim": "Test claim.",
+        "model_ref": "models/test.sysml",
+        "content_hash": "deadbeef",
+        "scope": "test scope",
+        "criteria": "test criteria",
+        "rationale": "test rationale",
+        "counterevidence": "test counterevidence",
+    }
     kwargs.update(overrides)
     return kwargs
 
