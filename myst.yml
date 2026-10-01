@@ -86,6 +86,7 @@ project:
     - file: docs/glossary
     - file: docs/references
     - file: docs/contributor
+    - file: docs/case-studies/2026-09-30-energy-conservation-requirement-tie
 
 site:
   template: book-theme

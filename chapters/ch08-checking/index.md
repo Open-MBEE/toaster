@@ -1,4 +1,4 @@
-# Chapter 8 - Constraint Checking
+# Chapter 8: Checking and Revision
 
 ## Purpose
 
