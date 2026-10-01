@@ -328,8 +328,12 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             # deliveredEnergyBoundedBySupply (Chapter 8); stubbed here with a
             # bare constraint of that name, since the fragment itself only
             # needs something to subset, not the lemma's own real body.
+            # acC10Tag (added alongside EnergyConservationReq) needs
+            # ReviewRecordRef itself in scope, the same stub every other
+            # ReviewRecordRef-tagging notebook's entry already carries.
             "context_stubs": [
                 "constraint deliveredEnergyBoundedBySupply;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
     ],

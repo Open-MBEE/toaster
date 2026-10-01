@@ -356,4 +356,8 @@ package ToasterDemo {
     }
 
     requirement energyConservationReq : EnergyConservationReq;
+
+    metadata acC10Tag : ReviewRecordRef about EnergyConservationReq {
+        identifier = "AC-C10";
+    }
 }
