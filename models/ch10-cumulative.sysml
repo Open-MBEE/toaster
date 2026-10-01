@@ -326,6 +326,10 @@ package ToasterDemo {
                 <= heatGenCheck.power * heatGenCheckDuration
     }
 
+    metadata asC08Tag : ReviewRecordRef about deliveredEnergyBoundedBySupply {
+        identifier = "AS-C08";
+    }
+
     requirement def EnergyConservationReq {
         doc /* A heat generator shall never deliver more energy than it is supplied:
              * energy conservation, a physical law any real heat generator design

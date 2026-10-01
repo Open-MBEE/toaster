@@ -285,4 +285,8 @@ package ToasterDemo {
         implies (heatGenCheck.power * heatGenCheckDuration * heatGenCheck.efficiency)
                 <= heatGenCheck.power * heatGenCheckDuration
     }
+
+    metadata asC08Tag : ReviewRecordRef about deliveredEnergyBoundedBySupply {
+        identifier = "AS-C08";
+    }
 }

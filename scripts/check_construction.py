@@ -280,10 +280,20 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             "path": "chapters/ch08-checking/01-invariant-def.ipynb",
             # deliveredEnergyBoundedBySupply references a fresh usage of HeatGenerator
             # (Ch6/Ch7), stubbed here with just the two features (power, efficiency) the
-            # fragment itself reads; nb02 and nb03 introduce no new construct (analysis
-            # only), so chapter 8 has exactly one construct-introducing notebook.
+            # fragment itself reads.
             "context_stubs": [
                 "abstract part def HeatGenerator { attribute power : ISQ::PowerValue; attribute efficiency : DimensionOneValue; }",
+            ],
+        },
+        {
+            "path": "chapters/ch08-checking/02-violation-witness.ipynb",
+            # asC08Tag's `about deliveredEnergyBoundedBySupply` requires that constraint
+            # (nb01) as a named element in scope, and ReviewRecordRef (carried forward
+            # from Chapter 2). nb03 introduces no new construct (analysis only), so
+            # chapter 8 has exactly two construct-introducing notebooks.
+            "context_stubs": [
+                "constraint deliveredEnergyBoundedBySupply;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
     ],
