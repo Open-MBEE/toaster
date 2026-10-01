@@ -1,4 +1,4 @@
-# Chapter 9 - Coverage and Sufficiency
+# Chapter 9: Coverage and Sufficiency
 
 ## Purpose
 

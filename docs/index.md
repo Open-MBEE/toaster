@@ -22,8 +22,8 @@ An executable tutorial on recursive system decomposition using SysML v2 and Open
 | 5: Architecture and Allocation | Which component performs it, and how do components connect? | model navigation, allocate, perform, port, interface |
 | 6: Recursive Decomposition | What does one branch of the recursion show, one level down? | nested action, abstract logical carrier, port, allocate, specialization, asserted_solution |
 | 7: Execution and Experiments | What does it do? | bounded calc, assert constraint, exhibit state, do action, execute_state, parameter sweep |
-| 8: Constraint Checking | Does one claim hold at one point, or does a property hold for every value? | assert constraint, verify_satisfaction, verify_holds (Z3), stale records |
+| 8: Checking and Revision | Does one claim hold at one point, or does a property hold for every value? | assert constraint, verify_satisfaction, verify_holds (Z3), stale records |
 | 9: Coverage and Sufficiency | Are all requirements covered? | requirement coverage, evidence sufficiency, stale detection at scale |
 | 10: Traceability and Sign-off | Is the argument complete? | traceability graph, judgment ledger, asserted_inference synthesis |
 
-[Setup and installation](setup.md) | [Glossary](glossary.md) | [References](references.md) | [Case studies](case-studies/)
+[Setup and installation](setup.md) | [Glossary](glossary.md) | [References](references.md) | [Case studies](case-studies/2026-09-30-energy-conservation-requirement-tie.md)

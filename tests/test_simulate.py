@@ -57,6 +57,7 @@ def _make_record(source: str) -> ReviewRecord:
         identifier="TS-01",
         kind="asserted_solution",
         claim="X.v satisfies the threshold.",
+        subject_ref="T::X",
         model_ref="T::X",
         content_hash=hash_content(source),
         scope="T",

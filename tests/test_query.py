@@ -895,3 +895,46 @@ def test_requirement_ties_raises_on_unknown_target(ch10) -> None:
         query.requirement_ties(ch10, "ToasterDemo::NonexistentThing", idx)
     with pytest.raises(KeyError):
         query.tied_to_any_requirement(ch10, "ToasterDemo::NonexistentThing", idx)
+
+
+_FIXTURE_ONE_TAG = """
+package ToasterDemo {
+    part def Widget { attribute flag : ScalarValues::Boolean; }
+    part target : Widget;
+    metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }
+    metadata rrTag : ReviewRecordRef about target { identifier = "RR-001"; }
+}
+"""
+
+_FIXTURE_NO_TAGS = """
+package ToasterDemo {
+    part def Widget { attribute flag : ScalarValues::Boolean; }
+    part target : Widget;
+}
+"""
+
+
+def _load(source):
+    conn = opensysml.connect(version="v0.9.0")
+    model = conn.load_from_content(source, strict=False)
+    assert model.ok, model.diagnostics
+    return conn, model
+
+
+def test_get_review_record_refs_finds_one_tag():
+    conn, model = _load(_FIXTURE_ONE_TAG)
+    try:
+        refs = query.get_review_record_refs(model)
+        assert len(refs) == 1
+        assert refs[0]["identifier"] == "RR-001"
+        assert refs[0]["annotated_element"] == "ToasterDemo::target"
+    finally:
+        conn.close()
+
+
+def test_get_review_record_refs_empty_when_no_tags():
+    conn, model = _load(_FIXTURE_NO_TAGS)
+    try:
+        assert query.get_review_record_refs(model) == []
+    finally:
+        conn.close()

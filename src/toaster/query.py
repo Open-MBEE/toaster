@@ -96,6 +96,38 @@ def get_satisfy_relationships(model: Any) -> list[dict]:
     return ApiIndex(model).of_type("SatisfyRequirementUsage")
 
 
+def get_review_record_refs(model: Any, index: ApiIndex | None = None) -> list[dict]:
+    """Every ``ReviewRecordRef`` metadata tag in the model: ``{tag, identifier, annotated_element}``.
+
+    The model-to-Python direction of this tutorial's narrowed Assurance Claim Point anchor
+    (``toaster-review-protocol``, SysML v2 formal/2026-03-02 §7.27.2): given a loaded model,
+    find every judgment-record tag and the one subject it names, independent of any
+    notebook's own Python objects. Takes the first ``annotatedElement`` only, matching this
+    tutorial's one-tag-one-subject convention (a tag with more than one is a modeling error
+    this tutorial's own notebooks never produce, not a shape this helper tries to generalize).
+    """
+    idx = index or ApiIndex(model)
+    out = []
+    for e in idx.of_type("MetadataUsage"):
+        type_qns = {idx.qn(t) for t in e.get("type", [])}
+        if not any(qn and qn.endswith("::ReviewRecordRef") for qn in type_qns):
+            continue
+        annotated = [idx.qn(a) for a in e.get("annotatedElement", [])]
+        identifier_value = None
+        for member_ref in e.get("ownedMember", []):
+            member = idx.by_id.get(_ref(member_ref))
+            if member and member.get("declaredName") == "identifier":
+                literal = idx.by_id.get(_ref(member.get("value")))
+                if literal is not None:
+                    identifier_value = literal.get("value")
+        out.append({
+            "tag": e.get("qualifiedName"),
+            "identifier": identifier_value,
+            "annotated_element": annotated[0] if annotated else None,
+        })
+    return out
+
+
 def satisfy_relationships(model: Any, index: ApiIndex | None = None) -> list[dict]:
     """``{id, requirement, subject, is_negated}`` for every satisfy (and verify) relationship.
 
@@ -272,6 +304,12 @@ def requirement_coverage(model: Any, index: ApiIndex | None = None) -> list[dict
     an unnamed ``RequirementUsage`` too (the objective's own auto-synthesized wrapper, not a
     design requirement anyone would check coverage on), and including it would report a bare
     bookkeeping artifact as an uncovered requirement.
+
+    ``satisfied_by``/``failed_by`` key on the ``satisfy`` relationship's own ``subject`` qualified
+    name, which is the top-level usage only: a chained feature subject (``assert not satisfy R by
+    a.b``) attributes to ``a.b``, never to ``a``, so a requirement claimed only via a feature chain
+    will not show up under the chain's own owning part (found by user-testing grid run M4-returning,
+    ``decisions/log.md`` DL-085(4); no chapter in this tutorial uses a chained subject today).
     """
     idx = index or ApiIndex(model)
     positive: dict[str, list[str]] = defaultdict(list)

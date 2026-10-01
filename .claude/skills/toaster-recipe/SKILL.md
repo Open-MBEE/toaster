@@ -126,6 +126,13 @@ below" — never a sentence built around naming the categories themselves. `user
 simulated-learner checklist judges this behaviorally (does removing any label still leave the
 connection legible?), which is exactly the test a lint rule can't run.
 
+**Judgment-record notebooks specifically:** the seam cell narrates one bridged connection — the
+tagged SysML text (the subject plus its `ReviewRecordRef` usage), the tool that loads it and
+cross-checks both the Python record and the model tag, and a result showing they agree
+(`validate_record` plus `get_review_record_refs`) — not a choice between the model's own
+construct/tool/result triad and the record's own fields/`validate_record`/result triad
+(`decisions/log.md` DL-075, retired by this convention).
+
 ## Chapter index.md — 6-element recipe
 
 1. Purpose — engineering question and model state after completing the chapter
@@ -160,7 +167,10 @@ someone happens to reread it.
 A notebook that builds a `ReviewRecord` (an `asserted_context`, `asserted_inference` or
 `asserted_solution` judgment) uses `toaster-review-protocol`'s own construction-zone pattern for
 it, not one dense call: name each group of fields, narrate what it's for, print it, then assemble.
-The size limits below are relaxed for this content (see that skill for the exact grouping and why).
+The first group now names the record's own subject (`subject_ref`) alongside its `claim`, and
+builds the matching `ReviewRecordRef` metadata-tag fragment the same way a model-increment cell
+builds any other named fragment (see toaster-review-protocol's own subject_ref section). The size limits below
+are relaxed for this content (see that skill for the exact grouping and why).
 
 ## Size limits (A6 review criteria)
 

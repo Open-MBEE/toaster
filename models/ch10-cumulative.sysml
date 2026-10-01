@@ -43,6 +43,10 @@
 // warranted).
 
 package ToasterDemo {
+    metadata def ReviewRecordRef {
+        attribute identifier : ScalarValues::String;
+    }
+
     private import ScalarValues::*;
     private import SI::*;
     private import ISQ::*;
@@ -72,6 +76,10 @@ package ToasterDemo {
             in energyIn = ApplyHeat::energy;
         }
         then done;
+    }
+
+    metadata aiC04Tag : ReviewRecordRef about ApplyHeat {
+        identifier = "AI-C04";
     }
 
     action def ToastBread {
@@ -126,7 +134,19 @@ package ToasterDemo {
 
     requirement timely : TimelyToast;
 
+    metadata acC03Tag : ReviewRecordRef about timely {
+        identifier = "AC-C03";
+    }
+
+    metadata asC03Tag : ReviewRecordRef about timely {
+        identifier = "AS-C03";
+    }
+
     part nominal : Toaster;
+    metadata ac001Tag : ReviewRecordRef about nominal {
+        identifier = "AC-001";
+    }
+
     part slow : Toaster {
         attribute :>> cycleTime = 200.0 [SI::s];
         assert not satisfy timely by slow;
@@ -210,6 +230,10 @@ package ToasterDemo {
         allocation heatGenAllocation allocate applyHeat.generateHeat to heatGen;
     }
 
+    metadata aiC06Tag : ReviewRecordRef about HeatingAssembly::heatGen {
+        identifier = "AI-C06";
+    }
+
     requirement def HeatGenerationReq {
         doc /*
          * A heat generator shall be rated for at least 600 W.
@@ -224,6 +248,10 @@ package ToasterDemo {
 
     requirement heatGenerationReq : HeatGenerationReq;
 
+    metadata acC06Tag : ReviewRecordRef about heatGenerationReq {
+        identifier = "AC-C06";
+    }
+
     part def ResistanceCoil :> HeatGenerator {
         doc /* An electrically switched resistive element: converts electrical
              * energy to heat by Joule heating. The mechanism selection this
@@ -232,6 +260,10 @@ package ToasterDemo {
              * two mechanisms work, not from anything the model connects. */
         attribute :>> power default = 800.0 [SI::W];
         attribute resistance : ISQ::ResistanceValue default = 12.0 [SI::ohm];
+    }
+
+    metadata asC06Tag : ReviewRecordRef about ResistanceCoil {
+        identifier = "AS-C06";
     }
 
     part rated : ResistanceCoil {
@@ -294,6 +326,10 @@ package ToasterDemo {
                 <= heatGenCheck.power * heatGenCheckDuration
     }
 
+    metadata asC08Tag : ReviewRecordRef about deliveredEnergyBoundedBySupply {
+        identifier = "AS-C08";
+    }
+
     requirement def EnergyConservationReq {
         doc /* A heat generator shall never deliver more energy than it is supplied:
              * energy conservation, a physical law any real heat generator design
@@ -320,4 +356,8 @@ package ToasterDemo {
     }
 
     requirement energyConservationReq : EnergyConservationReq;
+
+    metadata acC10Tag : ReviewRecordRef about EnergyConservationReq {
+        identifier = "AC-C10";
+    }
 }

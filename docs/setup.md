@@ -67,8 +67,9 @@ loads, validates, queries, and evaluates every model in this tutorial. Every cha
 
 **sysml-toolkit** does one thing OpenSysML cannot yet: prove that a constraint holds for every
 value of an unbound quantity, not just check it against one fixed value, using the Z3 solver.
-No chapter currently uses this; it becomes relevant once Chapter 8 is re-derived to need it.
-It is not on crates.io. The name `sysmlv2` is reserved on PyPI by sysml-toolkit's own
+Chapter 8 uses it directly (`toaster.modelcheck.verify_holds`, wrapping its `sysmlv2 verify
+--solve` CLI) to prove `deliveredEnergyBoundedBySupply` for every value its unbound features
+admit. It is not on crates.io. The name `sysmlv2` is reserved on PyPI by sysml-toolkit's own
 maintaining organization, but the package published there today is a placeholder, not the real
 thing; do not `pip install` it. Get a working binary instead from
 [its GitHub releases page](https://github.com/Open-MBEE/sysml-toolkit/releases) (macOS, Linux,
@@ -90,8 +91,19 @@ Fork the repository, provision the environment (above), then:
 
 1. Read the worked example: open a chapter notebook in `chapters/` and run every cell.
 2. Open the parallel exercise: `exercises/ch{N}/exercise.ipynb`.
-3. The exercise asks you to apply the same construct or operation to a different part of the
-   toaster. The only tools it needs are the ones the chapter already introduced.
+3. The exercise asks you to apply the same construct or operation to a different domain: a
+   coffee maker, built in parallel to the toaster throughout the tutorial. The only tools it
+   needs are the ones the chapter already introduced.
 
 The `exercises/` notebooks are blank workspaces. They are not pre-executed and not part of the
 CI pipeline. Work in them directly; do not modify the chapter notebooks while doing an exercise.
+
+**Keep your model between chapters.** Each exercise's first cell asks you to paste in your own
+completed model from the previous chapter's exercise — there is no committed solution file to
+load instead. Save the full `source` string your notebook ends with (for example, to a scratch
+`.sysml` file in your own fork, or just keep the notebook itself open) before moving to the next
+chapter's exercise, or you will have nothing to paste in. Chapter 6's own exercise is the one
+case where you need to keep **two** separate snapshots, not one: the model state right before you
+add `Impeller` (used by the mechanism-selection judgment, written before the mechanism it selects
+exists) and the model state right after (used by the stopping judgment, and the one that carries
+forward into Chapter 7). Chapter 6's own exercise notebook flags exactly where to save each one.

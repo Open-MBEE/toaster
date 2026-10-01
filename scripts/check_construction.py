@@ -90,13 +90,25 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
                 "part def Toaster { attribute cycleTime : ISQ::DurationValue default = 120.0 [SI::s]; }",
             ],
         },
+        {
+            "path": "chapters/ch02-requirements/03-judgment-context.ipynb",
+            # ac001Tag's `about nominal` requires nominal (nb01) to be a named element
+            # in scope; ReviewRecordRef itself is introduced by this notebook's own
+            # fragment, so it is not stubbed.
+            "context_stubs": [
+                "part nominal;",
+            ],
+        },
     ],
     3: [
         {
             "path": "chapters/ch03-measures/01-moe-definition.ipynb",
-            # timely : TimelyToast requires the requirement def from Chapter 2
+            # timely : TimelyToast requires the requirement def from Chapter 2;
+            # acC03Tag's `about timely` requires ReviewRecordRef (carried forward
+            # from Chapter 2) in scope.
             "context_stubs": [
                 "requirement def TimelyToast;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
         {
@@ -107,6 +119,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
                 "part def Toaster { attribute cycleTime : ISQ::DurationValue; }",
                 "requirement def TimelyToast { subject toaster : Toaster; require constraint { toaster.cycleTime <= 180.0 [SI::s] } }",
                 "requirement timely : TimelyToast;",
+            ],
+        },
+        {
+            "path": "chapters/ch03-measures/03-threshold-judgment.ipynb",
+            # asC03Tag's `about timely` requires timely (nb01) as a named element
+            # in scope, and ReviewRecordRef (carried forward from Chapter 2).
+            "context_stubs": [
+                "requirement timely;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
         {
@@ -133,6 +154,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
         {
             "path": "chapters/ch04-functional-decomp/02-heating-refinement.ipynb",
             "context_stubs": [],
+        },
+        {
+            "path": "chapters/ch04-functional-decomp/03-completeness-check.ipynb",
+            # aiC04Tag's `about ApplyHeat` requires ApplyHeat (nb01) as a named
+            # element in scope, and ReviewRecordRef (carried forward from Chapter 2).
+            "context_stubs": [
+                "action def ApplyHeat;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
+            ],
         },
     ],
     5: [
@@ -192,9 +222,23 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             "path": "chapters/ch06-recursive-decomp/02-second-level.ipynb",
             # ResistanceCoil :> HeatGenerator (nb01); HeatGenerationReq's subject
             # is HeatGenerator, and rated/weak are typed by ResistanceCoil, this
-            # notebook's own fragment.
+            # notebook's own fragment. acC06Tag's `about heatGenerationReq` and
+            # asC06Tag's `about ResistanceCoil` are both declared within this
+            # notebook's own TOASTER_INCREMENT; only ReviewRecordRef itself
+            # (carried forward from Chapter 2) needs stubbing.
             "context_stubs": [
                 "abstract part def HeatGenerator { attribute power : ISQ::PowerValue; }",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
+            ],
+        },
+        {
+            "path": "chapters/ch06-recursive-decomp/03-stopping-judgment.ipynb",
+            # aiC06Tag's `about HeatingAssembly::heatGen` requires HeatingAssembly
+            # (nb01) with its nested heatGen feature in scope, and ReviewRecordRef
+            # (carried forward from Chapter 2).
+            "context_stubs": [
+                "part def HeatingAssembly { part heatGen; }",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
     ],
@@ -236,10 +280,20 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             "path": "chapters/ch08-checking/01-invariant-def.ipynb",
             # deliveredEnergyBoundedBySupply references a fresh usage of HeatGenerator
             # (Ch6/Ch7), stubbed here with just the two features (power, efficiency) the
-            # fragment itself reads; nb02 and nb03 introduce no new construct (analysis
-            # only), so chapter 8 has exactly one construct-introducing notebook.
+            # fragment itself reads.
             "context_stubs": [
                 "abstract part def HeatGenerator { attribute power : ISQ::PowerValue; attribute efficiency : DimensionOneValue; }",
+            ],
+        },
+        {
+            "path": "chapters/ch08-checking/02-violation-witness.ipynb",
+            # asC08Tag's `about deliveredEnergyBoundedBySupply` requires that constraint
+            # (nb01) as a named element in scope, and ReviewRecordRef (carried forward
+            # from Chapter 2). nb03 introduces no new construct (analysis only), so
+            # chapter 8 has exactly two construct-introducing notebooks.
+            "context_stubs": [
+                "constraint deliveredEnergyBoundedBySupply;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
     ],
@@ -274,8 +328,12 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             # deliveredEnergyBoundedBySupply (Chapter 8); stubbed here with a
             # bare constraint of that name, since the fragment itself only
             # needs something to subset, not the lemma's own real body.
+            # acC10Tag (added alongside EnergyConservationReq) needs
+            # ReviewRecordRef itself in scope, the same stub every other
+            # ReviewRecordRef-tagging notebook's entry already carries.
             "context_stubs": [
                 "constraint deliveredEnergyBoundedBySupply;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
             ],
         },
     ],
