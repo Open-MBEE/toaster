@@ -304,6 +304,12 @@ def requirement_coverage(model: Any, index: ApiIndex | None = None) -> list[dict
     an unnamed ``RequirementUsage`` too (the objective's own auto-synthesized wrapper, not a
     design requirement anyone would check coverage on), and including it would report a bare
     bookkeeping artifact as an uncovered requirement.
+
+    ``satisfied_by``/``failed_by`` key on the ``satisfy`` relationship's own ``subject`` qualified
+    name, which is the top-level usage only: a chained feature subject (``assert not satisfy R by
+    a.b``) attributes to ``a.b``, never to ``a``, so a requirement claimed only via a feature chain
+    will not show up under the chain's own owning part (found by user-testing grid run M4-returning,
+    ``decisions/log.md`` DL-085(4); no chapter in this tutorial uses a chained subject today).
     """
     idx = index or ApiIndex(model)
     positive: dict[str, list[str]] = defaultdict(list)

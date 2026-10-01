@@ -66,11 +66,16 @@ For each sub-notebook in the assigned chapter(s):
 Execution command:
 
 ```sh
-cd /Users/z/Documents/GitHub/toaster
+cd <the notebook's own directory in YOUR worktree, never the main checkout>
 uv run python - <<'EOF'
 [paste cell code here]
 EOF
 ```
+
+A worktree-isolated cell that runs from the main checkout's path instead of its own worktree reads
+some files (e.g. notebook text) from the wrong branch state while reading others (e.g. model files)
+from its own worktree — a mixed-path read that produces false findings. Confirmed as the cause of a
+false NEEDS-FIX verdict in the first grid run (`decisions/log.md` DL-085).
 
 ## Report format
 
