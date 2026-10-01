@@ -31,15 +31,30 @@ def model_to_dot(
     Edges: composition (diamond arrowhead from owner to usage),
            typing (dashed open arrow from usage to its PartDefinition type).
 
-    A `PartUsage` whose owner is a `RequirementDefinition` or `RequirementUsage`
-    is a requirement's declared `subject` (e.g. `requirement def TimelyToast {
-    subject toaster : Toaster; ... }`), not real part composition -- SysML v2
-    represents the subject binding as a `PartUsage` owned by the requirement,
-    but it is a reference/parameter binding, not ownership. Such a usage is
-    skipped entirely (neither its composition edge nor its typing edge is
-    drawn, and it does not appear in the diagram), since nothing else
-    references it once the composition edge is gone. Every other owner kind
-    (a real `PartDefinition` or `PartUsage`) is unaffected.
+    A `PartUsage` whose owner is a `RequirementDefinition`/`RequirementUsage`,
+    or any other definition/usage kind that shares the same `subject`
+    semantics -- `ConcernDefinition`/`ConcernUsage` (Concern specializes
+    Requirement), `CaseDefinition`/`CaseUsage` and its own specializations
+    `VerificationCaseDefinition`/`VerificationCaseUsage`,
+    `UseCaseDefinition`/`UseCaseUsage`, `AnalysisCaseDefinition`/
+    `AnalysisCaseUsage` -- is a declared `subject` (e.g. `requirement def
+    TimelyToast { subject toaster : Toaster; ... }`, or equally `verification
+    def TimelyToastTest { subject toaster : Toaster; ... }`), not real part
+    composition. SysML v2 represents the subject binding as a `PartUsage`
+    owned by the requirement/concern/case, but on every one of these kinds
+    `subject` means the same thing: a reference/parameter binding, not
+    ownership. Such a usage is skipped entirely (neither its composition edge
+    nor its typing edge is drawn, and it does not appear in the diagram),
+    since nothing else references it once the composition edge is gone.
+    Every other owner kind (a real `PartDefinition` or `PartUsage`) is
+    unaffected.
+
+    Known, narrow limitation: only the direct subject-owned usage itself is
+    skipped. A subject usage with its own further-nested parts (e.g.
+    `requirement def R { subject t : T { part u : U; } }`) still leaks `u`
+    as an orphan node, since nothing transitively owned by the subject usage
+    is suppressed. No fixture in this tutorial exercises that case today, so
+    it is recorded here rather than fixed.
     """
     layout = layout or {}
     rankdir = layout.get("rankdir", "TB")
@@ -61,7 +76,20 @@ def model_to_dot(
         od = e.as_dict()
         oqname = od.get("qualifiedName", od.get("@id", ""))
         by_qname[oqname] = od
-    REQUIREMENT_OWNER_TYPES = {"RequirementDefinition", "RequirementUsage"}
+    REQUIREMENT_OWNER_TYPES = {
+        "RequirementDefinition",
+        "RequirementUsage",
+        "ConcernDefinition",
+        "ConcernUsage",
+        "CaseDefinition",
+        "CaseUsage",
+        "VerificationCaseDefinition",
+        "VerificationCaseUsage",
+        "UseCaseDefinition",
+        "UseCaseUsage",
+        "AnalysisCaseDefinition",
+        "AnalysisCaseUsage",
+    }
 
     for e in source:
         d = e.as_dict()

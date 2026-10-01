@@ -129,7 +129,37 @@ def test_model_to_dot_excludes_requirement_subject_on_real_ch02_fixture():
     conn.close()
 
     assert "TimelyToast" not in dot
-    for present in ("Toaster", "nominal", "slow", "HeatingSystem", "ControlSystem"):
+    # Real node-declaration lines, not a bare substring check -- every
+    # qualified name in this tutorial starts with "ToasterDemo::", so
+    # asserting "Toaster" in dot would pass almost regardless of content.
+    assert '"ToasterDemo::Toaster" [label="Toaster"];' in dot
+    assert '"ToasterDemo::HeatingSystem" [label="HeatingSystem"];' in dot
+    assert '"ToasterDemo::ControlSystem" [label="ControlSystem"];' in dot
+    for present in ("nominal", "slow"):
+        assert present in dot
+
+
+def test_model_to_dot_excludes_verification_case_subject_on_real_ch03_fixture():
+    """The same bug, via a different owner kind: Ch3 introduces
+    `verification def TimelyToastTest { subject toaster : Toaster; ... }`.
+    `subject` means the same reference-binding thing on a
+    VerificationCaseDefinition as it does on a RequirementDefinition (both
+    specialize the same KerML semantics), so the fix must skip this owner
+    kind too. Confirmed directly: TimelyToastTest::toaster is a PartUsage
+    owned by TimelyToastTest, whose own @type is VerificationCaseDefinition."""
+    conn = opensysml.connect(version="v0.9.0")
+    src = (REPO_ROOT / "models" / "ch03-cumulative.sysml").read_text()
+    model = conn.load_from_content(src, strict=False)
+    assert model.ok
+    dot = model_to_dot(model, title="Ch3")
+    conn.close()
+
+    assert "TimelyToastTest" not in dot
+    # Real, legitimate content this diagram should still show.
+    assert '"ToasterDemo::Toaster" [label="Toaster"];' in dot
+    assert '"ToasterDemo::HeatingSystem" [label="HeatingSystem"];' in dot
+    assert '"ToasterDemo::ControlSystem" [label="ControlSystem"];' in dot
+    for present in ("nominal", "slow"):
         assert present in dot
 
 
