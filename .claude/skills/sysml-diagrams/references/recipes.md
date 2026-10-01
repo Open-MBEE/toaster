@@ -1,80 +1,120 @@
 # Rendering recipes
 
-Run from the tutorial repository root. `$SYSML` is the pinned OpenSysML CLI, `$PILOT_JAR` and `$PILOT_LIBRARY` identify the matched pilot bundle, and `$PLANTUML_JAR` identifies the pinned standalone renderer. `model.sysml` is the chapter-generated snapshot. Replace example qualified names with the chosen subject. Write outputs to an ignored `build/figures/` directory.
+**Corrected 2026-10-01** (this file was not updated when `decisions/log.md` `DL-057`
+corrected `sysml-diagrams/SKILL.md`'s own renderer-choice table, so it kept describing the
+OMG pilot and SysMLD/sysml2d as the defaults for two view types after both were confirmed
+to fail entirely on real content, `decisions/diagram-study-real-fixtures.md`; Phase 1's own
+survey, `decisions/diagram-survey.md`, caught the gap). **Never use the OMG pilot or
+SysMLD/sysml2d for real chapter content.** Run from the tutorial repository root. `$SYSML`
+is the pinned OpenSysML CLI; `model.sysml` is the chapter-generated snapshot. Replace example
+qualified names with the chosen subject. Write outputs to an ignored `build/figures/`
+directory.
 
-## Definition and decomposition — official pilot
+## Definition and decomposition — in-house, `model_to_dot()`
 
-Load all required source files and the matched standard library into one pilot session. Validate, then render the qualified subject with `TREE`. In the pilot Java API, use `process(source, true)` to index a loaded source, followed by `viz(names, views, styles, help)`. The equivalent notebook operation in a pilot kernel is `%viz --view TREE Qualified::Subject`.
+```python
+from toaster.render import model_to_dot, containment_subgraph, render_dot
 
-The small Java harness shipped with this skill accepts:
-
-```sh
-java -Djava.awt.headless=true -cp "$PILOT_JAR" \
-  "$DIAGRAM_SKILL/scripts/PilotFigure.java" "$PILOT_LIBRARY" \
-  build/figures/decomposition.svg TREE TB \
-  ToasterStudy::ElectricToaster -- model.sysml
+dot_source = model_to_dot(model, title="Decomposition")
+# Or, once the full model is too large to be a legible single figure:
+scoped = containment_subgraph(model, "ToasterDemo::Toaster", relations=("composition", "typing"), depth=2)
+dot_source = model_to_dot(model, title="Decomposition", elements=scoped)
+render_dot(dot_source, "build/figures/decomposition.svg")
 ```
 
-Use a top-to-bottom arrangement for decomposition; show one structural level per teaching question. Read the diagram as a view of model containment and composition, keeping usages distinct from their definitions. Exposing an abstract definition alone should not imply an instantiated system.
+Nodes are `PartDefinition`s (dashed border if abstract); edges are composition (diamond
+arrowhead, owner to usage) and typing (dashed open arrow, usage to its type). `elements=None`
+(the default) draws the whole `model.query()` result — right for a small model where
+"everything" is itself a legible view. Use `containment_subgraph()`'s `root`/`depth` to scope
+once the model grows too large, picking the root that actually reaches the content the chapter
+teaches (`decisions/diagram-study-real-fixtures.md`'s own "wrong root chosen" finding: a usage's
+qualified name does not own anything itself, only its *type* does, so the chapter's own new
+content may sit at a different root than the familiar top-level one). **Known gap:** this
+function has no node/edge handling for `RequirementDefinition`, `ItemDefinition`,
+`ActionDefinition`/`ActionUsage`/`perform`, `SatisfyRequirementUsage`, `AllocationUsage`,
+`ConstraintUsage`, or specialization (`:>`) — only `PartDefinition` and `PartUsage` composition/
+typing. Do not propose this recipe for a notebook cell whose real content is one of those; no
+diagram type in this tutorial currently covers them (`decisions/diagram-survey.md`'s own
+repeated finding, Chapters 2/3/8/9/10).
 
-Expected check: the selected system and intended children appear with the correct ownership. Include multiplicities and inherited members when they matter; select the pilot’s `SHOWINHERITED`, `NODEMULTIPLICITY`, or `EDGEMULTIPLICITY` styles as appropriate, then inspect the result. The default fixture establishes basic structure rendering, not every style combination.
+Expected check: the selected elements and intended children appear with the correct ownership,
+and nothing the chapter hasn't yet taught (a later chapter's own structure) leaks into an
+earlier chapter's figure.
 
-## Interconnection — SysMLD, with model-derived intent
+## Interconnection — in-house `render_interconnection()`, or sysml-toolkit when port identity is the point
 
-Use SysMLD as the layout and SVG engine. The notebook supplies the semantic projection, just as a plotting cell supplies arrays to Matplotlib. The starting inputs are the validated model, a selected system or subsystem, and small presentation settings.
+**Default: `render_interconnection()`** (in-house, `src/toaster/render.py`), zero dependency on
+a third-party tool:
 
-Extract these facts using OpenSysML’s model API or an available semantic query engine:
+```python
+from toaster.render import build_interconnection_intent, render_interconnection
 
-| Projected fact | Source and mapping |
-|---|---|
-| Subject | Selected part definition or usage, with model identity. |
-| Part nodes | Selected owned part usages; labels derive from usage name and type. |
-| Ports | Port usages in each part’s context, including required inherited features; keep identity and type. |
-| Connection edges | Resolved connection identity and endpoint feature paths. Preserve connector kind and any flow direction separately from drawing orientation. |
-| Boundary connections | The selected subject’s external ports and their internal endpoints. |
-
-Construct the compact intent schema consumed by `sysmld interconnection`: `subject`, `model_files`, `aliases`, `nodes`, `edges`, optional `boundary_inputs`, and presentation settings. Node and edge identifiers map back to the projected facts. For an ordinary binary connection, derive `from` and `to` from its endpoint owners and `source_label` / `target_label` from the corresponding port names. `from`/`to` is a layout convention for an undirected connection; it does not assert a physical flow direction. Use `label_mode: "both"` when both connection names and port labels are needed.
-
-Keep the projection in memory until writing generated `interconnection.json`. The rendering sequence is:
-
-```sh
-sysmld interconnection build/figures/interconnection.json
-sysmld render build/figures/interconnection.sysmld
-sysmld validate build/figures/interconnection.sysmld --strict
+intent = build_interconnection_intent(model, "ToasterDemo::Toaster", depth=1)
+render_interconnection(intent, "build/figures/interconnection.svg")
 ```
 
-Start with direction, node widths, rank spacing, and label detail. Add explicit rank/order or port-face settings only when the figure needs them. Preserve the generated intent and layout as inspectable artifacts.
+`build_interconnection_intent()` extracts parts, flows, and allocations from the model via
+`model.query()`/`to_api_json()` — nothing is hand-authored, so there is no second,
+separately-maintained model to drift out of sync (the exact risk `decisions/log.md` `DL-055`
+found SysMLD/sysml2d's own intent-file approach carries, and which that tool's own indexer bug
+now independently blocks on real content regardless). Port identity is drawn as an edge label,
+not a dedicated box.
 
-Before rendering, assert that selected relationships and endpoints match the projected nodes and ports. After composing, check that the layout preserves those identities and connections. The tested composer generates port IDs from part pairs: repeated connections between the same pair, shared ports, and unconnected ports require particular care. For those cases, use explicit `.sysmld` elements and connections generated from the same facts, with stable per-port/per-connection IDs, rather than assuming the compact composer preserves them. Inspect the relevant schema before doing so.
+**Use sysml-toolkit instead specifically when port identity itself is the chapter's own
+pedagogical point** (e.g. a chapter introducing or exercising a conjugated port, per
+`decisions/diagram-survey.md`'s Ch5 recommendation):
 
-This recipe specifies the projection contract; it does not supply a general SysML-to-SysMLD adapter. Implement the small query/projection required by the chapter and test its actual supported constructs. Keep full semantic validation in the model engine, and inspect any disagreement with SysMLD’s textual reference index.
+```sh
+sysmlv2 viz model.sysml --view interconnection --element ToasterDemo::Toaster -o build/figures/interconnection.puml
+java -Djava.awt.headless=true -jar "$PLANTUML_JAR" -tsvg build/figures/interconnection.puml
+```
 
-## Action flow — OpenSysML and PlantUML
+Confirmed on every real fixture tested (`decisions/diagram-study-real-fixtures.md`): draws real
+port names (e.g. `durationIn`, `durationOut`) as their own boxes inside the owning part, not
+folded into one edge label the way OpenSysML's own interconnection export does. Otherwise, a
+chapter using interconnection only to show a connection or an allocation — where port identity
+is not itself the point — does not need the extra external-binary dependency; default to
+`render_interconnection()`.
+
+Before rendering, assert that selected relationships and endpoints match the model's own real
+parts, ports, and connections — never author a separate relationship model by hand for either
+pipeline.
+
+## Action flow — OpenSysML
 
 ```sh
 "$SYSML" model.sysml \
-  -render '#action:ToasterStudy::Toast' \
-  -render-form plantuml -o build/figures/actions.puml
-java -Djava.awt.headless=true -jar "$PLANTUML_JAR" \
-  -tsvg build/figures/actions.puml
+  -render '#action:ToasterDemo::ToastBread' \
+  -render-form dot -o build/figures/actions.dot
+dot -Tsvg build/figures/actions.dot -o build/figures/actions.svg
 ```
 
-Expected output: the declared actions, initial/final nodes, and successions. Check decisions, guards, forks, joins, and object flows whenever the selected model contains them. The basic toaster trial exercises a linear sequence.
+Confirmed directly against real chapter content (`decisions/diagram-study-real-fixtures.md`;
+Ch6's `ApplyHeat` action, exit 0, real action-flow notation). No in-house action-flow renderer
+exists yet. Expected output: the declared actions, initial/final nodes, and successions. Check
+decisions, guards, forks, joins, and object flows whenever the selected model contains them —
+every real chapter fixture tested so far exercises only a linear sequence.
 
-Use the same model view to control scope; use PlantUML presentation directives for font, orientation, and spacing. Apply those directives programmatically to generated output or through a renderer configuration. Preserve action names and edge meaning. Distinguish a structural action-flow figure from an actual execution trace.
+Distinguish a structural action-flow figure from an actual execution trace.
 
-## State transition — official pilot
+## State transition — OpenSysML
 
 ```sh
-java -Djava.awt.headless=true -cp "$PILOT_JAR" \
-  "$DIAGRAM_SKILL/scripts/PilotFigure.java" "$PILOT_LIBRARY" \
-  build/figures/states.svg STATE TB \
-  ToasterStudy::ToastCycle -- model.sysml
+"$SYSML" model.sysml \
+  -render '#state:ToasterDemo::Cycle' \
+  -render-form dot -o build/figures/states.dot
+dot -Tsvg build/figures/states.dot -o build/figures/states.svg
 ```
 
-Show states and transitions for one behavioral question. Preserve initial entry and, when present, event triggers, guards, effects, and entry/do/exit compartments. Change orientation or split nested behavior into another figure when labels become crowded.
+Confirmed directly against real chapter content (`decisions/diagram-study-real-fixtures.md`):
+100% success across both OpenSysML render forms on Ch7's real `Cycle` state machine, and the
+mutation-control test (retargeting a transition) correctly changes the rendered output. Show
+states and transitions for one behavioral question. Preserve initial entry and, when present,
+event triggers, guards, effects, and entry/do/exit compartments. Change orientation or split
+nested behavior into another figure when labels become crowded.
 
-Check each transition’s source and target. For the study fixture, `idle → heating` branches to `ready` or `cancelled`. A changed target must change the corresponding arrow. Generated pilot hyperlinks contain session-specific identifiers; appearance or normalized semantic comparisons are more useful than raw byte identity.
+Check each transition's source and target against the real model, not an assumed shape — a
+changed target must change the corresponding arrow.
 
 ## Sequence — OpenSysML and Mermaid
 
