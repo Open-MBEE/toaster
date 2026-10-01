@@ -30,6 +30,61 @@ def model_to_dot(
     Nodes: PartDefinition (dashed border if abstract).
     Edges: composition (diamond arrowhead from owner to usage),
            typing (dashed open arrow from usage to its PartDefinition type).
+
+    A `PartUsage` whose owner is a `RequirementDefinition`/`RequirementUsage`,
+    or any other definition/usage kind that shares the same `subject`
+    semantics -- `ConcernDefinition`/`ConcernUsage` (Concern specializes
+    Requirement), `CaseDefinition`/`CaseUsage` and its own specializations
+    `VerificationCaseDefinition`/`VerificationCaseUsage`,
+    `UseCaseDefinition`/`UseCaseUsage`, `AnalysisCaseDefinition`/
+    `AnalysisCaseUsage` -- is a declared `subject` (e.g. `requirement def
+    TimelyToast { subject toaster : Toaster; ... }`, or equally `verification
+    def TimelyToastTest { subject toaster : Toaster; ... }`), not real part
+    composition. SysML v2 represents the subject binding as a `PartUsage`
+    owned by the requirement/concern/case, but on every one of these kinds
+    `subject` means the same thing: a reference/parameter binding, not
+    ownership. Such a usage is skipped entirely (neither its composition edge
+    nor its typing edge is drawn, and it does not appear in the diagram),
+    since nothing else references it once the composition edge is gone.
+    Every other owner kind (a real `PartDefinition` or `PartUsage`) is
+    unaffected.
+
+    This 12-member skip-set is not a claim that it is complete against the
+    SysML v2 spec's full Requirement/Case family -- it is not (see below for
+    confirmed gaps). What is confirmed: across this tutorial's own real
+    fixtures (ch01 through ch10), every owner `@type` actually observed is
+    one of `PartDefinition`, `PartUsage`, `Package`, `RequirementDefinition`,
+    and `VerificationCaseDefinition` -- so only two of these 12 entries
+    (`RequirementDefinition`, `VerificationCaseDefinition`) are subject-
+    bearing owner kinds this tutorial's content currently exercises. The
+    other 10 (`RequirementUsage`, the `Concern*`, `Case*`, `UseCase*`, and
+    `AnalysisCase*` pairs) extend the skip-set to sibling kinds that share
+    the same `subject` semantics by spec reasoning alone -- no real fixture
+    in this tutorial exercises any of them today, so they are untested here,
+    not confirmed unnecessary.
+
+    Known, narrow limitation: only the direct subject-owned usage itself is
+    skipped. A subject usage with its own further-nested parts (e.g.
+    `requirement def R { subject t : T { part u : U; } }`) still leaks `u`
+    as an orphan node, since nothing transitively owned by the subject usage
+    is suppressed. No fixture in this tutorial exercises that case today, so
+    it is recorded here rather than fixed.
+
+    Separately, two more toolkit constructs carry their own `subject` and are
+    confirmed NOT covered by `REQUIREMENT_OWNER_TYPES`: a `viewpoint def V {
+    subject t : T; }` (a specialized requirement with its own `subject`)
+    comes back from the toolkit as `@type` `ViewpointDefinition`/
+    `ViewpointUsage`; a `satisfy requirement rq : R { subject t5 : T; }`
+    relationship comes back as `@type` `SatisfyRequirementUsage`. Neither is
+    in the skip-set, so each would still leak its subject as false
+    composition. A third, related toolkit quirk: an `objective` nested inside
+    a verification/analysis case def comes back as a plain `PartUsage` owned
+    by the case (not a distinguishable requirement-family `@type` at all), so
+    its own nested `subject` leaks too -- no type-list fix can catch that one,
+    since nothing in the owner's `@type` distinguishes it from real
+    composition. None of these three appear in any real fixture in this
+    tutorial today, so -- per the same reasoning as the nested-subject-parts
+    limitation above -- they are recorded here as a known gap, not fixed.
     """
     layout = layout or {}
     rankdir = layout.get("rankdir", "TB")
@@ -41,6 +96,31 @@ def model_to_dot(
         '  edge [fontname="Helvetica"];',
     ]
     source = model.query() if elements is None else elements
+    # Built once per call (not per element): every model element keyed by its
+    # own qualified name, so a PartUsage's `owner` string can be resolved to
+    # the owning element's own `@type` -- model.query() is always callable on
+    # `model` regardless of what `elements` was passed, since it queries the
+    # model object fresh and does not depend on any prior scoping.
+    by_qname = {}
+    for e in model.query():
+        od = e.as_dict()
+        oqname = od.get("qualifiedName", od.get("@id", ""))
+        by_qname[oqname] = od
+    REQUIREMENT_OWNER_TYPES = {
+        "RequirementDefinition",
+        "RequirementUsage",
+        "ConcernDefinition",
+        "ConcernUsage",
+        "CaseDefinition",
+        "CaseUsage",
+        "VerificationCaseDefinition",
+        "VerificationCaseUsage",
+        "UseCaseDefinition",
+        "UseCaseUsage",
+        "AnalysisCaseDefinition",
+        "AnalysisCaseUsage",
+    }
+
     for e in source:
         d = e.as_dict()
         etype = d.get("@type", "")
@@ -55,6 +135,9 @@ def model_to_dot(
         elif etype == "PartUsage":
             owner = d.get("owner", "")
             part_type = d.get("type", "")
+            owner_type = by_qname.get(owner, {}).get("@type", "")
+            if owner_type in REQUIREMENT_OWNER_TYPES:
+                continue
             if owner:
                 lines.append(
                     f'  "{owner}" -> "{qname}" [label="{dname}" arrowhead=diamond];'

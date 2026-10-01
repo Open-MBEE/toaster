@@ -115,6 +115,85 @@ def test_model_to_dot_excludes_unreachable_elements_on_real_ch08_fixture():
     conn.close()
 
 
+def test_model_to_dot_excludes_requirement_subject_on_real_ch02_fixture():
+    """The real correctness bug this fix addresses: a requirement's declared
+    `subject` (TimelyToast's `subject toaster : Toaster`) is internally a
+    PartUsage owned by the RequirementDefinition, not real part composition.
+    Unscoped model_to_dot() must not draw it, or TimelyToast at all, while
+    still drawing the legitimate part-composition content of this fixture."""
+    conn = opensysml.connect(version="v0.9.0")
+    src = (REPO_ROOT / "models" / "ch02-cumulative.sysml").read_text()
+    model = conn.load_from_content(src, strict=False)
+    assert model.ok
+    dot = model_to_dot(model, title="Ch2")
+    conn.close()
+
+    assert "TimelyToast" not in dot
+    # Real node-declaration lines, not a bare substring check -- every
+    # qualified name in this tutorial starts with "ToasterDemo::", so
+    # asserting "Toaster" in dot would pass almost regardless of content.
+    assert '"ToasterDemo::Toaster" [label="Toaster"];' in dot
+    assert '"ToasterDemo::HeatingSystem" [label="HeatingSystem"];' in dot
+    assert '"ToasterDemo::ControlSystem" [label="ControlSystem"];' in dot
+    for present in ("nominal", "slow"):
+        assert present in dot
+
+
+def test_model_to_dot_excludes_verification_case_subject_on_real_ch03_fixture():
+    """The same bug, via a different owner kind: Ch3 introduces
+    `verification def TimelyToastTest { subject toaster : Toaster; ... }`.
+    `subject` means the same reference-binding thing on a
+    VerificationCaseDefinition as it does on a RequirementDefinition (both
+    specialize the same KerML semantics), so the fix must skip this owner
+    kind too. Confirmed directly: TimelyToastTest::toaster is a PartUsage
+    owned by TimelyToastTest, whose own @type is VerificationCaseDefinition."""
+    conn = opensysml.connect(version="v0.9.0")
+    src = (REPO_ROOT / "models" / "ch03-cumulative.sysml").read_text()
+    model = conn.load_from_content(src, strict=False)
+    assert model.ok
+    dot = model_to_dot(model, title="Ch3")
+    conn.close()
+
+    assert "TimelyToastTest" not in dot
+    # Ch3's cumulative fixture carries forward Ch2's own requirement
+    # (`requirement timely : TimelyToast;`), so this fixture exercises both
+    # subject-bearing elements it contains -- not just the verification case.
+    assert "TimelyToast" not in dot
+    # Real, legitimate content this diagram should still show.
+    assert '"ToasterDemo::Toaster" [label="Toaster"];' in dot
+    assert '"ToasterDemo::HeatingSystem" [label="HeatingSystem"];' in dot
+    assert '"ToasterDemo::ControlSystem" [label="ControlSystem"];' in dot
+    for present in ("nominal", "slow"):
+        assert present in dot
+
+
+_COMPOSITION_SRC = """
+package CompositionProbe {
+    part def Outer {
+        part inner : Inner;
+    }
+    part def Inner;
+}
+"""
+
+
+def test_model_to_dot_real_composition_is_unaffected():
+    """Negative control: a PartUsage owned by a genuine PartDefinition must
+    still draw its composition diamond and typing dash -- the requirement-
+    subject fix must not over-correct and suppress real composition."""
+    conn = opensysml.connect(version="v0.9.0")
+    model = conn.load_from_content(_COMPOSITION_SRC, strict=False)
+    assert model.ok
+
+    dot = model_to_dot(model, title="CompositionProbe")
+    conn.close()
+
+    assert 'CompositionProbe::Outer" -> "CompositionProbe::Outer::inner"' in dot
+    assert "arrowhead=diamond" in dot
+    assert 'CompositionProbe::Outer::inner" -> "CompositionProbe::Inner"' in dot
+    assert "arrowhead=open" in dot
+
+
 def test_model_to_dot_layout_rankdir_override():
     conn = opensysml.connect(version="v0.9.0")
     model = conn.load_from_content(_SRC, strict=False)
