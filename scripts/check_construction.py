@@ -155,6 +155,15 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
             "path": "chapters/ch04-functional-decomp/02-heating-refinement.ipynb",
             "context_stubs": [],
         },
+        {
+            "path": "chapters/ch04-functional-decomp/03-completeness-check.ipynb",
+            # aiC04Tag's `about ApplyHeat` requires ApplyHeat (nb01) as a named
+            # element in scope, and ReviewRecordRef (carried forward from Chapter 2).
+            "context_stubs": [
+                "action def ApplyHeat;",
+                "metadata def ReviewRecordRef { attribute identifier : ScalarValues::String; }",
+            ],
+        },
     ],
     5: [
         {

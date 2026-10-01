@@ -31,6 +31,10 @@ package ToasterDemo {
         }
     }
 
+    metadata aiC04Tag : ReviewRecordRef about ApplyHeat {
+        identifier = "AI-C04";
+    }
+
     action def ToastBread {
         doc /* Transform bread into toast acceptable to its user. */
         in bread : Bread;
