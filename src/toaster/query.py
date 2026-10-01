@@ -100,7 +100,7 @@ def get_review_record_refs(model: Any, index: ApiIndex | None = None) -> list[di
     """Every ``ReviewRecordRef`` metadata tag in the model: ``{tag, identifier, annotated_element}``.
 
     The model-to-Python direction of this tutorial's narrowed Assurance Claim Point anchor
-    (``toaster-review-protocol``, SysML v2 formal/2026-03-02 SS7.27.2): given a loaded model,
+    (``toaster-review-protocol``, SysML v2 formal/2026-03-02 §7.27.2): given a loaded model,
     find every judgment-record tag and the one subject it names, independent of any
     notebook's own Python objects. Takes the first ``annotatedElement`` only, matching this
     tutorial's one-tag-one-subject convention (a tag with more than one is a modeling error

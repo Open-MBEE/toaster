@@ -36,7 +36,7 @@ def validate_record(r: ReviewRecord, model: Any | None = None) -> list[str]:
     """Return a list of field-level validation errors (empty = valid).
 
     `subject_ref` is this tutorial's narrowed analog of Hawkins' Assurance Claim Point
-    (`toaster-review-protocol` SS, SysML v2 formal/2026-03-02 SS7.27.2): the one model
+    (`toaster-review-protocol`, SysML v2 formal/2026-03-02 §7.27.2): the one model
     element this specific judgment is about. Required for `asserted_context` and
     `asserted_solution`; for `asserted_inference` it may stay empty only when `premises`
     is non-empty (the pure cross-record synthesis case, e.g. `AI-C10`).

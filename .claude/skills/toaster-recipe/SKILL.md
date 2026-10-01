@@ -169,7 +169,7 @@ A notebook that builds a `ReviewRecord` (an `asserted_context`, `asserted_infere
 it, not one dense call: name each group of fields, narrate what it's for, print it, then assemble.
 The first group now names the record's own subject (`subject_ref`) alongside its `claim`, and
 builds the matching `ReviewRecordRef` metadata-tag fragment the same way a model-increment cell
-builds any other named fragment (`toaster-review-protocol` SS"subject_ref"). The size limits below
+builds any other named fragment (see toaster-review-protocol's own subject_ref section). The size limits below
 are relaxed for this content (see that skill for the exact grouping and why).
 
 ## Size limits (A6 review criteria)

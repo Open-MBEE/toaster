@@ -229,7 +229,7 @@ def validate_record(r: ReviewRecord, model: Any | None = None) -> list[str]:
     """Return a list of field-level validation errors (empty = valid).
 
     `subject_ref` is this tutorial's narrowed analog of Hawkins' Assurance Claim Point
-    (`toaster-review-protocol` SS, SysML v2 formal/2026-03-02 SS7.27.2): the one model
+    (`toaster-review-protocol`, SysML v2 formal/2026-03-02 §7.27.2): the one model
     element this specific judgment is about. Required for `asserted_context` and
     `asserted_solution`; for `asserted_inference` it may stay empty only when `premises`
     is non-empty (the pure cross-record synthesis case, e.g. `AI-C10`).
@@ -406,7 +406,7 @@ def get_review_record_refs(model: Any, index: ApiIndex | None = None) -> list[di
     """Every ``ReviewRecordRef`` metadata tag in the model: ``{tag, identifier, annotated_element}``.
 
     The model-to-Python direction of this tutorial's narrowed Assurance Claim Point anchor
-    (``toaster-review-protocol``, SysML v2 formal/2026-03-02 SS7.27.2): given a loaded model,
+    (``toaster-review-protocol``, SysML v2 formal/2026-03-02 §7.27.2): given a loaded model,
     find every judgment-record tag and the one subject it names, independent of any
     notebook's own Python objects. Takes the first ``annotatedElement`` only, matching this
     tutorial's one-tag-one-subject convention (a tag with more than one is a modeling error
@@ -815,7 +815,7 @@ anchored to one specific, located assertion in the argument (Hawkins 2011, Sec. 
 `glid:def-hawkins--assurance-claim-point`). `subject_ref` is this tutorial's own narrowed,
 single-element analog: the one qualified name the record's `claim` is directly about, checkable
 both from Python (`validate_record(record, model=model)` resolves it via `model.find()`) and from
-the model's own side, via a real SysML metadata tag (SysML v2 formal/2026-03-02 SS7.27.2):
+the model's own side, via a real SysML metadata tag (SysML v2 formal/2026-03-02 §7.27.2):
 
 ```sysml
 metadata def ReviewRecordRef {
@@ -882,7 +882,7 @@ A notebook that builds a `ReviewRecord` (an `asserted_context`, `asserted_infere
 it, not one dense call: name each group of fields, narrate what it's for, print it, then assemble.
 The first group now names the record's own subject (`subject_ref`) alongside its `claim`, and
 builds the matching `ReviewRecordRef` metadata-tag fragment the same way a model-increment cell
-builds any other named fragment (`toaster-review-protocol` SS"subject_ref"). The size limits below
+builds any other named fragment (see toaster-review-protocol's own subject_ref section). The size limits below
 are relaxed for this content (see that skill for the exact grouping and why).
 ```
 
