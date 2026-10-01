@@ -478,9 +478,67 @@ def render_toolkit_interconnection(
         plantuml_svg_path.replace(out_path)
 
 
-def render_action_flow(model: Any, name: str, out: str | Path) -> None:
-    """Render an action flow diagram for a named action def to SVG via PlantUML.
+def _render_opensysml_view(
+    model: Any, name: str, out: str | Path, kind: str, *, binary: str | Path | None = None
+) -> None:
+    """Shared implementation for render_action_flow (kind="action") and
+    render_state_flow (kind="state"): both use the identical OpenSysML CLI
+    mechanism, differing only in the #kind: prefix.
 
-    WP-5 implements this using opensysml CLI + PlantUML.
+    Serializes the ALREADY-LOADED model (model.to_sysml()) to a temp file and
+    renders that, not the committed models/chXX-cumulative.sysml -- this
+    renders exactly what the notebook's own model object represents, which
+    may differ from disk in a notebook that applies an edit before rendering.
     """
-    raise NotImplementedError("render_action_flow: implement in WP-5")
+    import subprocess
+    import tempfile
+
+    if binary is None:
+        from toaster.bootstrap import ensure_cli_binary
+
+        binary = ensure_cli_binary()
+    binary = Path(binary)
+    if not binary.exists():
+        raise FileNotFoundError(f"sysml CLI binary not found at {binary}")
+
+    out = Path(out)
+    with tempfile.TemporaryDirectory() as tmp:
+        src_path = Path(tmp) / "model.sysml"
+        src_path.write_text(model.to_sysml().content)
+        dot_path = Path(tmp) / "view.dot"
+        subprocess.run(
+            [str(binary), str(src_path), "-render", f"#{kind}:{name}",
+             "-render-form", "dot", "-o", str(dot_path)],
+            check=True, capture_output=True, text=True,
+        )
+        render_dot(dot_path, out)
+
+
+def render_action_flow(
+    model: Any, name: str, out: str | Path, *, binary: str | Path | None = None
+) -> None:
+    """Render an action-flow diagram for a named action def to SVG, via
+    OpenSysML's own `-render #action:` CLI form (no in-house equivalent exists
+    -- confirmed working on real content, decisions/diagram-study-real-fixtures.md).
+
+    `binary=None` (default) provisions the CLI automatically via
+    toaster.bootstrap.ensure_cli_binary(); pass an explicit path to pin a
+    specific local build instead.
+    """
+    _render_opensysml_view(model, name, out, "action", binary=binary)
+
+
+def render_state_flow(
+    model: Any, name: str, out: str | Path, *, binary: str | Path | None = None
+) -> None:
+    """Render a state-transition diagram for a named state def to SVG, via
+    OpenSysML's own `-render #state:` CLI form. Transition edges are labeled
+    by their real trigger text (confirmed directly against Ch7's real Cycle
+    state machine: `label="accept Start"`), so a renamed or mistyped trigger
+    is visible in the figure, not just in printed diagnostics.
+
+    `binary=None` (default) provisions the CLI automatically via
+    toaster.bootstrap.ensure_cli_binary(); pass an explicit path to pin a
+    specific local build instead.
+    """
+    _render_opensysml_view(model, name, out, "state", binary=binary)
