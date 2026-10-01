@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **STATUS (2026-10-01, reconciliation pass): all 4 tasks DONE.** `containment_subgraph()`, `model_to_dot(elements=, layout=)`, and `build_interconnection_intent(depth=)` are all live in `src/toaster/render.py`; `decisions/diagram-tool-gaps.md` is seeded and has since grown past this plan's own Task 4 text (G-D001 is now marked RESOLVED there, not just documented). Every test this plan specifies exists and passes, plus extra hardening beyond what was planned (`tests/test_containment_subgraph.py` has 11 tests, not the 9 originally written here — two extra input-validation cases were added during implementation). The checkboxes below were never ticked when the work landed; this pass ticks them to match the actual, verified state (`uv run pytest tests/test_containment_subgraph.py tests/test_diagram_probe.py tests/test_interconnection.py -v`, all passing) rather than re-deriving or re-doing any of it.
+
 **Goal:** Give `src/toaster/render.py` a query-driven content-selection layer (root + relationship kind + depth) that is separate from layout/presentation, so structure diagrams stop drawing every model element indiscriminately, and seed a dedicated register for rendering-tool gaps found along the way.
 
 **Architecture:** One new function, `containment_subgraph()`, walks `model.query()`'s own `owner`/`type` fields from a root element by relationship kind, to a given depth, re-evaluated fresh against the live model every call. `model_to_dot()` gets an optional `elements` parameter (a pre-selected list, typically `containment_subgraph()`'s output) and a separate, optional `layout` parameter for presentation-only overrides. `build_interconnection_intent()` gets a `depth` parameter, implemented by reusing `containment_subgraph()` internally rather than duplicating traversal logic. A new file, `decisions/diagram-tool-gaps.md`, is seeded with the two rendering-tool gaps Phase 0 already found.
@@ -40,7 +42,7 @@
 
 **Semantics, pinned precisely (this is what the tests below check):** each traversal hop processes every element currently in the frontier and, for each one, follows both requested relation kinds — `"composition"`: find every `PartUsage` whose `owner` field equals the frontier element's own qualified name; `"typing"`: if the frontier element itself has a `type` field, follow it to that definition. Everything found is added to the result and becomes next hop's frontier; hop count then increments. `depth=None` runs until no new elements are found (the frontier goes empty). `depth=0` returns just `[root's own element]` with zero hops run. A root not present in `model.query()` returns `[]`.
 
-- [ ] **Step 1: Write the failing tests, grounded in the real Ch6 fixture**
+- [x] **Step 1: Write the failing tests, grounded in the real Ch6 fixture**
 
 ```python
 # tests/test_containment_subgraph.py
@@ -170,12 +172,12 @@ def test_no_infinite_loop_on_a_genuine_mutual_reference_cycle():
     assert names == {"CycleTest::A", "CycleTest::A::b", "CycleTest::B", "CycleTest::B::a"}
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/test_containment_subgraph.py -v`
 Expected: FAIL with `ImportError: cannot import name 'containment_subgraph'`
 
-- [ ] **Step 3: Implement `containment_subgraph()` in `src/toaster/render.py`**, inserted immediately after `model_to_dot()`'s closing `return "\n".join(lines)` line and before `def render_dot`:
+- [x] **Step 3: Implement `containment_subgraph()` in `src/toaster/render.py`**, inserted immediately after `model_to_dot()`'s closing `return "\n".join(lines)` line and before `def render_dot`:
 
 ```python
 def containment_subgraph(
@@ -240,17 +242,17 @@ def containment_subgraph(
     return list(result.values())
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_containment_subgraph.py -v`
 Expected: PASS (9 tests)
 
-- [ ] **Step 5: Run the full suite to confirm no regression**
+- [x] **Step 5: Run the full suite to confirm no regression**
 
 Run: `uv run pytest -q`
 Expected: all previously-passing tests still pass, plus the 8 new ones.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/toaster/render.py tests/test_containment_subgraph.py
@@ -267,7 +269,7 @@ git commit -m "Add containment_subgraph(): query-driven element selection by roo
 - Consumes: `containment_subgraph()`'s return value (Task 1) as the typical `elements` argument.
 - Produces: `model_to_dot(model, title="model", elements=None, layout=None) -> str` — the `elements`/`layout` signature every later chapter notebook that wants a scoped structure diagram will call.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_diagram_probe.py -- ADD these to the existing file, do not remove
@@ -350,12 +352,12 @@ def test_model_to_dot_layout_rankdir_override():
     conn.close()
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/test_diagram_probe.py -v`
 Expected: the 5 new tests FAIL (`TypeError: model_to_dot() got an unexpected keyword argument 'elements'`); the 2 existing tests still PASS.
 
-- [ ] **Step 3: Modify `model_to_dot()` in `src/toaster/render.py:8-48`**
+- [x] **Step 3: Modify `model_to_dot()` in `src/toaster/render.py:8-48`**
 
 Replace the full function with:
 
@@ -422,17 +424,17 @@ def model_to_dot(
 
 Note this keeps the composition/typing edge lines exactly as before; the only behavioral change is which elements `source` iterates over and the `rankdir` line, both no-ops at their default values.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_diagram_probe.py -v`
 Expected: PASS (7 tests: the original 2 plus the 5 new ones)
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `uv run pytest -q`
 Expected: no regressions.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/toaster/render.py tests/test_diagram_probe.py
@@ -451,7 +453,7 @@ git commit -m "model_to_dot(): add elements and layout parameters, default behav
 - Consumes: `containment_subgraph()` (Task 1), called internally with `relations=("composition", "typing")` (both — composition alone cannot reach a second nesting level, see above) and `depth=2*depth-1` (the raw-hop translation derived above).
 - Produces: `build_interconnection_intent(model, fqn, depth=1)` — `depth=1` (the default) is exactly today's behavior (direct owned parts only, confirmed: `2*1-1 == 1` raw hop, the same single composition hop the current code already does); `depth=2` reaches one further level of nested sub-parts (their own composition children); `depth=3` one further level again.
 
-- [ ] **Step 1: Write the failing test, using a small synthetic 3-level fixture**
+- [x] **Step 1: Write the failing test, using a small synthetic 3-level fixture**
 
 The real Ch5/Ch6/Ch8 fixtures don't have a part with its own nested `part` members deep enough to exercise `depth=2` meaningfully (per this plan's Review Focus) — add a synthetic source alongside the file's existing ones (`FLOW_SOURCE`, `ALLOC_SOURCE`), matching that established convention:
 
@@ -505,12 +507,12 @@ def test_depth_three_reaches_the_full_chain(nested_model):
     assert names == {"outer", "inner", "sensor"}
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/test_interconnection.py -v -k "depth"`
 Expected: `test_default_depth_is_unchanged_direct_parts_only` passes already (current behavior matches `depth=1`'s intended meaning); `test_depth_two_reaches_nested_composition` and `test_depth_three_reaches_the_full_chain` FAIL (`TypeError: build_interconnection_intent() got an unexpected keyword argument 'depth'`).
 
-- [ ] **Step 3: Modify `build_interconnection_intent()` in `src/toaster/render.py:75-123`**
+- [x] **Step 3: Modify `build_interconnection_intent()` in `src/toaster/render.py:75-123`**
 
 Replace the parts-extraction block (lines 89-97 of the current file) with a depth-aware version, and add the `depth` parameter to the signature:
 
@@ -583,17 +585,17 @@ def build_interconnection_intent(model: Any, fqn: str, depth: int = 1) -> dict:
     return {"title": fqn, "parts": parts, "flows": flows, "allocs": allocs}
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_interconnection.py -v`
 Expected: PASS (12 tests: the original 9 plus the 3 new ones)
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `uv run pytest -q`
 Expected: no regressions.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/toaster/render.py tests/test_interconnection.py
@@ -608,7 +610,7 @@ git commit -m "build_interconnection_intent(): add depth parameter, reusing cont
 **Interfaces:**
 - Produces: the register file itself, the format later entries (from Phase 1's survey or future probes) will follow.
 
-- [ ] **Step 1: Write `decisions/diagram-tool-gaps.md`**
+- [x] **Step 1: Write `decisions/diagram-tool-gaps.md`**
 
 ```markdown
 # Diagram tool gaps
@@ -643,12 +645,12 @@ from once a gap's picture is complete enough to be worth filing.
 - **Status:** documented, not drafted. No issue drafted yet.
 ```
 
-- [ ] **Step 2: Confirm the file exists and both entries are present**
+- [x] **Step 2: Confirm the file exists and both entries are present**
 
 Run: `test -f decisions/diagram-tool-gaps.md && grep -c "^## G-D" decisions/diagram-tool-gaps.md`
 Expected: file exists; count is `2`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add decisions/diagram-tool-gaps.md
