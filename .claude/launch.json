@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "myst-book",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "--", "npx", "myst", "start", "--execute"],
+      "port": 3000
+    }
+  ]
+}

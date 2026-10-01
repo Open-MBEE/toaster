@@ -1,0 +1,158 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix glid: <https://w3id.org/toaster/glossary/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+glid:def-sysml--abstract
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.6.2, p. 40 (PDF 72)" ;
+    gl:pdfPage "72"^^xsd:integer ;
+    gl:quote "A definition is specified as abstract by placing the keyword abstract before its kind keyword" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-abstract ;
+    gl:text "An abstract definition has no direct instances: every instance must also be an instance of a concrete definition or usage that specializes it." .
+
+glid:def-sysml--allocation
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.15.1, p. 78 (PDF 110)" ;
+    gl:pdfPage "110"^^xsd:integer ;
+    gl:quote "an allocation denotes a \"mapping\" across the various structures and hierarchies of a system model" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-allocation ;
+    gl:text "A mapping across the structures and hierarchies of a model; abstract, preliminary and sometimes tentative, used early in design as a precursor to detailed specification." .
+
+glid:def-sysml--definition
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.6.1, p. 31 (PDF 63)" ;
+    gl:pdfPage "63"^^xsd:integer ;
+    gl:quote "a definition element classifies a certain kind of element" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-definition ;
+    gl:text "A definition element classifies a kind of element (a classification of attributes, parts, actions and so on)." .
+
+glid:def-sysml--interface
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.14.1, p. 74 (PDF 106)" ;
+    gl:pdfPage "106"^^xsd:integer ;
+    gl:quote "An interface is simply a connection all of whose ends are ports" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-interface ;
+    gl:text "A connection whose ends are all ports; it supports reuse of compatible connections between parts." .
+
+glid:def-sysml--logical-component
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.11.1, p. 58 (PDF 90)" ;
+    gl:pdfPage "90"^^xsd:integer ;
+    gl:quote "purely logical component without implementation constraints" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-logical-component ;
+    gl:text "A part may be a purely logical component without implementation constraints." .
+
+glid:def-sysml--moe
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 9.3.4.2.1, p. 527 (PDF 559)" ;
+    gl:pdfPage "559"^^xsd:integer ;
+    gl:quote "semantic metadata for identifying an attribute as a measure of effectiveness" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-moe ;
+    gl:text "Semantic metadata (short name moe) that identifies an attribute as a measure of effectiveness. The spec gives no definition beyond the tag." .
+
+glid:def-sysml--mop
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 9.3.4.2.2, p. 527 (PDF 559)" ;
+    gl:pdfPage "559"^^xsd:integer ;
+    gl:quote "semantic metadata for identifying an attribute as a measure of performance" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-mop ;
+    gl:text "Semantic metadata (short name mop) that identifies an attribute as a measure of performance. The spec gives no definition beyond the tag." .
+
+glid:def-sysml--part-definition
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.11.1, p. 58 (PDF 90)" ;
+    gl:pdfPage "90"^^xsd:integer ;
+    gl:quote "A part can represent any level of abstraction, such as a purely logical component without implementation constraints, or a physical component with a part number" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-part-definition ;
+    gl:text "A part can be a purely logical component without implementation constraints, a physical component with a part number, or something in between." .
+
+glid:def-sysml--perform
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.17.6, p. 104 (PDF 136)" ;
+    gl:pdfPage "136"^^xsd:integer ;
+    gl:quote "then the part is considered to be the performer of the performed action" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-perform ;
+    gl:text "A perform action usage in a part definition or usage makes the part the performer of the action." .
+
+glid:def-sysml--requirement
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.21.1, p. 129 (PDF 161)" ;
+    gl:pdfPage "161"^^xsd:integer ;
+    gl:quote "A requirement definition is a kind of constraint definition" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-requirement ;
+    gl:text "A kind of constraint definition specifying stakeholder-imposed constraints that a design solution must satisfy to be valid." .
+
+glid:def-sysml--specialization
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.6.1, p. 32 (PDF 64)" ;
+    gl:pdfPage "64"^^xsd:integer ;
+    gl:quote "A definition is specialized using the subclassification relationship" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-specialization ;
+    gl:text "A definition is specialized by subclassification; the specialized definition inherits the features of the more general one and can add others." .
+
+glid:def-sysml--usage
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.6.1, p. 31 (PDF 63)" ;
+    gl:pdfPage "63"^^xsd:integer ;
+    gl:quote "A usage element is a usage of a definition element in a certain context" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-usage ;
+    gl:text "A usage is a usage of a definition in a context; it must be defined by at least one definition of its kind." .
+
+glid:def-sysml--verification
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.24.1, p. 141 (PDF 173)" ;
+    gl:pdfPage "173"^^xsd:integer ;
+    gl:quote "whose result is a verdict on whether the subject of the case satisfies certain requirements" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-verification ;
+    gl:text "A case definition whose result is a verdict on whether its subject satisfies certain requirements." .
+
+glid:def-sysml--view
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.26.1, p. 149 (PDF 181)" ;
+    gl:pdfPage "181"^^xsd:integer ;
+    gl:quote "A view artifact is a rendering of information that addresses some aspect of a system or domain of interest" ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-view ;
+    gl:text "A view definition specifies how to create a view artifact (a rendering of information for stakeholders) from conditions that extract the relevant model content plus a rendering." .

@@ -1,0 +1,897 @@
+"""src/toaster/query.py against the ch08 cumulative model and small probe models."""
+
+from pathlib import Path
+
+import opensysml
+import pytest
+
+from toaster import conformance, query
+
+ROOT = Path(__file__).resolve().parents[1]
+LAYERS = ROOT / ".claude" / "skills" / "architecture-layers" / "example-layers.sysml"
+
+
+@pytest.fixture(scope="module")
+def conn():
+    c = opensysml.connect(version="v0.9.0")
+    yield c
+    c.close()
+
+
+@pytest.fixture(scope="module")
+def ch08(conn):
+    m = conn.load_from_content((ROOT / "models" / "ch08-cumulative.sysml").read_text(), strict=False)
+    assert m.ok
+    return m
+
+
+def test_satisfy_relationships_read_the_json_content(ch08) -> None:
+    """PASS4-008: the real, current model (rebased onto ch07) carries forward only
+    `assert not satisfy timely by slow` (Chapter 3) and `assert satisfy` / `assert not
+    satisfy heatGenerationReq` (Chapter 6); there is no `assert satisfy timely by
+    nominal` in the real model at all, unlike the stale fixture this test used to read."""
+    raw = query.get_satisfy_relationships(ch08)
+    assert raw and all(e["@type"] == "SatisfyRequirementUsage" for e in raw)
+    got = {(s["requirement"], s["subject"]) for s in query.satisfy_relationships(ch08)}
+    assert ("ToasterDemo::timely", "ToasterDemo::slow") in got
+    assert ("ToasterDemo::heatGenerationReq", "ToasterDemo::rated") in got
+    assert ("ToasterDemo::heatGenerationReq", "ToasterDemo::weak") in got
+
+
+UNNAMED_ALLOCATE = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  action doApply : ApplyHeat;
+  part heater : HeatingSystem;
+  allocate doApply to heater;
+}
+"""
+
+
+def test_find_allocations_sees_unnamed_allocate(conn) -> None:
+    """PASS4-008: the real ch08 model no longer has an unnamed allocate (its own two
+    allocations, `heatAllocation` and `heatGenAllocation`, are both named, usage-level
+    AllocationUsages per DL-039's own fix), so this capability (find_connectors sees an
+    unnamed connector, unlike model.query()) is demonstrated on a small standalone
+    fixture instead; see test_find_allocations_sees_named_allocations below for ch08's
+    own, now-named allocations."""
+    m = conn.load_from_content(UNNAMED_ALLOCATE, strict=False)
+    assert m.ok
+    allocs = query.find_allocations(m)
+    assert [a["ends"] for a in allocs] == [[["P::doApply"], ["P::heater"]]]
+
+
+def test_find_allocations_sees_named_allocations(ch08) -> None:
+    """The real model's two allocations, both named and nested per DL-058's fix of the
+    package-level qualified-name non-conformance (see decisions/log.md DL-058)."""
+    allocs = {a["id"]: a["ends"] for a in query.find_allocations(ch08)}
+    assert allocs == {
+        "ToasterDemo::Toaster::heatAllocation": [
+            ["ToasterDemo::ToastingSystem::toastBread", "ToasterDemo::ToastBread::applyHeat"],
+            ["ToasterDemo::Toaster::heating"],
+        ],
+        "ToasterDemo::HeatingAssembly::heatGenAllocation": [
+            ["ToasterDemo::HeatingSystem::applyHeat", "ToasterDemo::ApplyHeat::generateHeat"],
+            ["ToasterDemo::HeatingAssembly::heatGen"],
+        ],
+    }
+
+
+INHERITED_ALLOCATION = """
+package P {
+  action def ApplyHeat;
+  part def HeatingSystem;
+  part def HeatingAssembly :> HeatingSystem;
+  action doApply : ApplyHeat;
+  part def Toaster {
+    part heater : HeatingSystem;
+    allocation alloc allocate doApply to heater;
+  }
+  part def BetterToaster :> Toaster {
+    part :>> heater : HeatingAssembly;
+  }
+}
+"""
+
+
+def test_allocations_for_follows_supertypes(conn) -> None:
+    """PASS4-008 round 2 review: the first version of this fixture allocated directly to
+    a bare PartDefinition (`allocate doApply to HeatingSystem;`), which is language
+    non-conformant (KerML 8.3.3.3.9 ReferenceSubsetting requires a Feature, not a
+    Definition; DL-039's own `allocate-between-definitions` gap rule flags exactly this,
+    confirmed directly), reintroducing by accident the pattern this project's own
+    conformance checks exist to catch. A later version allocated to a genuine usage but
+    by a package-level qualified path (`allocate doApply to Toaster::heater;`), which
+    DL-058 later ruled non-conformant too (the `Toaster::heater` end reaches into
+    `Toaster`'s own nested feature with no featuring context making it accessible,
+    caught directly by `allocate-connector-end-accessibility`, DL-058/D-032). This
+    version nests the allocation inside `Toaster` itself, alongside `heater` (matching
+    the conformant idiom Tasks 1-3 of the DL-058 remediation established for the real
+    chapter models), and demonstrates `inherit=True` following a redefinition
+    (`BetterToaster`'s own `:>> heater`), a real, conformant supertype-chain
+    relationship (confirmed: `model.ok` is True, `language_gap_findings` is empty), the
+    same shape the real ch08 model's own allocations are usage-level (see
+    test_allocations_for_on_ch08_usage_level_allocations below, where neither
+    `HeatingSystem` nor `HeatingAssembly` is itself ever an allocation end)."""
+    m = conn.load_from_content(INHERITED_ALLOCATION, strict=False)
+    assert m.ok
+    assert conformance.language_gap_findings(m) == []
+    assert query.allocations_for(m, "P::Toaster::heater", inherit=False)
+    assert query.allocations_for(m, "P::BetterToaster::heater")  # inherits Toaster::heater's allocation via redefinition
+    assert not query.allocations_for(m, "P::BetterToaster::heater", inherit=False)
+
+
+def test_allocations_for_on_ch08_usage_level_allocations(ch08) -> None:
+    """The real model's allocations resolve directly at the usage level; querying the
+    bare definitions with inherit=True finds nothing, because neither definition is
+    itself ever an allocation end (the settable-result pattern this project's audits
+    watch for does not recur here in a different guise: it simply does not apply, since
+    the model never puts an allocation on a definition to begin with)."""
+    assert query.allocations_for(ch08, "ToasterDemo::Toaster::heating", inherit=False)
+    assert query.allocations_for(ch08, "ToasterDemo::HeatingAssembly::heatGen", inherit=False)
+    assert not query.allocations_for(ch08, "ToasterDemo::HeatingSystem", inherit=True)
+    assert not query.allocations_for(ch08, "ToasterDemo::HeatingAssembly", inherit=True)
+
+
+FLOW_MODEL = """
+package P {
+  item def Bread;
+  part def Loader { item bread : Bread; }
+  part def Ejector { item bread : Bread; }
+  part def Handling {
+    part loader : Loader;
+    part ejector : Ejector;
+    flow loader.bread to ejector.bread;
+  }
+}
+"""
+
+
+def test_flows_and_connector_ends(conn) -> None:
+    """PASS4-008: the real ch08 model has no FlowUsage at all (BreadLoader, BreadEjector
+    and BreadHandling, the old stale fixture's flow endpoints, do not exist in the
+    current model), so this capability (find_connectors resolving a chained flow end
+    through ApiIndex.end_path) is demonstrated on a small standalone fixture instead,
+    built the same shape (a loader's bread flowing to an ejector's bread) the old
+    fixture had. PASS4-008 round 2 review: the first version of this fixture typed
+    `bread` as `part bread : Bread` (a part usage typed only by an item def), which is
+    language non-conformant (SysML validatePartUsagePartDefinition; DL-039's own
+    `part-typed-only-by-item-def` gap rule flags exactly this, confirmed directly),
+    reintroducing by accident the pattern this project's own conformance checks exist
+    to catch. `item bread : Bread` (confirmed: `model.ok` is True, `language_gap_findings`
+    is empty) exercises the identical flow-resolution path without that defect."""
+    m = conn.load_from_content(FLOW_MODEL, strict=False)
+    assert m.ok
+    assert conformance.language_gap_findings(m) == []
+    flows = query.find_connectors(m, "FlowUsage")
+    assert flows[0]["ends"][0] == ["P::Handling::loader", "P::Loader::bread"]
+
+
+def test_specialization_closure_finds_realizers(ch08) -> None:
+    """PASS4-008: in the real model, `HeatingSystem` and `ControlSystem` no longer
+    specialize `ToastingSystem` directly (DL-019's own fix of the F-3 finding it
+    named: a logical component specializing the whole's purpose type contradicted the
+    subject reading), so only `Toaster` and its own usages realize `ToastingSystem` now.
+    PASS4-008 round 2 review restored the genuine two-hop chain the previous round's
+    rewrite dropped: `rated`'s own supertypes are `ResistanceCoil` and, one hop further,
+    `HeatGenerator` (`ResistanceCoil :> HeatGenerator`), confirmed directly against the
+    real model, giving `supertypes_transitively` a real multi-hop closure to walk, not
+    only the single-hop `HeatingAssembly :> HeatingSystem` case."""
+    realizers = query.specializes_transitively(ch08, "ToasterDemo::ToastingSystem")
+    assert {"ToasterDemo::Toaster", "ToasterDemo::nominal", "ToasterDemo::slow"} <= realizers
+    assert "ToasterDemo::HeatingSystem" in query.supertypes_transitively(ch08, "ToasterDemo::HeatingAssembly")
+    assert query.supertypes_transitively(ch08, "ToasterDemo::rated") == {
+        "ToasterDemo::ResistanceCoil",
+        "ToasterDemo::HeatGenerator",
+    }
+
+
+def test_requirement_coverage_joins_satisfy_to_requirements(ch08) -> None:
+    """PASS4-009 round 2 (fixing a bug reported live in
+    decisions/audits/ch06-layer-audit.md and never fixed): `requirement_coverage` must
+    split by polarity, not just by requirement. Against the real ch08 model, `timely`
+    has only a NEGATIVE claim (`assert not satisfy timely by slow`) and a `verify`
+    objective with no bound subject -- no candidate has ever been positively claimed to
+    satisfy it, so `covered` must be False, not True. `heatGenerationReq` has one real
+    positive claim (`rated`) and one real negative claim (`weak`): `satisfied_by` must
+    contain only `rated`, and `weak` must appear in `failed_by` instead, never counted
+    as coverage."""
+    cov = {c["requirement"]: c for c in query.requirement_coverage(ch08)}
+
+    assert cov["ToasterDemo::timely"]["covered"] is False
+    assert cov["ToasterDemo::timely"]["satisfied_by"] == []
+    assert cov["ToasterDemo::timely"]["failed_by"] == ["ToasterDemo::slow"]
+
+    assert cov["ToasterDemo::heatGenerationReq"]["covered"] is True
+    assert cov["ToasterDemo::heatGenerationReq"]["satisfied_by"] == ["ToasterDemo::rated"]
+    assert cov["ToasterDemo::heatGenerationReq"]["failed_by"] == ["ToasterDemo::weak"]
+
+
+def test_requirement_coverage_excludes_verification_case_objective(ch08) -> None:
+    """A `verification def`'s own `objective { verify X; }` block is exported as its own
+    unnamed `RequirementUsage` (`ToasterDemo::TimelyToastTest::@2`, no `declaredName`):
+    the objective's own auto-synthesized wrapper, not a design requirement. It must not
+    appear in the coverage report at all (a bare bookkeeping artifact reported as an
+    uncovered requirement would be noise, not a finding)."""
+    reqs = {c["requirement"] for c in query.requirement_coverage(ch08)}
+    assert reqs == {"ToasterDemo::timely", "ToasterDemo::heatGenerationReq"}
+    assert not any(r.startswith("ToasterDemo::TimelyToastTest") for r in reqs)
+
+
+def test_satisfy_relationships_reports_is_negated(ch08) -> None:
+    """`satisfy_relationships` exposes `is_negated` so callers can distinguish a
+    positive claim from a negative one; a `verify` objective (no subject) is
+    `is_negated=False`, since it asserts nothing about any subject to negate."""
+    by_id = {s["id"]: s for s in query.satisfy_relationships(ch08)}
+    assert by_id["ToasterDemo::slow::@1"]["is_negated"] is True
+    assert by_id["ToasterDemo::rated::@1"]["is_negated"] is False
+    assert by_id["ToasterDemo::weak::@1"]["is_negated"] is True
+    assert by_id["ToasterDemo::TimelyToastTest::@2::@0"]["is_negated"] is False
+    assert by_id["ToasterDemo::TimelyToastTest::@2::@0"]["subject"] is None
+
+
+def test_perform_relationships_on_layers_example(conn) -> None:
+    m = conn.load_from_content(LAYERS.read_text(), strict=False)
+    assert query.perform_relationships(m) == [{"performer": "ToasterLayers::HeatSource", "action": "ToasterLayers::ApplyHeat"}]
+
+
+MISMATCH = """
+package P {
+  port def PowerPort; port def FuelPort; port def GasPort :> FuelPort;
+  part def Outlet { port o : PowerPort; }
+  part def Torch { port fuelIn : FuelPort; }
+  part def Tank { port f : GasPort; }
+  part outlet : Outlet; part torch : Torch; part tank : Tank;
+  connect outlet.o to torch.fuelIn;
+  connect tank.f to torch.fuelIn;
+}
+"""
+
+
+def test_port_type_check_flags_only_the_unrelated_pair(conn) -> None:
+    m = conn.load_from_content(MISMATCH, strict=False)
+    bad = query.port_type_mismatches(m)
+    assert len(bad) == 1 and bad[0]["types"] == [["P::PowerPort"], ["P::FuelPort"]]   # GasPort specializes FuelPort: fine
+
+
+def test_port_type_check_is_clean_on_ch08(ch08) -> None:
+    assert query.port_type_mismatches(ch08) == []
+
+
+@pytest.fixture(scope="module")
+def ch10(conn):
+    m = conn.load_from_content((ROOT / "models" / "ch10-cumulative.sysml").read_text(), strict=False)
+    assert m.ok
+    return m
+
+
+LEMMA = "ToasterDemo::deliveredEnergyBoundedBySupply"
+
+
+def _ch10_source_without_tie() -> str:
+    """`models/ch10-cumulative.sysml`'s own text with `EnergyConservationReq`/
+    `energyConservationReq` stripped out: the real, pre-remediation state
+    DL-070/DL-071's own search was built against (the same reconstruction
+    `01-traceability-graph.ipynb`'s own `source_before_remediation` builds).
+    Every fixture test below combines THIS (not the live, already-tied file)
+    with its own small construct, so the real, unfiltered
+    `requirement_ties`/`tied_to_any_requirement` can be called directly and
+    exercised for real -- no base-model permanent tie (DL-072) to filter out,
+    and no local reimplementation standing in for the real function."""
+    source = (ROOT / "models" / "ch10-cumulative.sysml").read_text()
+    marker = "\n    requirement def EnergyConservationReq {"
+    return source[:source.index(marker)] + "\n}\n"
+
+
+CH10_SOURCE_WITHOUT_TIE = _ch10_source_without_tie()
+
+
+def test_requirement_ties_real_model_now_tied_via_remediation(ch10) -> None:
+    """decisions/next-passes.md item 29 / decisions/log.md DL-070/DL-071/DL-072: this test used to
+    be `test_requirement_ties_negative_control_real_model`, asserting the real, unmodified model had
+    NO tie from `deliveredEnergyBoundedBySupply` to any requirement -- a real gap ch10's own
+    traceability search found (the lemma really was untied). That gap is now closed: the final,
+    reconciled design (two independently-built candidate designs, reconciled -- see
+    `docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md`) adds
+    `EnergyConservationReq`/`energyConservationReq` to `models/ch10-cumulative.sysml`, restating the
+    lemma's own Z3-proved conservation property (ch08) as a stakeholder-facing requirement, with its
+    own `require constraint c :> deliveredEnergyBoundedBySupply;` subsetting the lemma directly from
+    within the requirement DEFINITION's own body (Check B) -- and deliberately NO
+    `assert satisfy energyConservationReq by deliveredEnergyBoundedBySupply;` (Check A): direct
+    testing against `model.verify_satisfaction()` found that construct errors identically regardless
+    of its own binding (`require condition evaluation failed: no value for feature
+    heatGenCheck.efficiency`), because the requirement's own required constraint never references
+    its subject at all, so satisfying it by any candidate does no evaluative work; separately,
+    `sysmlv2 verify --solve` generates no check at all for a bare subsetting reference, confirmed
+    directly in notebook 01. The real model therefore carries exactly ONE entry for the lemma --
+    Check B's own `subsets` hit, attributed to the DEFINITION (`requirement=EnergyConservationReq`),
+    not the usage -- and `tied_to_any_requirement` is `True`."""
+    idx = query.ApiIndex(ch10)
+    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in query.requirement_ties(ch10, LEMMA, idx)}
+    assert ties == {
+        ("ToasterDemo::EnergyConservationReq::c", "subsets"): "ToasterDemo::EnergyConservationReq",
+    }
+    assert query.tied_to_any_requirement(ch10, LEMMA, idx) is True
+
+
+REQUIREMENT_SUBSETS_TIE = """
+package TieFixture {
+    private import ToasterDemo::*;
+    requirement def EnergyReq {
+        subject t : Toaster;
+        require constraint c :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_subsets(conn, ch10) -> None:
+    """A `requirement def`'s own `require constraint c :> deliveredEnergyBoundedBySupply;` is a
+    real, constructible tie the old `SatisfyRequirementUsage.subsets`-only check could never see
+    (its target is a bare `ConstraintUsage`, not a `SatisfyRequirementUsage` at all): confirm the
+    broader search finds it, via `c`'s own `subsets` field, owned by `TieFixture::EnergyReq`."""
+    source = CH10_SOURCE_WITHOUT_TIE + REQUIREMENT_SUBSETS_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture::EnergyReq::c", "field": "subsets", "requirement": "TieFixture::EnergyReq"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_REFERENCES_AND_USAGE_TIE = """
+package TieFixture2 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq2 {
+        subject t : Toaster;
+        ref altName references deliveredEnergyBoundedBySupply;
+    }
+    requirement usageTie : EnergyReq2 {
+        require constraint c2 :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_references_and_usage_owner(conn, ch10) -> None:
+    """The search also covers the `references` field (a `ref ... references target;` inside a
+    requirement) and a `RequirementUsage` (not just a `RequirementDefinition`) as the owning
+    requirement -- both real, distinct ways a tie can be made that a `subsets`-only,
+    `SatisfyRequirementUsage`-only search would miss."""
+    source = CH10_SOURCE_WITHOUT_TIE + REQUIREMENT_REFERENCES_AND_USAGE_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    fixture_ties = query.requirement_ties(m, LEMMA, idx)
+    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in fixture_ties}
+    assert ties == {
+        ("TieFixture2::EnergyReq2::altName", "references"): "TieFixture2::EnergyReq2",
+        ("TieFixture2::usageTie::c2", "subsets"): "TieFixture2::usageTie",
+    }
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+NON_REQUIREMENT_TIE = """
+package NonReqTie {
+    private import ToasterDemo::*;
+    part def Widget {
+        constraint c3 :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_reports_none_when_not_requirement_owned(conn, ch10) -> None:
+    """A `subsets` tie owned by an unrelated part (not any requirement) is found by the search,
+    but reported with `requirement=None`, and `tied_to_any_requirement` stays `False`: a tie is
+    only a traceability tie when a requirement actually owns it."""
+    source = CH10_SOURCE_WITHOUT_TIE + NON_REQUIREMENT_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "NonReqTie::Widget::c3", "field": "subsets", "requirement": None}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+def test_requirement_ties_mutation_old_narrow_check_misses_real_tie(conn, ch10) -> None:
+    """Mutation test: the OLD, narrow check (does the lemma's own id ever appear as any
+    `SatisfyRequirementUsage`'s own `subsets` target?) still reports `False` against the fixture
+    above, which contains a genuine, constructed tie -- proving the old check is blind to it, and
+    that the new, broader `requirement_ties`/`tied_to_any_requirement` is not itself vacuous."""
+    source = CH10_SOURCE_WITHOUT_TIE + REQUIREMENT_SUBSETS_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    satisfy_targets = {s["subsets"]["@id"] for s in idx.of_type("SatisfyRequirementUsage") if "subsets" in s}
+    lemma = idx.by_qn[LEMMA]
+    old_check_result = lemma["@id"] in satisfy_targets
+    assert old_check_result is False
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_REFERENT_TIE = """
+package TieFixture3 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq3 {
+        subject t : Toaster;
+        require deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_referent(conn, ch10) -> None:
+    """F1 (round-2 review): a bare `require target;` (a requirement reference to an
+    already-existing constraint, not declaring a new one) exports as a `FeatureReferenceExpression`
+    whose own `referent` field holds the target's id directly -- a different shape from
+    `subsets`/`redefines`/`references`, which the pre-round-2 search never looked at, and which
+    `require deliveredEnergyBoundedBySupply;` (as opposed to `require constraint c :>
+    deliveredEnergyBoundedBySupply;`, already covered by the `subsets` control above) is confirmed
+    to produce. Confirm the search now finds it, owned by `TieFixture3::EnergyReq3` (walking up
+    through the `FeatureReferenceExpression`'s own owning `ConstraintUsage`)."""
+    source = CH10_SOURCE_WITHOUT_TIE + REQUIREMENT_REFERENT_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert len(ties) == 1
+    assert ties[0]["field"] == "referent"
+    assert ties[0]["requirement"] == "TieFixture3::EnergyReq3"
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_REDEFINES_TIE = """
+package TieFixture4 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq4 {
+        subject t : Toaster;
+        require constraint c :>> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_positive_control_redefines(conn, ch10) -> None:
+    """F3 (round-2 review): the reviewer's own confirmed-working `redefines` construct
+    (`require constraint c :>> deliveredEnergyBoundedBySupply;`) was a real, working code path in
+    `requirement_ties` with no test of its own. Confirm it is found via `c`'s own `redefines`
+    field, owned by `TieFixture4::EnergyReq4`."""
+    source = CH10_SOURCE_WITHOUT_TIE + REQUIREMENT_REDEFINES_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture4::EnergyReq4::c", "field": "redefines", "requirement": "TieFixture4::EnergyReq4"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+REQUIREMENT_USAGE_DIRECT_TIE = """
+package TieFixture5 {
+    private import ToasterDemo::*;
+    requirement r :> deliveredEnergyBoundedBySupply;
+}
+"""
+
+
+def test_requirement_ties_positive_control_usage_is_tying_element_itself(conn, ch10) -> None:
+    """F3 (round-2 review): the reviewer's own confirmed-working construct where the tying
+    element is ITSELF a `RequirementUsage` (not a constraint nested inside one):
+    `requirement r :> deliveredEnergyBoundedBySupply;` puts `subsets` directly on `r`, a
+    `RequirementUsage`. `_nearest_requirement_owner`'s inclusive walk must find `r` as its own
+    nearest requirement ancestor, not `None`."""
+    source = CH10_SOURCE_WITHOUT_TIE + REQUIREMENT_USAGE_DIRECT_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture5::r", "field": "subsets", "requirement": "TieFixture5::r"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+SATISFY_BY_LEMMA_TIE = """
+package TieFixture6 {
+    private import ToasterDemo::*;
+    assert satisfy heatGenerationReq by deliveredEnergyBoundedBySupply;
+}
+"""
+
+
+def test_requirement_ties_satisfy_by_subject_the_chapter_own_idiom(conn, ch10) -> None:
+    """Check A, and round 2's most important finding, now fixed for real: `assert satisfy R by C;`
+    is this tutorial's OWN idiom for a genuine tie -- the exact pattern already used elsewhere in
+    the real model for `rated`/`weak` against `heatGenerationReq` (`models/ch10-cumulative.sysml`
+    lines 211/215) -- yet round 2's fixed-field-list search never looked at a
+    `SatisfyRequirementUsage`'s own `subject` field at all. This round's Check A is built directly
+    on `satisfy_relationships` (itself built on the already-tested `get_satisfy_relationships`): is
+    the lemma ever the `subject` of a real satisfy relationship? Confirm it is found here, correctly
+    attributed to the REAL, NAMED requirement (`heatGenerationReq`), not to the anonymous
+    `SatisfyRequirementUsage` itself. Check B also fires on this same fixture, but attributes
+    `requirement=None`: `assert satisfy R by C;` additionally exports a synthetic
+    `FeatureReferenceExpression` for its own `by` clause, whose `referent` field also names the
+    lemma directly (`_TIE_FIELDS` includes `referent`) -- but that synthetic element's owner chain
+    passes through the `SatisfyRequirementUsage` itself, which is NOT an exact
+    `RequirementDefinition`/`RequirementUsage` match (Check B's exact-type rule, by design), so
+    Check B alone cannot attribute this tie to a requirement. `tied_to_any_requirement` is `True`
+    because Check A alone already finds it -- this is exactly the point of keeping Check A as its
+    own, separate mechanism rather than folding it into Check B's field list."""
+    source = CH10_SOURCE_WITHOUT_TIE + SATISFY_BY_LEMMA_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    fixture_ties = query.requirement_ties(m, LEMMA, idx)
+    ties = {(t["tying_element"], t["field"]): t["requirement"] for t in fixture_ties}
+    assert ties == {
+        ("TieFixture6::@1", "subject"): "ToasterDemo::heatGenerationReq",
+        ("TieFixture6___401_subject_pvalue", "referent"): None,
+    }
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+NEGATED_SATISFY_NOT_A_TIE = """
+package TieFixture6b {
+    private import ToasterDemo::*;
+    assert not satisfy heatGenerationReq by deliveredEnergyBoundedBySupply;
+}
+"""
+
+
+def test_requirement_ties_negated_satisfy_does_not_count_as_a_tie(conn, ch10) -> None:
+    """Check A only counts a POSITIVE satisfy claim: `assert not satisfy R by C;` says C does NOT
+    meet R, which is evidence reinforcing "untied", not a real connection. Confirm Check A finds
+    nothing attributable to a requirement for this fixture (Check B's own `referent` hit on the
+    synthetic `by`-clause expression still has `requirement=None`, same as the positive case)."""
+    source = CH10_SOURCE_WITHOUT_TIE + NEGATED_SATISFY_NOT_A_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert all(t["requirement"] is None for t in ties), ties
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+DEPENDENCY_TIE = """
+package TieFixture7 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq7 {
+        subject t : Toaster;
+        dependency d from t to deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_sibling_dependency_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `dependency d from t to lemma;` names the lemma and the
+    requirement's subject as two SIBLING elements (the `Dependency`'s own `supplier` field), neither
+    owning the other. This is the genuine, unresolved scope question this round's own escalation
+    raised, which Z decided does NOT count as a "tie" for this narrow design -- Check A only covers
+    `satisfy`, and Check B's fixed field list (`subsets`/`redefines`/`references`/`referent`) does
+    not include `supplier`, so neither check fires. Confirm the search finds nothing at all for this
+    construct, not merely that it fails to attribute a requirement."""
+    source = CH10_SOURCE_WITHOUT_TIE + DEPENDENCY_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+ALLOCATE_TIE = """
+package TieFixture8 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq8 {
+        subject t : Toaster;
+        allocate deliveredEnergyBoundedBySupply to t;
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_sibling_allocate_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `allocate lemma to t;` is the same sibling-relationship
+    shape as `dependency` (the tie lives on `AllocationUsage.sourceFeature`/`relatedFeature`, neither
+    of which is in Check B's fixed field list, and this is not a `satisfy`), so it is out of scope by
+    design. Confirm the search finds nothing at all."""
+    source = CH10_SOURCE_WITHOUT_TIE + ALLOCATE_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+BIND_TIE = """
+package TieFixture9 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq9 {
+        subject t : Toaster;
+        constraint x;
+        bind x = deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_bind_connector_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `bind x = lemma;` carries the tie via
+    `BindingConnectorAsUsage.targetFeature`/`relatedFeature`, neither of which is in Check B's fixed
+    field list, and this is not a `satisfy`. Confirm the search finds nothing at all."""
+    source = CH10_SOURCE_WITHOUT_TIE + BIND_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+METADATA_TIE = """
+package TieFixture10 {
+    private import ToasterDemo::*;
+    metadata def Trace10;
+    requirement def EnergyReq10 {
+        subject t : Toaster;
+        metadata Trace10 about deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_metadata_about_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `metadata Trace10 about lemma;` carries the tie via
+    `MetadataUsage.annotatedElement`, a field outside Check B's fixed list, and this is not a
+    `satisfy`. Confirm the search finds nothing at all."""
+    source = CH10_SOURCE_WITHOUT_TIE + METADATA_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+INVOCATION_TIE = """
+package TieFixture11 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq11 {
+        subject t : Toaster;
+        require constraint { deliveredEnergyBoundedBySupply() }
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_invocation_expression_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: a body expression that INVOKES the constraint as a function
+    (`deliveredEnergyBoundedBySupply()`, as opposed to just naming it bare) carries the tie via
+    `InvocationExpression.function`, a field outside Check B's fixed list -- a different shape from
+    `referent` (a bare name, which IS covered, see `test_requirement_ties_positive_control_referent`).
+    Confirm the search finds nothing at all for the invocation shape."""
+    source = CH10_SOURCE_WITHOUT_TIE + INVOCATION_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+CONCERN_OWNER_TIE = """
+package TieFixture12 {
+    private import ToasterDemo::*;
+    concern def C12 {
+        subject t;
+        require constraint c :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_attribute_concern_definition_ownership_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `ConcernDefinition` is a genuine metaclass SUBTYPE of
+    `RequirementDefinition`, but Check B's owner-walk uses an EXACT `@type` match only, by design
+    (no metaclass-subtype closure): a `ConcernDefinition` owner does not count. The `subsets` tie
+    itself IS still found (Check B's field scan is not type-filtered), but `requirement` is `None`
+    because `C12` is not an exact match and no further exact-match ancestor exists above it."""
+    source = CH10_SOURCE_WITHOUT_TIE + CONCERN_OWNER_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture12::C12::c", "field": "subsets", "requirement": None}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+VIEWPOINT_OWNER_TIE = """
+package TieFixture13 {
+    private import ToasterDemo::*;
+    viewpoint def V13 {
+        subject t;
+        require constraint c :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_attribute_viewpoint_definition_ownership_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `ViewpointDefinition` is likewise a genuine metaclass
+    subtype of `RequirementDefinition`, and likewise deliberately NOT treated as a requirement owner
+    by Check B's exact-type rule. Same shape as the `ConcernDefinition` case above: the tie is found,
+    but `requirement` is `None`."""
+    source = CH10_SOURCE_WITHOUT_TIE + VIEWPOINT_OWNER_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture13::V13::c", "field": "subsets", "requirement": None}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+CONNECTION_END_TIE = """
+package TieFixtureConnEnd {
+    private import ToasterDemo::*;
+    requirement def EnergyReqConnEnd {
+        subject t : Toaster;
+        connection c2 {
+            end e1 ::> deliveredEnergyBoundedBySupply;
+            end e2 ::> t;
+        }
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_connection_end_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `end e1 ::> lemma;` types a connector end by reference
+    subsetting (`::>`). The tie lives on a `ReferenceSubsetting` relationship object's own
+    `referencedFeature` field, not on the connector end feature's own `subsets`/`redefines`/
+    `references`/`referent` field directly -- a different shape Check B's fixed field list does not
+    reach, and this is not a `satisfy`. This is exactly the gap round 3's field-agnostic scan itself
+    still missed (its `ReferenceSubsetting` relationship-object exclusion list happened to be the tie's
+    only carrier), which is part of why this round replaced that design rather than patching it
+    further. Confirm the search finds nothing at all."""
+    source = CH10_SOURCE_WITHOUT_TIE + CONNECTION_END_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == []
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+
+
+REQ_REQUIRES_REQ_TIE = """
+package TieFixture14 {
+    private import ToasterDemo::*;
+    requirement def A14 {
+        require constraint c :> deliveredEnergyBoundedBySupply;
+    }
+    requirement a14 : A14;
+    requirement def B14 {
+        require a14;
+    }
+}
+"""
+
+
+def test_requirement_ties_requirement_requires_requirement(conn, ch10) -> None:
+    """A chain where one requirement (`B14`) requires another requirement usage (`a14`), which is
+    itself typed by a definition (`A14`) that directly ties to the lemma. The direct tie (`A14::c`'s
+    own `subsets`) is found and correctly attributed to `A14`, regardless of `B14`'s further,
+    separate `require a14;` -- this is a DIRECT tie on `A14`, not the transitive-chain case this
+    module's search still, honestly, does not chase."""
+    source = CH10_SOURCE_WITHOUT_TIE + REQ_REQUIRES_REQ_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture14::A14::c", "field": "subsets", "requirement": "TieFixture14::A14"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+MULTI_SUBSETS_TIE = """
+package TieFixture15 {
+    private import ToasterDemo::*;
+    requirement def EnergyReq15 {
+        subject t : Toaster;
+        constraint other15;
+        require constraint c :> other15, deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_multi_subsets_list_shaped_field(conn, ch10) -> None:
+    """`require constraint c :> other15, deliveredEnergyBoundedBySupply;` subsets TWO things at
+    once, so `c`'s own `subsets` field is exported as a LIST of two refs, not a single dict --
+    confirms `_raw_refs` correctly finds the lemma's id inside a list-shaped field, and reports
+    exactly one entry (not two) for the single `(element, field)` pair that matched."""
+    source = CH10_SOURCE_WITHOUT_TIE + MULTI_SUBSETS_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture15::EnergyReq15::c", "field": "subsets", "requirement": "TieFixture15::EnergyReq15"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+FRAME_CONCERN_TIE = """
+package TieFixture16 {
+    private import ToasterDemo::*;
+    concern def C16;
+    requirement def EnergyReq16 {
+        subject t : Toaster;
+        frame concern k :> deliveredEnergyBoundedBySupply;
+    }
+}
+"""
+
+
+def test_requirement_ties_frame_concern_owned_by_a_real_requirement_still_found(conn, ch10) -> None:
+    """`frame concern k :> lemma;` puts `subsets` directly on `k`, a `ConcernUsage`. Check B's
+    exact-type owner-walk does NOT stop at `k` itself (a `ConcernUsage` is not an exact
+    `RequirementDefinition`/`RequirementUsage` match, by design), but `k` is nested inside a genuine
+    `RequirementDefinition` (`EnergyReq16`), so the walk continues past `k` and correctly attributes
+    the tie to the enclosing requirement. This is still IN scope: the exclusion is about a
+    `Concern`/`Viewpoint` DEFINITION being the tie's direct owner (see the `_as_owner` tests above),
+    not about a `ConcernUsage` appearing somewhere inside a real requirement's own body."""
+    source = CH10_SOURCE_WITHOUT_TIE + FRAME_CONCERN_TIE
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture16::EnergyReq16::k", "field": "subsets", "requirement": "TieFixture16::EnergyReq16"}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is True
+
+
+TRANSITIVE_CHAIN_NOT_DETECTED = """
+package TieFixture17 {
+    private import ToasterDemo::*;
+    constraint mid17 :> deliveredEnergyBoundedBySupply;
+    requirement def EnergyReq17 {
+        subject t : Toaster;
+        require constraint c :> mid17;
+    }
+}
+"""
+
+
+def test_requirement_ties_does_not_detect_transitive_chain_by_design(conn, ch10) -> None:
+    """Scope boundary, not a missed bug: `mid17` (a constraint outside any requirement) directly
+    subsets the lemma -- found by Check B, but `requirement=None` since `mid17` itself is not
+    requirement-owned. `EnergyReq17`'s own `c :> mid17;` is a SEPARATE, one-hop tie from `c` to
+    `mid17`, not to the lemma at all, so it produces no entry of its own here. A direct-reference
+    scan has no mechanism to chase a second hop through an element that is not itself
+    requirement-owned; `tied_to_any_requirement` stays `False`, and
+    `tied_to_any_requirement(model, "TieFixture17::mid17")` (checked separately, not asserted here)
+    would find `EnergyReq17::c` -- confirming this is a genuine one-hop-at-a-time scope limit, not a
+    search that misses `mid17` altogether."""
+    source = CH10_SOURCE_WITHOUT_TIE + TRANSITIVE_CHAIN_NOT_DETECTED
+    m = conn.load_from_content(source, strict=False)
+    assert m.ok
+    idx = query.ApiIndex(m)
+    ties = query.requirement_ties(m, LEMMA, idx)
+    assert ties == [{"tying_element": "TieFixture17::mid17", "field": "subsets", "requirement": None}]
+    assert query.tied_to_any_requirement(m, LEMMA, idx) is False
+    # Confirm the scope limit is specifically about the SECOND hop, not a blind spot on `mid17`
+    # itself: `EnergyReq17::c` DOES directly tie to `mid17` and IS found when `mid17` is the target.
+    mid_ties = query.requirement_ties(m, "TieFixture17::mid17", idx)
+    assert mid_ties == [{"tying_element": "TieFixture17::EnergyReq17::c", "field": "subsets", "requirement": "TieFixture17::EnergyReq17"}]
+    assert query.tied_to_any_requirement(m, "TieFixture17::mid17", idx) is True
+
+
+def test_requirement_ties_raises_on_unknown_target(ch10) -> None:
+    """F4: a target that does not resolve to any real element in the model must raise loudly,
+    not silently report an empty result -- the same "passes for the wrong reason" shape the
+    original bug had, just at a different layer. This also demonstrates the fix actually catches
+    a hypothetical future typo/rename of the lemma: confirm the real target exists first, then
+    confirm a nonexistent one raises."""
+    idx = query.ApiIndex(ch10)
+    assert idx.by_qn.get(LEMMA) is not None
+    with pytest.raises(KeyError):
+        query.requirement_ties(ch10, "ToasterDemo::NonexistentThing", idx)
+    with pytest.raises(KeyError):
+        query.tied_to_any_requirement(ch10, "ToasterDemo::NonexistentThing", idx)

@@ -1,0 +1,13 @@
+# Every term with its definition count and load-bearing flag.
+
+PREFIX gl: <https://w3id.org/toaster/glossary#>
+
+SELECT ?term ?label ?loadBearing (COUNT(?def) AS ?definitions)
+WHERE {
+  ?term a gl:Term ;
+        gl:label ?label .
+  OPTIONAL { ?term gl:loadBearing ?loadBearing }
+  OPTIONAL { ?def a gl:Definition ; gl:term ?term }
+}
+GROUP BY ?term ?label ?loadBearing
+ORDER BY ?label ?term

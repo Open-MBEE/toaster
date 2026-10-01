@@ -1,9 +1,19 @@
 # Chapter 9 Conclusion
 
-**What we built (stub):** [TODO — model state after this chapter.]
+## What we built
 
-**What this establishes (stub):** [TODO — engineering conclusion.]
+No new model element: every notebook in this chapter queries `models/ch08-cumulative.sysml`, the real, current model Chapter 8 committed, directly. What changed is what can be asked of it: notebook 01 adds a real coverage report joining every requirement usage against every satisfy relationship, and along the way finds and fixes a real polarity-blind bug in the repository's own `requirement_coverage()` helper; notebook 02 applies Hawkins' sufficiency idea to two real, verbatim-reconstructed ReviewRecords (`AS-C06`, `AS-C08`); notebook 03 extends Chapter 8's own `check_stale()` demonstration from one record to two tracked together.
 
-**What comes next (stub):** [TODO — one sentence bridging to Chapter 10.].
+## What this establishes
 
-**Exercise:** See `exercises/ch09/exercise.ipynb`: [TODO — one-line description].
+The coverage report is not a hypothetical exercise: it finds a real gap already present in this tutorial's own accumulated model. `heatGenerationReq` has been checked against two different candidates, one that meets it and one that does not; `timely` has only ever been checked against a candidate that fails it, plus a verification-case objective that names it without claiming anything about a subject. No one has ever claimed `nominal`, the usage meant to represent the toaster actually meeting its timing requirement, satisfies `timely` -- an absence of a claim, not evidence that it would fail one, since `cycleTime` is still not derived from anything. Finding this gap also surfaced a second, previously-unfixed one: `src/toaster/query.py`'s own `requirement_coverage()` helper, the one the `opensysml-query` skill's own cookbook names for exactly this kind of question, was polarity-blind, counting `slow`'s own failing claim against `timely` as coverage. Fixed here, and reproducible directly against the real model: `requirement_coverage()` now agrees exactly with this chapter's own hand-built join, and a deliberately polarity-blind version, built alongside it, shows precisely what goes missing when polarity is dropped.
+
+Sufficiency, applied to two records rather than asserted about all of them, shows what the check actually demands: not merely a non-empty `counterevidence` field (the mechanized floor `validate_record()` already enforces, and which a placeholder like "None known." would still pass) but a substantive one, and an `engineering_conclusion` that matches what the record's own evidence supports -- `AS-C06` honestly stays `undetermined` because its selection rests on a domain premise, not a trade study; `AS-C08` is `supported` because its own claim was already narrowed to exactly what got proved, and its genuinely empty `premises` field is itself appropriate, not a gap, once the claim's own deductive (proved, not argued) character is read correctly. Staleness, checked across both records at once against the same real edit, shows two different, genuinely real histories, not two flavors of the same bookkeeping fact: `AS-C06`'s own counterevidence named a specific gap ("Joule heating's own relation ... is still not modeled, so efficiency and response-time comparisons remain out of reach") that Chapter 7 has since partly overtaken by adding `HeatGenerator`'s `efficiency`, `efficiencyBounded` and `deliveredEnergy` -- an efficiency comparison can now at least be started, though the Joule relation itself and any response-time comparison are still unmodeled; `AS-C08` goes stale from an edit to a different part of the file (the companion lemma's own bound) than the one its own residual specifically names as a risk (`HeatGenerator`'s `efficiencyBounded`/`deliveredEnergy`), caught only because its `content_hash` is computed over the whole file, a coarse, partial safeguard, not a targeted one.
+
+## What comes next
+
+Chapter 10 builds the full traceability graph this chapter's coverage report only samples one join of, and asks what a real sign-off over that graph would actually require.
+
+## Exercise
+
+See `exercises/ch09/exercise.ipynb`: it asks you to produce a coverage report over your own coffee-maker model from Chapters 1-8 (notebook 01's own join), then apply the same sufficiency reading (notebook 02) and staleness check, at scale (notebook 03), to two of your own already-built judgment records.

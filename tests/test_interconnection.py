@@ -1,4 +1,4 @@
-"""Tests for build_interconnection_intent and render_sysmld (WP-4)."""
+"""Tests for build_interconnection_intent and render_interconnection (WP-4)."""
 import json
 import sys
 import tempfile
@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from toaster.render import build_interconnection_intent, render_sysmld
+from toaster.render import build_interconnection_intent, render_interconnection
 
 FLOW_SOURCE = """
 package ToasterDemo {
@@ -36,6 +36,46 @@ package ToasterDemo {
 }
 """
 
+# PASS4-005 push-back (Finding 9): the allocation target used a fully-qualified path
+# ('Toaster::heating') while the owned-part extraction used the short name ('heating'),
+# so the two were drawn as separate nodes for the same model element. Also exercises
+# the InterfaceUsage recognition OQ-1 added (a connection whose ends are all ports).
+#
+# DL-059 ADDENDUM (Task 5, allocate-fix/task5-harden-guard): the original fixture's
+# `allocation heatAllocation allocate ApplyHeat to Toaster::heating;` carried BOTH a
+# pre-existing `allocate-between-definitions` (D-019) violation (`ApplyHeat` resolves to a
+# Definition, not a Feature) and the `allocate-connector-end-accessibility` (DL-058) violation
+# next-passes.md item 23 anticipated (`Toaster::heating`'s declaring context, `ToasterDemo::Toaster`,
+# is neither the allocation's own owner, `ToasterDemo`, nor a plain package). Item 24 in
+# next-passes.md asked whether a conformant rewrite exists without losing this fixture's own point
+# (a fully-qualified-path allocation end must dedup against the owned-part node); it does: promoting
+# a named `action doApply : ApplyHeat;` to package level fixes the source-is-a-Definition problem,
+# and nesting the allocation inside `Toaster` makes `Toaster::heating`'s declaring context equal the
+# allocation's own new owner (`ToasterDemo::Toaster`) -- both gap rules are now clean, and the
+# qualified-path target ('Toaster::heating') is unchanged, so the dedup-against-the-owned-part
+# behavior this fixture exists to exercise is still genuinely tested.
+QUALIFIED_ALLOC_AND_INTERFACE_SOURCE = """
+package ToasterDemo {
+    private import ScalarValues::*;
+    private import SI::*;
+    private import ISQ::*;
+    port def DurationPort { out duration : ISQ::DurationValue[0..*]; }
+    action def ApplyHeat;
+    part def ControlSystem { port durationOut : DurationPort; }
+    part def HeatingSystem {
+        perform action applyHeat : ApplyHeat;
+        port durationIn : ~DurationPort;
+    }
+    action doApply : ApplyHeat;
+    part def Toaster {
+        part control : ControlSystem;
+        part heating : HeatingSystem;
+        interface durationInterface connect control.durationOut to heating.durationIn;
+        allocation heatAllocation allocate doApply to Toaster::heating;
+    }
+}
+"""
+
 
 @pytest.fixture(scope="module")
 def flow_model():
@@ -55,6 +95,19 @@ def alloc_model():
     conn = opensysml.connect(version="v0.9.0")
     model = conn.load_from_content(ALLOC_SOURCE, strict=False)
     assert model.ok, f"Alloc model failed: {model.diagnostics}"
+    yield model
+    conn.close()
+
+
+@pytest.fixture(scope="module")
+def qualified_model():
+    import opensysml
+
+    conn = opensysml.connect(version="v0.9.0")
+    model = conn.load_from_content(
+        QUALIFIED_ALLOC_AND_INTERFACE_SOURCE, strict=False
+    )
+    assert model.ok, f"Qualified model failed: {model.diagnostics}"
     yield model
     conn.close()
 
@@ -89,24 +142,58 @@ def test_intent_allocs(alloc_model):
     assert "HeatingSystem" in targets
 
 
-def test_render_sysmld_produces_svg(flow_model):
+def test_render_interconnection_produces_svg(flow_model):
     intent = build_interconnection_intent(flow_model, "ToasterDemo::BreadHandling")
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "test.svg"
-        render_sysmld(intent, out)
+        render_interconnection(intent, out)
         assert out.exists()
         content = out.read_text()
         assert "<svg" in content
 
 
-def test_render_sysmld_svg_contains_parts(flow_model):
+def test_render_interconnection_svg_contains_parts(flow_model):
     intent = build_interconnection_intent(flow_model, "ToasterDemo::BreadHandling")
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "test.svg"
-        render_sysmld(intent, out)
+        render_interconnection(intent, out)
         content = out.read_text()
         assert "loader" in content
         assert "ejector" in content
+
+
+def test_intent_flows_includes_interface_usage(qualified_model):
+    """OQ-1: build_interconnection_intent must recognize InterfaceUsage (a
+    connection whose ends are all ports, SysML v2 formal/2026-03-02 §7.14.1),
+    not only FlowUsage."""
+    intent = build_interconnection_intent(qualified_model, "ToasterDemo::Toaster")
+    assert len(intent["flows"]) == 1
+    flow = intent["flows"][0]
+    assert flow["source"] == "control.durationOut"
+    assert flow["target"] == "heating.durationIn"
+
+
+def test_qualified_allocation_target_reuses_the_part_node(qualified_model):
+    """Finding 9: an allocation end written as a fully-qualified path
+    ('Toaster::heating') must resolve to the same node the owned-part extraction
+    already created ('heating'), not a separate, duplicate box for the same
+    model element."""
+    intent = build_interconnection_intent(qualified_model, "ToasterDemo::Toaster")
+    part_names = {p["name"] for p in intent["parts"]}
+    assert "heating" in part_names
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "test.svg"
+        render_interconnection(intent, out)
+        content = out.read_text()
+        titles = [
+            line.split(">")[1].split("<")[0]
+            for line in content.splitlines()
+            if "<title>" in line
+        ]
+        # Exactly one node is titled "heating"; "Toaster::heating" never appears
+        # as its own node.
+        assert titles.count("heating") == 1
+        assert "Toaster::heating" not in titles
 
 
 def test_mutation_changes_diagram(flow_model):
@@ -119,6 +206,63 @@ def test_mutation_changes_diagram(flow_model):
     with tempfile.TemporaryDirectory() as tmp:
         out1 = Path(tmp) / "a.svg"
         out2 = Path(tmp) / "b.svg"
-        render_sysmld(intent1, out1)
-        render_sysmld(intent2, out2)
+        render_interconnection(intent1, out1)
+        render_interconnection(intent2, out2)
         assert out1.read_text() != out2.read_text()
+
+
+NESTED_SOURCE = """
+package ToasterDemo {
+    private import ScalarValues::*;
+    item def Signal;
+    part def Inner {
+        part sensor : Signal;
+    }
+    part def Outer {
+        part inner : Inner;
+    }
+    part def Top {
+        part outer : Outer;
+    }
+}
+"""
+
+
+@pytest.fixture(scope="module")
+def nested_model():
+    import opensysml
+
+    conn = opensysml.connect(version="v0.9.0")
+    model = conn.load_from_content(NESTED_SOURCE, strict=False)
+    assert model.ok, f"Nested model failed: {model.diagnostics}"
+    yield model
+    conn.close()
+
+
+def test_default_depth_is_unchanged_direct_parts_only(nested_model):
+    intent = build_interconnection_intent(nested_model, "ToasterDemo::Top")
+    names = {p["name"] for p in intent["parts"]}
+    assert names == {"outer"}
+
+
+def test_depth_two_reaches_nested_composition(nested_model):
+    intent = build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=2)
+    names = {p["name"] for p in intent["parts"]}
+    assert "outer" in names
+    assert "inner" in names
+
+
+def test_depth_three_reaches_the_full_chain(nested_model):
+    intent = build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=3)
+    names = {p["name"] for p in intent["parts"]}
+    assert names == {"outer", "inner", "sensor"}
+
+
+def test_negative_depth_raises_value_error(nested_model):
+    with pytest.raises(ValueError):
+        build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=-1)
+
+
+def test_none_depth_raises_value_error(nested_model):
+    with pytest.raises(ValueError):
+        build_interconnection_intent(nested_model, "ToasterDemo::Top", depth=None)

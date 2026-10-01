@@ -1,0 +1,9 @@
+$ /private/tmp/functional-toaster-design/sysml decisions/diagram-study-real-fixtures/fixtures/ch08.sysml -render #tree:ToasterDemo::Toaster -render-form plantuml -o decisions/diagram-study-real-fixtures/evidence/ch08-tree-opensysml-puml.puml
+exit_code=0 elapsed_seconds=0.06
+
+--- stdout ---
+
+--- stderr ---
+✓ package ToasterDemo
+wrote decisions/diagram-study-real-fixtures/evidence/ch08-tree-opensysml-puml.puml (plantuml, 1163 bytes)
+

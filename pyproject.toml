@@ -16,6 +16,9 @@ dependencies = [
   "sympy>=1.13",
   "matplotlib>=3.9",
   "tabulate>=0.9",
+  "rdflib>=7.6.0",
+  "pyshacl>=0.40.1",
+  "typer>=0.27.2",
 ]
 
 [dependency-groups]
@@ -24,6 +27,15 @@ dev = [
   "pytest-cov>=5.0",
   "ruff>=0.4",
 ]
+
+[tool.ruff]
+extend-exclude = ["scripts/probes"]  # scratch probe scripts; recorded results live in decisions/probes.md
+
+[tool.pytest.ini_options]
+markers = [
+  "checkpoint: verify notebook construction cells are consistent with committed fixtures",
+]
+addopts = "-m 'not checkpoint'"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/toaster"]

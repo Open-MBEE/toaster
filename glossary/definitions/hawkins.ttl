@@ -1,0 +1,147 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix glid: <https://w3id.org/toaster/glossary/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+glid:def-hawkins--appropriateness
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.2, p. 9 (PDF 7)" ;
+    gl:pdfPage "7"^^xsd:integer ;
+    gl:quote "it is being asserted that the context is appropriate for the argument elements to which it applies" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-appropriateness ;
+    gl:text "Whether the inference, context or evidence is right for the argument's application and purpose (Hawkins pairs it with sufficiency for inferences and trustworthiness for context and evidence)." .
+
+glid:def-hawkins--asserted-context
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.2, p. 9 (PDF 7)" ;
+    gl:pdfPage "7"^^xsd:integer ;
+    gl:quote "it is being asserted that the context is appropriate for the argument elements to which it applies" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-asserted-context ;
+    gl:text "Each time context or assumption is introduced, it is asserted to be appropriate for the argument elements it applies to." .
+
+glid:def-hawkins--asserted-inference
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.1, p. 9 (PDF 7)" ;
+    gl:pdfPage "7"^^xsd:integer ;
+    gl:quote "an assertion is being made that the inference is appropriate and sufficient" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-asserted-inference ;
+    gl:text "Each time a claim is said to be supported by other claims, an assertion is made that the inference is appropriate and sufficient." .
+
+glid:def-hawkins--asserted-solution
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.3, p. 12 (PDF 10)" ;
+    gl:pdfPage "10"^^xsd:integer ;
+    gl:quote "it is being asserted that the evidence put forward is sufficient to support the claim" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-asserted-solution ;
+    gl:text "Each time evidence is cited as a solution, it is asserted to be sufficient to support the claim." .
+
+glid:def-hawkins--assumption
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.2, p. 9 (PDF 7)" ;
+    gl:pdfPage "7"^^xsd:integer ;
+    gl:quote "contextual information (represented by context or assumption elements)" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-assumption ;
+    gl:text "Contextual information enters an argument as context or assumption elements, each carrying an assertion of appropriateness." .
+
+glid:def-hawkins--assurance-claim-point
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3, p. 8 (PDF 6)" ;
+    gl:pdfPage "6"^^xsd:integer ;
+    gl:quote "the confidence argument is tied to a number of Assurance Claim Points (ACP)" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-assurance-claim-point ;
+    gl:text "The place in the safety argument where an assertion is made; a confidence argument is developed for each." .
+
+glid:def-hawkins--assurance-deficit
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 1, p. 4 (PDF 2)" ;
+    gl:pdfPage "2"^^xsd:integer ;
+    gl:quote "Any knowledge gap that prohibits perfect (total) confidence is referred to as an assurance deficit" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-assurance-deficit ;
+    gl:text "Any knowledge gap that prohibits total confidence." .
+
+glid:def-hawkins--confidence-argument
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 1, p. 3 (PDF 1)" ;
+    gl:pdfPage "1"^^xsd:integer ;
+    gl:quote "a confidence argument that justifies the sufficiency of confidence in this safety argument" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-confidence-argument ;
+    gl:text "The component that justifies the sufficiency of confidence in the safety argument." .
+
+glid:def-hawkins--counter-evidence
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.4, p. 14 (PDF 12)" ;
+    gl:pdfPage "12"^^xsd:integer ;
+    gl:quote "helps identify the possible areas in the argument where counter-evidence may exist" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-counter-evidence ;
+    gl:text "Recognising assurance deficits guides the search for where counter-evidence may exist." .
+
+glid:def-hawkins--judgment
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.4, p. 14 (PDF 12)" ;
+    gl:pdfPage "12"^^xsd:integer ;
+    gl:quote "it is therefore necessary to make a judgment on when assurance deficits can be tolerated" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-judgment ;
+    gl:text "Completely mitigating all assurance deficits is not normally achievable, so a judgment on when they can be tolerated is necessary, assessed by expert judgment of likelihood and severity." .
+
+glid:def-hawkins--safety-argument
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 1, p. 3 (PDF 1)" ;
+    gl:pdfPage "1"^^xsd:integer ;
+    gl:quote "a safety argument that documents the arguments and evidence used to establish direct claims of system safety" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-safety-argument ;
+    gl:text "The component of an assured safety argument that documents the arguments and evidence used to establish direct claims of system safety." .
+
+glid:def-hawkins--sufficiency
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.1, p. 9 (PDF 7)" ;
+    gl:pdfPage "7"^^xsd:integer ;
+    gl:quote "the probable truth of the premises is sufficient to establish the probable truth of the conclusion" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-sufficiency ;
+    gl:text "For inductive arguments, the probable truth of the premises is sufficient to establish the probable truth of the conclusion." .
+
+glid:def-hawkins--trustworthiness
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.2, p. 10 (PDF 8)" ;
+    gl:pdfPage "8"^^xsd:integer ;
+    gl:quote "The concept of trustworthiness relates to freedom from flaw" ;
+    gl:source glid:src-hawkins ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-trustworthiness ;
+    gl:text "Freedom from flaw, argued by considering the processes that generated the artefact." .

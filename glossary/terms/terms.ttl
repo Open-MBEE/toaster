@@ -1,0 +1,239 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix glid: <https://w3id.org/toaster/glossary/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+glid:term-abstract
+    a gl:Term ;
+    gl:label "abstract definition" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-allocation
+    a gl:Term ;
+    gl:label "allocation" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-appropriateness
+    a gl:Term ;
+    gl:label "appropriateness" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-architecture
+    a gl:Term ;
+    gl:label "architecture" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-asserted-context
+    a gl:Term ;
+    gl:label "asserted context" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-asserted-inference
+    a gl:Term ;
+    gl:label "asserted inference" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-asserted-solution
+    a gl:Term ;
+    gl:label "asserted solution" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-assumption
+    a gl:Term ;
+    gl:label "assumption" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-assurance-claim-point
+    a gl:Term ;
+    gl:label "assurance claim point (ACP)" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-assurance-deficit
+    a gl:Term ;
+    gl:label "assurance deficit" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-behavior
+    a gl:Term ;
+    gl:label "behavior" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-concept
+    a gl:Term ;
+    gl:label "concept" ;
+    gl:loadBearing "false"^^xsd:boolean .
+
+glid:term-confidence-argument
+    a gl:Term ;
+    gl:label "confidence argument" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-control-law
+    a gl:Term ;
+    gl:label "control law" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-counter-evidence
+    a gl:Term ;
+    gl:label "counter-evidence" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-decomposition
+    a gl:Term ;
+    gl:label "decomposition" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-definition
+    a gl:Term ;
+    gl:label "definition" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-design
+    a gl:Term ;
+    gl:label "design" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-dynamical-system
+    a gl:Term ;
+    gl:label "dynamical system" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-emergence
+    a gl:Term ;
+    gl:label "emergence" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-function
+    a gl:Term ;
+    gl:label "function" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-functional-architecture
+    a gl:Term ;
+    gl:label "functional architecture" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-interface
+    a gl:Term ;
+    gl:label "interface" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-judgment
+    a gl:Term ;
+    gl:label "judgment" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-logical-architecture
+    a gl:Term ;
+    gl:label "logical architecture" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-logical-component
+    a gl:Term ;
+    gl:label "logical component" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-mechanism
+    a gl:Term ;
+    gl:label "mechanism" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-moe
+    a gl:Term ;
+    gl:label "measure of effectiveness (MoE)" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-mop
+    a gl:Term ;
+    gl:label "measure of performance (MoP)" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-part-definition
+    a gl:Term ;
+    gl:label "part definition" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-perform
+    a gl:Term ;
+    gl:label "perform action" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-physical-architecture
+    a gl:Term ;
+    gl:label "physical architecture" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-policy
+    a gl:Term ;
+    gl:label "policy" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-query
+    a gl:Term ;
+    gl:label "query" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-requirement
+    a gl:Term ;
+    gl:label "requirement" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-safety-argument
+    a gl:Term ;
+    gl:label "safety argument" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-selection-among-alternatives
+    a gl:Term ;
+    gl:label "selection among alternatives" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-simulation
+    a gl:Term ;
+    gl:label "simulation" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-specialization
+    a gl:Term ;
+    gl:label "specialization" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-sufficiency
+    a gl:Term ;
+    gl:label "sufficiency" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-tpm
+    a gl:Term ;
+    gl:label "technical performance measure (TPM)" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-traceability
+    a gl:Term ;
+    gl:label "traceability" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-trustworthiness
+    a gl:Term ;
+    gl:label "trustworthiness" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-usage
+    a gl:Term ;
+    gl:label "usage" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-validation
+    a gl:Term ;
+    gl:label "validation" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-verification
+    a gl:Term ;
+    gl:label "verification" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-view
+    a gl:Term ;
+    gl:label "view" ;
+    gl:loadBearing "true"^^xsd:boolean .

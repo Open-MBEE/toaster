@@ -1,0 +1,25 @@
+# All definition edges for one term (?term is bound by the caller).
+# Explicit ORDER BY: same graph, same output, byte for byte. Never remove it.
+
+PREFIX gl: <https://w3id.org/toaster/glossary#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?def ?source ?sourceLabel ?edition ?text ?quote ?gloss ?locator ?status ?confirmedBy
+       ?refines ?differsFrom ?approvedBy
+WHERE {
+  ?def a gl:Definition ;
+       gl:term ?term ;
+       gl:source ?source ;
+       gl:text ?text ;
+       gl:locator ?locator ;
+       gl:status ?status .
+  ?source gl:label ?sourceLabel ;
+          gl:edition ?edition .
+  OPTIONAL { ?def gl:quote ?quote }
+  OPTIONAL { ?def gl:gloss ?gloss }
+  OPTIONAL { ?def gl:confirmedBy ?confirmedBy }
+  OPTIONAL { ?def gl:refines ?refines }
+  OPTIONAL { ?def gl:differsFrom ?differsFrom }
+  OPTIONAL { ?def gl:approvedBy ?approvedBy }
+}
+ORDER BY ?sourceLabel ?locator ?def

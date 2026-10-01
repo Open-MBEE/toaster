@@ -4,7 +4,7 @@ An executable tutorial on recursive system decomposition using SysML v2 and Open
 Starting from one abstract system definition, readers progressively add purpose, requirements,
 measures, functions, structure, and executable behavior for a domestic toaster.
 
-**Published site:** https://open-mbee.github.io/toaster/
+No site is published yet; deployment stays off until the tutorial has complete, end-to-end content ready to publish. See [docs/setup.md](docs/setup.md) to run the tutorial or build the book locally.
 
 Adapted from Brian Douglas's [Systems Engineering Part 3](https://www.mathworks.com/videos/systems-engineering-part-3-the-benefits-of-functional-architectures-1602837771665.html).
 Engineering judgment records follow Hawkins et al. 2011 §§3.1–3.4.

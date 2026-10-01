@@ -14,6 +14,10 @@ Before touching any file:
 - If a WP is mid-loop (developer has delivered; reviewer has not finished): defer until the loop closes.
 - Write the DL log entry **first**, status `PENDING`, with the intended change in one sentence and the current text of the section being changed captured verbatim (revert record).
 
+**Z-directed alignment pass.** When Z has directed an alignment pass, the DL entry that records Z's direction (with the plan it follows) satisfies the escalate-to-Z gates in Step 2 for the edits it names. The pre-edit DL entry is still written first, and the revert record may point to the commit that precedes the first edit (`git show <commit>:<path>`) instead of pasting the text. This is a one-off Z override, not a change to file authority, and it ends with the pass.
+
+**Generated regions are exempt from this gate.** Text between `<!-- gloss:ID -->` and `<!-- /gloss -->` markers is generated from the glossary by `uv run python -m glossary render`. It is changed only by changing the glossary, which is itself logged and confirmed by Z. Never edit it by hand.
+
 ## Step 2 — Blast-radius assessment
 
 | Question | If yes |
@@ -34,6 +38,7 @@ Before touching any file:
 
 - Re-read the modified section and the two adjacent sections.
 - Confirm no adjacent rule is accidentally weakened or contradicted.
+- Confirm no skill you touched contradicts AGENTS.md Part 1 or a confirmed glossary definition (`uv run python -m glossary check`; search the skill for the terms you changed). When a skill and Part 1 disagree, Part 1 governs, and the skill is the thing to fix.
 - Update the DL entry to `COMPLETE` with a one-sentence summary of what changed and why.
 
 ## Revert protocol

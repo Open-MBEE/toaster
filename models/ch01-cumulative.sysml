@@ -1,19 +1,30 @@
+// GENERATED FIXTURE — do not edit directly.
+// Run: python scripts/check_construction.py --check   (to verify)
+// Source: notebook cell-02 TOASTER_INCREMENT in chapter 1's construct-introducing notebooks.
+
 package ToasterDemo {
     private import ScalarValues::*;
+    private import SI::*;
+    private import ISQ::*;
+
+    item def Bread;
+    item def Toast;
+
+    action def ToastBread {
+        doc /* Transform bread into toast acceptable to its user. */
+        in bread : Bread;
+        out toast : Toast;
+    }
 
     abstract part def ToastingSystem {
-        doc /* Transform bread into toast acceptable to its user. */
+        perform action toastBread : ToastBread;
     }
 
-    part def Heater {
-        attribute power : Real default = 800.0;
-    }
+    part def HeatingSystem;
+    part def ControlSystem;
 
-    part def HeatingSystem :> ToastingSystem;
-    part def ControlSystem :> ToastingSystem;
-
-    part def Toaster {
-        attribute cycleTime : Real default = 120.0;
+    part def Toaster :> ToastingSystem {
+        attribute cycleTime : ISQ::DurationValue;
         part heating : HeatingSystem;
         part control : ControlSystem;
     }

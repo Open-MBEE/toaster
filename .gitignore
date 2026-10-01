@@ -35,3 +35,13 @@ htmlcov/
 # Editor
 .vscode/
 .idea/
+
+# glossary: copyrighted source originals (registered by hash in glossary/sources/sources.ttl)
+glossary/sources/local/*
+!glossary/sources/local/.gitkeep
+
+# Chapter notebooks' own scratch companion files (written and unlinked at run time; a repo-
+# relative, portable location, not the system tempdir, so committed notebook output stays
+# reproducible across machines: see chapters/ch08-checking/02-violation-witness.ipynb)
+chapters/*/companion-check-scratch/
+exercises/*/companion-check-scratch/

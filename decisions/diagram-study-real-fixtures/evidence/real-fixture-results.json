@@ -1,0 +1,134 @@
+{
+  "ch05-tree": {
+    "opensysml-puml": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch05-tree-opensysml-puml.svg",
+      "sha256": "2190e889baebcf3960905c6d24bcc75043a6c99164f978b146591958a086c32c"
+    },
+    "opensysml-dot": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch05-tree-opensysml-dot.svg",
+      "sha256": "50ad8537e26903ce6a263b8fe0272f752c098e5bc4b2b1ba170999af3334af01"
+    },
+    "toolkit": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch05-tree-toolkit.svg",
+      "sha256": "3822b97cc4d371c8414f6d0fbc932384b6e0086672038d34514ffeeea98dd275"
+    },
+    "pilot": {
+      "exit_code": 1,
+      "svg_path": null,
+      "sha256": null
+    }
+  },
+  "ch05-interconnection": {
+    "opensysml-puml": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch05-interconnection-opensysml-puml.svg",
+      "sha256": "eac2960d7573676c08260fbc131969cf4500143038c7c68a8b9317a41d764010"
+    },
+    "opensysml-dot": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch05-interconnection-opensysml-dot.svg",
+      "sha256": "e1dc4e188f5160cef8b17d80b151866ec7b4d0bf5443a9439b5a98a1ac2437be"
+    },
+    "toolkit": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch05-interconnection-toolkit.svg",
+      "sha256": "6b335a625fbc667dfc3eb9ca3182f17238ac4074982376d27cab616e4d7bda0d"
+    },
+    "pilot": {
+      "exit_code": 1,
+      "svg_path": null,
+      "sha256": null
+    }
+  },
+  "ch06-tree": {
+    "opensysml-puml": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch06-tree-opensysml-puml.svg",
+      "sha256": "2190e889baebcf3960905c6d24bcc75043a6c99164f978b146591958a086c32c"
+    },
+    "opensysml-dot": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch06-tree-opensysml-dot.svg",
+      "sha256": "50ad8537e26903ce6a263b8fe0272f752c098e5bc4b2b1ba170999af3334af01"
+    },
+    "toolkit": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch06-tree-toolkit.svg",
+      "sha256": "3822b97cc4d371c8414f6d0fbc932384b6e0086672038d34514ffeeea98dd275"
+    },
+    "pilot": {
+      "exit_code": 1,
+      "svg_path": null,
+      "sha256": null
+    }
+  },
+  "ch07-tree": {
+    "opensysml-puml": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch07-tree-opensysml-puml.svg",
+      "sha256": "2190e889baebcf3960905c6d24bcc75043a6c99164f978b146591958a086c32c"
+    },
+    "opensysml-dot": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch07-tree-opensysml-dot.svg",
+      "sha256": "50ad8537e26903ce6a263b8fe0272f752c098e5bc4b2b1ba170999af3334af01"
+    },
+    "toolkit": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch07-tree-toolkit.svg",
+      "sha256": "3822b97cc4d371c8414f6d0fbc932384b6e0086672038d34514ffeeea98dd275"
+    },
+    "pilot": {
+      "exit_code": 1,
+      "svg_path": null,
+      "sha256": null
+    }
+  },
+  "ch07-state": {
+    "opensysml-puml": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch07-state-opensysml-puml.svg",
+      "sha256": "ee06a94f6368ca6ed059aace948ba50c894ad55a465c27fbf96e586119aa16a4"
+    },
+    "opensysml-dot": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch07-state-opensysml-dot.svg",
+      "sha256": "e4e4f64b7be9373961b4e191c6ba3fac65a9c528d9d69d901c91e6f7581201a6"
+    },
+    "toolkit": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch07-state-toolkit.svg",
+      "sha256": "7e460d76e2c31ad005b84431516b7ffe3207986b87836f4bdf8e921b77c2979c"
+    },
+    "pilot": {
+      "exit_code": 1,
+      "svg_path": null,
+      "sha256": null
+    }
+  },
+  "ch08-tree": {
+    "opensysml-puml": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch08-tree-opensysml-puml.svg",
+      "sha256": "2190e889baebcf3960905c6d24bcc75043a6c99164f978b146591958a086c32c"
+    },
+    "opensysml-dot": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch08-tree-opensysml-dot.svg",
+      "sha256": "50ad8537e26903ce6a263b8fe0272f752c098e5bc4b2b1ba170999af3334af01"
+    },
+    "toolkit": {
+      "exit_code": 0,
+      "svg_path": "decisions/diagram-study-real-fixtures/evidence/ch08-tree-toolkit.svg",
+      "sha256": "3822b97cc4d371c8414f6d0fbc932384b6e0086672038d34514ffeeea98dd275"
+    },
+    "pilot": {
+      "exit_code": 1,
+      "svg_path": null,
+      "sha256": null
+    }
+  }
+}

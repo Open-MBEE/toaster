@@ -1,0 +1,38 @@
+@prefix gl: <https://w3id.org/toaster/glossary#> .
+@prefix glid: <https://w3id.org/toaster/glossary/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+glid:def-astrom--control-law
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 2.4 (PDF 60)" ;
+    gl:pdfPage "60"^^xsd:integer ;
+    gl:quote "The control law in Figure 2.7 has error feedback because the control signal u is generated from the error" ;
+    gl:source glid:src-astrom ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-control-law ;
+    gl:text "A rule mapping the control error to the actuation command." .
+
+glid:def-astrom--dynamical-system
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 1.1 (PDF 13)" ;
+    gl:pdfPage "13"^^xsd:integer ;
+    gl:preferred "true"^^xsd:boolean ;
+    gl:quote "A dynamical system is a system whose behavior changes over time, often in response to external stimulation or forcing" ;
+    gl:source glid:src-astrom ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-dynamical-system ;
+    gl:text "A system whose behavior changes over time, often in response to external stimulation." .
+
+glid:def-astrom--dynamical-system-2
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 3.2 (PDF 82)" ;
+    gl:pdfPage "82"^^xsd:integer ;
+    gl:quote "A system can then be represented by the differential equation" ;
+    gl:source glid:src-astrom ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-dynamical-system ;
+    gl:text "A system is represented by state, inputs, outputs and dynamics dx/dt = f(x, u): the state summarizes the past for the purpose of predicting the future." .

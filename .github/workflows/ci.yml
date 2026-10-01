@@ -39,7 +39,7 @@ jobs:
 
       # Step 2: Run pytest (unit + smoke)
       - name: Run tests
-        run: uv run pytest tests/ -v --tb=short
+        run: uv run pytest tests/ glossary/tests/ -v --tb=short
 
       # Steps 3-7 (notebook execution, MyST build, Pages deploy) — WP-8
       # Placeholder: these steps are scaffolded but not active until WP-8

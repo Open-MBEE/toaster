@@ -1,16 +1,16 @@
-# Chapter 2 — Requirements and Assumptions
+# Chapter 2: Requirements and Assumptions
 
 ## Purpose
 
-Chapter 2 asks: what must the toaster do, and what do we assume about the conditions under which it operates? After completing this chapter, the model has a requirement definition, two named design variants, and the first engineering judgment record.
+Chapter 2 asks: what must the toaster do, and what do we assume about the conditions under which it operates? After completing this chapter, the model has a requirement definition, two named usages of `Toaster`, and the first engineering judgment record.
 
 ## Ingredients
 
 | Notebook | Construct / operation | Concept |
 |---|---|---|
-| [01 — requirement def](01-requirement-def.ipynb) | `requirement def` + `subject` + `require constraint` | A formal statement of what the system must satisfy |
-| [02 — attribute override](02-assumptions.ipynb) | `attribute :>>` override | Named variants that redeclare an inherited attribute value |
-| [03 — asserted context](03-judgment-context.ipynb) | `asserted_context` record | An assumption that frames the requirement evaluation |
+| [01: requirement def](01-requirement-def.ipynb) | `requirement def` + `subject` + `require constraint` | A formal statement of what the system must satisfy |
+| [02: attribute override](02-assumptions.ipynb) | `attribute :>>` override | A named usage that redeclares an inherited attribute with a deliberately faulty value |
+| [03: asserted context](03-judgment-context.ipynb) | `asserted_context` record | An assumption underlying a cycle-time estimate, not an evaluation of the requirement |
 
 ## Equipment
 
@@ -18,9 +18,9 @@ See [setup](../../docs/setup.md). Chapter 2 also uses `toaster.evidence.ReviewRe
 
 ## Method
 
-Notebook 01 adds the requirement to the cumulative model from Chapter 1. Notebook 02 adds the `nominal` and `slow` variants by overriding `cycleTime`. Notebook 03 introduces the first judgment record: an `asserted_context` that declares the 120-second cycle assumption before we evaluate whether any variant satisfies the requirement.
+Notebook 01 adds the requirement definition to the cumulative model from Chapter 1, along with `nominal`, a bare usage of `Toaster` with no attribute values set. Notebook 02 adds `slow`, overriding `cycleTime` with a deliberately injected fault value that exceeds the requirement's bound: a fixture for the requirement's failing branch, not a design variant or an operating condition. Notebook 03 introduces the first judgment record: an `asserted_context` that records an assumed estimate of nominal cycle time before any comparison against the requirement is reported.
 
-The judgment record is the first example of Hawkins et al. (2011) §3.2 in the tutorial. It does not assert that the design is correct — it asserts that the assumption is appropriate for the context.
+The judgment record is the first example of Hawkins et al. (2011) §3.2 in the tutorial. It does not assert that the design is correct. It asserts that the assumption is appropriate for the context.
 
 ## Expected result
 
@@ -28,7 +28,8 @@ After notebook 03:
 
 - `TimelyToast` is a `RequirementDefinition` in the model
 - `nominal` and `slow` are `PartUsage` instances of `Toaster`
-- `slow` has `cycleTime = 200.0` via `attribute :>>`
+- `nominal`'s `cycleTime` carries no value (Chapter 1 removed the default)
+- `slow` has `cycleTime = 200.0` via `attribute :>>`, a fixed, deliberately injected fault value
 - `context_record` is a Python `ReviewRecord` with `kind="asserted_context"` and `disposition="pending"`
 
 ## Experiment

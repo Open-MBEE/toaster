@@ -1,0 +1,27 @@
+{
+  "diagram": "ch05-interconnection",
+  "kind": "InterconnectionView",
+  "name": "Ch5 Duration Interface (Real Fixture)",
+  "subject": "toaster",
+  "model_files": ["ch05.sysml"],
+  "direction": "left-right",
+  "default_w": 160,
+  "default_h": 80,
+  "aliases": {
+    "toaster": "ToasterDemo::Toaster",
+    "heating": "ToasterDemo::Toaster::heating",
+    "control": "ToasterDemo::Toaster::control",
+    "conn-control-heating": "ToasterDemo::Toaster::durationInterface"
+  },
+  "nodes": {
+    "heating": {"label": "heating : HeatingSystem", "style": "part.mechanical"},
+    "control": {"label": "control : ControlSystem", "style": "part.control"}
+  },
+  "edges": [
+    {"from": "control", "to": "heating", "label": "duration", "model_ref": "conn-control-heating"}
+  ],
+  "styles": {
+    "part.mechanical": {"fill": "#E8F5E9", "stroke": "#2E7D32", "stroke_width": 2, "corner_radius": 10},
+    "part.control": {"fill": "#E3F2FD", "stroke": "#1565C0", "stroke_width": 2, "corner_radius": 10}
+  }
+}

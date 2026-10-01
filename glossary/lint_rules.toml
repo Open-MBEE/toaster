@@ -1,0 +1,60 @@
+# Lint rules for learner-facing content (see glossary/lint.py).
+# Every rule needs: id, regex (matched case-insensitively), message, why, severity, scope.
+# severity: "error" | "warn".  scope: "learner".
+# Use (?-i:...) inside a regex to require exact case for part of it.
+
+[[rule]]
+id = "tall-named"
+regex = '''\b(?-i:Tall)\b|\bthree[\s-]+worlds\b|\b(?-i:A-F)\b|\b(?-i:O-S)\b'''
+message = "The three-worlds lens is builder-facing; do not name Tall (or its A-F/O-S abbreviations) in learner content."
+why = "AGENTS.md 1.10; DL-050 (found by two independent simulated learners, invisible to this rule until widened)"
+severity = "error"
+scope = "learner"
+
+[[rule]]
+id = "no-em-dash"
+regex = '''—'''
+message = "No em-dashes in learner-facing prose (tutorial-style-guide). Use a period, comma, colon, or parentheses."
+why = "tutorial-style-guide, prose style"
+severity = "error"
+scope = "learner"
+
+[[rule]]
+id = "concept-selection"
+regex = '''\bconcept\s+selection\b'''
+message = "Say \"selection among alternatives\"."
+why = "AGENTS.md 1.5 / glossary term selection among alternatives"
+severity = "error"
+scope = "learner"
+
+[[rule]]
+id = "sub-behavior"
+regex = '''\bsub-behaviou?rs?\b'''
+message = "Do not use \"sub-behavior\"."
+why = "DL-017"
+severity = "error"
+scope = "learner"
+
+[[rule]]
+id = "stale-physical-layer"
+regex = '''\bphysical\s+architecture\s+layers?\b'''
+message = "Layers are what/how/where; the system of interest is the subject."
+why = "AGENTS.md 1.5"
+severity = "error"
+scope = "learner"
+
+[[rule]]
+id = "stale-partition"
+regex = '''\bpartitioned\s+into\s+implementation-agnostic\b'''
+message = "Stale phrasing for the layer partition."
+why = "AGENTS.md 1.5"
+severity = "error"
+scope = "learner"
+
+[[rule]]
+id = "accepted-disposition"
+regex = '''\bdispositions?\b(?:\W+\w+){0,4}?\W+accepted\b|\baccepted\s+dispositions?\b'''
+message = "No judgment record disposition is \"accepted\"."
+why = "SA-7"
+severity = "warn"
+scope = "learner"

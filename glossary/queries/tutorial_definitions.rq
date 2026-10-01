@@ -1,0 +1,38 @@
+# The tutorial-definition view: for each term, the best confirmed edge of EACH KIND of definition.
+#   gl:conceptual  the idea            (SEBoK, Hawkins, Astrom and Murray, Sutton and Barto)
+#   gl:formal      checkable semantics (the OMG specs)
+#   gl:didactic    analogy or story    (Douglas)
+#   gl:bridge      this tutorial's own refinements, which tie the kinds together
+# Kinds complement each other; they do not compete. Within one kind, lowest key wins,
+# key = 2 * source rank - (1 if gl:preferred else 0) (a preferred edge beats siblings of the same source only).
+# ?includeProposed (bound by the caller): false = confirmed edges only; true = preview including proposed.
+# More than one row for a (term, kind) is an ambiguity `check` reports.
+# Explicit ORDER BY: same graph, same output, byte for byte. Never remove it.
+
+PREFIX gl: <https://w3id.org/toaster/glossary#>
+
+SELECT ?term ?kind ?def ?source ?status ?key
+WHERE {
+  ?def a gl:Definition ;
+       gl:term ?term ;
+       gl:source ?source ;
+       gl:status ?status .
+  ?source gl:kind ?kind ;
+          gl:rank ?rank .
+  FILTER(?status = gl:confirmed || ?includeProposed)
+  OPTIONAL { ?def gl:preferred ?pref }
+  BIND(2 * ?rank - IF(COALESCE(?pref, false), 1, 0) AS ?key)
+  FILTER NOT EXISTS {
+    ?other a gl:Definition ;
+           gl:term ?term ;
+           gl:source ?otherSource ;
+           gl:status ?otherStatus .
+    ?otherSource gl:kind ?kind ;
+                 gl:rank ?otherRank .
+    FILTER(?otherStatus = gl:confirmed || ?includeProposed)
+    OPTIONAL { ?other gl:preferred ?otherPref }
+    BIND(2 * ?otherRank - IF(COALESCE(?otherPref, false), 1, 0) AS ?otherKey)
+    FILTER(?otherKey < ?key)
+  }
+}
+ORDER BY ?term ?kind ?key ?def

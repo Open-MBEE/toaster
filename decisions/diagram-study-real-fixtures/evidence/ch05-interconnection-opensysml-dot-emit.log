@@ -1,0 +1,9 @@
+$ /private/tmp/functional-toaster-design/sysml decisions/diagram-study-real-fixtures/fixtures/ch05.sysml -render #interconnection:ToasterDemo::Toaster -render-form dot -o decisions/diagram-study-real-fixtures/evidence/ch05-interconnection-opensysml-dot.dot
+exit_code=0 elapsed_seconds=0.068
+
+--- stdout ---
+
+--- stderr ---
+✓ package ToasterDemo
+wrote decisions/diagram-study-real-fixtures/evidence/ch05-interconnection-opensysml-dot.dot (dot, 1006 bytes)
+

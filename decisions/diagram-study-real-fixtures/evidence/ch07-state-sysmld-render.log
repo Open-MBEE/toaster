@@ -1,0 +1,16 @@
+$ (cwd=decisions/diagram-study-real-fixtures/sysml2d-intent) python3 -c from sysmld.cli import main; raise SystemExit(main()) render ch07-state.sysmld
+exit_code=1 elapsed_seconds=0.05
+
+--- stdout ---
+
+--- stderr ---
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from sysmld.cli import main; raise SystemExit(main())
+                                                  ~~~~^^
+  File "/private/tmp/toaster-diagram-study/sysml2d/src/sysmld/cli.py", line 172, in main
+    target = render_svg(Path(args.path), output_path=output, strict=strict)
+  File "/private/tmp/toaster-diagram-study/sysml2d/src/sysmld/render_svg.py", line 46, in render_svg
+    raise ValueError(f"Cannot render strict-invalid diagram: {messages}")
+ValueError: Cannot render strict-invalid diagram: SYSMLD-REF-002: unresolved model reference: cancelled -> ToasterDemo::Cycle::cancelled; SYSMLD-REF-002: unresolved model reference: cancel -> ToasterDemo::Cancel; SYSMLD-REF-002: unresolved model reference: ready -> ToasterDemo::Cycle::ready; SYSMLD-REF-002: unresolved model reference: cycle -> ToasterDemo::Cycle; SYSMLD-REF-002: unresolved model reference: finish -> ToasterDemo::Finish; SYSMLD-REF-002: unresolved model reference: idle -> ToasterDemo::Cycle::idle; SYSMLD-REF-002: unresolved model reference: start -> ToasterDemo::Start; SYSMLD-REF-002: unresolved model reference: heating -> ToasterDemo::Cycle::heating
+

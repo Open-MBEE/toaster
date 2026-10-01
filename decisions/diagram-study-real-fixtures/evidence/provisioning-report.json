@@ -1,0 +1,17 @@
+{
+  "study_root": "/private/tmp/toaster-diagram-study",
+  "opensysml_cli_path": "/private/tmp/functional-toaster-design/sysml",
+  "reported": {
+    "sysml-toolkit": "af839f0d22723772676e509213c65756d1e08ef2",
+    "sysml2d": "1af88250d355f4e218f6653ef934e93ac8319cd6",
+    "opensysml": "v0.9.0",
+    "pilot": "jupyter-sysml-kernel-0.62.0"
+  },
+  "pinned": {
+    "opensysml": "v0.9.0",
+    "sysml-toolkit": "af839f0d22723772676e509213c65756d1e08ef2",
+    "pilot": "jupyter-sysml-kernel-0.62.0",
+    "sysml2d": "1af88250d355f4e218f6653ef934e93ac8319cd6"
+  },
+  "mismatches": []
+}
