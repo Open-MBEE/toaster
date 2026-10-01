@@ -25,12 +25,17 @@
 // `assert satisfy energyConservationReq by deliveredEnergyBoundedBySupply;`:
 // `docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md` records the
 // full reconciliation of two independently-built designs for this tie -- one
-// (reverted, commit 85b7778) added that line against an incorrectly-typed declared
-// subject, a real SS7.21.1 violation; the other added it against the correct,
-// subject-less default, but direct testing found that construct makes
-// model.verify_satisfaction() error identically regardless of its own binding, not
-// pass, because this requirement's own required constraint never references its
-// subject at all. See that document and this chapter's own AC-C10 judgment record
+// (reverted, commit 85b7778) typed a declared subject (HeatGenerator) but never
+// added an assert satisfy line at all, so its own defect (a declared, unused
+// subject with nothing live bound to it, a real SS7.21.1 concern) was found by
+// direct spec reading, not by any tool diagnostic; the other, in its own first
+// draft, paired a typed subject with a real assert satisfy line, which the pilot
+// did flag directly ("Bound features should have conforming types"), fixed by
+// dropping the subject before this reconciliation began. Keeping the subject-less
+// default and adding the line back as a one-off, direct testing found that
+// construct makes model.verify_satisfaction() error identically regardless of its
+// own binding, not pass, because this requirement's own required constraint never
+// references its subject at all. See that document and this chapter's own AC-C10 judgment record
 // (notebook 01) for the full account. This is the one named model element this
 // chapter adds, and it exists only because this chapter's own traceability analysis
 // found the gap it closes (see notebook 01's own remediation cells, and
