@@ -155,6 +155,10 @@ def test_model_to_dot_excludes_verification_case_subject_on_real_ch03_fixture():
     conn.close()
 
     assert "TimelyToastTest" not in dot
+    # Ch3's cumulative fixture carries forward Ch2's own requirement
+    # (`requirement timely : TimelyToast;`), so this fixture exercises both
+    # subject-bearing elements it contains -- not just the verification case.
+    assert "TimelyToast" not in dot
     # Real, legitimate content this diagram should still show.
     assert '"ToasterDemo::Toaster" [label="Toaster"];' in dot
     assert '"ToasterDemo::HeatingSystem" [label="HeatingSystem"];' in dot

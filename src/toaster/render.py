@@ -49,12 +49,42 @@ def model_to_dot(
     Every other owner kind (a real `PartDefinition` or `PartUsage`) is
     unaffected.
 
+    This 12-member skip-set is not a claim that it is complete against the
+    SysML v2 spec's full Requirement/Case family -- it is not (see below for
+    confirmed gaps). What is confirmed: across this tutorial's own real
+    fixtures (ch01 through ch10), every owner `@type` actually observed is
+    one of `PartDefinition`, `PartUsage`, `Package`, `RequirementDefinition`,
+    and `VerificationCaseDefinition` -- so only two of these 12 entries
+    (`RequirementDefinition`, `VerificationCaseDefinition`) are subject-
+    bearing owner kinds this tutorial's content currently exercises. The
+    other 10 (`RequirementUsage`, the `Concern*`, `Case*`, `UseCase*`, and
+    `AnalysisCase*` pairs) extend the skip-set to sibling kinds that share
+    the same `subject` semantics by spec reasoning alone -- no real fixture
+    in this tutorial exercises any of them today, so they are untested here,
+    not confirmed unnecessary.
+
     Known, narrow limitation: only the direct subject-owned usage itself is
     skipped. A subject usage with its own further-nested parts (e.g.
     `requirement def R { subject t : T { part u : U; } }`) still leaks `u`
     as an orphan node, since nothing transitively owned by the subject usage
     is suppressed. No fixture in this tutorial exercises that case today, so
     it is recorded here rather than fixed.
+
+    Separately, two more toolkit constructs carry their own `subject` and are
+    confirmed NOT covered by `REQUIREMENT_OWNER_TYPES`: a `viewpoint def V {
+    subject t : T; }` (a specialized requirement with its own `subject`)
+    comes back from the toolkit as `@type` `ViewpointDefinition`/
+    `ViewpointUsage`; a `satisfy requirement rq : R { subject t5 : T; }`
+    relationship comes back as `@type` `SatisfyRequirementUsage`. Neither is
+    in the skip-set, so each would still leak its subject as false
+    composition. A third, related toolkit quirk: an `objective` nested inside
+    a verification/analysis case def comes back as a plain `PartUsage` owned
+    by the case (not a distinguishable requirement-family `@type` at all), so
+    its own nested `subject` leaks too -- no type-list fix can catch that one,
+    since nothing in the owner's `@type` distinguishes it from real
+    composition. None of these three appear in any real fixture in this
+    tutorial today, so -- per the same reasoning as the nested-subject-parts
+    limitation above -- they are recorded here as a known gap, not fixed.
     """
     layout = layout or {}
     rankdir = layout.get("rankdir", "TB")
