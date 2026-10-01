@@ -253,39 +253,4 @@ package ToasterDemo {
         implies (heatGenCheck.power * heatGenCheckDuration * heatGenCheck.efficiency)
                 <= heatGenCheck.power * heatGenCheckDuration
     }
-
-    requirement def EnergyConservationReq {
-        doc /*
-         * A heat generator's delivered energy shall never exceed its supplied
-         * energy. Rationale: no mechanism can output more thermal energy than
-         * the electrical energy supplied to it; this is the conservation
-         * relation deliveredEnergyBoundedBySupply already proves, by Z3, for
-         * every value its unbound features admit (Ch8-01, Ch8-02). The
-         * require constraint below ties this requirement directly to that
-         * proved lemma by subsetting it (:>), rather than restating the
-         * lemma's own body a second time.
-         */
-        subject heatGen : HeatGenerator;
-        require constraint energyConserved :> deliveredEnergyBoundedBySupply;
-    }
-
-    requirement energyConservationReq : EnergyConservationReq;
-
-    verification def EnergyConservationTest {
-        doc /*
-         * Verification method: analysis (the Z3-backed model-checked proof
-         * Ch8-02's verify_holds() already runs over
-         * deliveredEnergyBoundedBySupply, which energyConservationReq's own
-         * require constraint subsets).
-         * Method type: analysis (VerificationMethodKind::analysis, SysML v2
-         * formal/2026-03-02 §7.24 Table 22).
-         * Note: formal #verificationMethod metadata not yet supported in
-         * OpenSysML v0.9.0; tracked at toaster#19 / OpenSysML#608.
-         * spec: SysML v2 formal/2026-03-02 §7.24.2 (VerificationCaseDefinition).
-         */
-        subject heatGen : HeatGenerator;
-        objective {
-            verify energyConservationReq;
-        }
-    }
 }
