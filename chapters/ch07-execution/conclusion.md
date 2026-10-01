@@ -1,3 +1,7 @@
+---
+title: Conclusion
+---
+
 # Chapter 7 Conclusion
 
 ## What we built

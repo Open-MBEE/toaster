@@ -1,3 +1,7 @@
+---
+title: Conclusion
+---
+
 # Chapter 1: Conclusion
 
 ## What we built
