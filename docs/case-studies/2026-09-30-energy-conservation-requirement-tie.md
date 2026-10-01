@@ -56,11 +56,20 @@ Independent review of Approach A (a different model than the author, two full cy
 real test-suite weakening but did not catch a deeper defect: `EnergyConservationReq`'s declared
 subject (`heatGen : HeatGenerator`) was never actually used by its own required constraint, which
 is stated purely over unrelated free-standing elements. This is a real violation of §7.21.1's
-subject-conformance rule, confirmed independently once Approach B's own commit history was found
-and read — B's author had hit the same issue as a live tool diagnostic (the OMG pilot's "Bound
-features should have conforming types") and fixed it by dropping the subject declaration
-entirely. Neither review process caught this from reasoning alone; it took a second, independently
-built candidate actually exercising a stricter tool to surface it.
+subject-conformance *spirit*, found by re-reading the spec directly, not by any tool diagnostic —
+**correction (found during review of the reconciliation contract, see below): Approach A never had
+an `assert satisfy` line at all, so the OMG pilot had no live binding to flag on it, and running
+the pilot against Approach A's own committed model directly confirms 0 issues.** The pilot
+diagnostic ("Bound features should have conforming types") belongs to a different draft:
+Approach B's *own first commit* (`26e184e`) paired a typed subject with an `assert satisfy
+energyConservationReq by deliveredEnergyBoundedBySupply;` line, and *that* combination is what the
+pilot actually flagged — confirmed directly against that commit's own model. B's author fixed it
+two commits later (`56100bb`) by dropping the subject declaration. So two different defects, in two
+different places, were each found a different way: Approach A's (a declared-but-unused subject,
+no live binding) by direct spec reading; Approach B's own first draft's (a typed subject *plus* a
+real, type-inconsistent binding) by the pilot's own mechanical check. Neither tool nor either
+review process caught Approach A's own defect; it took re-reading §7.21.1 directly, later, to
+name it.
 
 ## The trade study
 
@@ -113,10 +122,13 @@ never mentions its subject anywhere — the lemma it subsets is a closed proposi
 free-standing elements. Binding anything to the subject changes nothing about whether the
 constraint evaluates true. The construct's grammar is satisfied; its purpose is not exercised.
 
-**Tool support.** Neither OpenSysML nor the OMG pilot flags this. The pilot caught Approach A's
-subject-*type* mismatch (a real, mechanically detectable defect), but there is no tool check for
-"this satisfy usage's binding is causally irrelevant to the requirement's own truth value" — that
-is a semantic property no diagnostic in this toolchain computes. This matters for the
+**Tool support.** Neither OpenSysML nor the OMG pilot flags *this specific line* (Check A as finally
+written, subject-less). The pilot does catch a live binding type-mismatch — confirmed directly
+against Approach B's own first draft, which paired a typed subject with this same `assert satisfy`
+line and drew "Bound features should have conforming types" — but there is no tool check for "this
+satisfy usage's binding is causally irrelevant to the requirement's own truth value" even when the
+types happen to line up, which is the finally-written version's own problem. That is a semantic
+property no diagnostic in this toolchain computes. This matters for the
 methodology, not just the conclusion: a construct passing every available tool check is evidence
 it is *legal*, not evidence it is *doing what it looks like it is doing*. The absence of a tool
 complaint was never going to settle this question.
@@ -260,13 +272,22 @@ verification case both need to come out.
    without diagnostics is never sufficient evidence it is being used for what it is for.
 2. **Passing a tool check and fulfilling a construct's own purpose are different claims.**
    Approach A's reviewer (a different model, two full independent cycles) reasoned about the
-   subject-type oddness as an open question without identifying it as a defect; the OMG pilot
-   caught the type mismatch but has no way to catch semantic vacuity. Every available tool check
-   passing is necessary, never sufficient.
-3. **Two independent attempts at the same problem surfaced something neither one's own review
-   process found alone.** This was not planned redundancy — it was discovered by accident, after
-   the fact — but it did real work: Approach B's author hit the subject-type defect as a live
-   diagnostic that Approach A's own reviewer only reasoned about abstractly.
+   subject-type oddness as an open question without identifying it as a defect, and no tool flagged
+   it either, because Approach A never attempted a live binding for any tool to check — its problem
+   was a declared-but-unused subject, invisible to a diagnostic that only fires on an actual
+   type-mismatched binding. The OMG pilot *does* catch a live type mismatch, as it did on Approach
+   B's own first draft, but a clean pilot run is not evidence a construct is doing its job, only
+   that nothing it actually tried to bind was mistyped. Every available tool check passing is
+   necessary, never sufficient.
+3. **Two independent attempts at the same problem each surfaced a different real defect, neither
+   caught by its own review.** Not planned redundancy — discovered by accident, after the fact —
+   but real work: Approach B's own first draft hit a live, pilot-diagnosable type mismatch (fixed
+   two commits later, before this reconciliation ever began); Approach A's own, different defect (a
+   subject that was never wired to anything, so no tool had anything to check) was found only by
+   directly re-reading §7.21.1, after merge, not by any diagnostic. Getting the attribution between
+   these two right took a third pass — this document itself first conflated them, and an
+   independent review of the reconciliation work that implements this decision caught the
+   conflation and this correction is its result.
 4. **Writing the rationale out, at each step, in the open, is what made this resolvable at all.**
    Not the chosen two lines of SysML — the explicit record of *why*, at every branch point (the
    trade study, the hybrid probe, the six-angle interrogation above), is what let a plausible,
