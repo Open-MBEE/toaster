@@ -293,18 +293,14 @@ package ToasterDemo {
         doc /* A heat generator shall never deliver more energy than it is supplied:
              * energy conservation, a physical law any real heat generator design
              * must obey, independent of any one proof of it. No subject type is
-             * declared here: the satisfying feature this requirement would be
-             * checked against (deliveredEnergyBoundedBySupply, a constraint, not a
-             * HeatGenerator usage) must conform to whatever this requirement's own
-             * subject is typed as (SysML v2 formal/2026-03-02 SS7.21.1), so the
-             * subject is left to inherit RequirementCheck's own default,
-             * `subject subj : Anything[1]` (Systems Library/Requirements.sysml).
-             * Deliberately no `assert satisfy` line: this requirement's own
-             * required constraint never references its subject anywhere -- it is a
-             * closed, already-proved proposition over its own free-standing
-             * elements, so the subject carries no distinguishing value and binding
-             * anything to it changes nothing about whether the constraint evaluates
-             * true. Confirmed directly, not merely argued: attempting
+             * declared here: this requirement's own required constraint never
+             * references any subject at all -- it is a closed, already-proved
+             * proposition over its own free-standing elements -- so declaring
+             * one would commit to an arbitrary, unused type, not state anything
+             * real; the subject is left to inherit RequirementCheck's own
+             * default, `subject subj : Anything[1]` (Systems
+             * Library/Requirements.sysml). Deliberately no `assert satisfy`
+             * line either. Confirmed directly, not merely argued: attempting
              * `assert satisfy energyConservationReq by
              * deliveredEnergyBoundedBySupply;` makes model.verify_satisfaction()
              * error identically no matter what is bound as the satisfying feature

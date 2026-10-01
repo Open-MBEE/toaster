@@ -253,18 +253,32 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     # check_predecessor_containment(9, ...) is a documented no-op
     # (tests/test_predecessor_containment.py::test_ch08_to_ch09_predecessor_containment_is_a_noop_by_design).
     9: [],
-    # PASS4-010 (Chapter 10, Traceability and Sign-off): also no construct-
-    # introducing notebook. A traceability graph, a judgment ledger and a
-    # sign-off synthesis over the model exactly as Chapter 8 left it add no
-    # new named model element, the same design choice Chapter 9 made. Unlike
-    # Chapter 9, this chapter DOES commit its own models/ch10-cumulative.sysml
-    # (byte-identical in body to ch08's, see that file's own header comment),
-    # specifically so check_predecessor_containment's own nearest-earlier-
-    # fixture fallback (below) has a real ch10 file to compare ch08's named
-    # elements against, resolving decisions/next-passes.md item 21: without
-    # this fixture, or without the fallback, ch08->ch10 containment would
-    # never actually be checked at all, silently, the same gap item 21 named.
-    10: [],
+    # PASS4-010 (Chapter 10, Traceability and Sign-off): a traceability graph,
+    # a judgment ledger and a sign-off synthesis over the model exactly as
+    # Chapter 8 left it, the same design choice Chapter 9 made -- except for
+    # one real exception, notebook 01's own EnergyConservationReq/
+    # energyConservationReq, added because that same notebook's own
+    # traceability search finds deliveredEnergyBoundedBySupply (Chapter 8's
+    # Z3-proved conservation lemma) tied to no requirement at all and closes
+    # that gap directly (ENERGY-TIE-RECONCILE; see
+    # docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md).
+    # Unlike Chapter 9, this chapter DOES commit its own
+    # models/ch10-cumulative.sysml, specifically so check_predecessor_
+    # containment's own nearest-earlier-fixture fallback (below) has a real
+    # ch10 file to compare ch08's named elements against, resolving
+    # decisions/next-passes.md item 21.
+    10: [
+        {
+            "path": "chapters/ch10-traceability-signoff/01-traceability-graph.ipynb",
+            # EnergyConservationReq's own require constraint subsets
+            # deliveredEnergyBoundedBySupply (Chapter 8); stubbed here with a
+            # bare constraint of that name, since the fragment itself only
+            # needs something to subset, not the lemma's own real body.
+            "context_stubs": [
+                "constraint deliveredEnergyBoundedBySupply;",
+            ],
+        },
+    ],
 }
 
 CUMULATIVE_FILES = {
