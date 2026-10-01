@@ -310,6 +310,122 @@ def render_interconnection(intent: dict | str | Path, out: str | Path) -> None:
     render_dot("\n".join(lines), out)
 
 
+class ToolkitRenderError(Exception):
+    """Raised when `render_toolkit_interconnection()` could not render: a given `binary`,
+    `lib`, `plantuml_jar` or `java` path does not exist, or either subprocess (sysml-toolkit's
+    `viz` CLI, or PlantUML) exited non-zero. Always names the offending path or command and
+    includes the subprocess's own stderr, rather than letting a bare `FileNotFoundError` or a
+    raw `subprocess.CalledProcessError` traceback surface to the caller."""
+
+
+def render_toolkit_interconnection(
+    src: str | Path,
+    element: str,
+    out: str | Path,
+    *,
+    lib: str | Path,
+    binary: str | Path,
+    plantuml_jar: str | Path,
+    java: str | Path,
+) -> None:
+    """Render an interconnection view via sysml-toolkit's real `viz` CLI (not the in-house
+    `render_interconnection()`), drawing real port names as their own boxes rather than
+    folding port identity into a single edge label.
+
+    Use this specifically when port identity itself is the chapter's own pedagogical point
+    (e.g. a chapter introducing or exercising a conjugated port) -- the criterion stated in
+    `.claude/skills/sysml-diagrams/SKILL.md`'s renderer-choice table and
+    `.claude/skills/sysml-diagrams/references/recipes.md`'s interconnection recipe, confirmed
+    on every real fixture tested (`decisions/diagram-study-real-fixtures.md`): sysml-toolkit
+    draws port names like `durationIn`/`durationOut` as their own boxes inside the owning
+    part, where the in-house `render_interconnection()` only draws one edge label
+    (`durationInterface`) with no port identity at all. `render_interconnection()` stays the
+    default everywhere else -- a chapter using interconnection only to show a connection or an
+    allocation, where port identity is not itself the point, does not need this function's
+    extra external-binary dependency.
+
+    `src`: a SysML source file to load. `element`: the qualified name of the part whose
+    interconnection view to draw (passed to `viz`'s own `--element`). `out`: the final SVG
+    path.
+
+    `lib`, `binary`, `plantuml_jar`, `java`: explicit paths to the sysml.library directory,
+    the `sysmlv2` executable, the PlantUML jar, and a working `java` executable. All four are
+    required keyword arguments -- none is ever resolved from an environment variable or
+    searched on PATH (unlike `modelcheck.py`'s optional `lib`/`binary`, every path here must
+    be passed explicitly). Each is checked to exist before either subprocess runs; a missing
+    one raises `ToolkitRenderError` naming which argument and path, not a bare
+    `FileNotFoundError`.
+
+    Shells out to `sysmlv2 viz <src> --lib <lib> --view interconnection --element <element>
+    -o <puml>`, then to `java -Djava.awt.headless=true -jar <plantuml_jar> -tsvg <puml>`,
+    which PlantUML writes next to `<puml>` as `<puml's stem>.svg`; that file is then moved to
+    `out`. The intermediate `.puml` is left on disk at `out` with its suffix replaced by
+    `.puml` (not a randomized temp name) so a caller -- or a test checking for real port-name
+    tokens, not just an exit code -- can read it after this function returns, matching
+    `render_dot()`/`render_interconnection()`'s own "write real files, return None" style.
+    """
+    for argname, path in (
+        ("lib", lib),
+        ("binary", binary),
+        ("plantuml_jar", plantuml_jar),
+        ("java", java),
+    ):
+        if not Path(path).exists():
+            raise ToolkitRenderError(
+                f"{argname}={path!r} does not exist -- render_toolkit_interconnection() "
+                f"requires each of lib/binary/plantuml_jar/java as an explicit, existing "
+                f"path; none is resolved from an environment variable or PATH"
+            )
+
+    out_path = Path(out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    puml_path = out_path.with_suffix(".puml")
+
+    viz_command = [
+        str(binary),
+        "viz",
+        str(src),
+        "--lib",
+        str(lib),
+        "--view",
+        "interconnection",
+        "--element",
+        element,
+        "-o",
+        str(puml_path),
+    ]
+    r = subprocess.run(viz_command, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise ToolkitRenderError(
+            f"`{' '.join(viz_command)}` exited {r.returncode}: "
+            f"{r.stderr.strip() or '(no stderr)'}"
+        )
+
+    plantuml_svg_path = puml_path.with_suffix(".svg")
+    plantuml_command = [
+        str(java),
+        "-Djava.awt.headless=true",
+        "-jar",
+        str(plantuml_jar),
+        "-tsvg",
+        str(puml_path),
+    ]
+    r = subprocess.run(plantuml_command, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise ToolkitRenderError(
+            f"`{' '.join(plantuml_command)}` exited {r.returncode}: "
+            f"{r.stderr.strip() or '(no stderr)'}"
+        )
+    if not plantuml_svg_path.exists():
+        raise ToolkitRenderError(
+            f"`{' '.join(plantuml_command)}` exited 0 but did not produce the expected "
+            f"SVG at {plantuml_svg_path}"
+        )
+
+    if plantuml_svg_path != out_path:
+        plantuml_svg_path.replace(out_path)
+
+
 def render_action_flow(model: Any, name: str, out: str | Path) -> None:
     """Render an action flow diagram for a named action def to SVG via PlantUML.
 
