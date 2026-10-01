@@ -27,17 +27,41 @@ One agent per persona. No two agents with identical persona in one checkpoint ru
 
 ## Execution checklist (`simulated-learner` must run these in order)
 
+Identify each step below by what the cell *does*, not by a fixed position: a construction-zone
+notebook may have several fragment cells before assembly, a judgment-record notebook can run
+17-27 real cells, and some chapters carry the seam across several cells' prose rather than one
+dedicated cell (Chapter 10's own distributed-seam design is a real, valid instance of this, not a
+gap) — the same "by content type, not cell index" rule `toaster-recipe` already states for its own
+review. If you cannot find a cell matching a step below, say so explicitly rather than guessing
+which numbered cell it must be.
+
 For each sub-notebook in the assigned chapter(s):
 
 1. **Read index.md** — does it orient you? Note any undefined terms or missing prerequisites.
-2. **Cell 0** — read the concept statement. Is it exactly one sentence? Does it state what you will learn?
-3. **Cell 1** — read the context paragraph. Does it locate this notebook in the arc? Is there a link to the prior notebook where needed?
-4. **Cell 2 (execute)** — run the model-loading code. Record: `model.ok`, any diagnostic output.
-5. **Cell 3 (execute)** — run the negative control. Record: `bad.ok` (must be False), printed diagnostic message.
-6. **Cell 4 (execute)** — run the demonstration. Record: output produced; note if it matches what cell 0 promised.
-7. **Cell 5** — read the Tall seam. AGENTS.md 1.10 binds that learner content **never names** Tall or "the three worlds" (the `tall-named` lint rule, `glossary/lint_rules.toml`, DL-028, already enforces the never-name half in CI). Your job is the half a lint rule cannot judge: does the cell **address the seam in behavior** — is it clear, without naming the lens, that the SysML text, the tool that loads and runs it, and the rendered/printed result are three distinct things the reader has just seen connect? Record which of the three you could each point to concretely from what the cell actually showed, and whether a reader who had not been told there were "three worlds" would still notice the seam.
-8. **Cell 6** — read the exercise pointer. Is it one sentence? Does it describe what the exercise asks?
-9. **Read conclusion.md** — three paragraphs (what was built / what this establishes / what comes next) plus exercise reference?
+2. **The concept-statement cell** — read it. Is it exactly one sentence? (A single sentence may
+   contain a semicolon joining two independent clauses and still be one sentence — count terminal
+   periods, not semicolons or conjunctions, before judging this a failure.) Does it state what you
+   will learn?
+3. **The context cell** — read it. Does it locate this notebook in the arc? Is there a link to the
+   prior notebook where needed?
+4. **The model-increment cell(s) (execute)** — run the model-loading code. Record: `model.ok`, any
+   diagnostic output.
+5. **The negative-control cell (execute)** — run it. Record: `bad.ok` (must be False), printed
+   diagnostic message.
+6. **The demonstration cell(s) (execute)** — run them. Record: output produced; note if it matches
+   what the concept-statement cell promised.
+7. **The seam cell(s)** — read them. AGENTS.md 1.10 binds that learner content **never names** Tall
+   or "the three worlds" (the `tall-named` lint rule, `glossary/lint_rules.toml`, DL-028, already
+   enforces the never-name half in CI). Your job is the half a lint rule cannot judge: does the
+   content **address the seam in behavior** — is it clear, without naming the lens, that the SysML
+   text, the tool that loads and runs it, and the rendered/printed result are three distinct things
+   the reader has just seen connect? Record which of the three you could each point to concretely
+   from what the notebook actually showed, and whether a reader who had not been told there were
+   "three worlds" would still notice the seam.
+8. **The exercise-pointer cell** — read it. Is it one sentence? Does it describe what the exercise
+   asks?
+9. **Read conclusion.md** — three paragraphs (what was built / what this establishes / what comes
+   next) plus exercise reference?
 
 Execution command:
 
@@ -54,9 +78,9 @@ EOF
 LEARNER [ID] — [Persona] — Ch[N]
 
 EXECUTION RESULTS:
-- nb[N] cell2: ok=[True/False] | [diagnostic if any]
-- nb[N] cell3: neg_ok=[True/False] | diagnostic: [message]
-- nb[N] cell4: output=[one-line summary]
+- nb[N] model-increment: ok=[True/False] | [diagnostic if any]
+- nb[N] negative-control: neg_ok=[True/False] | diagnostic: [message]
+- nb[N] demonstration: output=[one-line summary]
 [repeat for each notebook]
 
 NARRATIVE OBSERVATIONS (top 3, each quoting exact text):
@@ -65,9 +89,9 @@ NARRATIVE OBSERVATIONS (top 3, each quoting exact text):
 3. "[exact quote]" — [learner reaction in one sentence]
 
 STRUCTURAL CHECKS:
-- Cell 0 one sentence: [yes/no]
-- Cell 5 addresses the seam without naming it: [yes/no] — [which of the three you could point to; if no, what's missing]
-- Cell 6 one sentence: [yes/no]
+- Concept-statement cell is one sentence: [yes/no]
+- Seam addressed in behavior without naming it: [yes/no] — [which of the three you could point to; if no, what's missing]
+- Exercise-pointer cell is one sentence: [yes/no]
 - conclusion.md three paragraphs + exercise reference: [yes/no]
 
 OVERALL: [PASS/NEEDS-FIX] — one sentence.
