@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "identifier": "AC-C06",
+  "kind": "asserted_context",
+  "claim": "heatGenerationReq (HeatGenerationReq) is framed as a measure of performance: an engineering rating on a chosen component, not a direct measure of the user's acceptance of the toast.",
+  "subject_ref": "ToasterDemo::heatGenerationReq",
+  "model_ref": "ToasterDemo::heatGenerationReq",
+  "content_hash": "4742e6898be0ec8dbbcaa3f84004f1cbc7e537b0831dd75cd598c63ac94767b9",
+  "scope": "ToasterDemo",
+  "criteria": "MoE if the split names who cares and frames the measure as acceptance; MoP if its threshold is derived from a stated MoE with a means of checking (architecture-layers skill).",
+  "premises": [],
+  "assumption_refs": [
+    "The MoE/MoP split for a component rating is a case-specific modeling judgment, not a fixed rule (AC-C03 makes the same split for toast timing)."
+  ],
+  "evidence_refs": [
+    "ToasterDemo::HeatGenerationReq doc: the rationale states a component rating threshold, naming no stakeholder acceptance criterion."
+  ],
+  "rationale": "HeatGenerationReq's rationale argues from a component's own rating, not from what a user notices about the toast: it names no one who would reject a toaster on this figure alone, and a heat generator rated below 600 W could still make acceptable toast more slowly. Framing it as a MoP is honest about who cares (the engineer sizing a component) and what the threshold characterizes (a rating), not the user's acceptance.",
+  "counterevidence": "A user might notice a heat generator so weak that toasting takes too long, which links this rating back to timely (Chapter 3) indirectly. The link is not modeled: no relation connects power, resistance and cycle time yet, so treating power as purely engineering-internal is a simplification.",
+  "residual_uncertainties": "The 600 W threshold is not derived from timely or from any stated measure of effectiveness through the energy relation: no supply and no coil exist together in this model to derive it from. It is recorded as a free-standing engineering figure, honestly, not a fixed rule for every future chapter.",
+  "disposition": "pending",
+  "dependency_freshness": "current",
+  "engineering_conclusion": "undetermined",
+  "record_kind": "worked_example"
+}
