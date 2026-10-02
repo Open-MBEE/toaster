@@ -14,9 +14,9 @@ After completing this chapter, the model has grown by one new construct, `delive
 
 | Notebook | Concept |
 |---|---|
-| [01 - assert constraint](01-invariant-def.ipynb) | State `deliveredEnergyBoundedBySupply` as a real SysML constraint; confirm it is really in the loaded model. |
-| [02 - proof versus point evaluation](02-violation-witness.ipynb) | Contrast `verify_holds()`'s universal proof with `verify_satisfaction()`'s point evaluation; show the loop catching a fully broken variant as `violated` and a merely weakened variant as `undecided`; record the proof as engineering evidence with its own real limits stated. |
-| [03 - stale record detection](03-revision-flow.ipynb) | Loosen the lemma's own bound; show `check_stale()` marking the existing record for re-review. |
+| [01: assert constraint](01-assert-constraint-def.ipynb) | State `deliveredEnergyBoundedBySupply` as a real SysML constraint; confirm it is really in the loaded model. |
+| [02: proof versus point evaluation](02-violation-witness.ipynb) | Contrast `verify_holds()`'s universal proof with `verify_satisfaction()`'s point evaluation; show the loop catching a fully broken variant as `violated` and a merely weakened variant as `undecided`; record the proof as engineering evidence with its own real limits stated. |
+| [03: stale record detection](03-revision-flow.ipynb) | Loosen the lemma's own bound; show `check_stale()` marking the existing record for re-review. |
 
 ## Equipment
 

@@ -14,7 +14,7 @@ After completing this chapter, the cumulative model has a named, usage-level `al
 
 | Notebook | Concept |
 |---|---|
-| [01: Model Navigation](01-model-navigation.ipynb) | Navigate model elements by qualified name using `model.find()` and `model.get(fqn)`. |
+| [01: model navigation](01-model-navigation.ipynb) | Navigate model elements by qualified name using `model.find()` and `model.get(fqn)`. |
 | [02: Allocate](02-allocate.ipynb) | Make `HeatingSystem` an abstract logical component that performs `ApplyHeat`, and assign it a named, usage-level allocation. |
 | [03: Interfaces](03-interfaces.ipynb) | Declare a port-typed interface between `ControlSystem` and `HeatingSystem` and render the interconnection diagram. |
 
