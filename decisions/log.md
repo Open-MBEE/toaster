@@ -1258,3 +1258,92 @@ Revert record (verbatim, the exact text immediately surrounding the insertion po
 ```
 Reasoning: this is the direct follow-up DL-090 itself named as a required next step -- the H1+short_title convention is real (independently verified across four review rounds) and completely undocumented in the one skill a builder or reviewer would actually consult before touching a notebook's own cell 0; leaving it undocumented reintroduces DL-090's own bug the next time anyone writes `##` instead of `#` without knowing why it matters.
 Post-edit check: added one short paragraph after the skeleton table (`.claude/skills/toaster-recipe/SKILL.md`, the exact text quoted above in the revert record) stating the H1 + `short_title` requirement, citing DL-090; added one clause to the A6 checklist's existing "Concept statement present" bullet so a reviewer actually checks for it. Re-read the modified section and both adjacent sections (the skeleton table above, the Construction-zone pattern below): neither is weakened or contradicted -- the construction-zone code examples show only fragment-variable strings, never a notebook cell-0 heading, so there is no overlap to conflict with. `uv run python -m glossary check`: 0 errors (7 pre-existing source-absent warnings, unrelated). Full suite (`uv run pytest tests/ glossary/tests/ -q`): 444 passed, 7 deselected. `uv run python scripts/check_construction.py --check`: clean. One logical change this session, as required.
+
+## DL-092 | 2026-10-02 | DIAGRAM-TEXT-INTEGRATION-PHASE-B | PENDING -- construction-zone reflection print changes from "print" to "assign, do not print" across two skills, so Phase B's proposed fixes stop contradicting the live skill text
+
+Path: ACE triage (ruled, applying Z's prior Decisions 1-2; not an escalation on the substance), routed here by the orchestrator per `decisions/diagram-text-integration-survey.md`'s cross-chapter open question 1. Still gated by `skill-editor`'s own Step 2: this change touches more than one archetype's primary skill (`tutorial-style-guide` loads for A3/A4/A6/A7; `toaster-recipe` loads for A4/A6), which is an automatic escalate-to-Z row on that skill's own blast-radius table -- not optional, and not satisfied by the ACE's ruling on the substance. Z's one-line confirmation of the exact replacement wording below is the actual gate; no edit has been made.
+
+Intended change, in one sentence: `TOASTER_INCREMENT` is assigned but never printed in any construction-zone notebook; the seam's result step is filled by the chapter's diagram where one exists, otherwise a short `model.find()`/`model.query()`/`model.eval()` or `src/toaster/query.py`-helper confirmation against the construct just declared, added where none exists.
+
+Decision (ACE's ruling, pending Z's wording confirmation): all 9 chapter-survey agents, independently, proposed removing the `print(TOASTER_INCREMENT)` line in roughly 20 construction notebooks across Ch1-Ch8 and Ch10. Every one of those proposals currently contradicts live skill text in two places. The ACE ruled to apply Z's own already-approved mechanism (spec Decision 1: scope includes the construction-zone double print in every construction notebook, with or without a diagram; Decision 2, Approach A: the diagram takes over the reflection step's job) rather than the orchestrator's own more conservative draft default (print only when neither a diagram nor a confirmation exists) -- Pattern 1b's own spec text already makes that fallback case empty by requiring a confirmation to be added where none exists, so keeping a conditional print would leave a loophole Z's own Decision 1 already closed, and would keep the stale sentence alive in the skill regardless.
+
+Revert record (verbatim, captured before any edit):
+
+`.claude/skills/tutorial-style-guide/SKILL.md` lines 93-101:
+```
+- `TOASTER_INCREMENT` is assembled from the fragment variables in the final cell of the
+  construction zone; it equals the **new declarations for this notebook only** (not the full
+  cumulative model). Print it as the reflection.
+- The cumulative load (`conn.load_from_content(ch0X-cumulative.sysml)`) happens in the same
+  final cell, after printing `TOASTER_INCREMENT`.
+- `conn.close()` belongs at the end of the last code cell in the notebook (cell-04 or later),
+  never in the construction zone.
+- Judgment, depth, navigation, analysis, and param-sweep notebooks have no construction zone
+  and do not assign `TOASTER_INCREMENT`.
+```
+
+`.claude/skills/toaster-recipe/SKILL.md` line 18 (skeleton table, Model increment row): "...Assign to `TOASTER_INCREMENT`; print immediately as reflection. Only in construct-introducing notebooks..."
+
+`.claude/skills/toaster-recipe/SKILL.md` lines 40-44 (construction-zone diagram): "`[code]     TOASTER_INCREMENT assembled + printed    ← reflection`"
+
+`.claude/skills/toaster-recipe/SKILL.md` lines 90-92 (multi-element example): "`# Cell: assembly + reflection + cumulative load`" / "`TOASTER_INCREMENT = f"{HEATER_DEF}\n{POWER_ATTR}\n    ...\n}}"`" / "`print(TOASTER_INCREMENT)`"
+
+`.claude/skills/toaster-recipe/SKILL.md` line 101 (Notes): "It is assembled from the named fragment variables and printed as the reflection."
+
+`.claude/skills/toaster-recipe/SKILL.md` line 189 (A6 checklist, Model increment cell bullet): "...(1) `TOASTER_INCREMENT` assigned and printed as reflection (Pattern A: `str(editor.apply())`; Pattern B: SysML fragment string)..."
+
+`.claude/skills/toaster-recipe/SKILL.md` lines 204-210 (Tall's three worlds, construction cell update): "**E:** `TOASTER_INCREMENT` printed as the reflection — the engineer sees the validated canonical SysML"
+
+Proposed replacement wording (one logical change; the same governing sentence in both skills, each skill's own surrounding examples/table cells edited to match):
+
+> `TOASTER_INCREMENT` is assembled from the fragment variables in the final construction cell and equals the new declarations for this notebook only. It is assigned, not printed: each fragment was already printed when declared, and `scripts/check_construction.py` reads the assignment, never the print. The reflection -- the result the seam cell points at -- is the chapter's diagram where one exists; otherwise a short confirmation query against the construct just declared (`model.find()`/`model.query()`/`model.eval()`, or the `src/toaster/query.py` helper for constructs those surfaces do not see: `get_review_record_refs` for metadata usages, `satisfy_relationships` for `assert satisfy`, `find_allocations`/`perform_relationships` for allocations and performs), added if none exists.
+
+Principles applied: ace-protocol's "a prior decision by Z on the same question is applied as a decision, not re-escalated"; the P4 test (removing the reprint makes nothing harder for the learner, since each fragment is already printed once); P3/P5 (a printed string before loading is not a validated result; a diagram or query result the reader watched the loaded model produce is); `check_construction.py` reads only the assignment, so nothing downstream depends on the print.
+
+Reasoning: see the ACE's full report of 2026-10-02 (delivered via `SubagentHandback`, not yet a committed file) for the complete principle-by-principle argument, including why the confirmation class must include the `query.py` helpers (three of the survey's own Pattern-1b instances -- Ch3-01 metadata, Ch3-02 `assert satisfy`, Ch5-02 allocation -- are invisible to `model.find`/`model.query` per AGENTS.md 1.9) and why this does not reopen any Z decision (the original "print as reflection" convention was the ACE's own implementing choice in DL-011/DL-012, not Z's verbatim words there).
+
+Determined: yes, on the substance (not an extension of Z's own Decisions 1-2 as recorded in the spec). Still pending Z's one-line wording confirmation per `skill-editor`'s own multi-archetype escalation row -- that gate, not the substance, is what keeps this PENDING rather than COMPLETE.
+
+Extension: no.
+
+Provenance: `docs/superpowers/specs/2026-10-02-diagram-text-integration-design.md` Decisions 1-2 and "The two target patterns"; `decisions/diagram-text-integration-survey.md` (all 9 chapter tables; cross-chapter open questions 1 and 7); `.claude/skills/tutorial-style-guide/SKILL.md` 93-101; `.claude/skills/toaster-recipe/SKILL.md` 18, 40-44, 90-92, 101, 189, 204-210; `scripts/check_construction.py` 11-13, 378-421; AGENTS.md 1.7, 1.9; DL-011, DL-012 (origin of the "print as reflection" convention); DL-084 (P5 applied the same way to a seam's result step); ACE report, agentId `abdd0254803c46fa7`, delivered 2026-10-02.
+
+## DL-093 | 2026-10-02 | DIAGRAM-TEXT-INTEGRATION-PHASE-B | PENDING -- judgment-record tag reprint ruled the same defect as DL-092, not a sanctioned exception; the "judgment notebooks never assign TOASTER_INCREMENT" lines in two skills are stale since DL-084 and are corrected in the same pass
+
+Path: ACE triage (ruled; flagged "Extension: yes" per the ACE's own report, since this applies Z's Decision 1 to a case -- the judgment-record tag increments registered under DL-084 -- that Decision 1's own scope statement did not name at the time it was written). Same `skill-editor` gate as DL-092 applies (multiple archetypes' primary skills): Z's one-line confirmation of the replacement wording below is required before any edit; none has been made.
+
+Intended change, in one sentence: in every judgment-record notebook that introduces a new `ReviewRecordRef` tag, `TOASTER_INCREMENT` is assigned but never printed for that tag fragment, matching DL-092's ruling, and the two skills' own "judgment notebooks never assign `TOASTER_INCREMENT`" lines are corrected to reflect DL-084's already-approved tag-increment design.
+
+Decision (ACE's ruling, pending Z's wording confirmation): `toaster-recipe/SKILL.md` and `tutorial-style-guide/SKILL.md` both still say judgment notebooks have no construction zone and never assign `TOASTER_INCREMENT` -- text that predates DL-084, which gave judgment notebooks introducing a new tag a real model-side increment, registered them in `check_construction.py`'s own registry, and already has `toaster-recipe` lines 167-175 (the judgment-record construction-zone example) describing the tag fragment as built "the same way any other chapter's model increment is." The ACE ruled this is staleness, not a live two-skill conflict, and that the tag reprint itself is the same reflection-print-duplicates-already-shown-text defect DL-092 targets, not an exception from it: `toaster-review-protocol/SKILL.md` lines 150-152 justify the tag `TOASTER_INCREMENT` by parity with other increments, which is a reason for the fragment to exist, not a reason to print it twice. Affected notebooks, found independently by multiple survey agents: `ch02/03-judgment-context.ipynb` (cells 8-12), `ch03/01-moe-definition.ipynb` and `03-threshold-judgment.ipynb` (own tag cells), `ch04/03-completeness-check.ipynb` (cells 9-11), `ch06/03-stopping-judgment.ipynb` (cell-11), `ch08/02-violation-witness.ipynb` (cell-20), and `ch10/01-traceability-graph.ipynb` (cell 33, same defect by content type though it doesn't match either named pattern's literal shape).
+
+Two corrections to the survey document this ruling makes, recorded here since Phase B wording depends on them: (1) the hard "print as reflection" rule quoted in open question 1 is `tutorial-style-guide/SKILL.md` lines 93-97, not `toaster-recipe` -- `toaster-recipe` carries the same rule in the four locations listed under DL-092's revert record, not as its own separate rule; (2) the survey's claim that Ch6-03's narration "already calls this duplication deliberate" misreads the notebook -- `chapters/ch06-recursive-decomp/03-stopping-judgment.ipynb` cell-11's "deliberately" describes `weak`, the deliberately-failing candidate, not the reprint. No notebook in this survey narrates its own reflection-print reprint as intentional.
+
+Revert record (verbatim, captured before any edit):
+
+`.claude/skills/toaster-review-protocol/SKILL.md` lines 109-112 (judgment record construction zone, anchor-groups code block): "`[code]     TOASTER_INCREMENT = SOME_TAG   # or assembled with any other new fragment this notebook adds`" / "`           print(TOASTER_INCREMENT)`"
+
+`.claude/skills/toaster-review-protocol/SKILL.md` lines 150-152: "Each printed group is its own reflection, the same role a printed `TOASTER_INCREMENT` plays for a model fragment -- and `TOASTER_INCREMENT` here really is the Hawkins record's own model-side anchor, assembled and loaded the same way any other chapter's model increment is."
+
+`.claude/skills/toaster-recipe/SKILL.md` line 102 (Notes): "13 notebooks have construction cells; judgment, depth, navigation, analysis, param-sweep do not."
+
+`.claude/skills/toaster-recipe/SKILL.md` line 189 (A6 checklist): "...Judgment/depth/navigation/analysis notebooks: cell-02 loads cumulative only, no TOASTER_INCREMENT."
+
+`.claude/skills/tutorial-style-guide/SKILL.md` lines 100-101: "Judgment, depth, navigation, analysis, and param-sweep notebooks have no construction zone and do not assign `TOASTER_INCREMENT`."
+
+Proposed replacement wording:
+
+> `toaster-review-protocol/SKILL.md` lines 111-112: drop the `print(TOASTER_INCREMENT)` line from the code block (narration at line 110 stays, describing the fragment as already committed). Lines 150-152 reword to: "`TOASTER_INCREMENT` here is the record's own model-side anchor, assigned and checked the same way any other chapter's increment is; the `Model tag:` line printed when the record assembles is its confirmation, not a second print of the fragment."
+>
+> `toaster-recipe/SKILL.md` line 102 and `tutorial-style-guide/SKILL.md` lines 100-101 become: "Judgment notebooks that introduce a new `ReviewRecordRef` tag assign (not print) `TOASTER_INCREMENT` as the tag fragment(s), per DL-084. Python-only reconstruction, depth, navigation, analysis and param-sweep notebooks do not assign it at all."
+>
+> `toaster-recipe/SKILL.md` line 189's "no TOASTER_INCREMENT" clause gets the same correction.
+
+Principles applied: DL-084 applied as a prior Z-directed decision governing a later-written, now-stale rule; ace-protocol's "a quotation that does not address the case is not evidence for it" (applied to `toaster-review-protocol`'s parity sentence, which justifies the fragment's existence, not its reprint); the P4 test; F4 with confirmed extension DL-033/DL-084 (a tag is checkable metadata, i.e. analysis of the model, not narration).
+
+Reasoning: see the ACE's full report of 2026-10-02 (delivered via `SubagentHandback`) for the complete argument, including why `decisions/declarative-construction-plan.md` line 56 (which lists `ch04/03-completeness-check.ipynb` as having no construction cells) is itself pre-DL-084 and needs an administrative annotation, not a rewrite, and why Ch10-01 cell 33 falls under this same ruling by content type rather than variable name.
+
+Determined: yes, on the substance. Still PENDING Z's one-line wording confirmation, same gate as DL-092.
+
+Extension: yes, per the ACE's own flag -- applying Z's Decision 1 (scoped, at the time it was written, to "the 13 construction notebooks" under the pre-DL-084 count) to the judgment-record tag increments DL-084 later registered as real construction cells is a case Z's own scope statement did not name. This is the flag the spec's own "scope outside the named patterns is flagged for Z, not folded in silently" rule calls for -- and the `skill-editor` gate below is where that flag actually reaches Z, not a separate escalation.
+
+Provenance: DL-084 (design, registry change, `toaster-recipe`/`toaster-review-protocol` updates, known-gaps item 2); DL-075 (closed by DL-084); DL-033 (confirmed extension: judgment records are analysis); `.claude/skills/toaster-review-protocol/SKILL.md` 95-152; `.claude/skills/toaster-recipe/SKILL.md` 102, 130-136, 167-175, 189; `.claude/skills/tutorial-style-guide/SKILL.md` 100-101; `scripts/check_construction.py` registry lines 94, 125, 159, 235, 289, 326; `chapters/ch02-requirements/03-judgment-context.ipynb` cells 8-13; `chapters/ch06-recursive-decomp/03-stopping-judgment.ipynb` cells 11-16; `decisions/diagram-text-integration-survey.md` cross-chapter open questions 2, 5, 6, 7; `decisions/declarative-construction-plan.md` 52-60; `docs/superpowers/specs/2026-10-02-diagram-text-integration-design.md` Decision 1, "Rolling cleanup" closing paragraph, Non-goals; ACE report, agentId `abdd0254803c46fa7`, delivered 2026-10-02.
