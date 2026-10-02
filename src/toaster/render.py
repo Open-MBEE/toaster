@@ -106,6 +106,44 @@ def model_to_dot(
         od = e.as_dict()
         oqname = od.get("qualifiedName", od.get("@id", ""))
         by_qname[oqname] = od
+
+    # Built once per call (not per element): the raw API-JSON export, indexed
+    # by @id and by qualifiedName, so a PartDefinition/PartUsage's own
+    # `specializes` reference field (a single {"@id": ...} dict, or a list of
+    # them when an element specializes more than one target -- confirmed
+    # empirically, both shapes occur) can be resolved to its target's own
+    # qualifiedName. Mirrors src/toaster/query.py's ApiIndex/
+    # supertypes_transitively_raw() approach: never rebuild a qualified name
+    # by string-replacing an @id's "__" with "::" (the id form also escapes
+    # "_" itself, e.g. "named_flow" -> "named_5fflow", so that replace is not
+    # a safe inverse -- .claude/skills/opensysml-query/SKILL.md's "Ids"
+    # section). Always resolve a reference by following its @id to that
+    # element's own qualifiedName field in this same payload.
+    import json as _json
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        _raw_elements = _json.loads(model.to_api_json().content)
+    raw_by_id = {rel["@id"]: rel for rel in _raw_elements if "@id" in rel}
+    raw_by_qname = {
+        rel["qualifiedName"]: rel for rel in _raw_elements if rel.get("qualifiedName")
+    }
+
+    # Only used when `elements` is a scoped subset: the qualified names of
+    # every element actually in scope, so a specialization edge is drawn only
+    # when BOTH ends are in the diagram's own declared scope (the same
+    # discipline render_interconnection() applies to flows, and
+    # build_interconnection_intent() applies to allocs). When elements is
+    # None (the unscoped, whole-model case) every pair naturally qualifies,
+    # so this stays None and the scope check below is skipped entirely.
+    scoped_qnames = None
+    if elements is not None:
+        scoped_qnames = {
+            sd.get("qualifiedName", sd.get("@id", ""))
+            for sd in (s.as_dict() for s in source)
+        }
+
     REQUIREMENT_OWNER_TYPES = {
         "RequirementDefinition",
         "RequirementUsage",
@@ -138,7 +176,14 @@ def model_to_dot(
             owner_type = by_qname.get(owner, {}).get("@type", "")
             if owner_type in REQUIREMENT_OWNER_TYPES:
                 continue
-            if owner:
+            # A Package is not a part and does not compose anything: a
+            # PartUsage declared directly inside a package (e.g. `nominal`,
+            # `slow`, `rated`) is not real part composition, so skip the
+            # composition edge for this owner kind only. Its own typing edge
+            # (below) is unaffected, so the usage's node still appears in the
+            # diagram. Every other owner kind (PartDefinition, PartUsage)
+            # keeps drawing the composition edge exactly as before.
+            if owner and owner_type != "Package":
                 lines.append(
                     f'  "{owner}" -> "{qname}" [label="{dname}" arrowhead=diamond];'
                 )
@@ -146,6 +191,35 @@ def model_to_dot(
                 lines.append(
                     f'  "{qname}" -> "{part_type}" [style=dashed arrowhead=open];'
                 )
+
+        if etype in ("PartDefinition", "PartUsage"):
+            # Direct specialization (`:>`) edges: drawn for any PartDefinition
+            # or PartUsage whose own raw element carries a `specializes`
+            # reference. In practice this only ever fires for a
+            # PartDefinition specializing another PartDefinition (`part def
+            # B :> A;`) -- a Usage-level `:>` (`part y :> x;`) is exported as
+            # `subsets`, not `specializes` (confirmed empirically; see
+            # src/toaster/query.py's supertypes_transitively_raw() docstring)
+            # -- but both kinds are checked here since the field is simply
+            # absent, and harmless to check, on a Usage. Styled distinctly
+            # from both composition (solid line, filled diamond) and typing
+            # (dashed line, open arrow): a solid line with a hollow/open
+            # triangle arrowhead, the real UML/SysML generalization notation.
+            spec_refs = raw_by_qname.get(qname, {}).get("specializes")
+            if spec_refs is None:
+                spec_refs = []
+            elif not isinstance(spec_refs, list):
+                spec_refs = [spec_refs]
+            for ref in spec_refs:
+                ref_id = ref["@id"] if isinstance(ref, dict) else ref
+                target_qname = raw_by_id.get(ref_id, {}).get("qualifiedName")
+                if not target_qname:
+                    continue
+                if scoped_qnames is not None and (
+                    qname not in scoped_qnames or target_qname not in scoped_qnames
+                ):
+                    continue
+                lines.append(f'  "{qname}" -> "{target_qname}" [arrowhead=empty];')
     lines.append("}")
     return "\n".join(lines)
 
