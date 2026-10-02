@@ -28,8 +28,36 @@ def model_to_dot(
     `{"rankdir": "TB"|"LR"|"BT"|"RL"}`; defaults to "TB" (unchanged).
 
     Nodes: PartDefinition (dashed border if abstract).
-    Edges: composition (diamond arrowhead from owner to usage),
-           typing (dashed open arrow from usage to its PartDefinition type).
+    Edges: composition (diamond arrowhead from owner to usage, skipped when
+               the owner is a Package -- see below),
+           typing (dashed open arrow from usage to its PartDefinition type),
+           specialization (solid line, hollow/open triangle arrowhead, from
+               a PartDefinition or PartUsage to a direct `:>` target -- see
+               below).
+
+    A `PartUsage` owned directly by a `Package` (e.g. `nominal`, `slow`,
+    `rated`, declared at package scope, not inside any part) is not real
+    part composition -- a package does not compose anything -- so its
+    composition edge is skipped. Its own typing edge is unaffected, so a
+    TYPED package-owned usage still appears in the diagram via that edge.
+    An UNTYPED package-owned usage (no `part_type`, including one that only
+    `:>`-subsets another usage) has no edge at all and so does not appear in
+    the diagram -- recorded here as a known gap, not fixed: no real fixture
+    in this tutorial has an untyped package-owned usage today.
+
+    Direct specialization (`:>`) edges are drawn between a PartDefinition or
+    PartUsage and its own direct target(s) (one edge per target; an element
+    may specialize more than one). In practice this only ever fires for a
+    PartDefinition specializing another PartDefinition -- a Usage-level `:>`
+    (`part y :> x;`) is exported by the toolkit as `subsets`, not
+    `specializes`, so it is NOT drawn by this function at all -- recorded
+    here as a known gap, not fixed: no real fixture in this tutorial has a
+    usage-level `:>` today. If a PartDefinition ever specialized something
+    that is not itself a PartDefinition (e.g. an ItemDefinition), the edge
+    would still be drawn to that target's own node, which would then appear
+    in the diagram without the usual PartDefinition styling -- not a false
+    edge (the relationship is real), just an unstyled node; no real fixture
+    has this today either.
 
     A `PartUsage` whose owner is a `RequirementDefinition`/`RequirementUsage`,
     or any other definition/usage kind that shares the same `subject`
@@ -95,7 +123,13 @@ def model_to_dot(
         '  node [shape=box fontname="Helvetica"];',
         '  edge [fontname="Helvetica"];',
     ]
-    source = model.query() if elements is None else elements
+    # Materialized once: `source` is now iterated twice below (once to build
+    # `scoped_qnames`, once in the main loop), so a one-shot iterable passed
+    # as `elements` would otherwise be silently exhausted after the first
+    # pass. `elements`'s own type is `list | None` and every current caller
+    # already passes a list, so this is a latent-bug guard, not a behavior
+    # change for any real call site.
+    source = list(model.query() if elements is None else elements)
     # Built once per call (not per element): every model element keyed by its
     # own qualified name, so a PartUsage's `owner` string can be resolved to
     # the owning element's own `@type` -- model.query() is always callable on
