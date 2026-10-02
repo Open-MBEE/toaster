@@ -28,8 +28,36 @@ def model_to_dot(
     `{"rankdir": "TB"|"LR"|"BT"|"RL"}`; defaults to "TB" (unchanged).
 
     Nodes: PartDefinition (dashed border if abstract).
-    Edges: composition (diamond arrowhead from owner to usage),
-           typing (dashed open arrow from usage to its PartDefinition type).
+    Edges: composition (diamond arrowhead from owner to usage, skipped when
+               the owner is a Package -- see below),
+           typing (dashed open arrow from usage to its PartDefinition type),
+           specialization (solid line, hollow/open triangle arrowhead, from
+               a PartDefinition or PartUsage to a direct `:>` target -- see
+               below).
+
+    A `PartUsage` owned directly by a `Package` (e.g. `nominal`, `slow`,
+    `rated`, declared at package scope, not inside any part) is not real
+    part composition -- a package does not compose anything -- so its
+    composition edge is skipped. Its own typing edge is unaffected, so a
+    TYPED package-owned usage still appears in the diagram via that edge.
+    An UNTYPED package-owned usage (no `part_type`, including one that only
+    `:>`-subsets another usage) has no edge at all and so does not appear in
+    the diagram -- recorded here as a known gap, not fixed: no real fixture
+    in this tutorial has an untyped package-owned usage today.
+
+    Direct specialization (`:>`) edges are drawn between a PartDefinition or
+    PartUsage and its own direct target(s) (one edge per target; an element
+    may specialize more than one). In practice this only ever fires for a
+    PartDefinition specializing another PartDefinition -- a Usage-level `:>`
+    (`part y :> x;`) is exported by the toolkit as `subsets`, not
+    `specializes`, so it is NOT drawn by this function at all -- recorded
+    here as a known gap, not fixed: no real fixture in this tutorial has a
+    usage-level `:>` today. If a PartDefinition ever specialized something
+    that is not itself a PartDefinition (e.g. an ItemDefinition), the edge
+    would still be drawn to that target's own node, which would then appear
+    in the diagram without the usual PartDefinition styling -- not a false
+    edge (the relationship is real), just an unstyled node; no real fixture
+    has this today either.
 
     A `PartUsage` whose owner is a `RequirementDefinition`/`RequirementUsage`,
     or any other definition/usage kind that shares the same `subject`
@@ -95,7 +123,13 @@ def model_to_dot(
         '  node [shape=box fontname="Helvetica"];',
         '  edge [fontname="Helvetica"];',
     ]
-    source = model.query() if elements is None else elements
+    # Materialized once: `source` is now iterated twice below (once to build
+    # `scoped_qnames`, once in the main loop), so a one-shot iterable passed
+    # as `elements` would otherwise be silently exhausted after the first
+    # pass. `elements`'s own type is `list | None` and every current caller
+    # already passes a list, so this is a latent-bug guard, not a behavior
+    # change for any real call site.
+    source = list(model.query() if elements is None else elements)
     # Built once per call (not per element): every model element keyed by its
     # own qualified name, so a PartUsage's `owner` string can be resolved to
     # the owning element's own `@type` -- model.query() is always callable on
@@ -106,6 +140,44 @@ def model_to_dot(
         od = e.as_dict()
         oqname = od.get("qualifiedName", od.get("@id", ""))
         by_qname[oqname] = od
+
+    # Built once per call (not per element): the raw API-JSON export, indexed
+    # by @id and by qualifiedName, so a PartDefinition/PartUsage's own
+    # `specializes` reference field (a single {"@id": ...} dict, or a list of
+    # them when an element specializes more than one target -- confirmed
+    # empirically, both shapes occur) can be resolved to its target's own
+    # qualifiedName. Mirrors src/toaster/query.py's ApiIndex/
+    # supertypes_transitively_raw() approach: never rebuild a qualified name
+    # by string-replacing an @id's "__" with "::" (the id form also escapes
+    # "_" itself, e.g. "named_flow" -> "named_5fflow", so that replace is not
+    # a safe inverse -- .claude/skills/opensysml-query/SKILL.md's "Ids"
+    # section). Always resolve a reference by following its @id to that
+    # element's own qualifiedName field in this same payload.
+    import json as _json
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        _raw_elements = _json.loads(model.to_api_json().content)
+    raw_by_id = {rel["@id"]: rel for rel in _raw_elements if "@id" in rel}
+    raw_by_qname = {
+        rel["qualifiedName"]: rel for rel in _raw_elements if rel.get("qualifiedName")
+    }
+
+    # Only used when `elements` is a scoped subset: the qualified names of
+    # every element actually in scope, so a specialization edge is drawn only
+    # when BOTH ends are in the diagram's own declared scope (the same
+    # discipline render_interconnection() applies to flows, and
+    # build_interconnection_intent() applies to allocs). When elements is
+    # None (the unscoped, whole-model case) every pair naturally qualifies,
+    # so this stays None and the scope check below is skipped entirely.
+    scoped_qnames = None
+    if elements is not None:
+        scoped_qnames = {
+            sd.get("qualifiedName", sd.get("@id", ""))
+            for sd in (s.as_dict() for s in source)
+        }
+
     REQUIREMENT_OWNER_TYPES = {
         "RequirementDefinition",
         "RequirementUsage",
@@ -138,7 +210,14 @@ def model_to_dot(
             owner_type = by_qname.get(owner, {}).get("@type", "")
             if owner_type in REQUIREMENT_OWNER_TYPES:
                 continue
-            if owner:
+            # A Package is not a part and does not compose anything: a
+            # PartUsage declared directly inside a package (e.g. `nominal`,
+            # `slow`, `rated`) is not real part composition, so skip the
+            # composition edge for this owner kind only. Its own typing edge
+            # (below) is unaffected, so the usage's node still appears in the
+            # diagram. Every other owner kind (PartDefinition, PartUsage)
+            # keeps drawing the composition edge exactly as before.
+            if owner and owner_type != "Package":
                 lines.append(
                     f'  "{owner}" -> "{qname}" [label="{dname}" arrowhead=diamond];'
                 )
@@ -146,6 +225,35 @@ def model_to_dot(
                 lines.append(
                     f'  "{qname}" -> "{part_type}" [style=dashed arrowhead=open];'
                 )
+
+        if etype in ("PartDefinition", "PartUsage"):
+            # Direct specialization (`:>`) edges: drawn for any PartDefinition
+            # or PartUsage whose own raw element carries a `specializes`
+            # reference. In practice this only ever fires for a
+            # PartDefinition specializing another PartDefinition (`part def
+            # B :> A;`) -- a Usage-level `:>` (`part y :> x;`) is exported as
+            # `subsets`, not `specializes` (confirmed empirically; see
+            # src/toaster/query.py's supertypes_transitively_raw() docstring)
+            # -- but both kinds are checked here since the field is simply
+            # absent, and harmless to check, on a Usage. Styled distinctly
+            # from both composition (solid line, filled diamond) and typing
+            # (dashed line, open arrow): a solid line with a hollow/open
+            # triangle arrowhead, the real UML/SysML generalization notation.
+            spec_refs = raw_by_qname.get(qname, {}).get("specializes")
+            if spec_refs is None:
+                spec_refs = []
+            elif not isinstance(spec_refs, list):
+                spec_refs = [spec_refs]
+            for ref in spec_refs:
+                ref_id = ref["@id"] if isinstance(ref, dict) else ref
+                target_qname = raw_by_id.get(ref_id, {}).get("qualifiedName")
+                if not target_qname:
+                    continue
+                if scoped_qnames is not None and (
+                    qname not in scoped_qnames or target_qname not in scoped_qnames
+                ):
+                    continue
+                lines.append(f'  "{qname}" -> "{target_qname}" [arrowhead=empty];')
     lines.append("}")
     return "\n".join(lines)
 
