@@ -904,3 +904,12 @@ Both gaps were independently found by two different review passes (Phase 2 chapt
 **Resolution:** either an upstream fix in OpenSysML's own `-render` CLI (emit flow-pin nodes/edges for an action-flow render; emit the performed action's own name on a state's "do" activity), or — if that doesn't materialize — a local DOT post-processing step that reconstructs the missing labels/nodes from the model object `render_action_flow()`/`render_state_flow()` already have in hand before shelling out; re-test and re-evaluate once either is available.
 **Upstream issue:** not yet filed.
 **Toaster issue:** not filed
+
+## D-038: OpenSysML's API-JSON export has no structural `subjectParameter` key on `RequirementDefinition`; Ch10 reads each candidate feature's own `sysx:sourceText` instead
+
+Found during DL-097's own gap analysis (`decisions/log.md`): `chapters/ch10-traceability-signoff/01-traceability-graph.ipynb` cell 8's `requirement_subject()` needs each requirement definition's own declared `subject` feature (SysML v2 formal/2026-03-02 §8.3, `RequirementDefinition`). The API-JSON export OpenSysML v0.9.0 produces carries no `subjectParameter` key on a `RequirementDefinition` element to read that structurally — confirmed directly, live probe 2026-10-02: every `RequirementDefinition` element in the cumulative model's own export was checked for a `subjectParameter` key, and none has one. `requirement_subject()` works around this by scanning each requirement definition's own owned `ReferenceUsage` features for the literal `subject` keyword in that feature's own `sysx:sourceText`, matching the text SysML v2 itself requires there, rather than reading a structural field.
+
+**Workaround:** `requirement_subject()` (`chapters/ch10-traceability-signoff/01-traceability-graph.ipynb` cell 8) reads `sysx:sourceText` for the literal `subject ` prefix on each candidate `ReferenceUsage`; this is a text scrape of the exported source text, not a structural API read, but it is correct and already in place — tracked here, not blocking.
+**Resolution:** upstream fix in OpenSysML's API-JSON export (emit a structural `subjectParameter` reference on `RequirementDefinition`, matching the formal spec); re-test once available.
+**Upstream issue:** not yet filed.
+**Toaster issue:** not filed
