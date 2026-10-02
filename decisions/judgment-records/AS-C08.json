@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "identifier": "AS-C08",
+  "kind": "asserted_solution",
+  "claim": "deliveredEnergyBoundedBySupply, a hand-restated real-arithmetic lemma of the same shape as HeatGenerator's efficiencyBounded constraint and deliveredEnergy's own definition, holds for every value of efficiency in [0,1] and every non-negative power and duration a companion restatement admits.",
+  "subject_ref": "ToasterDemo::deliveredEnergyBoundedBySupply",
+  "model_ref": "ToasterDemo::deliveredEnergyBoundedBySupply",
+  "content_hash": "35b4bff86cd4b27155318744e5c6076c58272ee76987c9b769655cf064b977ac",
+  "scope": "The lemma governs the companion restatement's own heatGenCheck.efficiency, heatGenCheck.power and heatGenCheckDuration features; it is not a solver-checked reference to HeatGenerator's own efficiencyBounded or deliveredEnergy (DEFERRED.md D-030, D-031), only a hand-restated copy of the same shape.",
+  "criteria": "verify_holds() reports a single satisfied verdict for deliveredEnergyBoundedBySupply, with the reason text naming z3 (not propagation alone), proved for all values of the unbound heatGenCheck.efficiency, heatGenCheck.power and heatGenCheckDuration features.",
+  "premises": [],
+  "assumption_refs": [],
+  "evidence_refs": [
+    "verify_holds: deliveredEnergyBoundedBySupply satisfied (z3: holds for all values of unbound features)"
+  ],
+  "rationale": "verify_holds() calls sysml-toolkit's real verify --solve command, which runs Z3 over the unbound features of a companion restatement of this lemma (see the narration above for why a companion file is used) and reports deliveredEnergyBoundedBySupply as satisfied: proved for all values the restatement admits, not read back from one entered value. This is a materially different kind of evidence from an evaluate-only verdict: verify_satisfaction() could only ever check a relation at whichever single power, duration and efficiency a candidate happens to carry. It is also, deliberately, a narrower claim than 'this proves HeatGenerator's own conservation property': see counterevidence.",
+  "counterevidence": "This proof is NOT a solver-checked reference to HeatGenerator's own efficiencyBounded constraint or deliveredEnergy calc: this toolchain's Z3 backend does not compose two separately declared assert constraints, whether sibling or inherited (DEFERRED.md D-030), and cannot reason through a chained calc invocation like heatGenCheck.deliveredEnergy(...) (D-031). Confirmed directly: loosening efficiencyBounded's own literal bound to <= 1.5, or doubling deliveredEnergy's own definition by a factor of 2.0, in the real committed model changes neither the original elements' own verdicts nor this lemma's verdict at all, because the lemma restates its own copy of both rather than referencing either. The companion file used by verify_holds also restates the construct rather than checking the committed model directly, because toaster.modelcheck's own text parser does not yet handle the extra annotation the CLI prints for assert satisfy declarations (DEFERRED.md D-029).",
+  "residual_uncertainties": "Whether efficiency, power and duration ever take values outside the bound in a real candidate is not addressed by this proof; it establishes only that the restated lemma respects conservation wherever its own bound is honored. If HeatGenerator's own efficiencyBounded or deliveredEnergy is ever edited, this record's content_hash (computed from the whole model file) does go stale, which forces a re-review, but nothing automatically re-checks that the restated copy still matches the edited original; that check would be manual. No physical heat generator has been checked against this property; HeatGenerator remains an abstract carrier with no concrete realization of its own.",
+  "disposition": "pending",
+  "dependency_freshness": "current",
+  "engineering_conclusion": "supported",
+  "record_kind": "worked_example"
+}
