@@ -14,9 +14,9 @@ After completing this chapter, the cumulative model has a real second-level func
 
 | Notebook | Concept |
 |---|---|
-| [01: Level-2 Function and Logical Carrier](01-subsystem-requirements.ipynb) | Nest `GenerateHeat` inside `ApplyHeat`, the same way `ApplyHeat` nests inside `ToastBread`, and give it a logical carrier, `HeatGenerator`, one level below `HeatingSystem`; neither commits to an energy form or mechanism. |
-| [02: Level-2 Physical Realization](02-second-level.ipynb) | State the requirement `HeatGenerator`'s rating is checked against, record the measure framing and the mechanism selection that requirement raises, then build `ResistanceCoil`, the concrete realization the selection licenses. |
-| [03: Stopping Judgment](03-stopping-judgment.ipynb) | Record `AI-C06`, an `asserted_inference` checked against real analysis on the loaded model, stating plainly what this one branch establishes and what it does not. |
+| [01: level-2 function and logical carrier](01-subsystem-requirements.ipynb) | Nest `GenerateHeat` inside `ApplyHeat`, the same way `ApplyHeat` nests inside `ToastBread`, and give it a logical carrier, `HeatGenerator`, one level below `HeatingSystem`; neither commits to an energy form or mechanism. |
+| [02: level-2 physical realization](02-second-level.ipynb) | State the requirement `HeatGenerator`'s rating is checked against, record the measure framing and the mechanism selection that requirement raises, then build `ResistanceCoil`, the concrete realization the selection licenses. |
+| [03: stopping judgment](03-stopping-judgment.ipynb) | Record `AI-C06`, an `asserted_inference` checked against real analysis on the loaded model, stating plainly what this one branch establishes and what it does not. |
 
 ## Equipment
 
