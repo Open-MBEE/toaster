@@ -215,8 +215,9 @@ own design purposes only:
 
 The seam cell (slot 5) addresses the connection behaviorally, as above — for a Pattern A notebook
 that means pointing at what `editor.add_*()` produced and what running it validated; for Pattern B,
-at the `TOASTER_INCREMENT` string and what loading it validated. Neither the labels above nor "Tall"
-nor "three worlds" appear in the sentence itself.
+at the fragment variables already printed when declared and the diagram or confirmation query that
+shows what loading validated. Neither the labels above nor "Tall" nor "three worlds" appear in the
+sentence itself.
 
 ## What A4 must never do
 

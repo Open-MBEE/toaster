@@ -1261,7 +1261,7 @@ Post-edit check: added one short paragraph after the skeleton table (`.claude/sk
 
 ## DL-092 | 2026-10-02 | DIAGRAM-TEXT-INTEGRATION-PHASE-B | COMPLETE -- construction-zone reflection print changes from "print" to "assign, do not print" across two skills, so Phase B's proposed fixes stop contradicting the live skill text
 
-Path: ACE triage (ruled, applying Z's prior Decisions 1-2; not an escalation on the substance), routed here by the orchestrator per `decisions/diagram-text-integration-survey.md`'s cross-chapter open question 1. Still gated by `skill-editor`'s own Step 2: this change touches more than one archetype's primary skill (`tutorial-style-guide` loads for A3/A4/A6/A7; `toaster-recipe` loads for A4/A6), which is an automatic escalate-to-Z row on that skill's own blast-radius table -- not optional, and not satisfied by the ACE's ruling on the substance. Z's one-line confirmation of the exact replacement wording below is the actual gate; no edit has been made.
+Path: ACE triage (ruled, applying Z's prior Decisions 1-2; not an escalation on the substance), routed here by the orchestrator per `decisions/diagram-text-integration-survey.md`'s cross-chapter open question 1. Still gated by `skill-editor`'s own Step 2: this change touches more than one archetype's primary skill (`tutorial-style-guide` loads for A3/A4/A6/A7; `toaster-recipe` loads for A4/A6), which is an automatic escalate-to-Z row on that skill's own blast-radius table -- not optional, and not satisfied by the ACE's ruling on the substance. Z's one-line confirmation of the exact replacement wording below was the actual gate; the edit has been made (commit `fbdbc1d`).
 
 Intended change, in one sentence: `TOASTER_INCREMENT` is assigned but never printed in any construction-zone notebook; the seam's result step is filled by the chapter's diagram where one exists, otherwise a short `model.find()`/`model.query()`/`model.eval()` or `src/toaster/query.py`-helper confirmation against the construct just declared, added where none exists.
 
@@ -1302,7 +1302,7 @@ Principles applied: ace-protocol's "a prior decision by Z on the same question i
 
 Reasoning: see the ACE's full report of 2026-10-02 (delivered via `SubagentHandback`, not yet a committed file) for the complete principle-by-principle argument, including why the confirmation class must include the `query.py` helpers (three of the survey's own Pattern-1b instances -- Ch3-01 metadata, Ch3-02 `assert satisfy`, Ch5-02 allocation -- are invisible to `model.find`/`model.query` per AGENTS.md 1.9) and why this does not reopen any Z decision (the original "print as reflection" convention was the ACE's own implementing choice in DL-011/DL-012, not Z's verbatim words there).
 
-Determined: yes, on the substance (not an extension of Z's own Decisions 1-2 as recorded in the spec). Still pending Z's one-line wording confirmation per `skill-editor`'s own multi-archetype escalation row -- that gate, not the substance, is what keeps this PENDING rather than COMPLETE.
+Determined: yes, on the substance (not an extension of Z's own Decisions 1-2 as recorded in the spec). Z confirmed the wording; the edit is applied (see Post-edit check line below).
 Post-edit check: `.claude/skills/tutorial-style-guide/SKILL.md` lines 93-101, `.claude/skills/toaster-recipe/SKILL.md` lines 18, 40-46, 90-94, 101-110, 189, 204-210 edited; glossary check 0 errors; pytest 444 passed, 7 deselected; check_construction.py clean; no new em-dash introduced.
 
 Extension: no.
@@ -1311,7 +1311,7 @@ Provenance: `docs/superpowers/specs/2026-10-02-diagram-text-integration-design.m
 
 ## DL-093 | 2026-10-02 | DIAGRAM-TEXT-INTEGRATION-PHASE-B | COMPLETE -- judgment-record tag reprint ruled the same defect as DL-092, not a sanctioned exception; the "judgment notebooks never assign TOASTER_INCREMENT" lines in two skills are stale since DL-084 and are corrected in the same pass
 
-Path: ACE triage (ruled; flagged "Extension: yes" per the ACE's own report, since this applies Z's Decision 1 to a case -- the judgment-record tag increments registered under DL-084 -- that Decision 1's own scope statement did not name at the time it was written). Same `skill-editor` gate as DL-092 applies (multiple archetypes' primary skills): Z's one-line confirmation of the replacement wording below is required before any edit; none has been made.
+Path: ACE triage (ruled; flagged "Extension: yes" per the ACE's own report, since this applies Z's Decision 1 to a case -- the judgment-record tag increments registered under DL-084 -- that Decision 1's own scope statement did not name at the time it was written). Same `skill-editor` gate as DL-092 applies (multiple archetypes' primary skills): Z's one-line confirmation of the replacement wording below was required before any edit; the edit has been made (commit `fbdbc1d`).
 
 Intended change, in one sentence: in every judgment-record notebook that introduces a new `ReviewRecordRef` tag, `TOASTER_INCREMENT` is assigned but never printed for that tag fragment, matching DL-092's ruling, and the two skills' own "judgment notebooks never assign `TOASTER_INCREMENT`" lines are corrected to reflect DL-084's already-approved tag-increment design.
 
@@ -1343,7 +1343,7 @@ Principles applied: DL-084 applied as a prior Z-directed decision governing a la
 
 Reasoning: see the ACE's full report of 2026-10-02 (delivered via `SubagentHandback`) for the complete argument, including why `decisions/declarative-construction-plan.md` line 56 (which lists `ch04/03-completeness-check.ipynb` as having no construction cells) is itself pre-DL-084 and needs an administrative annotation, not a rewrite, and why Ch10-01 cell 33 falls under this same ruling by content type rather than variable name.
 
-Determined: yes, on the substance. Still PENDING Z's one-line wording confirmation, same gate as DL-092.
+Determined: yes, on the substance. Z confirmed the wording; the edit is applied (see Post-edit check line below).
 Post-edit check: `.claude/skills/toaster-review-protocol/SKILL.md` lines 109-112, 150-152 edited; `.claude/skills/toaster-recipe/SKILL.md` lines 100-110, 189 edited; `.claude/skills/tutorial-style-guide/SKILL.md` lines 100-101 edited; glossary check 0 errors; pytest 444 passed, 7 deselected; check_construction.py clean; no new em-dash introduced.
 
 Extension: yes, per the ACE's own flag -- applying Z's Decision 1 (scoped, at the time it was written, to "the 13 construction notebooks" under the pre-DL-084 count) to the judgment-record tag increments DL-084 later registered as real construction cells is a case Z's own scope statement did not name. This is the flag the spec's own "scope outside the named patterns is flagged for Z, not folded in silently" rule calls for -- and the `skill-editor` gate below is where that flag actually reaches Z, not a separate escalation.
