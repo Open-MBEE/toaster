@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "identifier": "AC-001",
+  "kind": "asserted_context",
+  "claim": "Approximately 120 seconds is assumed, for illustration only, as a plausible nominal cycle time for standard sliced bread, a placeholder pending the mechanism-and-energy-balance derivation a later chapter performs, not a value drawn from any real-world source.",
+  "subject_ref": "ToasterDemo::nominal",
+  "model_ref": "ToasterDemo::nominal",
+  "content_hash": "5463247ea7bf5b76a90a85bc0c1000d50aba173409714f3c2f3422a7d3187f27",
+  "scope": "ToasterDemo",
+  "criteria": "This chapter adopts an illustrative placeholder range of 90-150 seconds for a toaster's nominal cycle time toasting standard sliced bread. The range is invented for this tutorial and is not drawn from any manufacturer data, measurement, or cited source.",
+  "premises": [],
+  "assumption_refs": [
+    "A-CH02-1: illustrative placeholder cycle-time range (90-150s) for standard sliced bread, invented for this tutorial; no real-world source exists for it."
+  ],
+  "evidence_refs": [
+    "None: the value is a stated placeholder assumption (A-CH02-1), not evidence from a real source, and not the model's own declared value. Toaster::cycleTime carries no value in this chapter."
+  ],
+  "rationale": "120 seconds sits within the illustrative placeholder range (A-CH02-1) and is used only as a stand-in estimate; it is not derived from any mechanism or energy-balance analysis in this chapter, and it is not backed by any real-world data.",
+  "counterevidence": "Thick-cut and frozen bread may require 180-240s, which would exceed TimelyToast's 180-second bound. More fundamentally, the placeholder range itself is invented for this tutorial and has no real-world source, so it carries no evidentiary weight beyond illustrating the pattern.",
+  "residual_uncertainties": "User preference variation is not modeled. Because 120 seconds is an invented placeholder, not a derived or measured value, any comparison against the 180-second threshold is conditional on this assumption and must never be reported as a settled pass/fail verdict.",
+  "disposition": "pending",
+  "dependency_freshness": "current",
+  "engineering_conclusion": "undetermined",
+  "record_kind": "worked_example"
+}
