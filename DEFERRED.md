@@ -890,3 +890,17 @@ Found while fixing Chapter 10's own "unjustified widget" tie-search (the `requir
 **Resolution:** confirm, against the formal SysML v2 / KerML specs (not just the grammar-file excerpts referenced above), that `connector` is genuinely KerML-only and `connection`/`connect` is the correct SysML-level surface form; if confirmed, file an upstream issue against OpenSysML (not sysml-toolkit/the pilot) for accepting a KerML-only keyword in `.sysml` content.
 **Upstream issue:** not yet filed.
 **Toaster issue:** not filed
+
+## D-037: OpenSysML's own `-render` CLI drops real content from both action-flow and state diagrams
+
+Found during the post-Phase-2 pre-PR user-testing pass (`decisions/log.md` DL-088) and confirmed directly against the real rendered output, not assumed from a user report. `render_action_flow()`/`render_state_flow()` (`src/toaster/render.py`) both shell out to OpenSysML's own `-render '#action:...' -render-form dot` / `-render '#state:...' -render-form dot` CLI — the DOT output itself, not our wrapper, is missing content in both cases:
+
+- **Action-flow:** `render_action_flow(model, "ToasterDemo::ApplyHeat", ...)` (Ch4, Ch6) produces a DOT graph whose only nodes/edges are the control sequence (`start -> applyHeat : ApplyHeat -> done`, with a bare "own flow" label on the action node). Confirmed by grepping `figures/ch04-toastbread-flow.svg`'s own `<text>` elements directly: none of `ApplyHeat`'s declared typed flows (`bread`, `energy`, `duration` in; `toast`, `delivered`, `loss` out) appear anywhere in the rendered SVG, even though the concept-statement cell and the balance constraint both emphasize exactly these flows. The CLI's own DOT output has no flow-pin nodes or edges to draw at all — this is not a filtering choice in `render_action_flow()`, which passes the CLI's output through unmodified.
+- **State diagram:** `render_state_flow(model, "ToasterDemo::Cycle", ...)` (Ch7) produces a `heating` state node whose body shows a bare "do" activity label with no action name — `generateHeat`, the action the state actually performs, is never printed, even though the state machine's own SysML text declares it. Confirmed by a Ch7 chapter reviewer during Phase 2 (decisions/log.md DL-087 known gap (b)), predating this entry.
+
+Both gaps were independently found by two different review passes (Phase 2 chapter review for the state-diagram gap; the pre-PR user-testing pass for the action-flow gap), on two different diagram types sharing the same underlying mechanism (OpenSysML's `-render` CLI), which is why they're recorded together here rather than as two separate entries.
+
+**Workaround:** none. Both notebooks' own prose states the missing content in words (Ch4's concept statement and balance-constraint text name the real flows; Ch7's state-machine text names `generateHeat`), so a reader isn't left without the information — only the diagram itself doesn't show it. Z's own decision (asked directly, pre-PR triage): track only, do not invest in a DOT post-processing fix at this time.
+**Resolution:** either an upstream fix in OpenSysML's own `-render` CLI (emit flow-pin nodes/edges for an action-flow render; emit the performed action's own name on a state's "do" activity), or — if that doesn't materialize — a local DOT post-processing step that reconstructs the missing labels/nodes from the model object `render_action_flow()`/`render_state_flow()` already have in hand before shelling out; re-test and re-evaluate once either is available.
+**Upstream issue:** not yet filed.
+**Toaster issue:** not filed
