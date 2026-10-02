@@ -7,7 +7,7 @@
   "model_ref": "ToasterDemo::timely",
   "content_hash": "4fe42a07b62e3f3a4f0eb732ba35cad98ffeae3bde6ed11956fe1f9c2b47c48c",
   "scope": "ToasterDemo",
-  "criteria": "MoE if the split names who cares and frames the measure as acceptance; MoP if its threshold is derived from a stated MoE with a means of checking (architecture-layers skill).",
+  "criteria": "MoE if the split names who cares and frames the measure as acceptance; MoP if its threshold is derived from a stated MoE with a means of checking (SEBoK's MoE/MoP distinction, PDF 1562).",
   "premises": [],
   "assumption_refs": [
     "The MoE/MoP split for toast timing is a case-specific modeling judgment, not a fixed rule."
