@@ -15,7 +15,7 @@ The 7 cells below are the **required skeleton**. Additional markdown+code pairs 
 |---|---|---|
 | **Concept** | Markdown | Exactly one sentence: "This notebook introduces X; after running it you can Y." |
 | **Context** | Markdown | One paragraph locating this notebook in the chapter arc. One link to prior notebook if model state carries over. |
-| **Model increment** | Code | Two-phase. (1) Declare the increment: Pattern A (Editor API, returns full model) or Pattern B (SysML string fragment for gap constructs). Assign to `TOASTER_INCREMENT`; print immediately as reflection. Only in construct-introducing notebooks — see scope table in `decisions/declarative-construction-plan.md`. (2) Load full chapter cumulative from `models/chXX-cumulative.sysml`; `assert model.ok`. |
+| **Model increment** | Code | Two-phase. (1) Declare the increment: Pattern A (Editor API, returns full model) or Pattern B (SysML string fragment for gap constructs). Assign to `TOASTER_INCREMENT`; it is not printed here — see "Construction cells" below for what fills the reflection step (the chapter's diagram or a confirmation query). Only in construct-introducing notebooks — see scope table in `decisions/declarative-construction-plan.md`. (2) Load full chapter cumulative from `models/chXX-cumulative.sysml`; `assert model.ok`. |
 | **Negative control** | Code + Markdown | Short bad_source string. `bad = conn.load_from_content(bad_source, strict=False)`. `assert not bad.ok`. Markdown: one sentence naming the error type and pointing to the diagnostic. |
 | **Demonstration** | Code + Markdown | One key operation per code cell. If two things happen, split into two cells each with its own narration markdown. |
 | **Seam** | Markdown | Exactly one sentence, addressing in behavior that the written construct, the tool that loaded it, and the rendered result are three distinct things the reader has just watched connect. Never names Tall or "the three worlds" (AGENTS.md 1.10) — see "Tall's three worlds" below. |
@@ -40,8 +40,10 @@ The construction zone replaces the single cell-02 with a sequence of code+markdo
 [code]     next fragment variable + printed         ← mirrors next editor.add_*() call
 [markdown] narration
 ...
-[code]     TOASTER_INCREMENT assembled + printed    ← reflection
+[code]     TOASTER_INCREMENT assembled (not printed)
            cumulative model loaded; assert model.ok ← for subsequent cells
+[markdown] bridge: what's about to be shown and why
+[code]     the chapter's diagram, or a model.find()/model.query() confirmation ← reflection
 ```
 
 **Fragment size rule:** ≤5 lines per fragment variable (ideally 1–3). If longer, split further.
@@ -87,9 +89,9 @@ POWER_ATTR = "    attribute power : ISQ::PowerValue default = 800.0 [SI::W];"
 print(POWER_ATTR)
 ```
 ```python
-# Cell: assembly + reflection + cumulative load
+# Cell: assembly + cumulative load (TOASTER_INCREMENT is assigned, not printed --
+# the reflection step is a diagram or confirmation query, shown in a later cell)
 TOASTER_INCREMENT = f"{HEATER_DEF}\n{POWER_ATTR}\n    ...\n}}"
-print(TOASTER_INCREMENT)
 
 source = Path("../../models/ch01-cumulative.sysml").read_text()
 model = conn.load_from_content(source, strict=False)
@@ -98,8 +100,14 @@ assert model.ok, f"Model failed: {format_diagnostics(model.diagnostics)}"
 
 **Notes:**
 - `TOASTER_INCREMENT` = new declarations introduced by this notebook only (not the full model).
-- It is assembled from the named fragment variables and printed as the reflection.
-- 13 notebooks have construction cells; judgment, depth, navigation, analysis, param-sweep do not.
+- It is assembled from the named fragment variables and assigned, not printed. The reflection
+  step is the chapter's diagram where one exists, otherwise a confirmation query against the
+  construct just declared (`model.find()`/`model.query()`/`model.eval()`, or the
+  `src/toaster/query.py` helper where those surfaces do not see the construct).
+- Construction-introducing notebooks assign `TOASTER_INCREMENT` for their model fragment;
+  judgment notebooks that introduce a new `ReviewRecordRef` tag also assign it for that tag
+  fragment (DL-084). Python-only reconstruction, depth, navigation, analysis and param-sweep
+  notebooks do not assign it at all.
 - The cumulative model file is authored by A3 and must exist before A4 finalizes the assembly cell.
 
 ## Tall's three worlds (builder-facing lens; corrected DL-015/DL-050)
@@ -186,7 +194,7 @@ Identify required cells by content type, not by cell index — additional narrat
 
 - [ ] **Concept statement present:** exactly one sentence starting "This notebook introduces"; cell 0's own heading is level 1 (`#`), and the notebook's `metadata` carries `short_title: "ChN-NN"`
 - [ ] **Context cell present:** one paragraph with link to prior notebook (where applicable)
-- [ ] **Model increment cell present (construct-introducing notebooks only):** two-phase — (1) `TOASTER_INCREMENT` assigned and printed as reflection (Pattern A: `str(editor.apply())`; Pattern B: SysML fragment string); (2) full cumulative loaded from `models/chXX-cumulative.sysml`; `assert model.ok`. Judgment/depth/navigation/analysis notebooks: cell-02 loads cumulative only, no TOASTER_INCREMENT.
+- [ ] **Model increment cell present (construct-introducing notebooks only):** two-phase — (1) `TOASTER_INCREMENT` assigned, not printed (Pattern A: `str(editor.apply())`; Pattern B: SysML fragment string); the reflection step is the chapter's diagram or a confirmation query, not a reprint; (2) full cumulative loaded from `models/chXX-cumulative.sysml`; `assert model.ok`. Judgment notebooks introducing a new `ReviewRecordRef` tag: same rule, for the tag fragment (DL-084). Depth/navigation/analysis/param-sweep notebooks and Python-only judgment reconstructions: cell-02 loads cumulative only, no `TOASTER_INCREMENT`.
 - [ ] **Negative control present:** short bad_source inline; `assert not bad.ok`; markdown names the error type
 - [ ] **Demo cell(s) present:** one key operation per code cell; each code cell followed by markdown narration
 - [ ] **Seam present:** exactly one sentence addressing, in behavior, that the definition, the loading tool, and the printed result are three distinct things the reader just watched connect — never naming Tall, "the three worlds", A-F, O-S or E
@@ -201,7 +209,9 @@ own design purposes only:
 
 - **A-F:** the SysML declaration produced by the construction call or written as a string
 - **O-S:** `editor.apply()` (Pattern A) or `conn.load_from_content()` (Pattern B) executes it
-- **E:** `TOASTER_INCREMENT` printed as the reflection — the engineer sees the validated canonical SysML
+- **E:** the chapter's diagram, or a confirmation query against the construct just declared --
+  the engineer sees the validated canonical SysML reflected back by a real result, not a reprint
+  of the string from before it loaded
 
 The seam cell (slot 5) addresses the connection behaviorally, as above — for a Pattern A notebook
 that means pointing at what `editor.add_*()` produced and what running it validated; for Pattern B,

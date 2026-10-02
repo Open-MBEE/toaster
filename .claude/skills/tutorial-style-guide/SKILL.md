@@ -90,15 +90,22 @@ structure stays the same.
   # spec: SysML v2 formal/2026-03-02 §7.3.3
   TOASTING_SYSTEM_DEF = "abstract part def ToastingSystem;"
   ```
-- `TOASTER_INCREMENT` is assembled from the fragment variables in the final cell of the
-  construction zone; it equals the **new declarations for this notebook only** (not the full
-  cumulative model). Print it as the reflection.
+- `TOASTER_INCREMENT` is assembled from the fragment variables in the final construction cell
+  and equals the **new declarations for this notebook only** (not the full cumulative model).
+  It is assigned, not printed: each fragment was already printed when declared, and
+  `scripts/check_construction.py` reads the assignment, never the print. The reflection -- the
+  result the seam cell points at -- is the chapter's diagram where one exists; otherwise a short
+  confirmation query against the construct just declared (`model.find()`/`model.query()`/
+  `model.eval()`, or the `src/toaster/query.py` helper for constructs those surfaces do not see:
+  `get_review_record_refs` for metadata usages, `satisfy_relationships` for `assert satisfy`,
+  `find_allocations`/`perform_relationships` for allocations and performs), added if none exists.
 - The cumulative load (`conn.load_from_content(ch0X-cumulative.sysml)`) happens in the same
-  final cell, after printing `TOASTER_INCREMENT`.
+  final cell as the assignment.
 - `conn.close()` belongs at the end of the last code cell in the notebook (cell-04 or later),
   never in the construction zone.
-- Judgment, depth, navigation, analysis, and param-sweep notebooks have no construction zone
-  and do not assign `TOASTER_INCREMENT`.
+- Judgment notebooks that introduce a new `ReviewRecordRef` tag assign (not print)
+  `TOASTER_INCREMENT` as the tag fragment(s), per DL-084. Python-only reconstruction, depth,
+  navigation, analysis and param-sweep notebooks do not assign it at all.
 
 ## What every agent loading this skill must never do
 

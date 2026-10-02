@@ -109,7 +109,7 @@ Hawkins' taxonomy is answering, not by the dataclass's field order:
            print(SOME_TAG)
 [markdown] narration: this fragment is the same text now committed in the cumulative model
 [code]     TOASTER_INCREMENT = SOME_TAG   # or assembled with any other new fragment this notebook adds
-           print(TOASTER_INCREMENT)
+           # assigned, not printed -- the anchor fragment above was already printed when declared
 [markdown] narration: the claim itself comes next
 [code]     claim = "..."
            model_ref = "..."
@@ -147,9 +147,10 @@ Hawkins-taxonomy groups); five when it is a Python-only reconstruction that cite
 identifier from an earlier chapter (no new SysML, so no anchor groups, but `model=model` and the
 `Model tag` lookup still run, exercising the cross-representation check against the already-committed
 tag). Every code cell is still followed by a markdown cell narrating what's next (no two code cells
-adjacent). Each printed group is its own reflection, the same role a printed `TOASTER_INCREMENT`
-plays for a model fragment — and `TOASTER_INCREMENT` here really is the Hawkins record's own model-
-side anchor, assembled and loaded the same way any other chapter's model increment is.
+adjacent). Each printed group is its own reflection. `TOASTER_INCREMENT` here is the Hawkins record's own
+model-side anchor, assigned and checked the same way any other chapter's increment is -- not
+printed again, since the anchor fragment it's built from was already printed above; the
+`Model tag:` line printed when the record assembles is its confirmation.
 
 **Size limit:** `toaster-recipe`'s ≤600 words / ≤50 lines budget is sized for a notebook whose main
 content is one model construct. A notebook whose construct is a judgment record may exceed it — the
