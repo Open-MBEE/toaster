@@ -64,7 +64,7 @@ project:
     - title: "Chapter 8: Checking and Revision"
       children:
         - file: chapters/ch08-checking/index
-        - file: chapters/ch08-checking/01-invariant-def
+        - file: chapters/ch08-checking/01-assert-constraint-def
         - file: chapters/ch08-checking/02-violation-witness
         - file: chapters/ch08-checking/03-revision-flow
         - file: chapters/ch08-checking/conclusion

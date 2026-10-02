@@ -690,7 +690,7 @@ committed to `models/`), restating only `deliveredEnergyBoundedBySupply` and the
 two usages it needs, which carries no `assert satisfy` declaration and so never
 hits this parser gap. The construct itself is real, committed content in
 `models/ch08-cumulative.sysml` (introduced in
-`chapters/ch08-checking/01-invariant-def.ipynb`); only the file handed to
+`chapters/ch08-checking/01-assert-constraint-def.ipynb`); only the file handed to
 `verify_holds` is a restatement, and the notebook says so. See D-030 and D-031 for
 the separate, deeper reason this construct is a hand-restated lemma rather than a
 solver-checked reference to `HeatGenerator`'s own `efficiencyBounded` and
@@ -795,7 +795,7 @@ checked reference to them, and re-checking it after either original element
 changes is a manual, not automatic, step.
 
 **Workaround:** `deliveredEnergyBoundedBySupply`'s own doc comment, and Chapter 8's
-prose (`chapters/ch08-checking/01-invariant-def.ipynb`,
+prose (`chapters/ch08-checking/01-assert-constraint-def.ipynb`,
 `02-violation-witness.ipynb`, `index.md`, `conclusion.md`), state this limit
 plainly rather than claiming a link the toolchain cannot check.
 **Resolution:** none attempted; would need `verify --solve` (or a successor tool)
