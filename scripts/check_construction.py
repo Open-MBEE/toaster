@@ -277,7 +277,7 @@ CONSTRUCTION_NOTEBOOKS: dict[int, list[dict]] = {
     ],
     8: [
         {
-            "path": "chapters/ch08-checking/01-invariant-def.ipynb",
+            "path": "chapters/ch08-checking/01-assert-constraint-def.ipynb",
             # deliveredEnergyBoundedBySupply references a fresh usage of HeatGenerator
             # (Ch6/Ch7), stubbed here with just the two features (power, efficiency) the
             # fragment itself reads.
