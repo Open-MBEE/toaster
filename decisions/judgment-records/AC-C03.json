@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "identifier": "AC-C03",
+  "kind": "asserted_context",
+  "claim": "timely (TimelyToast) is framed as a measure of effectiveness: an acceptance criterion for the user's kitchen workflow, not an engineering performance figure derived from a lower-level measure.",
+  "subject_ref": "ToasterDemo::timely",
+  "model_ref": "ToasterDemo::timely",
+  "content_hash": "4fe42a07b62e3f3a4f0eb732ba35cad98ffeae3bde6ed11956fe1f9c2b47c48c",
+  "scope": "ToasterDemo",
+  "criteria": "MoE if the split names who cares and frames the measure as acceptance; MoP if its threshold is derived from a stated MoE with a means of checking (architecture-layers skill).",
+  "premises": [],
+  "assumption_refs": [
+    "The MoE/MoP split for toast timing is a case-specific modeling judgment, not a fixed rule."
+  ],
+  "evidence_refs": [
+    "ToasterDemo::TimelyToast doc: the rationale argues from kitchen workflow timing, naming the user as who cares."
+  ],
+  "rationale": "TimelyToast's rationale argues from the user's kitchen workflow, not from a solution class or a lower-level performance figure: it names who cares (the user) and frames the 180-second bound as part of what the user accepts, not an engineering figure derived from another measure.",
+  "counterevidence": "TimelyToastTest's doc checks the bound as a timed test at a stated input condition ('nominal input power'), which reads like an engineering performance test rather than an acceptance criterion. Toast time could reasonably be framed either way.",
+  "residual_uncertainties": "This split is a contestable modeling judgment, not a settled fact. A later chapter that derives cycle time from the mechanism and the energy balance may instead introduce a genuine MoP threshold derived from this MoE.",
+  "disposition": "pending",
+  "dependency_freshness": "current",
+  "engineering_conclusion": "undetermined",
+  "record_kind": "worked_example"
+}

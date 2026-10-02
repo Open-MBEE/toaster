@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "identifier": "AS-C03",
+  "kind": "asserted_solution",
+  "claim": "The negated claim on slow (assert not satisfy timely by slow) evaluates True: slow's cycleTime (200 s) fails timely's 180 s bound, as intended for the injected fault. No corresponding claim is made for nominal.",
+  "subject_ref": "ToasterDemo::timely",
+  "model_ref": "ToasterDemo::timely",
+  "content_hash": "4fe42a07b62e3f3a4f0eb732ba35cad98ffeae3bde6ed11956fe1f9c2b47c48c",
+  "scope": "ToasterDemo",
+  "criteria": "assert not satisfy timely by slow holds when ToasterDemo::timely(ToasterDemo::slow) evaluates False.",
+  "premises": [
+    "slow.cycleTime is fixed at 200.0 [SI::s], a deliberately injected fault value (Chapter 2), not a value derived from any mechanism."
+  ],
+  "assumption_refs": [
+    "AC-C03: timely is framed as a measure of effectiveness (notebook 01)."
+  ],
+  "evidence_refs": [
+    "assert not satisfy timely by slow (ToasterDemo::slow::@1), evaluated by model.eval('ToasterDemo::timely(ToasterDemo::slow)') = False, above."
+  ],
+  "rationale": "slow's fixed cycleTime exceeds the bound, and the model's own evaluation confirms the negated claim holds. This demonstrates the deliberately negated satisfaction claim applied to an injected fault value: a real, evaluable claim about a fixture built to fail, not a check that traces a failure back to a design choice, since deriving a cycle time from an actual mechanism is not yet possible. Toaster::cycleTime carries no default value, so nominal.cycleTime has no value and ToasterDemo::timely(ToasterDemo::nominal) cannot be evaluated at all; claiming nominal satisfies timely would assert a result that was never computed.",
+  "counterevidence": "This only demonstrates that a chosen fault value fails. It does not demonstrate that a derived cycle time can pass; that demonstration needs a chapter that derives cycle time from the mechanism and the energy balance.",
+  "residual_uncertainties": "Whether timely is best framed as a measure of effectiveness or a measure of performance stays a contestable judgment (AC-C03, notebook 01), independent of this result. nominal's status under timely is genuinely open, not merely deferred.",
+  "disposition": "pending",
+  "dependency_freshness": "current",
+  "engineering_conclusion": "supported",
+  "record_kind": "worked_example"
+}
