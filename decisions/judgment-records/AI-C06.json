@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "identifier": "AI-C06",
+  "kind": "asserted_inference",
+  "claim": "GenerateHeat is a real, specified behavior: HeatGenerator performs it and is allocated the nested step, not merely declared syntax. energyIn is a declared, typed connection point on HeatGenerator, not yet wired to a producer. heatGenerationReq evaluates against two real candidates, rated (True) and weak (False), a genuine satisfaction check on an underived threshold, not an unevaluated assertion.",
+  "subject_ref": "ToasterDemo::HeatingAssembly::heatGen",
+  "model_ref": "ToasterDemo::HeatingAssembly::heatGen",
+  "content_hash": "4742e6898be0ec8dbbcaa3f84004f1cbc7e537b0831dd75cd598c63ac94767b9",
+  "scope": "ToasterDemo::HeatingAssembly::heatGen and its realizations",
+  "criteria": "Per the recursion's own stopping rule, a leaf performs its specified behavior, connects through its specified interfaces, and has verification evidence. At this level: GenerateHeat is a specified behavior, allocated to HeatGenerator (met). energyIn is a declared, typed connection point, not yet connected to any producer (partially met, not complete). heatGenerationReq evaluates on two real candidates against a threshold that is itself not yet derived (partial evidence, not full verification).",
+  "premises": [
+    "AC-C06",
+    "AS-C06",
+    "AS-C03",
+    "AI-C04"
+  ],
+  "assumption_refs": [
+    "GenerateHeat's own energy input is bound to ApplyHeat::energy, printed as part of APPLY_HEAT_INCREMENT and loaded successfully in notebook 01; this does not by itself mean energyIn is wired to any producer."
+  ],
+  "evidence_refs": [
+    "perform_relationships(model): [{'performer': 'ToasterDemo::ToastingSystem', 'action': 'ToasterDemo::ToastBread'}, {'performer': 'ToasterDemo::HeatingSystem', 'action': 'ToasterDemo::ApplyHeat'}, {'performer': 'ToasterDemo::HeatGenerator', 'action': 'ToasterDemo::GenerateHeat'}]",
+    "find_allocations(model): [{'id': 'ToasterDemo::Toaster::heatAllocation', 'type': 'AllocationUsage', 'ends': [['ToasterDemo::ToastingSystem::toastBread', 'ToasterDemo::ToastBread::applyHeat'], ['ToasterDemo::Toaster::heating']]}, {'id': 'ToasterDemo::HeatingAssembly::heatGenAllocation', 'type': 'AllocationUsage', 'ends': [['ToasterDemo::HeatingSystem::applyHeat', 'ToasterDemo::ApplyHeat::generateHeat'], ['ToasterDemo::HeatingAssembly::heatGen']]}]",
+    "heatGenerationReq(rated) = True, heatGenerationReq(weak) = False, evaluated directly against the loaded model above."
+  ],
+  "rationale": "Performs: real, not merely declared. HeatGenerator performing GenerateHeat and heatGenAllocation both appear directly in perform_relationships and find_allocations above, not just in the source text, the same performer-and-allocation split Chapter 5 established one level up. Connects: energyIn is declared and typed, the interface point the stopping rule names, but it is not wired to any producer, so this condition is only partially met. Verified: heatGenerationReq is genuinely evaluated, not left as an unevaluated assertion, on two real candidates, one passing and one deliberately failing for a reason about the design; but its own threshold is not yet derived from any stated measure of effectiveness (AC-C06), so this is partial verification evidence, not a completed check.",
+  "counterevidence": "energyIn has no producer wired to it: no supply or wire component exists in this model, so the interface point is declared, not yet connected end to end, the same partial state Chapter 5 left ApplyHeat::duration in before that chapter built its own port connection. HeatingAssembly is not yet composed into any Toaster candidate: Toaster::heating is still typed by the abstract HeatingSystem, so no full toaster candidate contains a resistance coil yet. The 600 W threshold is not derived from any stated measure of effectiveness (AC-C06); it is a free-standing engineering figure. This branch addresses only GenerateHeat's own energy-to-heat conversion: ApplyHeat's other flows (bread, duration, toast, delivered, loss) are not decomposed or accounted for at this level. This is a deliberate one-branch worked example of one of ApplyHeat's own flows, the same kind of honestly scoped choice Chapter 4 made for ApplyHeat itself out of Douglas's roughly fifteen functions, not a claim that Chapter 6 finishes ApplyHeat's full decomposition.",
+  "residual_uncertainties": "Whether GenerateHeat needs further decomposition of its own, whether HeatingAssembly is ever composed into a real Toaster candidate, and whether ApplyHeat's other flows (duration, bread, toast) get their own level-2 branches, are open for whichever chapter takes them up.",
+  "disposition": "pending",
+  "dependency_freshness": "current",
+  "engineering_conclusion": "undetermined",
+  "record_kind": "worked_example"
+}

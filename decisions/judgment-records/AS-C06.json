@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "identifier": "AS-C06",
+  "kind": "asserted_solution",
+  "claim": "ResistanceCoil, an electrically switched resistive element that converts energy to heat by Joule heating, is selected over a combustion-based alternative (a gas burner, the tongs-and-blowtorch alternative this tutorial already contrasts) as the mechanism HeatGenerator commits to.",
+  "subject_ref": "ToasterDemo::ResistanceCoil",
+  "model_ref": "ToasterDemo::ResistanceCoil",
+  "content_hash": "4742e6898be0ec8dbbcaa3f84004f1cbc7e537b0831dd75cd598c63ac94767b9",
+  "scope": "ToasterDemo::HeatGenerator and its realizations",
+  "criteria": "The chosen mechanism must pair with the discrete timing control ControlSystem's durationOut already provides, and must expose a rating heatGenerationReq's power threshold can be checked against once a concrete part exists.",
+  "premises": [
+    "ControlSystem declares durationOut : DurationPort (Chapter 5), a discrete duration signal, confirmed by model.find() above.",
+    "Domain premise, not derived from the model: a resistive element responds to being switched on and off directly, while a combustion source needs separate ignition and fuel-metering machinery to do the same. Neither HeatGenerator nor any of its realizations is yet connected to ControlSystem's port in this model; this premise is about the physical mechanisms themselves, not about what the model currently wires together."
+  ],
+  "assumption_refs": [
+    "HeatGenerator::energyIn and GenerateHeat carry no energy-form commitment (notebook 01): this record is what actually commits to an electrical form, not a fact already built into the port or the function."
+  ],
+  "evidence_refs": [
+    "model.find('ToasterDemo::ControlSystem::durationOut') resolves to a real portUsage, confirmed above."
+  ],
+  "rationale": "An electrically resistive element responds to being switched on and off directly, the same shape as duration's discrete timing signal, while a combustion-based burner needs separate ignition and fuel-metering machinery to respond the same way (the domain premise above). That is a claim about how the two mechanisms work, not something this model currently shows: no realization of HeatGenerator is yet connected to ControlSystem's durationOut port, so this selection is a reasoned engineering preference argued from mechanism, not a claim that the model already connects one mechanism and not the other.",
+  "counterevidence": "This does not rule out a combustion design: a burner controlled by its own timed valve could equally use a duration-like signal, which is exactly why the argument above rests on a domain premise about how the two mechanisms work, not on anything the model itself already builds or connects. Joule heating's own relation (power proportional to resistance and the square of current) is still not modeled, so efficiency and response-time comparisons remain out of reach either way.",
+  "residual_uncertainties": "Once a supply and a control policy are modeled together, this selection could be revisited against a real trade study rather than a domain premise alone.",
+  "disposition": "pending",
+  "dependency_freshness": "current",
+  "engineering_conclusion": "undetermined",
+  "record_kind": "worked_example"
+}
