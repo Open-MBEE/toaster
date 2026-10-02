@@ -14,9 +14,9 @@ This chapter adds exactly one new named model element, and only because its own 
 
 | Notebook | Concept |
 |---|---|
-| [01 - traceability graph](01-traceability-graph.ipynb) | Trace two of the model's three requirements from functional intent through allocation and realization to verification evidence, built entirely from real queries; find that the model's own strongest formal proof is tied to no requirement at all, close that gap directly by subsetting (not by `assert satisfy`, confirmed by negative control to fail, across three different bindings), and record how that tie should honestly be read (`AC-C10`). |
-| [02 - judgment ledger](02-judgment-synthesis.ipynb) | Reconstruct `AS-C06` and `AS-C08` (re-verified against their real originals) plus `AI-C06`, and read what each record's own kind, disposition and residual uncertainty actually says. |
-| [03 - engineering synthesis](03-engineering-signoff.ipynb) | Synthesize the graph and the ledger into one honest, bounded record, and state plainly why that record is not itself sign-off. |
+| [01: traceability graph](01-traceability-graph.ipynb) | Trace two of the model's three requirements from functional intent through allocation and realization to verification evidence, built entirely from real queries; find that the model's own strongest formal proof is tied to no requirement at all, close that gap directly by subsetting (not by `assert satisfy`, confirmed by negative control to fail, across three different bindings), and record how that tie should honestly be read (`AC-C10`). |
+| [02: judgment ledger](02-judgment-synthesis.ipynb) | Reconstruct `AS-C06` and `AS-C08` (re-verified against their real originals) plus `AI-C06`, and read what each record's own kind, disposition and residual uncertainty actually says. |
+| [03: engineering synthesis](03-engineering-signoff.ipynb) | Synthesize the graph and the ledger into one honest, bounded record, and state plainly why that record is not itself sign-off. |
 
 ## Equipment
 
