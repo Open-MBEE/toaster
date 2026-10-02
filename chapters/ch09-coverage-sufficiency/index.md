@@ -14,9 +14,9 @@ This chapter adds no new model element. `models/ch08-cumulative.sysml`, the real
 
 | Notebook | Concept |
 |---|---|
-| [01 - Querying the model for what has, and has not, been claimed](01-requirement-coverage.ipynb) | Build a real coverage report by joining every requirement usage against every satisfy relationship, contrast it against a polarity-blind join that gets it wrong, and confirm it against the repository's own (now-fixed) `requirement_coverage()` helper. |
-| [02 - Evidence sufficiency, applied to two real records](02-evidence-completeness.ipynb) | Apply Hawkins' sufficiency idea to two real ReviewRecords, reconstructed verbatim from Chapter 6 and Chapter 8. |
-| [03 - Stale detection, at scale](03-stale-detection.ipynb) | Check several tracked records against the real, current model in one pass, before and after a real edit. |
+| [01 - requirement coverage](01-requirement-coverage.ipynb) | Build a real coverage report by joining every requirement usage against every satisfy relationship, contrast it against a polarity-blind join that gets it wrong, and confirm it against the repository's own (now-fixed) `requirement_coverage()` helper. |
+| [02 - evidence sufficiency](02-evidence-completeness.ipynb) | Apply Hawkins' sufficiency idea to two real ReviewRecords, reconstructed verbatim from Chapter 6 and Chapter 8. |
+| [03 - stale detection at scale](03-stale-detection.ipynb) | Check several tracked records against the real, current model in one pass, before and after a real edit. |
 
 ## Equipment
 
