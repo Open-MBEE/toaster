@@ -64,6 +64,10 @@ development, and this tutorial tracks what each one can currently do.
 
 **OpenSysML** (`opensysml`, installed automatically by `check-tools.py`) is the primary tool: it
 loads, validates, queries, and evaluates every model in this tutorial. Every chapter needs it.
+`scripts/check-tools.py` also provisions a second OpenSysML binary, the
+render-capable CLI (distinct from the service binary the Python package
+itself talks to) — chapters that render an action-flow or state-transition
+diagram need it; nothing else does.
 
 **sysml-toolkit** does one thing OpenSysML cannot yet: prove that a constraint holds for every
 value of an unbound quantity, not just check it against one fixed value, using the Z3 solver.

@@ -21,6 +21,8 @@ The 7 cells below are the **required skeleton**. Additional markdown+code pairs 
 | **Seam** | Markdown | Exactly one sentence, addressing in behavior that the written construct, the tool that loaded it, and the rendered result are three distinct things the reader has just watched connect. Never names Tall or "the three worlds" (AGENTS.md 1.10) — see "Tall's three worlds" below. |
 | **Exercise pointer** | Markdown | One sentence: "Try the chapter exercise in `exercises/ch{N}/exercise.ipynb`: [one-line description]." No embedded code. |
 
+**Cell 0's own heading must be level 1 (`#`, not `##`), and the notebook's own `metadata` must carry `"short_title": "ChN-NN"`.** mystmd lifts a cell-0 level-1 heading into the page's own title and removes it from the body; any other heading level renders twice — once as an implicit page title, once again in the body (a real, found defect; `decisions/log.md` DL-090). `short_title` drives the sidebar/TOC label (`ChN-NN`, e.g. `Ch1-01`); the page banner and the in-body heading both show the real heading text instead.
+
 ### Construction zone — model increment pattern (construct-introducing notebooks only)
 
 All 13 construction notebooks use SysML string fragments (Editor API gaps — see DEFERRED.md
@@ -182,7 +184,7 @@ are relaxed for this content (see that skill for the exact grouping and why).
 
 Identify required cells by content type, not by cell index — additional narration cells may be interspersed.
 
-- [ ] **Concept statement present:** exactly one sentence starting "This notebook introduces"
+- [ ] **Concept statement present:** exactly one sentence starting "This notebook introduces"; cell 0's own heading is level 1 (`#`), and the notebook's `metadata` carries `short_title: "ChN-NN"`
 - [ ] **Context cell present:** one paragraph with link to prior notebook (where applicable)
 - [ ] **Model increment cell present (construct-introducing notebooks only):** two-phase — (1) `TOASTER_INCREMENT` assigned and printed as reflection (Pattern A: `str(editor.apply())`; Pattern B: SysML fragment string); (2) full cumulative loaded from `models/chXX-cumulative.sysml`; `assert model.ok`. Judgment/depth/navigation/analysis notebooks: cell-02 loads cumulative only, no TOASTER_INCREMENT.
 - [ ] **Negative control present:** short bad_source inline; `assert not bad.ok`; markdown names the error type

@@ -1,3 +1,7 @@
+---
+title: Overview
+---
+
 # Chapter 4: Functional Decomposition
 
 ## Purpose
@@ -8,9 +12,9 @@ Chapter 4 asks: how do we describe one functional step and make it an actual ste
 
 | Notebook | Construct | Concept |
 |---|---|---|
-| [01: action def](01-action-def-ffbd.ipynb) | `action def` with `in`/`out`, a balance constraint, nested as a step of another action | A named behavior with typed flows, a phenomena relation, and its place in a decomposition |
+| [01: action def](01-action-def-ffbd.ipynb) | `action def` with `in`/`out`, a balance constraint, nested as a step of another action | A named behavior with typed flows, a phenomena relation, and its place in a decomposition; an action-flow diagram of `ApplyHeat` nested in `ToastBread` |
 | [02: item def](02-heating-refinement.ipynb) | `item def` | Named signals, each stating its own denotation |
-| [03: completeness check](03-completeness-check.ipynb) | `asserted_inference` ReviewRecord | A judgment record claiming child claims support a parent claim |
+| [03: completeness check](03-completeness-check.ipynb) | `asserted_inference` ReviewRecord | A judgment record claiming child claims support a parent claim; a structure diagram rooted at `Toaster` |
 
 ## Equipment
 

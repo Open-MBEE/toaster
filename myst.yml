@@ -43,7 +43,7 @@ project:
     - title: "Chapter 5: Architecture and Allocation"
       children:
         - file: chapters/ch05-architecture/index
-        - file: chapters/ch05-architecture/01-concept-selection
+        - file: chapters/ch05-architecture/01-model-navigation
         - file: chapters/ch05-architecture/02-allocate
         - file: chapters/ch05-architecture/03-interfaces
         - file: chapters/ch05-architecture/conclusion

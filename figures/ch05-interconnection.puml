@@ -1,0 +1,12 @@
+@startuml
+skinparam linetype ortho
+rectangle "Toaster" as n1 <<part def>> {
+  rectangle "heating : HeatingSystem" as n2 <<part>> {
+    port "durationIn\n: ~DurationPort" as n3
+  }
+  rectangle "control : ControlSystem" as n4 <<part>> {
+    port "durationOut\n: DurationPort" as n5
+  }
+}
+n5 -- n3 : «interface» durationInterface
+@enduml
