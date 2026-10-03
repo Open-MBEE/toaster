@@ -49,6 +49,21 @@ glid:def-tutorial--functional-architecture
     gl:term glid:term-functional-architecture ;
     gl:text "The layer that states intents: the functions a system must perform, as transformations of typed flows with the phenomena and relations among them (for example an energy-balance inequality), together with the measures of effectiveness that say what is good and good enough. Solution-independent: it holds for a pop-up toaster and for tongs and a blowtorch." .
 
+glid:def-tutorial--judgment-record
+    a gl:Definition ;
+    gl:gloss "A persisted, checkable record of one judgment call: claim, subject, criteria, premises, evidence, rationale, counter-evidence, residual uncertainty, disposition. It documents reasoning; it proves and approves nothing." ;
+    gl:locator "src/toaster/evidence.py ReviewRecord; AGENTS.md Part 1, section 1.6" ;
+    gl:refines glid:def-hawkins--asserted-context,
+        glid:def-hawkins--asserted-inference,
+        glid:def-hawkins--asserted-solution,
+        glid:def-hawkins--assurance-deficit,
+        glid:def-hawkins--counter-evidence,
+        glid:def-hawkins--judgment ;
+    gl:source glid:src-tutorial ;
+    gl:status gl:proposed ;
+    gl:term glid:term-judgment-record ;
+    gl:text "A persisted, checkable record of one judgment call, held as a ReviewRecord. It names the claim, the model element it is about (when it has one), the criteria, the premises, the evidence, the rationale, the counter-evidence, the residual uncertainty and a disposition, and is one of three kinds taken from Hawkins: asserted context, asserted inference or asserted solution. It documents the reasoning so a reader can examine it; it does not prove the claim or approve anything. The phrase 'judgment record' is ours; the idea is Hawkins's: identify assurance deficits as completely as practicable and justify the residual ones." .
+
 glid:def-tutorial--logical-architecture
     a gl:Definition ;
     gl:approvalNote "DL-015, 2026-09-26: approved in planning ('differsFrom, approved')" ;
