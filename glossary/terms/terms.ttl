@@ -68,6 +68,11 @@ glid:term-confidence-argument
     gl:label "confidence argument" ;
     gl:loadBearing "true"^^xsd:boolean .
 
+glid:term-conjugated-port
+    a gl:Term ;
+    gl:label "conjugated port" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
 glid:term-control-law
     a gl:Term ;
     gl:label "control law" ;
@@ -103,6 +108,11 @@ glid:term-emergence
     gl:label "emergence" ;
     gl:loadBearing "true"^^xsd:boolean .
 
+glid:term-feature-chain
+    a gl:Term ;
+    gl:label "feature chain" ;
+    gl:loadBearing "false"^^xsd:boolean .
+
 glid:term-function
     a gl:Term ;
     gl:label "function" ;
@@ -121,6 +131,11 @@ glid:term-interface
 glid:term-judgment
     a gl:Term ;
     gl:label "judgment" ;
+    gl:loadBearing "true"^^xsd:boolean .
+
+glid:term-judgment-record
+    a gl:Term ;
+    gl:label "judgment record" ;
     gl:loadBearing "true"^^xsd:boolean .
 
 glid:term-logical-architecture
