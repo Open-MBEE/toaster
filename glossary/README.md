@@ -25,6 +25,29 @@ uv run python -m glossary render                  # write glosses between <!-- g
 
 Every command takes `--json`. `check` passes in a fresh worktree or CI without the source PDFs (hashes and quotes are verified only for files that are present).
 
+## Getting the source files
+
+The seven file sources in `sources/sources.ttl` are copyrighted, so the originals are not in the repository. `sources/local/` is gitignored; you fetch the files once and place them there under the exact filename in the first column. Each row gives the first 12 hex digits of the registered `gl:sha256` (the full hash is in `sources/sources.ttl`).
+
+| Registered filename | What it is | Where to get it | sha256 (first 12) |
+|---|---|---|---|
+| `sysml-v2.0-language-formal-26-03-02.pdf` | OMG SysML v2.0, Part 1: Language Specification, formal/2026-03-02 | OMG specification page <https://www.omg.org/spec/SysML/2.0/>, row "Specification - Language", formal/26-03-02; its PDF link is <https://www.omg.org/spec/SysML/2.0/Language/PDF>. Match by sha256 | `46e6c0476a6f` |
+| `kerml-1.1-beta2.pdf` | OMG Kernel Modeling Language (KerML) 1.1 Beta 2 (older than the SysML v2.0 spec that builds on it) | OMG KerML page <https://www.omg.org/spec/KerML/> lists only formal/26-03-01, not this Beta 2 draft; no public link to Beta 2 was confirmed, so obtain the OMG KerML 1.1 Beta 2 PDF and match by sha256 | `e8b7f33d9dac` |
+| `sysml-api-services-v1.0-formal-26-03-04.pdf` | OMG Systems Modeling API and Services v1.0, formal/2026-03-04 | OMG specification page <https://www.omg.org/spec/SystemsModelingAPI/>, formal/26-03-04; its PDF link is <https://www.omg.org/spec/SystemsModelingAPI/1.0/PDF> | `1a93ffb92145` |
+| `sebok-v2.14.pdf` | Guide to the Systems Engineering Body of Knowledge (SEBoK), version 2.14 | SEBoK <https://sebokwiki.org/wiki/Download_SEBoK_PDF> ("Download SEBoK PDF") | `251668f0ed4e` |
+| `astrom-murray-fbs-2e-v3.1.5.pdf` | Astrom and Murray, Feedback Systems, 2nd ed., electronic edition v3.1.5 (24 Jul 2020) | The authors' book page <https://fbswiki.org/wiki/index.php/Main_Page> ("Complete PDF (24 Jul 2020)") | `e2fa6992fe5a` |
+| `hawkins-2011.pdf` | Hawkins, Kelly, Knight, Graydon, "A New Approach to Creating Clear Safety Arguments", Springer 2011, the book-chapter PDF, DOI 10.1007/978-0-85729-133-2_1 | <https://doi.org/10.1007/978-0-85729-133-2_1> (Springer; download the chapter PDF in a browser) | `53af633615db` |
+| `sutton-barto-rl-2e.pdf` | Sutton and Barto, Reinforcement Learning: An Introduction, 2nd ed. (authors' PDF) | <http://incompleteideas.net/book/RLbook2020trimmed.pdf> (the "trimmed" file) | `fd1751be1a2f` |
+
+Procedure:
+
+1. Put each file, or a symlink to it, in `glossary/sources/local/` under the exact registered filename. Symlinks work: `verify-sources` hashes through them.
+2. Run `uv run python -m glossary verify-sources`. Success prints `verify-sources: ok` and exits 0.
+3. If it reports `source-absent`, the filename is wrong or missing. If it reports `source-hash`, you have a different edition or print of the document: run `shasum -a 256 <file>` and compare it with the table, and fetch the right one. The hash is what counts, not where the file came from.
+4. Never commit these files. `check` (not `verify-sources`) is the command CI and fresh worktrees run, and it only warns for absent files; `verify-sources` is the strict check for a machine that holds the originals.
+5. Hawkins: the registered file is the Springer book-chapter PDF. A browser download is named like `chp:10.1007%2F978-0-85729-133-2_1.pdf`; rename it to `hawkins-2011.pdf`. An author's manuscript copy exists elsewhere, but its hash does not match.
+6. Sutton and Barto: use the authors' `RLbook2020trimmed.pdf`. The same site's `RLbook2020.pdf` and `RLbook2018.pdf` have different hashes and fail. The site's `https` endpoint has a self-signed certificate (so `curl` and some browsers refuse it); the plain `http` link above works, and the sha256 is what guarantees you have the right file.
+
 ## Layout
 
 ```

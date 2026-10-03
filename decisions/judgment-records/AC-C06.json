@@ -7,7 +7,7 @@
   "model_ref": "ToasterDemo::heatGenerationReq",
   "content_hash": "4742e6898be0ec8dbbcaa3f84004f1cbc7e537b0831dd75cd598c63ac94767b9",
   "scope": "ToasterDemo",
-  "criteria": "MoE if the split names who cares and frames the measure as acceptance; MoP if its threshold is derived from a stated MoE with a means of checking (architecture-layers skill).",
+  "criteria": "MoE if the split names who cares and frames the measure as acceptance; MoP if its threshold is derived from a stated MoE with a means of checking (SEBoK's MoE/MoP distinction, PDF 1562).",
   "premises": [],
   "assumption_refs": [
     "The MoE/MoP split for a component rating is a case-specific modeling judgment, not a fixed rule (AC-C03 makes the same split for toast timing)."

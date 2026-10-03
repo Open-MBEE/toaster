@@ -3,6 +3,17 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+glid:def-kerml--feature-chain
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:locator "Sec. 7.3.4.6, p. 38 (PDF 64)" ;
+    gl:pdfPage "64"^^xsd:integer ;
+    gl:quote "The values of a chained feature are the same as the values of the last feature in the chain." ;
+    gl:source glid:src-kerml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-feature-chain ;
+    gl:text "A chained feature has two or more chaining features, listed in order, and that list is its feature chain. The values of the chained feature are the values of the last feature in the chain, found by following the values of each feature in turn from the first." .
+
 glid:def-kerml--specialization
     a gl:Definition ;
     gl:confirmedBy "Z" ;

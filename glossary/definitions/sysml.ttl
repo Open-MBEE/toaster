@@ -25,6 +25,18 @@ glid:def-sysml--allocation
     gl:term glid:term-allocation ;
     gl:text "A mapping across the structures and hierarchies of a model; abstract, preliminary and sometimes tentative, used early in design as a precursor to detailed specification." .
 
+glid:def-sysml--conjugated-port
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:gloss "A port usage typed by the conjugate of a port definition: the same features with in and out reversed, written with a ~. It conforms to usages of the original port definition." ;
+    gl:locator "Sec. 7.12.1, p. 61 (PDF 93); notation in Sec. 7.12.3, p. 63 (PDF 95)" ;
+    gl:pdfPage "93"^^xsd:integer ;
+    gl:quote "A conjugated port usage automatically conforms to a usage of the corresponding original port definition." ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-conjugated-port ;
+    gl:text "Every port definition has a conjugated port definition with the same features but with directed features reversed (in and out swapped, inout unchanged). A conjugated port usage is a usage of that definition, written with a ~ before the original port definition's name, and it conforms to usages of the original port definition." .
+
 glid:def-sysml--definition
     a gl:Definition ;
     gl:confirmedBy "Z" ;
@@ -35,6 +47,18 @@ glid:def-sysml--definition
     gl:status gl:confirmed ;
     gl:term glid:term-definition ;
     gl:text "A definition element classifies a kind of element (a classification of attributes, parts, actions and so on)." .
+
+glid:def-sysml--feature-chain
+    a gl:Definition ;
+    gl:confirmedBy "Z" ;
+    gl:gloss "Two or more qualified names separated by dots, each resolved inside the one before it, naming a deeply nested usage, for example the end of a connection." ;
+    gl:locator "Sec. 7.6.6, p. 43 (PDF 75)" ;
+    gl:pdfPage "75"^^xsd:integer ;
+    gl:quote "A feature chain is a textual notation specified as a sequence of two or more qualified names separated by dot (.) symbols." ;
+    gl:source glid:src-sysml ;
+    gl:status gl:confirmed ;
+    gl:term glid:term-feature-chain ;
+    gl:text "A textual notation of two or more qualified names separated by dots, each resolving to a usage (feature), the later ones resolved inside the one before. The path of usages is recorded, not just the final usage, so it can name a deeply nested usage, for example as the end of a connection." .
 
 glid:def-sysml--interface
     a gl:Definition ;
