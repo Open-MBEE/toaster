@@ -8,7 +8,7 @@ title: Overview
 
 This chapter asks a different question from Chapter 3's and Chapter 6's own: not "does the model's own entered value satisfy a threshold" (point evaluation, which those chapters already do), but "does a real-arithmetic lemma hold for every value its unbound features could take" (a genuinely formal, model-checked property).
 
-After completing this chapter, the model has grown by one new construct, `deliveredEnergyBoundedBySupply`, a real SysML `assert constraint` stating a real-arithmetic lemma of the same shape as the conservation entailment that Chapter 7's `efficiencyBounded` and `deliveredEnergy` already imply. It is proved, for every value of efficiency, power and duration a hand-restated companion admits, by a real Z3-backed solver (`sysml-toolkit`'s `verify --solve`, wrapped by `toaster.modelcheck`), not evaluated at one point. It is a hand-restated copy, not a solver-checked reference to `HeatGenerator`'s own `efficiencyBounded` or `deliveredEnergy`: this toolchain does not compose separately declared constraints, and cannot reason through a chained calc invocation (`DEFERRED.md` D-030, D-031).
+After completing this chapter, the model has grown by one new construct, `deliveredEnergyBoundedBySupply`, a real SysML `assert constraint` stating a real-arithmetic lemma of the same shape as the conservation entailment that Chapter 7's `efficiencyBounded` and `deliveredEnergy` already imply. It is proved, for every value of efficiency, power and duration a hand-restated companion admits, by a real Z3-backed solver (`sysml-toolkit`'s `verify --solve`, wrapped by `toaster.modelcheck`), not evaluated at one point. It is a hand-restated copy, not a solver-checked reference to `HeatGenerator`'s own `efficiencyBounded` or `deliveredEnergy`: this toolchain does not compose separately declared constraints, and cannot reason through a chained calc invocation (`DEFERRED.md` [D-030](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md#d-030-two-independently-declared-assert-constraints-are-never-composed-by-verify---solve-whether-sibling-or-inherited), [D-031](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md#d-031-a-chained-calcfunction-invocation-inside-an-assert-constraint-is-not-in-z3s-solvable-fragment)).
 
 ## Ingredients
 
@@ -20,13 +20,13 @@ After completing this chapter, the model has grown by one new construct, `delive
 
 ## Equipment
 
-See [docs/setup.md](../../docs/setup.md) for environment setup. This chapter additionally needs a local build of `sysml-toolkit`'s `sysmlv2` CLI and the `z3` binary (see `tests/test_modelcheck.py` for the exact paths this repository's own tests use); without them, `verify_holds()` cannot run.
+See [Getting Started](../../docs/setup.md) for environment setup. This chapter additionally needs a local build of `sysml-toolkit`'s `sysmlv2` CLI and the `z3` binary (see [`tests/test_modelcheck.py`](https://github.com/Open-MBEE/toaster/blob/main/tests/test_modelcheck.py) for the exact paths this repository's own tests use); without them, `verify_holds()` cannot run.
 
 ## Method
 
-Notebook 01 states the new lemma directly in `models/ch08-cumulative.sysml`. Notebook 02 evaluates the model's existing `assert satisfy` claims with `verify_satisfaction()` (point evaluation, unchanged since Chapter 3 and Chapter 6), proves the lemma with `verify_holds()` (universal, over every value a small companion restatement's unbound features can take), shows a fully broken variant of the same shape reported `violated`, and shows a merely weakened variant reported `undecided`, with `holds()` correctly refusing to collapse that into a clean pass or fail. Notebook 03 shows the resulting judgment record is not static: loosening the lemma's own bound makes the record's stored hash stop matching the model.
+Notebook 01 states the new lemma directly in [`models/ch08-cumulative.sysml`](https://github.com/Open-MBEE/toaster/blob/main/models/ch08-cumulative.sysml). Notebook 02 evaluates the model's existing `assert satisfy` claims with `verify_satisfaction()` (point evaluation, unchanged since Chapter 3 and Chapter 6), proves the lemma with `verify_holds()` (universal, over every value a small companion restatement's unbound features can take), shows a fully broken variant of the same shape reported `violated`, and shows a merely weakened variant reported `undecided`, with `holds()` correctly refusing to collapse that into a clean pass or fail. Notebook 03 shows the resulting judgment record is not static: loosening the lemma's own bound makes the record's stored hash stop matching the model.
 
-Chapter 7's parameter sweep samples 50 specific power values and shows where a threshold is crossed among those samples; it says nothing about values it did not sample. `deliveredEnergyBoundedBySupply`, when genuinely proved, holds for every value in its stated domain at once, not just the ones anyone thought to try. That is the real difference between checking scenarios and model checking a property (AGENTS.md 1.1 item 5): simulation explores; a proof, when it succeeds, covers the whole space it is stated over.
+Chapter 7's parameter sweep samples 50 specific power values and shows where a threshold is crossed among those samples; it says nothing about values it did not sample. `deliveredEnergyBoundedBySupply`, when genuinely proved, holds for every value in its stated domain at once, not just the ones anyone thought to try. That is the real difference between checking scenarios and model checking a property: simulation explores; a proof, when it succeeds, covers the whole space it is stated over.
 
 ## Expected result
 
@@ -34,4 +34,4 @@ After running all three notebooks: `deliveredEnergyBoundedBySupply` is confirmed
 
 ## Experiment
 
-Try the [Chapter 8 exercise](../../exercises/ch08/exercise.ipynb): it works through the same `verify_satisfaction()` and stale-detection pattern on its own, separate coffee-maker exercise model.
+Try the [Chapter 8 exercise](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch08/exercise.ipynb): it works through the same `verify_satisfaction()` and stale-detection pattern on its own, separate coffee-maker exercise model.

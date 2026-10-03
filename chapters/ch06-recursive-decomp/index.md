@@ -20,7 +20,7 @@ After completing this chapter, the cumulative model has a real second-level func
 
 ## Equipment
 
-See [docs/setup.md](../../docs/setup.md) for environment setup. No chapter-specific tools are required.
+See [Getting Started](../../docs/setup.md) for environment setup. No chapter-specific tools are required.
 
 ## Method
 
@@ -32,4 +32,4 @@ After running all three notebooks, `perform_relationships(model)` includes `Heat
 
 ## Experiment
 
-Try the [Chapter 6 exercise](../../exercises/ch06/exercise.ipynb): nest `MoveWater` inside `ApplyWater`, give it an abstract carrier `WaterMover`, build `BrewAssembly :> BrewUnit` composing it with a usage-level allocation, and state a `BrewReq` requirement on `WaterMover` itself, following the same level-2 function/carrier/allocation/requirement pattern this chapter builds for `GenerateHeat`/`HeatGenerator`; record a measure-framing and a mechanism-selection judgment the requirement raises (`Impeller`, built only after the selection is argued), and write an honestly scoped `asserted_inference` record stating what the decomposition establishes and does not.
+Try the [Chapter 6 exercise](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch06/exercise.ipynb): nest `MoveWater` inside `ApplyWater`, give it an abstract carrier `WaterMover`, build `BrewAssembly :> BrewUnit` composing it with a usage-level allocation, and state a `BrewReq` requirement on `WaterMover` itself, following the same level-2 function/carrier/allocation/requirement pattern this chapter builds for `GenerateHeat`/`HeatGenerator`; record a measure-framing and a mechanism-selection judgment the requirement raises (`Impeller`, built only after the selection is argued), and write an honestly scoped `asserted_inference` record stating what the decomposition establishes and does not.
