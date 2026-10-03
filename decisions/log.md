@@ -1558,3 +1558,13 @@ Reasoning: none beyond the owner's direct ruling; recorded here so the A3 defaul
 Determined: yes.
 Extension: no.
 Provenance: `decisions/pages-publishing/a4-dangling-references.md` A3; `decisions/pages-publishing-survey.md` section 4; git author identity `Michael Zargham <mzargham@users.noreply.github.com>` on all commits; `myst.yml` project author "Michael Zargham".
+
+## DL-113 | 2026-10-03 | PAGES-PUBLISHING-PHASE-A | PA-2 complete: the unmodified book builds on ubuntu-latest and reproduces the stored outputs once Z3 is provisioned; Phase A done
+
+Path: Orchestrator-run; Z authorized the push and the run
+Decision: Two diagnostic runs on `ubuntu-latest` (branch `pub/diagnose`, kept on the remote). Run 1 failed Ch8-02 and Ch10-01 only because `sysmlv2 verify --solve` needs a separate `z3` executable. Run 2, with Z3 5.1.0 (pinned sha256), built all 59 pages with zero cell errors, 18 figures and outputs identical to the stored macOS outputs for the toolkit-dependent notebooks. About 95 s per job. Findings: `decisions/pages-publishing/a2-real-runner.md`; survey updated. Phase A is complete; Phase B waits only on the reference-policy decisions for Z/ACE (survey section 4).
+Principles applied: P5 (measure before fixing; a green job over cell errors is not a pass, so errors and figures are counted separately).
+Reasoning: the first run's two failures were attributable to a missing tool rather than the book, and the pinned-tool second run isolates that cause; the figure count alone (18 in both runs) would have hidden the failures.
+Determined: yes.
+Extension: no.
+Provenance: runs 37146440620 and 37146757647; commits 7498a97, 48b8bb7 on pub/diagnose; decisions/pages-publishing/a2-real-runner.md; decisions/pages-publishing-survey.md.

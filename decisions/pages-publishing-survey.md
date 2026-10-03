@@ -2,8 +2,7 @@
 
 **Date:** 2026-10-03
 **Inputs:** `decisions/pages-publishing/a1-clean-checkout.md` (PA-1), `a3-output-equivalence.md` (PA-3),
-`a4-dangling-references.md` (PA-4); PA-2 (real `ubuntu-latest` run) is **pending**: the workflow is final on
-branch `pub/diagnose` (local commit `7498a97`; the remote has an older version) and has not been run.
+`a4-dangling-references.md` (PA-4); PA-2 (real `ubuntu-latest` runs) is complete: `decisions/pages-publishing/a2-real-runner.md`.
 Every finding below was reproduced by an independent reviewer on a different model, except where noted.
 
 ## 1. What breaks on a clean machine (PA-1)
@@ -29,8 +28,9 @@ Notebook cells that name a local path (the full list for the fix): Ch5-03 cell-1
   `sysmlv2-0.9.1-aarch64-apple-darwin.tar.gz` sha256 `ad0204041c95ce9817d398420e5057132a1378d53a812172cbd207cc40100c4a`.
   Tarball layout `sysmlv2-0.9.1-<target>/{sysmlv2,README.md,LICENSE}`. The Linux binary links only libc, libm, libgcc_s (no Z3 library needed).
 - `sysml.library`: `Systems-Modeling/SysML-v2-Release` commit `de1070ae8e79c21532b8004fc663d47b35d0e9fa`, top-level `sysml.library`; the sparse-clone commands in the workflow were run by a reviewer and fetch it (117 files, 1.4 MB `.git`).
+- Z3: `sysmlv2 verify --solve` shells out to a separate `z3` (no libz3 link); Linux needs `z3-5.1.0-x64-glibc-2.39.zip`, sha256 `f47be8d27d3230e823bf1eeede2fe0abaca55bb78d0b59974370e6689a92284a` (matches Z's local Z3 5.1.0). Without it Ch8-02 and Ch10-01 fail on the runner.
 - PlantUML: Ubuntu's apt `plantuml` (1.2020.2) **rejects** the committed `figures/ch05-interconnection.puml` (a `port` inside a `rectangle`); the upstream jar `plantuml-1.2026.8.jar` (sha256 `5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462`, matching GitHub's published digest) renders it. apt `plantuml` pulls Java 21, not 17.
-- **Output equivalence (PA-3, macOS arm64 only):** the release v0.9.1 binary reproduces every output of Ch5-03, Ch8-01/02/03 and Ch10-01 (cells 25, 46, 48) versus both Z's local build (`0.9.1-1-gaf839f0`) and the stored outputs: zero verdict-changing differences, Ch5 figure byte-identical, same Z3 witness. Cosmetic only: stdout stream chunk boundaries vary run to run, so any CI comparison of raw outputs must join adjacent same-stream chunks first. **Not measured: Linux** (Z3 witness values and PlantUML/Graphviz versions could differ); that is PA-2's job.
+- **Output equivalence (PA-3, macOS arm64 only):** the release v0.9.1 binary reproduces every output of Ch5-03, Ch8-01/02/03 and Ch10-01 (cells 25, 46, 48) versus both Z's local build (`0.9.1-1-gaf839f0`) and the stored outputs: zero verdict-changing differences, Ch5 figure byte-identical, same Z3 witness. Cosmetic only: stdout stream chunk boundaries vary run to run, so any CI comparison of raw outputs must join adjacent same-stream chunks first. **Linux is covered by PA-2:** the same outputs reproduce exactly on ubuntu-latest with the release binary, Z3 5.1.0 and PlantUML 1.2026.8.
 
 ## 3. Dangling references (PA-4)
 
@@ -49,7 +49,7 @@ Notebook cells that name a local path (the full list for the fix): Ch5-03 cell-1
 5. **A10** `reproducibility.md` cites `decisions/pass4-run-*.md` (a glob): default link the `decisions/` directory; alternative drop the pointer.
 6. The published `docs/setup.md`, `docs/contributor.md` and `docs/reproducibility.md` currently say deployment is off; they must change when the site is published.
 7. Which exercises, if any, should be published (default: none; link to GitHub).
-8. Spec Q1 (CI time): measured build time 46 s with all notebooks executed on this Mac; the full runner time is the PA-2 result.
+8. Spec Q1 (CI time): answered by PA-2: about 95 s per job on a cold ubuntu-latest runner (build 24-27 s), no caching. Acceptable by the spec's default.
 
 ## 5. Consequences for Phase B
 
@@ -57,4 +57,5 @@ Notebook cells that name a local path (the full list for the fix): Ch5-03 cell-1
 - PUB-4 (CI) changes: build with `uv run --frozen npx myst build --html --execute --strict` (F1, F2); the figure check counts `image/*` outputs in `_build/site/content/*.json` against a recorded baseline (not DOM images), plus a zero-error check (a notebook that halts after a figure still shows its figure); the leak scan must cover `$HOME`/`/home/runner`/`/opt/homebrew`/`Documents/GitHub`/`/Users/`; pin uv, Python and the Node version in CI; decide whether to pin the MyST book theme (F8).
 - New contract: retarget links to `exercises/` and `DEFERRED.md` to GitHub (F6) and document `uv run` for local preview in `docs/setup.md` (F1).
 - PUB-5 edits are driven by the 365-row table, minimal diffs, no model or persisted-record changes (section 3).
-- Phase B waits for: the PA-2 Linux run (confirms Linux Z3 witness and PlantUML results, runner time), and the decisions above.
+- PUB-3/PUB-4 must also provision Z3 5.1.0 (pinned sha256) and put it on PATH; the resolver gains `Z3` (env `Z3`, then PATH). PUB-4's check is: zero cell errors (`--strict`) AND image-output count equal to the recorded baseline (18).
+- Phase B waits only for the decisions above (Z/ACE); PA-2 is complete.
