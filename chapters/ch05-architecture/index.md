@@ -20,7 +20,7 @@ After completing this chapter, the cumulative model has a named, usage-level `al
 
 ## Equipment
 
-See [docs/setup.md](../../docs/setup.md) for environment setup. No chapter-specific tools are required beyond the base installation.
+See [Getting Started](../../docs/setup.md) for environment setup. No chapter-specific tools are required beyond the base installation.
 
 ## Method
 
@@ -36,4 +36,4 @@ After running all three notebooks, the cumulative model contains the complete Ch
 
 ## Experiment
 
-Try the [Chapter 5 exercise](../../exercises/ch05/exercise.ipynb): allocate your coffee maker's `applyWater` step to `brewUnit` (both usages, not the `Brew`/`BrewUnit` definitions), then add a `CoffeeFlow` assembly with `pump` and `filterUnit` parts joined by a named, port-typed interface, confirm the port types are compatible, and render the interconnection diagram.
+Try the [Chapter 5 exercise](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch05/exercise.ipynb): allocate your coffee maker's `applyWater` step to `brewUnit` (both usages, not the `Brew`/`BrewUnit` definitions), then add a `CoffeeFlow` assembly with `pump` and `filterUnit` parts joined by a named, port-typed interface, confirm the port types are compatible, and render the interconnection diagram.

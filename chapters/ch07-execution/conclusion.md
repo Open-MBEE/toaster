@@ -10,7 +10,7 @@ The cumulative model now has `deliveredEnergy`, a calc on `HeatGenerator` with a
 
 ## What this establishes
 
-The efficiency bound is a real constraint, not a comment: it holds for `rated`'s own value and fails, witnessed by evaluation, for a value outside it, and there is no way to reach the relation with an efficiency that bypasses this check. `ToastingSystem` now exhibits a real mode machine: `Cycle`'s traces are derived from its own transition table, not entered as a choice. Running `[Start, Finish]` and `[Start, Cancel]` shows the machine actually cycling, including a repeated run that returns to `idle` twice. These traces are specification analysis: they confirm the transition table says what it was meant to say and would catch a mistake in it, not evidence about the toaster's behavior in use. OpenSysML v0.9.0 does not resolve a transition's trigger against the item def it names; the tutorial's own guard, demonstrated directly in notebook 02, catches a typo'd trigger the tool lets through silently (`DEFERRED.md` D-023).
+The efficiency bound is a real constraint, not a comment: it holds for `rated`'s own value and fails, witnessed by evaluation, for a value outside it, and there is no way to reach the relation with an efficiency that bypasses this check. `ToastingSystem` now exhibits a real mode machine: `Cycle`'s traces are derived from its own transition table, not entered as a choice. Running `[Start, Finish]` and `[Start, Cancel]` shows the machine actually cycling, including a repeated run that returns to `idle` twice. These traces are specification analysis: they confirm the transition table says what it was meant to say and would catch a mistake in it, not evidence about the toaster's behavior in use. OpenSysML v0.9.0 does not resolve a transition's trigger against the item def it names; the tutorial's own guard, demonstrated directly in notebook 02, catches a typo'd trigger the tool lets through silently (`DEFERRED.md` [D-023](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md#d-023-opensysml-does-not-resolve-state-machine-transition-trigger-names)).
 
 ## What comes next
 
@@ -18,4 +18,4 @@ Chapter 8 checks the model's own claims against its own values: `verify_satisfac
 
 ## Exercise
 
-See `exercises/ch07/exercise.ipynb`: add a bounded `transferEfficiency` slot and `deliveredMass` calc to the coffee maker's `WaterMover`, add a `BrewCycle` state machine, and sweep `deliveredMass`'s `throughput` argument against `BrewReq`'s own threshold, read from the model.
+See [`exercises/ch07/exercise.ipynb`](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch07/exercise.ipynb): add a bounded `transferEfficiency` slot and `deliveredMass` calc to the coffee maker's `WaterMover`, add a `BrewCycle` state machine, and sweep `deliveredMass`'s `throughput` argument against `BrewReq`'s own threshold, read from the model.
