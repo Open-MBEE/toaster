@@ -128,6 +128,15 @@ Sources
 - Idea
   - Hawkins et al. 2011, Sec. 1, p. 3
 
+## conjugated port
+
+A port usage typed by the conjugate of a port definition: the same features with in and out reversed, written with a ~. It conforms to usages of the original port definition.
+
+Sources
+
+- Formal semantics
+  - SysML v2.0 Language Specification, Sec. 7.12.1, p. 61; notation in Sec. 7.12.3, p. 63
+
 ## control law
 
 A rule mapping the control error to the actuation command.
@@ -196,6 +205,16 @@ Sources
   - SEBoK, Emergence and Complexity, 'Emergence in Systems'
   - SEBoK, Glossary: Emergence
 
+## feature chain
+
+Two or more qualified names separated by dots, each resolved inside the one before it, naming a deeply nested usage, for example the end of a connection.
+
+Sources
+
+- Formal semantics
+  - SysML v2.0 Language Specification, Sec. 7.6.6, p. 43
+  - KerML, Sec. 7.3.4.6, p. 38
+
 ## function
 
 A transformation of input flows to output flows, with defined performance.
@@ -240,6 +259,15 @@ Sources
 
 - Idea
   - Hawkins et al. 2011, Sec. 3.4, p. 14
+
+## judgment record
+
+A persisted, checkable record of one judgment call: claim, subject, criteria, premises, evidence, rationale, counter-evidence, residual uncertainty, disposition. It documents reasoning; it proves and approves nothing.
+
+Sources
+
+- Tutorial
+  - This tutorial's gloss refines asserted context in Hawkins et al. 2011, asserted inference in Hawkins et al. 2011, asserted solution in Hawkins et al. 2011, assurance deficit in Hawkins et al. 2011, counter-evidence in Hawkins et al. 2011 and judgment in Hawkins et al. 2011.
 
 ## logical architecture
 
