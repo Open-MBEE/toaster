@@ -1548,3 +1548,13 @@ Reasoning: review findings changed the work materially: the first diagnostic wor
 Determined: yes for the measurements; underdetermined for the reference policy items A1-A10 (Z/ACE) and for the Linux behavior (PA-2).
 Extension: no.
 Provenance: decisions/pages-publishing/a1-clean-checkout.md, a3-output-equivalence.md, a4-dangling-references.md; decisions/pages-publishing-survey.md; docs/superpowers/specs/2026-10-03-pages-publishing-design.md; docs/superpowers/plans/2026-10-03-pages-publishing-phase-a-plan.md; branch pub/diagnose.
+
+## DL-112 | 2026-10-03 | IDENTITY | "Z" is the contributor identity mzargham; public pages name the handle; the mapping is recorded in the repo
+
+Path: mzargham decided directly (chat, 2026-10-03), answering PA-4's open item A3 (should the handle "Z" appear on the public site)
+Decision: "Z" refers to the contributor identity `mzargham` (Michael Zargham, GitHub user `mzargham`, the project's author and chief engineer; the only contributor so far). Where the repo or published site mentions "Z" to readers, it says `mzargham` (e.g. "mzargham (Z)") at first mention rather than a bare "Z", or defines the mapping once on the page. The mapping is recorded durably in `AGENTS.md` Part 1 and `docs/contributor.md` (Phase B, PUB-5/PUB-6). If other contributors join, they are named by their own handles; "Z" keeps meaning `mzargham` and is never reused for another person. Internal files (`decisions/`, skills, agents) keep using "Z" as before; only the published pages change, and only to add the handle.
+Principles applied: P5 (record who a role-name refers to so history stays readable); P6 (the owner decides how their identity appears publicly).
+Reasoning: none beyond the owner's direct ruling; recorded here so the A3 default in `decisions/pages-publishing-survey.md` is superseded.
+Determined: yes.
+Extension: no.
+Provenance: `decisions/pages-publishing/a4-dangling-references.md` A3; `decisions/pages-publishing-survey.md` section 4; git author identity `Michael Zargham <mzargham@users.noreply.github.com>` on all commits; `myst.yml` project author "Michael Zargham".
