@@ -15,6 +15,11 @@ naming where the candidate came from; it never falls through silently to the nex
 exception is step 3, where an absent file just means "not provisioned" and resolution continues to
 step 4. An environment variable set to the empty string counts as unset.
 
+`java` has one more check. A candidate that passes the executable test is run as `java -version` (10 s
+timeout); one that does not run (macOS ships `/usr/bin/java` as a stub that exits 1 with "Unable to
+locate a Java Runtime") raises `ToolNotFoundError`. A successful probe is cached per resolved path;
+failures are not cached.
+
 If nothing is found, `ToolNotFoundError` names the environment variable and the provisioning command.
 """
 
@@ -22,12 +27,16 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
 REPO_ROOT: Path = Path(__file__).resolve().parents[2]
 
 _PROVISION_HINT = "uv run python scripts/provision-tools.py"
+
+_JAVA_PROBE_TIMEOUT: float = 10.0
+_JAVA_PROBED_OK: set[Path] = set()
 
 
 class ToolNotFoundError(RuntimeError):
@@ -58,6 +67,7 @@ def _resolve(
     provisioned: str | None,
     which: str | None,
     kind: tuple[str, Callable[[Path], bool]],
+    probe: Callable[[Path, str], None] | None = None,
 ) -> Path:
     what, is_valid = kind
 
@@ -66,6 +76,8 @@ def _resolve(
             raise ToolNotFoundError(
                 f"{tool} from {source} is {str(path)!r}, which is not {what}{hint}"
             )
+        if probe is not None:
+            probe(path, source)
         return path
 
     if explicit is not None:
@@ -95,6 +107,40 @@ def _resolve(
     )
 
 
+def _probe_java(path: Path, source: str) -> None:
+    """Run `path -version`; raise `ToolNotFoundError` if java does not run. Cache successes only."""
+    if path in _JAVA_PROBED_OK:
+        return
+    hint = "set the JAVA environment variable to a working java"
+    try:
+        result = subprocess.run(
+            [str(path), "-version"],
+            capture_output=True,
+            text=True,
+            timeout=_JAVA_PROBE_TIMEOUT,
+            check=False,
+            # posix_spawn instead of fork: a fork child runs gRPC's atfork handlers (gRPC is loaded by
+            # other parts of the tutorial) and those print to the child's stderr, which we report.
+            close_fds=False,
+        )
+    except subprocess.TimeoutExpired:
+        raise ToolNotFoundError(
+            f"java from {source} is {str(path)!r}, but java did not run: "
+            f"`-version` did not finish within {_JAVA_PROBE_TIMEOUT:g} s; {hint}"
+        ) from None
+    except OSError as error:
+        raise ToolNotFoundError(
+            f"java from {source} is {str(path)!r}, but java did not run: {error}; {hint}"
+        ) from error
+    if result.returncode != 0:
+        lines = [line.strip() for line in result.stderr.splitlines() if line.strip()]
+        first = lines[0] if lines else f"exit status {result.returncode}, no stderr output"
+        raise ToolNotFoundError(
+            f"java from {source} is {str(path)!r}, but java did not run: {first}; {hint}"
+        )
+    _JAVA_PROBED_OK.add(path)
+
+
 def resolve_sysmlv2(explicit: str | Path | None = None) -> Path:
     """The `sysmlv2` executable: explicit, `SYSMLV2_BINARY`, `.tools/bin/sysmlv2`, then PATH."""
     return _resolve("sysmlv2", explicit, "SYSMLV2_BINARY", "bin/sysmlv2", "sysmlv2", _EXECUTABLE)
@@ -111,8 +157,8 @@ def resolve_plantuml_jar(explicit: str | Path | None = None) -> Path:
 
 
 def resolve_java(explicit: str | Path | None = None) -> Path:
-    """The `java` executable: explicit, `JAVA`, then PATH (java is not provisioned)."""
-    return _resolve("java", explicit, "JAVA", None, "java", _EXECUTABLE)
+    """The `java` executable: explicit, `JAVA`, then PATH (java is not provisioned); it must run `-version`."""
+    return _resolve("java", explicit, "JAVA", None, "java", _EXECUTABLE, _probe_java)
 
 
 def resolve_z3(explicit: str | Path | None = None) -> Path:

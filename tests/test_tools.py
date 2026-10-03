@@ -41,6 +41,13 @@ def make(path: Path, kind: str, executable: bool = True) -> Path:
     return path
 
 
+@pytest.fixture(autouse=True)
+def _fresh_java_probe_cache():
+    tools._JAVA_PROBED_OK.clear()
+    yield
+    tools._JAVA_PROBED_OK.clear()
+
+
 @pytest.fixture
 def sandbox(tmp_path, monkeypatch):
     """Clean env, REPO_ROOT and PATH all pointing into tmp_path."""
@@ -270,3 +277,121 @@ def test_tool_env_base_without_path(sandbox):
 def test_tool_env_raises_when_z3_unresolvable(sandbox):
     with pytest.raises(ToolNotFoundError, match="Z3"):
         tools.tool_env()
+
+
+# --- java must run: the macOS /usr/bin/java stub passes the executable check but exits 1 -----------------
+
+JAVA_HINT = "set the JAVA environment variable to a working java"
+STUB_MESSAGE = "Unable to locate a Java Runtime."
+
+
+def fake_java(path: Path, body: str) -> Path:
+    """An executable shell script at path with the given body; `counter` lines are appended per run."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("#!/bin/sh\n" + body)
+    path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    return path
+
+
+def counting_java(path: Path, counter: Path, tail: str) -> Path:
+    return fake_java(path, f'echo run >> "{counter}"\n{tail}')
+
+
+def java_via(source: str, path: Path, pathdir: Path, monkeypatch):
+    """Return a zero-argument call that resolves `path` through the given source."""
+    if source == "explicit":
+        return lambda: tools.resolve_java(path), "the explicit argument"
+    if source == "env":
+        monkeypatch.setenv("JAVA", str(path))
+        return tools.resolve_java, "the JAVA environment variable"
+    link = pathdir / "java"
+    link.symlink_to(path)
+    return tools.resolve_java, "PATH"
+
+
+@pytest.mark.parametrize("source", ["explicit", "env", "path"])
+def test_working_java_resolves(sandbox, monkeypatch, source):
+    root, pathdir, tmp = sandbox
+    java = fake_java(tmp / "bin" / "java", 'echo "openjdk version" >&2\nexit 0\n')
+    resolve, _ = java_via(source, java, pathdir, monkeypatch)
+    resolved = resolve()
+    assert resolved.samefile(java)
+
+
+@pytest.mark.parametrize("source", ["explicit", "env", "path"])
+def test_failing_java_raises_with_stderr_and_hint(sandbox, monkeypatch, source):
+    root, pathdir, tmp = sandbox
+    java = fake_java(tmp / "bin" / "java", f'echo "{STUB_MESSAGE}" >&2\necho second line >&2\nexit 1\n')
+    resolve, where = java_via(source, java, pathdir, monkeypatch)
+    with pytest.raises(ToolNotFoundError) as info:
+        resolve()
+    message = str(info.value)
+    assert where in message
+    assert "java did not run" in message
+    assert STUB_MESSAGE in message
+    assert "second line" not in message
+    assert JAVA_HINT in message
+
+
+def test_failing_java_without_stderr_reports_exit_status(sandbox):
+    root, pathdir, tmp = sandbox
+    java = fake_java(tmp / "bin" / "java", "exit 3\n")
+    with pytest.raises(ToolNotFoundError, match="exit status 3") as info:
+        tools.resolve_java(java)
+    assert JAVA_HINT in str(info.value)
+
+
+def test_hanging_java_raises(sandbox, monkeypatch):
+    root, pathdir, tmp = sandbox
+    monkeypatch.setattr(tools, "_JAVA_PROBE_TIMEOUT", 0.3)
+    java = fake_java(tmp / "bin" / "java", "exec /bin/sleep 30\n")
+    with pytest.raises(ToolNotFoundError) as info:
+        tools.resolve_java(java)
+    message = str(info.value)
+    assert "java did not run" in message
+    assert "did not finish" in message
+    assert JAVA_HINT in message
+
+
+def test_unrunnable_java_oserror_raises(sandbox):
+    root, pathdir, tmp = sandbox
+    # Executable bit set, but the kernel cannot exec it (no shebang, not a binary): OSError from subprocess.
+    java = tmp / "bin" / "java"
+    java.parent.mkdir()
+    java.write_bytes(b"\x00\x01\x02 not a program\n")
+    java.chmod(java.stat().st_mode | stat.S_IXUSR)
+    with pytest.raises(ToolNotFoundError) as info:
+        tools.resolve_java(java)
+    assert "java did not run" in str(info.value)
+    assert JAVA_HINT in str(info.value)
+
+
+def test_successful_probe_is_cached(sandbox):
+    root, pathdir, tmp = sandbox
+    counter = tmp / "counter"
+    java = counting_java(tmp / "bin" / "java", counter, "exit 0\n")
+    for _ in range(3):
+        assert tools.resolve_java(java) == java
+    assert counter.read_text().splitlines() == ["run"]
+
+
+def test_failed_probe_is_not_cached(sandbox):
+    root, pathdir, tmp = sandbox
+    counter = tmp / "counter"
+    java = counting_java(tmp / "bin" / "java", counter, f'echo "{STUB_MESSAGE}" >&2\nexit 1\n')
+    for _ in range(2):
+        with pytest.raises(ToolNotFoundError):
+            tools.resolve_java(java)
+    assert counter.read_text().splitlines() == ["run", "run"]
+    # Once java is fixed, the next call re-probes and succeeds.
+    counting_java(java, counter, "exit 0\n")
+    assert tools.resolve_java(java) == java
+    assert counter.read_text().splitlines() == ["run", "run", "run"]
+
+
+def test_other_resolvers_do_not_probe(sandbox):
+    root, pathdir, tmp = sandbox
+    counter = tmp / "counter"
+    z3 = counting_java(tmp / "bin" / "z3", counter, "exit 1\n")
+    assert tools.resolve_z3(z3) == z3
+    assert not counter.exists()
