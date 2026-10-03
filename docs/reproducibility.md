@@ -8,13 +8,15 @@ and where that guarantee currently stops. It doesn't repeat the setup steps them
 ## What's pinned, and why that's most of the guarantee
 
 Reproducing this tutorial's outputs depends on reproducing four things exactly: the Python
-environment, the OpenSysML binary, the external tools some chapters call, and (only if you're
+environment, the OpenSysML runtime binary, the external tools some chapters call, and (only if you're
 building the rendered book) the Node toolchain.
+
+OpenSysML ([opensysml.org](https://opensysml.org/)) is the open-source SysML v2 tool stack. This tutorial pins two of its components: the OpenSysML runtime (Go; `Open-MBEE/OpenSysML`; Python package `opensysml`; v0.9.0) and sysml-toolkit (Rust; `sysmlv2` binary; v0.9.1, pinned with Z3 and the standard library in `scripts/tool-pins.json`). The OMG SysML v2 Pilot Implementation (EPL-2.0) is the conformance baseline.
 
 - **Python dependencies** are pinned by [`uv.lock`](https://github.com/Open-MBEE/toaster/blob/main/uv.lock), installed with `uv sync --locked` (not
   `uv sync`, which would let versions drift). Every chapter and every test runs against the exact
   versions recorded there.
-- **The OpenSysML binary** is pinned by version string (`v0.9.0` as of this tutorial), downloaded
+- **The OpenSysML runtime binary** is pinned by version string (`v0.9.0` as of this tutorial), downloaded
   by [`scripts/check-tools.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py) rather than resolved from a floating "latest." Every model-loading
   call in every notebook goes through this one pinned binary; there's no code path that reaches a
   different version.
@@ -87,7 +89,7 @@ notebook wrote it.
   reader can independently confirm the tutorial cites the edition it says it does, provided they
   obtain their own copy of that same source and check its hash against the recorded one; it is not
   something cloning this repository alone reproduces.
-- **A gap fixed upstream doesn't silently change what's here.** Where OpenSysML or sysml-toolkit
+- **A gap fixed upstream doesn't silently change what's here.** Where the OpenSysML runtime or sysml-toolkit
   doesn't yet support something the spec allows, [`DEFERRED.md`](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md) records the gap together with the
   exact version it was found against (down to a commit hash, for the one case built from source
   rather than a tagged release). If a later version of either tool closes that gap, this tutorial's
