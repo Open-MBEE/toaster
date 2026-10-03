@@ -8,7 +8,7 @@ title: Overview
 
 This chapter builds a real traceability graph over two of the model's three named requirements, synthesizes three of the tutorial's own real judgment records into a ledger, and assembles the real inputs a real sign-off decision would be made from: a bounded, honest synthesis of what is established, what is not, and what residual judgment remains. This chapter does not perform that sign-off itself, and does not claim to: deciding whether to proceed remains a human, accountable act. This is the tutorial's final chapter.
 
-This chapter adds exactly one new named model element, and only because its own traceability analysis finds a real gap it is positioned to close directly: otherwise, `models/ch10-cumulative.sysml` carries `models/ch08-cumulative.sysml`'s content forward unchanged, the same deliberate design choice Chapter 9 made (`decisions/pass4-run-009.md`). This is not a departure from that design principle in general: the one exception is warranted precisely because it is not new model content for its own sake, it is the direct result of what this chapter's own traceability graph discovered (notebook 01 finds `deliveredEnergyBoundedBySupply`, Chapter 8's own Z3-proved conservation lemma, tied to no requirement at all, then closes that gap by subsetting it directly from `EnergyConservationReq`'s own required constraint -- deliberately with no `assert satisfy` line; see `docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md` and notebook 01's own `AC-C10` for why). Unlike Chapter 9, this chapter commits its own `models/ch10-cumulative.sysml` file: Chapter 9 left no cumulative fixture of its own, which would have made `scripts/check_construction.py`'s own predecessor-containment check silently no-op between Chapter 8 and Chapter 10 (`decisions/next-passes.md` item 21). This chapter resolves that for real: `check_predecessor_containment()` now falls back to the nearest earlier chapter with a real fixture when the immediate predecessor has none, so Chapter 8's own named elements are actually checked against this chapter's own committed file, not skipped.
+This chapter adds exactly one new named model element, and only because its own traceability analysis finds a real gap it is positioned to close directly: otherwise, [`models/ch10-cumulative.sysml`](https://github.com/Open-MBEE/toaster/blob/main/models/ch10-cumulative.sysml) carries [`models/ch08-cumulative.sysml`](https://github.com/Open-MBEE/toaster/blob/main/models/ch08-cumulative.sysml)'s content forward unchanged, the same deliberate design choice [Chapter 9](../ch09-coverage-sufficiency/index.md) made. This is not a departure from that design principle in general: the one exception is warranted precisely because it is not new model content for its own sake, it is the direct result of what this chapter's own traceability graph discovered (notebook 01 finds `deliveredEnergyBoundedBySupply`, Chapter 8's own Z3-proved conservation lemma, tied to no requirement at all, then closes that gap by subsetting it directly from `EnergyConservationReq`'s own required constraint -- deliberately with no `assert satisfy` line; see [the case study](../../docs/case-studies/2026-09-30-energy-conservation-requirement-tie.md) and notebook 01's own `AC-C10` for why). Unlike Chapter 9, this chapter commits its own [`models/ch10-cumulative.sysml`](https://github.com/Open-MBEE/toaster/blob/main/models/ch10-cumulative.sysml) file: Chapter 9 left no cumulative fixture of its own, which would have made [`scripts/check_construction.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check_construction.py)'s own predecessor-containment check silently no-op between Chapter 8 and Chapter 10. This chapter resolves that for real: `check_predecessor_containment()` now falls back to the nearest earlier chapter with a real fixture when the immediate predecessor has none, so Chapter 8's own named elements are actually checked against this chapter's own committed file, not skipped.
 
 ## Ingredients
 
@@ -20,7 +20,7 @@ This chapter adds exactly one new named model element, and only because its own 
 
 ## Equipment
 
-See [docs/setup.md](../../docs/setup.md) for environment setup. No additional tooling beyond earlier chapters.
+See [Getting Started](../../docs/setup.md) for environment setup. No additional tooling beyond earlier chapters.
 
 ## Method
 
@@ -32,4 +32,4 @@ After running all three notebooks: notebook 01's graph shows `heatGenerationReq`
 
 ## Experiment
 
-See `exercises/ch10/exercise.ipynb`.
+See [`exercises/ch10/exercise.ipynb`](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch10/exercise.ipynb).
