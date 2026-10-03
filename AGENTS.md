@@ -11,6 +11,8 @@ A cold session should reach working alignment from `CLAUDE.md`, this Part 1, the
 
 # Part 1 — Foundations
 
+"Z" in this repository is the contributor identity `mzargham` (Michael Zargham, GitHub user `mzargham`), the project's author and chief engineer. Internal files keep saying "Z"; published pages name the handle at first mention, as "mzargham (Z)". Other contributors are named by their own handles, and "Z" is never reused for another person (`decisions/log.md` DL-112).
+
 ## 1.1 What the tutorial teaches
 
 A learner recursively breaks a system down until the leaves are concrete component definitions that perform the intended behavior, connect through the specified interfaces, and are verified. The worked example is a toaster. The tutorial teaches, in this order of emphasis:

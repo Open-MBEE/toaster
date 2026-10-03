@@ -8,7 +8,7 @@ This page lists the primary sources this tutorial draws on.
 
 *Guide to the Systems Engineering Body of Knowledge (SEBoK)*, version 2.14. BKCASE / INCOSE / IEEE Computer Society / SERC.
 
-The tutorial's conceptual source, cited first in this tutorial's citation order (AGENTS.md Part 1): the ideas behind functional, logical and physical architecture, MoE/MoP/TPM, allocation, and the "what/how/where" progression this tutorial refines. SEBoK itself nests the functional view inside the logical architecture (PDF 587, 593, 1554), which is why the tutorial's own logical/functional split is a recorded departure (`differsFrom`, approved by Z), not a restatement.
+The tutorial's conceptual source, cited first in this tutorial's citation order ([AGENTS.md Part 1](https://github.com/Open-MBEE/toaster/blob/main/AGENTS.md)): the ideas behind functional, logical and physical architecture, MoE/MoP/TPM, allocation, and the "what/how/where" progression this tutorial refines. SEBoK itself nests the functional view inside the logical architecture (PDF 587, 593, 1554), which is why the tutorial's own logical/functional split is a recorded departure (a departure from SEBoK's use of the term, stated in the [logical architecture](glossary.md#logical-architecture) entry and approved by mzargham (Z)), not a restatement.
 
 ## Åström and Murray — Feedback Systems
 
@@ -24,7 +24,7 @@ The canonical anchor for **policy**: a rule for choosing actions given states (�
 
 ## Brian Douglas — Systems Engineering: Managing System Complexity
 
-A MATLAB Tech Talk series by Brian Douglas, published by MathWorks in 2020; the playlist lists five parts (verified 2026-09-26, `glossary/sources/notes/reading-notes.md`). Parts 3 and 4 both use a domestic toaster as the worked example and establish the engineering ground truth this tutorial re-implements in SysML v2 and Python.
+A MATLAB Tech Talk series by Brian Douglas, published by MathWorks in 2020; the playlist lists five parts (verified 2026-09-26, [`glossary/sources/notes/reading-notes.md`](https://github.com/Open-MBEE/toaster/blob/main/glossary/sources/notes/reading-notes.md)). Parts 3 and 4 both use a domestic toaster as the worked example and establish the engineering ground truth this tutorial re-implements in SysML v2 and Python.
 
 **Part 3 — The Benefits of Functional Architectures**
 Brian Douglas. MathWorks, October 15, 2020. 14:24.
@@ -64,7 +64,7 @@ The normative specification for all SysML v2 constructs used in this tutorial. C
 
 Open-MBEE/OpenSysML. <https://github.com/Open-MBEE/OpenSysML>
 
-The Python library (`opensysml==0.9.0`) used to load, validate, evaluate, and query SysML v2 models in this tutorial. All model loading uses `conn.load_from_content(content, strict=False)`. Gaps between the library's current API and the SysML v2 specification are tracked in [DEFERRED.md](../DEFERRED.md) and as issues in this repository and upstream.
+The Python library (`opensysml==0.9.0`) used to load, validate, evaluate, and query SysML v2 models in this tutorial. All model loading uses `conn.load_from_content(content, strict=False)`. Gaps between the library's current API and the SysML v2 specification are tracked in [DEFERRED.md](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md) and as issues in this repository and upstream.
 
 ---
 
