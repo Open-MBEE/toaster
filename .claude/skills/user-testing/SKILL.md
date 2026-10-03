@@ -77,6 +77,36 @@ some files (e.g. notebook text) from the wrong branch state while reading others
 from its own worktree — a mixed-path read that produces false findings. Confirmed as the cause of a
 false NEEDS-FIX verdict in the first grid run (`decisions/log.md` DL-085).
 
+### Browser read-through diaries: evidence rules (binding; from DL-100, DL-102, DL-103)
+
+When a persona reads the rendered site page by page in a browser instead of executing cells
+(the longitudinal read-through mode), the checklist above still applies to what each page shows,
+and these four rules apply to how the diary is written:
+
+1. **Read prose with `get_page_text`.** It is the required primary reading tool for page text.
+   `read_page`'s accessibility tree truncates long text nodes with an ellipsis and renders inline
+   code spans as separate child nodes, so prose read from it loses its identifiers, operators and
+   keywords; that is the likely cause of round 1's "sentence cut off" findings, every one of which
+   was an intact sentence on the page (DL-100). Screenshots are for figures and layout, not for
+   reading prose.
+2. **Minimum evidence before an observation is written.** For each page: the page actually opened
+   in the browser at its real URL (never a guessed slug), its text extracted, every figure on it
+   screenshotted and described from the screenshot, and any sentence quoted in the diary copied from
+   the extracted text. An entry written from memory, from an earlier page, or from the notebook
+   source instead of the rendered page is not a diary entry; say "not read" instead.
+3. **String-level verification of any reported defect.** A finding that names a specific string
+   (a caption, a printed output, a qualified name, a number, a character count) must be checked
+   against the extracted page text before it is written, and the entry must say where on the page
+   the string appears. Page-level verification ("I read this page") does not catch a quoted string
+   that is not there: round 2 reported a caption and a doubled qualified name on `/part-def` that
+   exist nowhere on the page or in its source (DL-102, R2-1 and R2-2).
+4. **One reader per diary, or an explicit hand-off marker.** If a fresh agent instance continues a
+   diary, the diary carries a marker at the hand-off naming the page range each instance read, and
+   the continuing instance answers interview questions only about its own range. Without this the
+   ACE cannot weight interview testimony: round 2's instance could not say which pages it had opened
+   and answered about pages it had not (DL-102, M2 and M4). A diary written at roughly one minute
+   per page is a skim and its load ratings measure length, not difficulty; record the dwell per page.
+
 ## Report format
 
 ```
