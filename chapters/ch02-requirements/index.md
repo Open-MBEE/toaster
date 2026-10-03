@@ -40,4 +40,4 @@ After notebook 03:
 
 ## Experiment
 
-The [chapter exercise](../../exercises/ch02/exercise.ipynb) asks you to add a temperature requirement to your coffee maker model and write the first context record for the brew-temperature assumption.
+The [chapter exercise](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch02/exercise.ipynb) asks you to add a temperature requirement to your coffee maker model and write the first context record for the brew-temperature assumption.

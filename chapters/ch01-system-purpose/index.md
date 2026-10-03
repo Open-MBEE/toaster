@@ -41,4 +41,4 @@ The Ch1 cumulative model contains:
 
 ## Experiment
 
-The [chapter exercise](../../exercises/ch01/exercise.ipynb) asks you to model a coffee maker using the same constructs. Work through it after completing all four notebooks.
+The [chapter exercise](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch01/exercise.ipynb) asks you to model a coffee maker using the same constructs. Work through it after completing all four notebooks.
