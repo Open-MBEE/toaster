@@ -48,3 +48,6 @@ exercises/*/companion-check-scratch/
 
 # Agent-managed git worktrees (builder/reviewer isolation during plan execution)
 .claude/worktrees/
+
+# External tools provisioned by scripts/provision-tools.py
+.tools/
