@@ -1568,3 +1568,13 @@ Reasoning: the first run's two failures were attributable to a missing tool rath
 Determined: yes.
 Extension: no.
 Provenance: runs 37146440620 and 37146757647; commits 7498a97, 48b8bb7 on pub/diagnose; decisions/pages-publishing/a2-real-runner.md; decisions/pages-publishing-survey.md.
+
+## DL-114 | 2026-10-03 | PAGES-PUBLISHING-PHASE-B-PLAN | Phase B plan written: nine builder contracts plus an ACE gate, on one integration branch
+
+Path: Orchestrator-run; mzargham approved the reference-policy defaults (A1, A2/A4, A9, A10) in chat
+Decision: `docs/superpowers/plans/2026-10-03-pages-publishing-phase-b-plan.md` specifies Phase B as full contracts on one integration branch `pages-publishing` with one PR at the end: PUB-1 tool resolver (`toaster.tools`), PUB-2 notebooks use it, PUB-3 tests/scripts without local paths plus a guard test, PUB-4 pinned provisioning into a gitignored `.tools/` (sysml-toolkit v0.9.1, Z3 5.1.0, PlantUML 1.2026.8, SysML library at a pinned commit), PUB-5 the release gate `scripts/check-site.py` (cell errors, figure baseline 18, host-path leaks, no published exercises/DEFERRED.md, internal links under BASE_URL), PUB-6A-D reference cleanup by chapter group from the 365-row PA-4 table, PUB-7 docs/README/identity (including the "Z is mzargham" statement in AGENTS.md Part 1 and docs/contributor.md), PUB-8 CI build + gate + Pages deploy from main only, PUB-9 first deploy with mzargham enabling Pages, and an ACE gate for the A7 rows (default: leave unchanged). Merge order and dependencies are in Task 0 and each contract's State line.
+Principles applied: P5 (the gate measures errors and figures separately because run 1 had all 18 figures and two failing notebooks); P4 (rows that would change models or persisted records are held for the ACE rather than done in passing).
+Reasoning: Phase A showed the work divides cleanly: tooling (PUB-1..5), content (PUB-6, PUB-7), pipeline (PUB-8, PUB-9). Content edits are split by chapter group so each reviewer can sample rows meaningfully; the A7 rows are gated because editing ReviewRecord strings or SysML doc comments would change `models/*.sysml` and make `AS-C08.json` stale.
+Determined: yes for the plan; the ACE gate decides whether one extra contract (PUB-6E) is needed.
+Extension: no.
+Provenance: decisions/pages-publishing-survey.md; decisions/pages-publishing/a1..a4; DL-111, DL-112, DL-113; docs/superpowers/specs/2026-10-03-pages-publishing-design.md.
