@@ -1,12 +1,14 @@
 # scripts/diagram_study/provision_check.py
 """Phase 0 toolchain provisioning check: confirms the four trade-study tools
-match the original study's pinned versions (versions.json / manifest.json at
-/Users/z/Downloads/toaster/diagram-study/) before any real-fixture render runs.
+match the original study's pinned versions (versions.json / manifest.json in the original
+study's diagram-study directory) before any real-fixture render runs.
 """
 import json
 import os
 import subprocess
 from pathlib import Path
+
+from toaster.tools import ToolNotFoundError, resolve_sysmlv2
 
 STUDY_ROOT = Path(os.environ.get("STUDY_ROOT", "/private/tmp/toaster-diagram-study"))
 
@@ -50,10 +52,20 @@ def gather_reported_versions() -> dict[str, str]:
     callers pass the result to compare_pinned_versions() to see what's missing."""
     reported: dict[str, str] = {}
 
-    toolkit_dir = Path.home() / "Documents/GitHub/sysml-toolkit"
-    commit = _git_commit(toolkit_dir)
-    if commit:
-        reported["sysml-toolkit"] = commit
+    # A source build keeps its binary at <checkout>/target/release/sysmlv2, so the checkout (and its
+    # git commit) is recoverable from the resolved binary. A provisioned release binary has no
+    # checkout around it, so no commit is reported and the pinned comparison says "not provisioned".
+    toolkit_dir = None
+    try:
+        binary = resolve_sysmlv2().resolve()
+        if binary.parent.name == "release" and binary.parent.parent.name == "target":
+            toolkit_dir = binary.parents[2]
+    except ToolNotFoundError:
+        pass
+    if toolkit_dir is not None and (toolkit_dir / ".git").exists():
+        commit = _git_commit(toolkit_dir)
+        if commit:
+            reported["sysml-toolkit"] = commit
 
     sysml2d_dir = STUDY_ROOT / "sysml2d"
     commit = _git_commit(sysml2d_dir)

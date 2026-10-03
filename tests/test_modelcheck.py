@@ -1,9 +1,8 @@
 """src/toaster/modelcheck.py: parses real sysml-toolkit `verify` CLI output (DEFERRED.md D-025, DL-046).
 
 Every test here runs the real `sysmlv2` binary — this module's whole job is correctly parsing real CLI
-output, so mocking the subprocess would test nothing. `BINARY`/`LIB` point at the local build described in
-the work contract; if they are not present on this machine, that is itself something to report, not paper
-over.
+output, so mocking the subprocess would test nothing. `BINARY`/`LIB` come from toaster.tools; if they
+cannot be resolved on this machine, every test here is skipped with the actionable reason, not papered over.
 """
 
 import os
@@ -13,17 +12,62 @@ from pathlib import Path
 import pytest
 
 from toaster import modelcheck as mc
-
-BINARY = Path.home() / "Documents/GitHub/sysml-toolkit/target/release/sysmlv2"
-LIB = (
-    Path.home()
-    / "Documents/GitHub/sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library"
+from toaster.tools import (
+    ToolNotFoundError,
+    resolve_library,
+    resolve_sysmlv2,
+    resolve_z3,
+    tool_env,
 )
 
-pytestmark = pytest.mark.skipif(
-    not BINARY.exists(),
-    reason=f"sysmlv2 binary not found at {BINARY} (see work contract PASS2-012)",
-)
+_PROVISION_HINT = "uv run python scripts/provision-tools.py"
+
+
+def _skip_reason(exc: ToolNotFoundError) -> str:
+    return str(exc) if _PROVISION_HINT in str(exc) else f"{exc}; provision with `{_PROVISION_HINT}`"
+
+
+def _require_tools() -> bool:
+    """TOASTER_REQUIRE_TOOLS=1 turns "tool missing, skip" into "tool missing, fail" (for CI)."""
+    return os.environ.get("TOASTER_REQUIRE_TOOLS") == "1"
+
+
+def _resolve_tools(resolvers, require=None):
+    """Call each resolver; return (their results, None), or (None, the actionable skip reason).
+
+    With `require` true (default: TOASTER_REQUIRE_TOOLS=1) an unresolved tool raises instead, so the
+    module fails to collect and CI cannot go green on silent skips.
+    """
+    if require is None:
+        require = _require_tools()
+    try:
+        return tuple(resolver() for resolver in resolvers), None
+    except ToolNotFoundError as exc:
+        reason = _skip_reason(exc)
+        if require:
+            raise ToolNotFoundError(
+                f"{reason} (TOASTER_REQUIRE_TOOLS=1: a missing tool is a failure, not a skip)"
+            ) from exc
+        return None, reason
+
+
+_TOOLS, _SKIP_REASON = _resolve_tools((resolve_sysmlv2, resolve_library, resolve_z3))
+BINARY, LIB = (_TOOLS[0], _TOOLS[1]) if _TOOLS else (None, None)
+
+# Tests whose subject is the switch itself; they run whether or not the tools resolve.
+_NO_TOOL_TESTS = ("test_require_tools_switch",)
+
+
+@pytest.fixture(autouse=True)
+def _toolkit(monkeypatch, request):
+    """Skip when the toolkit is unresolved; otherwise put the resolved z3's directory on PATH, since
+    `sysmlv2 verify --solve` finds z3 there."""
+    if request.function.__name__.startswith(_NO_TOOL_TESTS):
+        return
+    if _TOOLS is None:
+        pytest.skip(_SKIP_REASON)
+    monkeypatch.setenv("PATH", tool_env()["PATH"])
+
 
 TAUTOLOGY = """
 package P {
@@ -435,3 +479,29 @@ def test_notebook_call_shape(tmp_path):
     f = _write(tmp_path, "timely.sysml", TIMELY_TOAST)
     verdicts = mc.verify_holds(f, lib=str(LIB), binary=str(BINARY))
     assert all(v.status in ("satisfied", "violated", "undecided") for v in verdicts)
+
+
+# --- the TOASTER_REQUIRE_TOOLS switch ----------------------------------------------------------------------
+
+
+def _unresolvable():
+    raise ToolNotFoundError("z3 not found: set the Z3 environment variable")
+
+
+def test_require_tools_switch_default_skips(monkeypatch):
+    monkeypatch.delenv("TOASTER_REQUIRE_TOOLS", raising=False)
+    tools, reason = _resolve_tools((_unresolvable,))
+    assert tools is None
+    assert "Z3" in reason and _PROVISION_HINT in reason
+
+
+def test_require_tools_switch_set_raises(monkeypatch):
+    monkeypatch.setenv("TOASTER_REQUIRE_TOOLS", "1")
+    with pytest.raises(ToolNotFoundError, match="TOASTER_REQUIRE_TOOLS=1"):
+        _resolve_tools((_unresolvable,))
+
+
+def test_require_tools_switch_other_values_still_skip(monkeypatch):
+    monkeypatch.setenv("TOASTER_REQUIRE_TOOLS", "0")
+    tools, reason = _resolve_tools((_unresolvable,))
+    assert tools is None and reason
