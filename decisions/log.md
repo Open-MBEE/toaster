@@ -1538,3 +1538,13 @@ Reasoning: DL-108's condition (run `verify-sources` against the registered files
 Determined: yes.
 Extension: no.
 Provenance: DL-104, DL-105..108, DL-109; commit messages on branch novice-test-bprime. Chapter text may now link the three terms (not done in this change).
+
+## DL-111 | 2026-10-03 | PAGES-PUBLISHING-PHASE-A | Phase A survey for publishing the book to GitHub Pages: three of four discovery contracts merged; the real-runner run is pending
+
+Path: Orchestrator-run (builder/reviewer pipeline per decisions/work-contract-template.md); judgment items listed for Z and the ACE, none ruled here
+Decision: PA-1 (clean-checkout reproduction), PA-3 (release-binary output equivalence) and PA-4 (dangling-reference inventory) merged to local main with independent reviews; PA-2 (diagnostic workflow for ubuntu-latest) is written, reviewed and amended three times (pinned PlantUML jar, honest failure summary, page-JSON figure count, uv run build, leak scan) but not run. Findings and consequences for Phase B are in `decisions/pages-publishing-survey.md`. The main results: no notebook executes unless the project venv is first on PATH; `myst build` exits 0 with notebook errors so CI needs `--strict`; a clean-HOME build fails exactly three notebooks (Ch5-03, Ch8-02, Ch10-01) on hard-coded toolkit paths; figures are in page JSON, not the DOM (18 in a fully working build); the built site publishes local paths and, via linked files, exercises ch01-ch08 and DEFERRED.md; the toolkit v0.9.1 release binary reproduces every toolkit-dependent output on macOS arm64 (Linux not yet measured); 365 learner-visible references to internal artifacts are classified (LINK 164, REWORD 58, KEEP 143).
+Principles applied: P5 (measure before fixing; record what was not measured); P4 (Phase A changes no learner-facing file).
+Reasoning: review findings changed the work materially: the first diagnostic workflow would have blamed the book for a failure caused by apt's 2020 PlantUML and would have reported a green build over cell errors and a figure count near 1 instead of 18; the first PA-4 table double-counted 40 `models/` paths and missed `chapters/` paths. Corrections were made before merge.
+Determined: yes for the measurements; underdetermined for the reference policy items A1-A10 (Z/ACE) and for the Linux behavior (PA-2).
+Extension: no.
+Provenance: decisions/pages-publishing/a1-clean-checkout.md, a3-output-equivalence.md, a4-dangling-references.md; decisions/pages-publishing-survey.md; docs/superpowers/specs/2026-10-03-pages-publishing-design.md; docs/superpowers/plans/2026-10-03-pages-publishing-phase-a-plan.md; branch pub/diagnose.
