@@ -3,7 +3,7 @@
 **Date:** 2026-09-30
 **Status:** resolved — direction adopted (B, revised); `assert satisfy` drop confirmed by direct
 test, not argument alone; implementation pending integration
-**Related:** `decisions/next-passes.md` item 29; `decisions/log.md` DL-070, DL-071, DL-072 (and the entry recording this decision); SysML v2 formal/2026-03-02 §7.20–7.21, §7.24
+**Related:** [`decisions/next-passes.md`](https://github.com/Open-MBEE/toaster/blob/main/decisions/next-passes.md) item 29; [`decisions/log.md`](https://github.com/Open-MBEE/toaster/blob/main/decisions/log.md) DL-070, DL-071, DL-072 (and the entry recording this decision); SysML v2 formal/2026-03-02 §7.20–7.21, §7.24
 
 ## Why this document exists
 
@@ -13,22 +13,21 @@ settle on its own, using the spec's letter, the spec's expressed intent, two ind
 candidate models, live tool behavior, and a direct argument about what our own model actually
 means. The question itself — *does a formal tie between a proved property and a stated
 requirement actually say what we mean it to say* — is exactly the kind of judgment this tutorial
-teaches (AGENTS.md: "judgment is the engineer's expertise, exercised with justification and never
+teaches ([AGENTS.md](https://github.com/Open-MBEE/toaster/blob/main/AGENTS.md): "judgment is the engineer's expertise, exercised with justification and never
 eliminated"). This document is the full working, kept because the working is the point, not just
 the two lines of SysML it ends in.
 
 ## The problem
 
 Chapter 8 proves a real-arithmetic lemma, `deliveredEnergyBoundedBySupply`
-(`models/ch08-cumulative.sysml`), for every value its unbound features admit, using
+([`models/ch08-cumulative.sysml`](https://github.com/Open-MBEE/toaster/blob/main/models/ch08-cumulative.sysml)), for every value its unbound features admit, using
 `sysml-toolkit`'s Z3-backed `verify --solve`. Chapter 10's own traceability search —
-`requirement_ties`/`tied_to_any_requirement` (`src/toaster/query.py`, finalized at DL-070/DL-071
-after several rounds of broadening and then deliberately narrowing) — correctly reports that this
+`requirement_ties`/`tied_to_any_requirement` ([`src/toaster/query.py`](https://github.com/Open-MBEE/toaster/blob/main/src/toaster/query.py), finalized after several rounds of broadening and then deliberately narrowing) — correctly reports that this
 lemma is tied to no stated requirement at all. This was originally treated as intentional
 pedagogy: the inverse of Douglas's own "unjustified widget" concern (a design element with no
 requirement behind it), here a piece of formal evidence with no requirement behind *it*.
 
-Z reconsidered this (chat, 2026-09-30): using something that plausibly *should* be tied as the
+mzargham (Z) reconsidered this (chat, 2026-09-30): using something that plausibly *should* be tied as the
 worked example of something that is *not* tied is confusing. The decision was to add a real tie,
 and to preserve the "unjustified widget" pedagogy separately, with a freshly constructed fixture
 built specifically to be untied.
@@ -61,10 +60,10 @@ subject-conformance *spirit*, found by re-reading the spec directly, not by any 
 an `assert satisfy` line at all, so the OMG pilot had no live binding to flag on it, and running
 the pilot against Approach A's own committed model directly confirms 0 issues.** The pilot
 diagnostic ("Bound features should have conforming types") belongs to a different draft:
-Approach B's *own first commit* (`26e184e`) paired a typed subject with an `assert satisfy
+Approach B's *own first commit* paired a typed subject with an `assert satisfy
 energyConservationReq by deliveredEnergyBoundedBySupply;` line, and *that* combination is what the
 pilot actually flagged — confirmed directly against that commit's own model. B's author fixed it
-two commits later (`56100bb`) by dropping the subject declaration. So two different defects, in two
+two commits later by dropping the subject declaration. So two different defects, in two
 different places, were each found a different way: Approach A's (a declared-but-unused subject,
 no live binding) by direct spec reading; Approach B's own first draft's (a typed subject *plus* a
 real, type-inconsistent binding) by the pilot's own mechanical check. Neither tool nor either
@@ -213,7 +212,7 @@ confirm this claim the way the tutorial has already taught them to — by runnin
 `verify_satisfaction()` — gets an error, not the pass a skim of the model would suggest.
 
 This also sharpens what `AC-C10`'s own cited evidence (`requirement_coverage(...)` reporting
-`covered=True`) actually is. `requirement_coverage()` (`src/toaster/query.py:258`) never runs the
+`covered=True`) actually is. `requirement_coverage()` ([`src/toaster/query.py`](https://github.com/Open-MBEE/toaster/blob/main/src/toaster/query.py)) never runs the
 constraint at all — it checks only whether a non-negated `SatisfyRequirementUsage` node *exists* in
 the API-JSON export. `AC-C10` already describes this carefully as "a point-evaluation claim about
 the assert satisfy declaration's own success, not the same claim as the solver output," which is
