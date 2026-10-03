@@ -16,8 +16,7 @@ glossary CLI for any term you are about to define or use:
 Definitions come from the glossary, not from memory. Sources in citation order:
 SEBoK (ideas), the OMG SysML v2 / API / KerML specs (formal semantics), Hawkins
 2011 (judgment taxonomy), Åström and Murray with Sutton and Barto (mechanism and
-policy only), Douglas (story and the toaster example). OpenSysML and sysml-toolkit
-are toolchain, cited only to flag spec gaps.
+policy only), Douglas (story and the toaster example). The OpenSysML runtime and sysml-toolkit, two components of the OpenSysML stack (opensysml.org; AGENTS.md 1.2), are toolchain, cited only to flag spec gaps.
 
 Roles (.claude/agents/): `orchestrator` (run the main session as it with `claude --agent orchestrator`), `layer-auditor`, `builder`, `reviewer`, `ace`. Each pins its model; author and reviewer run on different models; work contracts follow `decisions/work-contract-template.md` and task states `decisions/task-states.md`.
 
