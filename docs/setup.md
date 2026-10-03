@@ -35,6 +35,8 @@ Run the test suite to confirm the environment is working:
 uv run pytest tests/ -v
 ```
 
+The glossary's source checks (`uv run python -m glossary verify-sources`) also need the copyrighted source PDFs, which are not in the repository. The section "Getting the source files" in `glossary/README.md` says where to get each one and where to put it.
+
 ## Preview the rendered book locally
 
 There is no published site yet: deployment stays off until the tutorial has complete,

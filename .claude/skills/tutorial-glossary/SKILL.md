@@ -47,7 +47,7 @@ Sources are not ranked against each other. Each supplies a **kind** of definitio
 - **Term:** add a node to `glossary/terms/terms.ttl` (`glid:term-<slug>`, `gl:label`, `gl:loadBearing true` only if a Foundations paragraph or skill relies on it). A term with no edge is an orphan and fails `check`.
 - **Source:** add to `glossary/sources/sources.ttl` with `gl:kind`, `gl:rank`, and either a file (`gl:sha256`, `gl:localPath` under the gitignored `glossary/sources/local/`) or a non-file source (`gl:url` and `gl:retrievedOn`, or `gl:commit`). Keep N small; prefer an edge in an existing source.
 - **Edge:** add to `glossary/definitions/<source>.ttl` as `glid:def-<source>--<term>` with `gl:source`, `gl:term`, `gl:text`, `gl:locator`, `gl:status gl:proposed`, and `gl:quote` plus `gl:pdfPage` for files.
-- Write Turtle through the `glossary.graph.save_graph` helper (canonical, byte-deterministic), not by hand, or `check` will report drift. Then run `check`. On Z's machine also run `verify-sources`.
+- Write Turtle through the `glossary.graph.save_graph` helper (canonical, byte-deterministic), not by hand, or `check` will report drift. Then run `check`. On Z's machine also run `verify-sources` (where to get each source file and where to put it: "Getting the source files" in `glossary/README.md`).
 - Tell the ACE (or Z) what you proposed; they triage and Z confirms. Log it in `decisions/log.md` if it changes a confirmed definition (only Z can change one).
 
 ## Worktree and CI safety
