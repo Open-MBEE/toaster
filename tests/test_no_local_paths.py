@@ -11,9 +11,11 @@ the forbidden strings below reappears in
   (d) a published docs page: docs/**/*.md except docs/superpowers/ (plans and specs that myst.yml's
       toc does not build).
 
-The allowlist is exactly two things: this file (it has to spell the strings out), and the one line in
-src/toaster/bootstrap.py that builds the `.opensysml` cache directory under the user's home
-(`Path.home()` and `".opensysml"` on the same line; a cache location, not a tool location).
+The allowlist is exactly: this file and the site-gate pair scripts/check-site.py and
+tests/test_check_site.py (all three have to spell the strings out: they are the scanners and their
+fixtures), and the one line in src/toaster/bootstrap.py that builds the `.opensysml` cache directory
+under the user's home (`Path.home()` and `".opensysml"` on the same line; a cache location, not a tool
+location).
 """
 
 import json
@@ -26,6 +28,11 @@ ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN = ("Path.home()", "/opt/homebrew", "Documents/GitHub", "/Users/", "/home/")
 
 THIS_FILE = Path(__file__).resolve()
+SPELLS_THE_STRINGS = {
+    THIS_FILE,
+    (ROOT / "scripts" / "check-site.py").resolve(),
+    (ROOT / "tests" / "test_check_site.py").resolve(),
+}
 BOOTSTRAP = ROOT / "src" / "toaster" / "bootstrap.py"
 BOOTSTRAP_ALLOWED_MARKER = '".opensysml"'
 
@@ -42,8 +49,8 @@ def find_forbidden(text: str) -> list[str]:
 
 
 def find_forbidden_in_py(path: Path, text: str) -> list[str]:
-    """As `find_forbidden`, for a .py file, honouring the two-item allowlist."""
-    if path.resolve() == THIS_FILE:
+    """As `find_forbidden`, for a .py file, honouring the allowlist."""
+    if path.resolve() in SPELLS_THE_STRINGS:
         return []
     if path.resolve() == BOOTSTRAP:
         text = "\n".join(
