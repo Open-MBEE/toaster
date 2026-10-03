@@ -1478,3 +1478,43 @@ Reasoning: none needed beyond Z's direct choice, following the ACE's own recomme
 Determined: yes.
 Extension: no.
 Provenance: DL-102.
+
+## DL-105 | 2026-10-03 | BP-2 | Glossary term "judgment record": tutorial edge refining confirmed Hawkins edges; no Hawkins edge for a phrase Hawkins does not use
+
+Path: Handled by ACE
+Decision: Reviewer option (i). Remove def-hawkins--judgment-record and its entry in the tutorial edge's gl:refines; keep def-tutorial--judgment-record refining def-hawkins--judgment, --assurance-deficit, --counter-evidence, --asserted-context, --asserted-inference, --asserted-solution; add to its gl:text a clause marking the phrase as the tutorial's and the idea as Hawkins's. Option (ii) is unnecessary (the mechanism precedent is the rule); option (iii) is barred.
+Principles applied: F5 (kinds of definition; canonical edges are the source's definition, tutorial edges refine and never invent); heuristic 7 (which kind of definition is asked for); P4 (keep it small: no new rule when a confirmed precedent decides); P5 (a self-disclaiming idea edge papers over the absence of a canonical phrase).
+Reasoning: (1) A gl:Definition from a canonical source asserts that the source defines the term; text that opens "Hawkins does not use the phrase" negates its own assertion and would render as the term's idea row in `tutorial`. (2) The repo has the same kind of case already decided: term-mechanism has no canonical edge of its own; its confirmed tutorial edge refines three edges of a different term (dynamical system) and marks the word as ours; def-tutorial--mop and def-tutorial--policy are further confirmed cross-term refinements. So the reviewer's premise that no existing tutorial edge refines another term's edge is false, and README's "no term without a canonical source" is read in confirmed practice as "no term without canonical edges its definition refines". (3) The Sec. 3.4 idea is already carried by def-hawkins--judgment (the 1.6 gloss), so dropping the new edge loses nothing. (4) A prior decision by Z on the same kind of question (mechanism, Z-15) is applied as a decision.
+Determined: yes.
+Extension: no (applies the confirmed mechanism pattern to a case of the same kind).
+Provenance: Z-11, Z-15, Z-16; confirmed edges def-tutorial--mechanism, def-tutorial--mop, def-tutorial--policy; `tutorial "judgment record" --proposed` output in the worktree; def-hawkins--judgment gloss in AGENTS.md 1.6; glossary/README.md line 51; tutorial-glossary SKILL.md rule 2; DL-102, DL-104. Follow-up suggested for Z: one clause in glossary/README.md line 51 recording that "no term without a canonical source" is satisfied by a tutorial edge that refines canonical edges.
+
+## DL-106 | 2026-10-03 | BP-2 | loadBearing on the three proposed terms: set by reliance, not to avoid the pending-confirmation warning
+
+Path: Handled by ACE
+Decision: term-judgment-record loadBearing true; term-conjugated-port true; term-feature-chain false. The resulting `check` warning "2 load-bearing term(s) have no confirmed definition yet" is the intended signal until Z confirms.
+Principles applied: P5 (do not paper over: a warning designed to show pending state is not to be silenced by flipping the flag); P4 and heuristic 6; tutorial-glossary SKILL.md "loadBearing true only if a Foundations paragraph or skill relies on it".
+Reasoning: (1) The skill rule names the test; apply it per term. (2) Judgment record: AGENTS.md 1.6 states a binding rule about its fields, and architecture-layers, toaster-review-protocol, toaster-recipe, tutorial-supporting-pages and ace-protocol use it; true. (3) Conjugated port: opensysml-query names it as the interface checker's blind spot and sysml-diagrams conditions renderer choice on a chapter exercising one; a builder must know the term to apply either; true (the closest of the three calls; the alternative reading "mentions, not reliance" is noted). (4) Feature chain: no Foundations paragraph or skill uses it; false. (5) check.py warns for load-bearing terms with no confirmed tutorial definition; that is the pending-Z signal, and the builder's uniform false was chosen to avoid it, which P5 forbids. On main 46 of 47 terms are true.
+Determined: yes.
+Extension: no.
+Provenance: tutorial-glossary SKILL.md "Adding a term"; glossary/check.py 147-152; AGENTS.md line 116; .claude/skills/opensysml-query/SKILL.md:159; .claude/skills/sysml-diagrams/SKILL.md:17; glossary/terms/terms.ttl on main; Z-16, Z-20.
+
+## DL-107 | 2026-10-03 | BP-2 | Conjugated-port edge: two-section locator accepted as a pointer; the checkable claim stays one quote; purpose clause dropped unless sourced
+
+Path: Handled by ACE
+Decision: Keep gl:locator "Sec. 7.12.1, p. 61 (PDF 93); notation in Sec. 7.12.3, p. 63 (PDF 95)" with gl:pdfPage 93 and the one quote. Do not split into two edges; do not narrow to 7.12.1. Remove "so the two ends of a connection can match" from gl:text unless the builder cites the sentence on PDF 93 or 95 that states it, in which case it stays as paraphrase.
+Principles applied: F5 (canonical edge paraphrases, never invents; purpose commentary belongs to the bridge or the prose); P4 and heuristic 6 (the ~ notation is what the learner met and could not name); P5; tutorial-glossary SKILL.md rules 2-3.
+Reasoning: (1) Rule 3 defines what is mechanically checked: the quote on its page; the edge satisfies it. (2) The locator is a pointer; a second page-numbered section pointer is human-checkable at confirmation and no rule limits locators to one section. (3) Splitting yields two same-source edges on one term, which check treats as a within-kind ambiguity unless gl:preferred breaks it; gl:preferred is for two senses, not two halves of one definition. (4) Narrowing drops the notation that answers the novice's question (DL-102 C7, DL-104 item 3). (5) The closing clause asserts a purpose not quoted; under F5 it stands only as paraphrase of a cited sentence.
+Determined: yes.
+Extension: yes (first two-section locator in the glossary; a format call Z sees at confirmation).
+Provenance: tutorial-glossary SKILL.md rules 2-3; glossary/definitions/sysml.ttl; def-sebok--behavior-2 gl:preferred; DL-102, DL-104; Z-11.
+
+## DL-108 | 2026-10-03 | BP-2 | Hawkins locators checked against a non-registered copy: edges stay proposed; Z runs verify-sources against the registered file before confirming
+
+Path: Handled by ACE
+Decision: Yes to the builder's recommendation. Edges stay `proposed`; Z runs `uv run python -m glossary verify-sources` against the registered hawkins-2011.pdf before confirming. The builder's and reviewer's check used an author copy (og-caie-spec/sources/local/pdf/hawkins-sss-2011.pdf, sha256 1043bce7b664fa09c2c1f3a3e63a3ba6ba9b4f9ba42d02d2036d258afaf6c77c) that differs from the registered 53af6336...3750; all 14 Hawkins quotes aligned page for page, as corroboration only. The author copy is not to be placed under glossary/sources/local/hawkins-2011.pdf. Under DL-105 no new Hawkins quote enters the graph in this contract.
+Principles applied: P5 (record the provenance of the check and its limit; do not substitute a different file for the registered one); P6 and glossary rule 1 (only Z confirms, so the strict check sits with Z); tutorial-glossary SKILL.md rule 3 and "Worktree and CI safety".
+Reasoning: (1) The process already assumes builders work without originals (`check` warns source-absent and passes) and that `verify-sources` on Z's machine is the gate before confirmation. (2) A page-aligned read of a different edition is evidence about the quotes, not about the registered file; a mismatched file under the registered name would fail `source-hash`. (3) With DL-105 the new Hawkins edge is removed; the 13 confirmed Hawkins edges are unchanged.
+Determined: yes.
+Extension: no.
+Provenance: glossary/check.py 207-215; tutorial-glossary SKILL.md rule 3; glossary/README.md "Every claim is checkable"; glossary/sources/sources.ttl src-hawkins; DL-105; Z-20.
