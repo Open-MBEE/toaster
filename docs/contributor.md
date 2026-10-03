@@ -67,7 +67,8 @@ book with every notebook executed, and then runs the release gate,
 The gate fails the build unless all five checks pass:
 
 1. the build log has no code-execution or Jupyter-session failure (MyST exits 0 even when a cell
-   raised, so the exit code alone proves nothing);
+   raised unless it is run with `--strict`, which CI does; the log check backs that up, so a
+   failed cell is caught even if the flag is ever dropped);
 2. the built content has the expected number of figures, recorded in
    [`scripts/site-baseline.json`](https://github.com/Open-MBEE/toaster/blob/main/scripts/site-baseline.json);
 3. no built text file contains a host path (a home directory, a Homebrew prefix or a CI runner path);
@@ -78,7 +79,8 @@ The gate fails the build unless all five checks pass:
 To reproduce the build and the gate locally, from a clone with the tools provisioned:
 
 ```sh
-BASE_URL=/toaster uv run --frozen npx myst build --html --execute 2>&1 | tee build.log
+set -o pipefail
+BASE_URL=/toaster uv run --frozen npx myst build --html --execute --strict 2>&1 | tee build.log
 uv run python scripts/check-site.py --site _build/html --content _build/site/content \
     --log build.log --base-url /toaster
 ```
@@ -135,9 +137,10 @@ uv run pytest tests/ glossary/tests/ -v
 uv run npx mystmd start --execute
 ```
 
-The first five commands mirror the `build` job's provisioning and tests; the last serves the book
-for preview rather than building it. To make a missing external tool fail the tests instead of
-skipping them, prefix the pytest line with `TOASTER_REQUIRE_TOOLS=1`. To run the build itself and
+The first five commands mirror the `build` job's provisioning and tests (the job also installs
+Graphviz and a Java runtime from apt); the last serves the book for preview rather than building
+it. CI runs pytest with `TOASTER_REQUIRE_TOOLS=1`, so a missing external tool fails the tests
+instead of skipping them; prefix the pytest line with it to get the same behavior locally. To run the build itself and
 the release gate, use the two commands under [Deployment status](#deployment-status). There is no
 local equivalent of the `deploy` job, and there should not be, since publishing is a decision, not
 a build artifact.

@@ -68,7 +68,7 @@ To build the static site the way CI does, rather than serve it, use the build fo
 URL is the path the site is served under on GitHub Pages:
 
 ```sh
-BASE_URL=/toaster uv run --frozen npx myst build --html --execute
+BASE_URL=/toaster uv run --frozen npx myst build --html --execute --strict
 ```
 
 Building and deploying the GitHub Pages site itself is a maintainer task, not something you

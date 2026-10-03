@@ -33,7 +33,7 @@ looks for a Jupyter on your `PATH`, which is usually a different installation. T
 static site the way CI does:
 
 ```sh
-BASE_URL=/toaster uv run --frozen npx myst build --html --execute
+BASE_URL=/toaster uv run --frozen npx myst build --html --execute --strict
 ```
 
 See [docs/setup.md](docs/setup.md) for full setup instructions and the fork-and-exercise workflow,
