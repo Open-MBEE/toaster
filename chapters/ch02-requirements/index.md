@@ -8,6 +8,8 @@ title: Overview
 
 Chapter 2 asks: what must the toaster do, and what do we assume about the conditions under which it operates? After completing this chapter, the model has a requirement definition, two named usages of `Toaster`, and the first engineering judgment record.
 
+A judgment record is a written, checkable record of an engineering judgment call, and following Hawkins et al. (2011) there are three kinds. An `asserted_context` records a context or assumption that is asserted to be appropriate for the argument elements it applies to. An `asserted_solution` records evidence cited as a solution that is asserted to be sufficient to support a claim. An `asserted_inference` records a claim said to be supported by other claims, with the inference asserted to be appropriate and sufficient. Notebook 03 builds the first of these, an `asserted_context`; a record states what is being asserted and does not settle the question, so its disposition stays `pending`.
+
 ## Ingredients
 
 | Notebook | Construct / operation | Concept |

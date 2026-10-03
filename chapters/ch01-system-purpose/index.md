@@ -23,9 +23,9 @@ See [setup](../../docs/setup.md) to provision Python and the OpenSysML binary be
 
 ## Method
 
-The four notebooks build the model of the toaster, the subject the tutorial's layers describe. Notebook 01 states the toaster's purpose functionally: `ToastingSystem`, the abstract subject, performs `ToastBread`, an action with typed `Bread` in and `Toast` out flows and the acceptance language as its `doc`. Notebooks 02 through 04 build the logical composition: two concrete subsystem placeholders (`HeatingSystem`, `ControlSystem`) with no content yet, the specialization that makes the concrete whole (`Toaster`) a kind of the subject it names, and the composition that gives `Toaster` a `heating` part and a `control` part.
+The four notebooks build the model of the toaster, the subject the tutorial's layers describe. Notebook 01 states the toaster's purpose functionally: `ToastingSystem`, the [abstract](../../docs/glossary.md#abstract-definition) subject, performs `ToastBread`, an action with typed `Bread` in and `Toast` out flows and the acceptance language as its `doc`. Notebooks 02 through 04 build the logical composition: two concrete subsystem placeholders (`HeatingSystem`, `ControlSystem`) with no content yet, the specialization that makes the concrete whole (`Toaster`) a kind of the subject it names, and the composition that gives `Toaster` a `heating` part and a `control` part.
 
-By the end of notebook 04, `Toaster :> ToastingSystem` performs the toasting purpose and owns both subsystems. Neither subsystem carries a mechanism, an interface, or a value yet. That is later chapters' work, once a mechanism has been selected for each.
+By the end of notebook 04, `Toaster :> ToastingSystem` performs the toasting purpose and owns both subsystems. Neither subsystem carries a [mechanism](../../docs/glossary.md#mechanism), an interface, or a value yet. That is later chapters' work, once a mechanism has been selected for each.
 
 ## Expected result
 
