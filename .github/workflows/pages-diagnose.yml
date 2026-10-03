@@ -1,0 +1,314 @@
+# THROWAWAY diagnostic workflow (PA-2). Builds the UNMODIFIED book on a clean
+# ubuntu-latest runner to measure the real failures before any fix.
+# The hard-coded macOS/Homebrew paths in the notebooks are deliberately created
+# as symlinks to freshly provisioned tools. This is for diagnosis only.
+name: Pages diagnose
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [pub/diagnose]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      TOOLKIT_VERSION: "0.9.1"
+      TOOLKIT_TAG: v0.9.1
+      TOOLKIT_ASSET: sysmlv2-0.9.1-x86_64-unknown-linux-gnu.tar.gz
+      LIBRARY_COMMIT: de1070ae8e79c21532b8004fc663d47b35d0e9fa
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.x"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Python dependencies
+        run: uv sync --locked
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install system tools
+        run: sudo apt-get update && sudo apt-get install -y graphviz openjdk-17-jre-headless
+
+      - name: Download and verify sysml-toolkit v0.9.1 (linux x86_64)
+        run: |
+          set -euo pipefail
+          base="https://github.com/Open-MBEE/sysml-toolkit/releases/download/${TOOLKIT_TAG}"
+          mkdir -p "$RUNNER_TEMP/toolkit"
+          cd "$RUNNER_TEMP/toolkit"
+          curl -fsSL -O "${base}/${TOOLKIT_ASSET}"
+          curl -fsSL -O "${base}/SHA256SUMS"
+          # Fails the step on mismatch; --ignore-missing because SHA256SUMS lists every platform.
+          sha256sum -c --ignore-missing SHA256SUMS
+          grep -q "${TOOLKIT_ASSET}" SHA256SUMS
+          tar xzf "${TOOLKIT_ASSET}"
+          test -x "sysmlv2-${TOOLKIT_VERSION}-x86_64-unknown-linux-gnu/sysmlv2"
+          "sysmlv2-${TOOLKIT_VERSION}-x86_64-unknown-linux-gnu/sysmlv2" --version || true
+
+      # PlantUML 1.2026.8 (latest release of plantuml/plantuml at authoring time, v1.2026.8).
+      # apt's plantuml (1.2020.2) rejects figures/ch05-interconnection.puml, so the jar comes from upstream.
+      # sha256 below computed locally from the downloaded jar and cross-checked against the
+      # digest published by the GitHub release asset (gh release view --json assets): both agree.
+      - name: Download and verify PlantUML jar
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/plantuml"
+          cd "$RUNNER_TEMP/plantuml"
+          curl -fsSL -O "https://github.com/plantuml/plantuml/releases/download/v1.2026.8/plantuml-1.2026.8.jar"
+          echo "5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462  plantuml-1.2026.8.jar" | sha256sum -c -
+
+      # Z3 5.1.0: `sysmlv2 verify --solve` shells out to a `z3` executable.
+      # sha256 is GitHub's published digest for the release asset (gh release view z3-5.1.0 --json assets),
+      # re-computed locally from the downloaded zip with shasum -a 256: both agree.
+      # Zip layout: z3-5.1.0-x64-glibc-2.39/bin/z3 (mode 0755, with libz3.so, jars and python bindings beside it).
+      - name: Download and verify Z3 5.1.0 (linux x64)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/z3"
+          cd "$RUNNER_TEMP/z3"
+          curl -fsSL -O "https://github.com/Z3Prover/z3/releases/download/z3-5.1.0/z3-5.1.0-x64-glibc-2.39.zip"
+          echo "f47be8d27d3230e823bf1eeede2fe0abaca55bb78d0b59974370e6689a92284a  z3-5.1.0-x64-glibc-2.39.zip" | sha256sum -c -
+          unzip -q z3-5.1.0-x64-glibc-2.39.zip
+          test -x "$RUNNER_TEMP/z3/z3-5.1.0-x64-glibc-2.39/bin/z3"
+          echo "$RUNNER_TEMP/z3/z3-5.1.0-x64-glibc-2.39/bin" >> "$GITHUB_PATH"
+
+      - name: Sparse-clone the SysML v2 standard library at the pinned commit
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout --sparse \
+            https://github.com/Systems-Modeling/SysML-v2-Release.git "$RUNNER_TEMP/SysML-v2-Release"
+          cd "$RUNNER_TEMP/SysML-v2-Release"
+          git sparse-checkout set sysml.library
+          git checkout "${LIBRARY_COMMIT}"
+          test "$(git rev-parse HEAD)" = "${LIBRARY_COMMIT}"
+          test -d sysml.library
+
+      - name: Create the hard-coded notebook paths as symlinks (diagnosis only)
+        run: |
+          set -euo pipefail
+          jar="$RUNNER_TEMP/plantuml/plantuml-1.2026.8.jar"
+          java_real="$(readlink -f "$(command -v java)")"
+          echo "plantuml jar: ${jar}"
+          echo "java: ${java_real}"
+          test -f "${jar}"
+          test -x "${java_real}"
+
+          sudo mkdir -p "$HOME/Documents/GitHub/sysml-toolkit/target/release"
+          sudo ln -sf "$RUNNER_TEMP/toolkit/sysmlv2-${TOOLKIT_VERSION}-x86_64-unknown-linux-gnu/sysmlv2" \
+            "$HOME/Documents/GitHub/sysml-toolkit/target/release/sysmlv2"
+
+          sudo mkdir -p "$HOME/Documents/GitHub/sysml-toolkit/spec-refs/SysML-v2-Release"
+          sudo ln -sfn "$RUNNER_TEMP/SysML-v2-Release/sysml.library" \
+            "$HOME/Documents/GitHub/sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library"
+
+          sudo mkdir -p /opt/homebrew/opt/plantuml/libexec
+          sudo ln -sf "${jar}" /opt/homebrew/opt/plantuml/libexec/plantuml.jar
+
+          sudo mkdir -p /opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home/bin
+          sudo ln -sf "${java_real}" /opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home/bin/java
+
+          ls -l "$HOME/Documents/GitHub/sysml-toolkit/target/release/sysmlv2" \
+            "$HOME/Documents/GitHub/sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library" \
+            /opt/homebrew/opt/plantuml/libexec/plantuml.jar \
+            /opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home/bin/java
+
+      - name: Check tool versions
+        run: |
+          z3 --version
+          uv run python scripts/check-tools.py
+
+      - name: Build the book (unmodified, with execution)
+        id: build
+        continue-on-error: true
+        env:
+          BASE_URL: /toaster
+        run: |
+          # uv run puts .venv/bin first on PATH so MyST's Jupyter kernel finds the toaster package.
+          set -o pipefail
+          uv run --frozen npx myst build --html --execute 2>&1 | tee build.log
+
+      - name: Summarise failures and figures
+        if: always()
+        run: |
+          if [ -f build.log ]; then
+            sed 's/\x1b\[[0-9;]*m//g' build.log > build.clean.log
+          else
+            : > build.clean.log
+          fi
+          cat > .figure-count.py <<'PYEOF'
+          import glob, json, os
+
+          def count(node):
+              n = 0
+              if isinstance(node, dict):
+                  jd = node.get("jupyter_data")
+                  if isinstance(jd, dict) and any(
+                      k.startswith("image/") for k in (jd.get("data") or {})
+                  ):
+                      n += 1
+                  for v in node.values():
+                      n += count(v)
+              elif isinstance(node, list):
+                  for v in node:
+                      n += count(v)
+              return n
+
+          pages = {}
+          for path in sorted(glob.glob("_build/site/content/*.json")):
+              try:
+                  with open(path, encoding="utf-8") as fh:
+                      pages[os.path.basename(path)] = count(json.load(fh))
+              except (OSError, ValueError) as exc:
+                  print("unreadable:", path, exc)
+          if not pages:
+              print("_build/site/content/*.json not found")
+          for name, n in pages.items():
+              if n:
+                  print(f"{n}  {name}")
+          print("Total:", sum(pages.values()))
+          # Pages with no image output whose JSON carries a traceback: a figure cell most likely failed.
+          for path in sorted(glob.glob("_build/site/content/*.json")):
+              name = os.path.basename(path)
+              if pages.get(name) == 0:
+                  with open(path, encoding="utf-8") as fh:
+                      text = fh.read()
+                  if "Traceback" in text:
+                      print("0  " + name + "  (no images, traceback present)")
+          print("interfaces:", pages.get("interfaces.json", "page JSON not found"), "images (expected 0 without the fix)")
+          PYEOF
+          cat > .verdicts.py <<'PYEOF'
+          import json, os, re
+
+          VERDICT = re.compile(r"^\[(satisfied|violated|undecided)\]")
+
+
+          def texts(node):
+              """Yield every output text blob (stream text, text/plain, error summary) under node."""
+              if isinstance(node, dict):
+                  jd = node.get("jupyter_data")
+                  if isinstance(jd, dict):
+                      t = jd.get("text")
+                      if isinstance(t, str):
+                          yield t
+                      plain = (jd.get("data") or {}).get("text/plain")
+                      if isinstance(plain, dict):
+                          plain = plain.get("content")
+                      if isinstance(plain, str):
+                          yield plain
+                      if jd.get("output_type") == "error":
+                          yield "ERROR " + str(jd.get("ename")) + ": " + str(jd.get("evalue"))
+                  for v in node.values():
+                      yield from texts(v)
+              elif isinstance(node, list):
+                  for v in node:
+                      yield from texts(v)
+
+
+          for page in ("violation-witness", "traceability-graph"):
+              path = "_build/site/content/" + page + ".json"
+              print("== " + page)
+              if not os.path.exists(path):
+                  print("   page JSON not found: " + path)
+                  continue
+              with open(path, encoding="utf-8") as fh:
+                  data = json.load(fh)
+              found = False
+              for blob in texts(data):
+                  for line in blob.splitlines():
+                      if VERDICT.match(line) or "z3: satisfiable, e.g." in line or line.startswith("ERROR "):
+                          print("   " + line)
+                          found = True
+                      elif page == "traceability-graph" and "(z3:" in line and len(line) < 300:
+                          print("   " + line)
+                          found = True
+              if not found:
+                  print("   (no verdict lines)")
+          PYEOF
+          exc_lines="$(grep -n 'An exception occurred during code execution' build.clean.log || true)"
+          if [ -n "${exc_lines}" ]; then exc_count="$(printf '%s\n' "${exc_lines}" | wc -l)"; else exc_count=0; fi
+          {
+            echo "## Pages diagnose"
+            echo
+            echo "Build step outcome: \`${{ steps.build.outcome }}\`"
+            echo
+            echo "**The build step outcome does not reflect cell errors (mystmd 1.11.0 exits 0 even when a notebook cell raises); the failure signal is this count.**"
+            echo
+            echo "### Cell execution exceptions: ${exc_count}"
+            echo
+            echo "Lines matching \`An exception occurred during code execution\` in the ANSI-stripped log:"
+            echo '```'
+            echo "${exc_lines}"
+            echo '```'
+            echo
+            echo "### Other failing notebook/cell lines"
+            echo '```'
+            grep -n -i -E 'error|fail|traceback|exception|cell [0-9]+|notebook' build.clean.log | head -n 300 || true
+            echo '```'
+            echo
+            echo "### Built figures (output nodes with an image/* mime type in _build/site/content/*.json)"
+            echo
+            echo "SVG figures live in the page JSON, not the page DOM. A fully working build has 18 (param-sweep PNG included)."
+            echo '```'
+            python3 .figure-count.py
+            echo '```'
+            echo
+            echo "### Linux Z3 verdicts"
+            echo
+            echo "Expected from the macOS run (stored outputs), for side-by-side comparison; no failure on mismatch:"
+            echo '```'
+            echo "[satisfied] deliveredEnergyBoundedBySupply  (z3: holds for all values of unbound features)"
+            echo "[violated] deliveredEnergyExceedsSupply  (z3: unsatisfiable -- no assignment can make this hold)"
+            echo "[undecided] deliveredEnergyBoundedBySupply  (result is indeterminate over unbound features -- z3: satisfiable, e.g. heatGenCheck.efficiency = 0, heatGenCheck.power = 0 [W], heatGenCheckDuration = 1 [s])"
+            echo '```'
+            echo
+            echo "Found in the executed page JSON on this runner (violation-witness = Ch8-02, traceability-graph = Ch10-01):"
+            echo '```'
+            python3 .verdicts.py
+            echo '```'
+            echo
+            echo "### Host-path leak scan of _build/html (files containing each pattern)"
+            echo '```'
+            if [ -d _build/html ]; then
+              for pat in "/home/runner" "/opt/homebrew" "Documents/GitHub" "/Users/"; do
+                n="$(grep -rIl -F -e "${pat}" _build/html | wc -l)"
+                echo "${n}  files contain ${pat}"
+              done
+            else
+              echo "_build/html not found"
+            fi
+            echo '```'
+            echo
+            echo "Note: \`myst build --strict\` exits 1 on cell errors (measured rc=1 with 3 errors in PA-1); the real CI build will need it."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build.log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Upload _build/html
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-html
+          path: _build/html
+          retention-days: 7
+          if-no-files-found: warn
