@@ -168,3 +168,20 @@ Acceptance:     the lint is clean on the real learner surface (chapters, docs) a
 ## Out of scope
 
 Pilot membership (Z's answer may change only the definition sentence in AGENTS.md 1.2 and `docs/references.md`); renaming skills or packages; re-running notebooks; editing `decisions/` evidence; closing stale upstream-issue wording (separate DEFERRED follow-up).
+
+## Queued after OT-8 (requested by mzargham, 2026-10-03; NOT started, specify as its own contract when the terminology contracts clear)
+
+**Contribution-policy revision.** The contribution sections, both in the notebooks and in the docs, must say that the
+contributions we want are **keeping the tutorials current to the toolchain**, not adding new content. Existing content may be
+refined, clarified or otherwise improved against the project's existing priorities:
+1. conformance with the SysML v2 specifications (all three OMG PDFs: the SysML v2 language spec, the API and Services spec, KerML);
+2. didactic clarity;
+3. effective, demonstrative use of tools from the OpenSysML ecosystem.
+An improvement is acceptable if it is **strictly dominant**: it makes at least one of these better without making any of them worse.
+
+Scope to inventory when specified: `docs/contributor.md`, `docs/setup.md` (fork-and-exercise workflow), `README.md`, any "contribute"
+text in chapter `index.md`/`conclusion.md` and notebook markdown cells, the exercise-pointer cells, and `AGENTS.md` where it states
+contribution scope. Judgment items for the ACE: the exact "strictly dominant" test wording; how it reconciles with the
+chapter-conclusion "what comes next" sentences and with `DEFERRED.md` (which tracks tool gaps); whether adding a chapter or
+exercise is ever allowed. Edits fall under the same protections as the terminology pass (protected zones, markdown-only for
+notebooks, guard checker, independent reviewer), and the contribution wording must use the OpenSysML convention (DL-116/DL-117).
