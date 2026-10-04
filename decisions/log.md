@@ -1644,3 +1644,13 @@ Reasoning: A bare "OpenSysML" no longer identifies the subject of a runtime clai
 Determined: yes.
 Extension: no (DL-117's reading-note treatment of z-model.md applied as a prior decision).
 Provenance: DL-116, DL-117, DL-118, DL-119; decisions/opensysml-terminology/final-texts.md, final-texts-2.md, inventory-b.md rows B-082..B-160; DEFERRED.md D-004, D-014, D-017, D-037; AGENTS.md 1.2, 1.7, 1.9; src/toaster/render.py, modelcheck.py, tools.py and chapters/ch10 notebooks 01, 03; plan Task 6; guard run (base f491403, head 758bdb3: PASS); tests/test_skill_snippets.py 4 passed; full suite 1847 passed; glossary check ok; six-pattern scan of skills 0 hits; Opus review of OT-6.
+
+## DL-121 | 2026-10-03 | OPENSYSML-TERMINOLOGY | Whole-branch gate passed; terminology merged into pages-publishing
+
+Path: Orchestrator-run; reviewer gate (Opus) passed with no blockers
+Decision: The OpenSysML terminology revision (DL-115..DL-120; contracts OT-1a, OT-1b, OT-2, OT-3A, OT-3B, OT-3C, OT-4, OT-5, OT-6, OT-7, OT-8) is merged into `pages-publishing` (merge commit 795d0f6). Gate evidence: both trees build under `myst build --html --execute --strict` with the pinned tools; `scripts/check-site.py` passes all five checks on both (18 figures, no leaks, no published exercise/DEFERRED files, links resolve); executed outputs identical across 59 content files and 255 outputs; judgment records byte-identical and AS-C08 content_hash equals the sha256 of models/ch08-cumulative.sysml; visible page text differs only on the 20 edited sources and every differing line maps to an inventory row or final text (0 orphans); lint equal to base outside docs/superpowers with the six new rules at 0; 1882 passed, 0 skipped with TOASTER_REQUIRE_TOOLS=1; the pinned guard passes against the base with the two visible glossary exemptions. Non-blocking notes N1-N8 are in decisions/opensysml-terminology/gate-notes.md and go to the next ACE round.
+Principles applied: P5 (the gate measures output equality and unauthorized change rather than trusting the builders); P4.
+Reasoning: Every contract passed an independent review on a different model, and the gate re-derived the guarantees (protected zones, outputs, hashes, orphans) from scratch rather than from the contracts' own reports.
+Determined: yes.
+Extension: no.
+Provenance: decisions/opensysml-terminology/{website-review,inventory-a,inventory-b,final-texts,final-texts-2,gate-notes}.md; DL-115..DL-120; plan docs/superpowers/plans/2026-10-03-opensysml-terminology-plan.md; the OT-8 gate report.
