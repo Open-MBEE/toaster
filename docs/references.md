@@ -70,7 +70,7 @@ The OpenSysML runtime's Python package (`opensysml==0.9.0`), used to load, valid
 
 sysml-toolkit: Open-MBEE/sysml-toolkit. <https://github.com/Open-MBEE/sysml-toolkit>
 
-The Rust toolkit (`sysmlv2` binary, pinned v0.9.1), used in Chapter 8 for `sysmlv2 verify --solve` through `toaster.modelcheck`, and for the cross-checks recorded in DEFERRED.md.
+The Rust toolkit (`sysmlv2` binary, pinned v0.9.1), used in Chapter 5 to draw the interconnection diagram (`sysmlv2 viz`, laid out by PlantUML), in Chapters 8 and 10 for `sysmlv2 verify --solve` (through `toaster.modelcheck` in Chapter 8; called directly in Chapter 10), and for the cross-checks recorded in DEFERRED.md.
 
 ---
 
