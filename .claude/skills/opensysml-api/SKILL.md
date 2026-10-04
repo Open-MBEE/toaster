@@ -3,7 +3,7 @@ name: opensysml-api
 description: opensysml v0.9.0 interface — correct method names, return shapes, limitations, and the D-001 encapsulation rule.
 ---
 
-# OpenSysML v0.9.0 API
+# The OpenSysML runtime v0.9.0 API
 
 ## Connection
 

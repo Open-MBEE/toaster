@@ -83,7 +83,7 @@ structure stays the same.
 - One code cell per fragment variable. Each is printed immediately after assignment.
 - Fragment variable names mirror the element: `HEATER_DEF`, `POWER_ATTR`, `TIMELY_REQ`, etc.
 - Fragment size: ≤5 lines of SysML per variable (ideally 1–3). Split if longer.
-- Every gap construct: add a comment citing the toaster issue + OpenSysML issue + spec section
+- Every gap construct: add a comment citing the toaster issue + the issue on the tracker of the component at fault (the runtime's `Open-MBEE/OpenSysML#NNN` or `Open-MBEE/sysml-toolkit#N`) + spec section
   directly above the string, e.g.:
   ```python
   # abstract modifier not yet supported — toaster#9 / OpenSysML#595

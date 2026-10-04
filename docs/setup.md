@@ -24,7 +24,7 @@ uv run python scripts/check-tools.py
 [Tools for chapters 5, 8 and 10](#tools-for-chapters) below).
 [`check-tools.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py)
 prints where each tool resolves and its version, verifies Graphviz is installed, and downloads
-the OpenSysML binary this tutorial's Python package connects to. If anything is missing, it
+the OpenSysML runtime binary this tutorial's Python package connects to. If anything is missing, it
 names what to install.
 
 `uv sync --locked` also installs JupyterLab and the kernel this project uses (both are
@@ -133,18 +133,20 @@ TOASTER_REQUIRE_TOOLS=1 uv run pytest tests/ glossary/tests/ -v
 
 ## The tools this tutorial uses, and why
 
+OpenSysML ([opensysml.org](https://opensysml.org/)) is the open-source SysML v2 tool stack. This tutorial uses two of its components and names them by role: the OpenSysML runtime (Go; repository `Open-MBEE/OpenSysML`; Python package `opensysml`; pinned v0.9.0) and sysml-toolkit (Rust; `sysmlv2` binary; pinned v0.9.1). The OMG SysML v2 Pilot Implementation (EPL-2.0) is the conformance baseline and is always named as such; it is not one of the two tools the chapters run.
+
 This tutorial models a system in SysML v2 and runs that model with Python. Two tools do that
 work, and neither implements the full SysML v2 specification yet. Both are under active
 development, and this tutorial tracks what each one can currently do.
 
-**OpenSysML** (`opensysml`, installed automatically by [`check-tools.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py)) is the primary tool: it
+**The OpenSysML runtime** (`opensysml`, installed automatically by [`check-tools.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py)) is the primary tool: it
 loads, validates, queries, and evaluates every model in this tutorial. Every chapter needs it.
-[`scripts/check-tools.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py) also provisions a second OpenSysML binary, the
+[`scripts/check-tools.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py) also provisions a second OpenSysML runtime binary, the
 render-capable CLI (distinct from the service binary the Python package
 itself talks to) — chapters that render an action-flow or state-transition
 diagram need it; nothing else does.
 
-**sysml-toolkit** does one thing OpenSysML cannot yet: prove that a constraint holds for every
+**sysml-toolkit** does what the OpenSysML runtime cannot yet: prove that a constraint holds for every
 value of an unbound quantity, not just check it against one fixed value, using the Z3 solver.
 Chapter 8 uses it directly (`toaster.modelcheck.verify_holds`, wrapping its `sysmlv2 verify
 --solve` CLI) to prove `deliveredEnergyBoundedBySupply` for every value its unbound features

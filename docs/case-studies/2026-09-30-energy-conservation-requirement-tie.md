@@ -57,7 +57,7 @@ subject (`heatGen : HeatGenerator`) was never actually used by its own required 
 is stated purely over unrelated free-standing elements. This is a real violation of §7.21.1's
 subject-conformance *spirit*, found by re-reading the spec directly, not by any tool diagnostic —
 **correction (found during review of the reconciliation contract, see below): Approach A never had
-an `assert satisfy` line at all, so the OMG pilot had no live binding to flag on it, and running
+an `assert satisfy` line at all, so the OMG SysML v2 Pilot Implementation (the pilot) had no live binding to flag on it, and running
 the pilot against Approach A's own committed model directly confirms 0 issues.** The pilot
 diagnostic ("Bound features should have conforming types") belongs to a different draft:
 Approach B's *own first commit* paired a typed subject with an `assert satisfy
@@ -66,7 +66,7 @@ pilot actually flagged — confirmed directly against that commit's own model. B
 two commits later by dropping the subject declaration. So two different defects, in two
 different places, were each found a different way: Approach A's (a declared-but-unused subject,
 no live binding) by direct spec reading; Approach B's own first draft's (a typed subject *plus* a
-real, type-inconsistent binding) by the pilot's own mechanical check. Neither tool nor either
+real, type-inconsistent binding) by the pilot's own mechanical check. No tool diagnostic and neither
 review process caught Approach A's own defect; it took re-reading §7.21.1 directly, later, to
 name it.
 
@@ -101,7 +101,7 @@ single worked example, and the answer required looking at the same fact from sev
 angles before it became clear enough to act on.
 
 **The letter of the rule.** `assert satisfy energyConservationReq by deliveredEnergyBoundedBySupply;`
-is grammatically legal and loads cleanly under OpenSysML. The one binding constraint the spec
+is grammatically legal and loads cleanly under the OpenSysML runtime. The one binding constraint the spec
 states — §7.21.1's "a requirement usage can only be satisfied by an entity that conforms to the
 definition of its subject" — is satisfied once the subject is left undeclared (inheriting
 `Anything`, which everything conforms to). Nothing in the grammar or the type system forbids this
@@ -121,13 +121,13 @@ never mentions its subject anywhere — the lemma it subsets is a closed proposi
 free-standing elements. Binding anything to the subject changes nothing about whether the
 constraint evaluates true. The construct's grammar is satisfied; its purpose is not exercised.
 
-**Tool support.** Neither OpenSysML nor the OMG pilot flags *this specific line* (Check A as finally
+**Tool support.** Neither the OpenSysML runtime nor the pilot flags *this specific line* (Check A as finally
 written, subject-less). The pilot does catch a live binding type-mismatch — confirmed directly
 against Approach B's own first draft, which paired a typed subject with this same `assert satisfy`
 line and drew "Bound features should have conforming types" — but there is no tool check for "this
 satisfy usage's binding is causally irrelevant to the requirement's own truth value" even when the
 types happen to line up, which is the finally-written version's own problem. That is a semantic
-property no diagnostic in this toolchain computes. This matters for the
+property no diagnostic of the OpenSysML runtime or the pilot computes. This matters for the
 methodology, not just the conclusion: a construct passing every available tool check is evidence
 it is *legal*, not evidence it is *doing what it looks like it is doing*. The absence of a tool
 complaint was never going to settle this question.
@@ -186,7 +186,7 @@ a second, quieter instance of the same failure mode in reverse.
 
 **Empirical confirmation, not just argument.** Z was not convinced by the argument above on its
 own — correctly: an abstract claim that a construct "does no evaluative work" deserves to be
-checked against the tool, not just read off the spec text. Two things were verified directly
+checked against the OpenSysML runtime, not just read off the spec text. Two things were verified directly
 rather than asserted.
 
 First, the base library itself settles where subject-dependence actually comes from.
@@ -198,7 +198,7 @@ reference the subject's own features (exactly what the spec's worked example, `m
 via `:>> mass = massActual`, and exactly what `EnergyConservationReq`'s own `require constraint c
 :> deliveredEnergyBoundedBySupply` does not do).
 
-Second, this was tested directly against `model.verify_satisfaction()` — the tool's own
+Second, this was tested directly against `model.verify_satisfaction()` — the runtime's own
 point-evaluation engine, the same one a reader would reach for expecting confirmation, the same
 way `heatGenerationReq`'s own real `assert satisfy ... by rated` / `by weak` claims are confirmed
 elsewhere in this model. Three variants of `assert satisfy energyConservationReq by X;` were built
@@ -274,7 +274,7 @@ verification case both need to come out.
    subject-type oddness as an open question without identifying it as a defect, and no tool flagged
    it either, because Approach A never attempted a live binding for any tool to check — its problem
    was a declared-but-unused subject, invisible to a diagnostic that only fires on an actual
-   type-mismatched binding. The OMG pilot *does* catch a live type mismatch, as it did on Approach
+   type-mismatched binding. The pilot *does* catch a live type mismatch, as it did on Approach
    B's own first draft, but a clean pilot run is not evidence a construct is doing its job, only
    that nothing it actually tried to bind was mistyped. Every available tool check passing is
    necessary, never sufficient.
