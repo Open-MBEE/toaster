@@ -2,6 +2,8 @@
 # Every rule needs: id, regex (matched case-insensitively), message, why, severity, scope.
 # severity: "error" | "warn".  scope: "learner".
 # Use (?-i:...) inside a regex to require exact case for part of it.
+# Optional: ignore_code = true (boolean, default false) matches the rule against a copy of the text in which
+# fenced blocks and inline code spans are blanked out (same length, line numbers unchanged).
 
 [[rule]]
 id = "tall-named"
@@ -58,3 +60,57 @@ message = "No judgment record disposition is \"accepted\"."
 why = "SA-7"
 severity = "warn"
 scope = "learner"
+
+[[rule]]
+id = "opensysml-contrast-or-and"
+regex = '''OpenSysML\s+(or|and|nor|vs\.?|versus)\s+sysml-toolkit'''
+message = "Bare \"OpenSysML\" names the stack, so it cannot be contrasted with or joined to sysml-toolkit. Name the component: \"the OpenSysML runtime\" and sysml-toolkit."
+why = "AGENTS.md 1.2 (OpenSysML naming convention); DL-116 (guard), DL-118 (ignore_code scope)"
+severity = "error"
+scope = "learner"
+ignore_code = true
+
+[[rule]]
+id = "toolkit-and-opensysml"
+regex = '''sysml-toolkit\s+(or|and)\s+OpenSysML'''
+message = "Bare \"OpenSysML\" names the stack, so it cannot be joined to sysml-toolkit. Name the component: sysml-toolkit and \"the OpenSysML runtime\"."
+why = "AGENTS.md 1.2 (OpenSysML naming convention); DL-116 (guard), DL-118 (ignore_code scope)"
+severity = "error"
+scope = "learner"
+ignore_code = true
+
+[[rule]]
+id = "neither-opensysml"
+regex = '''neither\s+OpenSysML'''
+message = "A \"neither\" claim needs two named components: \"neither the OpenSysML runtime nor sysml-toolkit\", or say \"no tool\"."
+why = "AGENTS.md 1.2 (OpenSysML naming convention); DL-116 (guard), DL-118 (ignore_code scope)"
+severity = "error"
+scope = "learner"
+ignore_code = true
+
+[[rule]]
+id = "not-opensysml"
+regex = '''not\s+OpenSysML'''
+message = "A negative claim needs the component that was probed: say \"not the OpenSysML runtime\" (or name sysml-toolkit)."
+why = "AGENTS.md 1.2 (OpenSysML naming convention); DL-116 (guard), DL-118 (ignore_code scope)"
+severity = "error"
+scope = "learner"
+ignore_code = true
+
+[[rule]]
+id = "opensysml-capability"
+regex = '''OpenSysML\s+(alone|itself|cannot|can't|does\s+not|doesn't|only)'''
+message = "A capability claim names the component that was probed: \"the OpenSysML runtime cannot ...\" or \"sysml-toolkit does not ...\"."
+why = "AGENTS.md 1.2 (OpenSysML naming convention); DL-116 (guard), DL-118 (ignore_code scope)"
+severity = "error"
+scope = "learner"
+ignore_code = true
+
+[[rule]]
+id = "opensysml-version"
+regex = '''OpenSysML\s+v0\.9'''
+message = "Versions attach to component names: \"the OpenSysML runtime v0.9.0\", \"sysml-toolkit v0.9.1\"."
+why = "AGENTS.md 1.2 (OpenSysML naming convention); DL-116 (guard), DL-118 (ignore_code scope)"
+severity = "error"
+scope = "learner"
+ignore_code = true
