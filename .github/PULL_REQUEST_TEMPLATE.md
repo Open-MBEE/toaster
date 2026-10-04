@@ -20,6 +20,6 @@ Not worse on each of the others (one line each, with how you checked):
 
 ## Protections
 
-- [ ] No new chapter, notebook, exercise, construct or analysis operation, model element, judgment record or glossary term
+- [ ] No new chapter, notebook, exercise, construct or analysis operation, model element, judgment record, glossary term or learning outcome
 - [ ] `models/`, judgment records, stored outputs and `DEFERRED.md` headings unchanged, or the change says why and recomputes `content_hash`
 - [ ] `TOASTER_REQUIRE_TOOLS=1 uv run pytest tests/ glossary/tests/` and `uv run python -m glossary lint` pass locally
