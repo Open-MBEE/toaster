@@ -40,7 +40,7 @@ Sources are not ranked against each other. Each supplies a **kind** of definitio
 3. **Locators and quotes are checkable.** Each canonical edge has a `gl:locator` and, for file sources, a short `gl:quote` (at most 300 characters) with `gl:pdfPage`. `verify-sources` finds the quote on that page. Douglas locators are `Part N, m:ss` and were read from transcripts. Never quote at length; paraphrase in `gl:text`. **Exception (Z, 2026-09-26, DL-026):** a single definitional sentence of at most 200 characters may reproduce canonical wording in `gl:text` or `gl:gloss` when the source is attributed on the page (the Sources list) and the wording is not placed in quotation marks as if verbatim. Longer text is paraphrased. `gl:quote` is never rendered on the public page.
 4. **Glosses are at most 240 characters.** A `gl:gloss` is used verbatim by `render`; without one, `gl:text` is used if it fits.
 5. **Change definitions only through the graph**, then `check`, then `render`. Text between `<!-- gloss:ID -->` and `<!-- /gloss -->` is generated; never edit it by hand. Learner-facing pages and the skills cite terms, they do not redefine them.
-6. **Builder-facing lenses are not sources or terms** (Tall's three worlds, optimization and control, generalized dynamical systems). Implementations (OpenSysML, sysml-toolkit) are toolchain, not sources.
+6. **Builder-facing lenses are not sources or terms** (Tall's three worlds, optimization and control, generalized dynamical systems). Implementations (the OpenSysML runtime and sysml-toolkit, components of the OpenSysML stack, and the OMG SysML v2 Pilot Implementation) are toolchain, not sources.
 
 ## Adding a term, source or edge
 

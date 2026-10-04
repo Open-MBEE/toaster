@@ -12,7 +12,7 @@ description: docs/ page inventory, reproducibility statement structure, fork-and
 | `docs/index.md` | Opening navigation + didactic purpose statement |
 | `docs/setup.md` | Provisioning steps + fork-and-exercise workflow |
 | `docs/glossary.md` | Generated glossary of every confirmed load-bearing term (`uv run python -m glossary render`); never edited by hand |
-| `docs/references.md` | Citations: Brian Douglas video, Hawkins 2011, opensysml, mystmd |
+| `docs/references.md` | Citations: Brian Douglas video, Hawkins 2011, OpenSysML (the stack definition and its two components' links), mystmd |
 | `docs/reproducibility.md` | Closing reproducibility statement (populated from build manifest) |
 | `docs/contributor.md` | Maintainer guide (4 update scenarios) |
 

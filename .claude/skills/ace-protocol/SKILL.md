@@ -60,7 +60,7 @@ Frame decisions the way Z thinks: an **objective** (what is good and good enough
 | SA-3 | Energy model = `Q = ηPt`, sympy+numpy+matplotlib for the base tutorial. scipy is permitted if it is the right tool for the job. |
 | SA-4 | Single-platform CI (ubuntu-latest) |
 | SA-5 | Default book-theme, no custom CSS |
-| SA-6 | Bounded model checking: opensysml `check` engine only |
+| SA-6 | Bounded model checking: opensysml `check` engine only (the runtime's engine; for "holds" questions Z accepted sysml-toolkit's `sysmlv2 verify --solve` wrapped by `toaster.modelcheck`: DL-046, D-025) |
 | SA-7 | All judgment records are worked examples; `disposition` stays `"pending"` |
 | SA-8 | One new construct or analysis operation per sub-notebook; depth notebooks may introduce neither |
 | SA-9 | DOT for sequences/relationships; SysMLD first-class for interconnection; PlantUML for action flow; Matplotlib for quantitative; never Mermaid |
@@ -127,9 +127,9 @@ Earlier entries with a single `Rationale:` line pre-date this format.
 ## Escalate to Z
 
 - SA challenge without an obvious "no" — e.g., renderer limitation that genuinely threatens a learning outcome
-- Licensing questions (GPL PlantUML, pilot EPL-2.0, redistribution)
+- Licensing questions (GPL PlantUML, the OMG SysML v2 Pilot Implementation's EPL-2.0, redistribution)
 - Spec ambiguity spanning multiple chapters, not resolvable by existing SAs
-- Required opensysml capability missing from v0.9.0 with no workable simplification
+- Required OpenSysML runtime capability missing from v0.9.0 with no workable simplification
 - A request to change a confirmed glossary definition or to approve a `differsFrom`: only Z acts. If Z's recorded positions show the change is wrong, decline it yourself and log it (nothing changes, so Z need not act); if you cannot tell whether the change would be right, escalate
 - Any question the frameworks and principles in `z-principles.md` do not determine (the default for the unknown)
 - A proposal to reopen an SA rule

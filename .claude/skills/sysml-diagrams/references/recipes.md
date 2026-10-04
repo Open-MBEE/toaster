@@ -2,11 +2,11 @@
 
 **Corrected 2026-10-01** (this file was not updated when `decisions/log.md` `DL-057`
 corrected `sysml-diagrams/SKILL.md`'s own renderer-choice table, so it kept describing the
-OMG pilot and SysMLD/sysml2d as the defaults for two view types after both were confirmed
+OMG SysML v2 Pilot Implementation and SysMLD/sysml2d as the defaults for two view types after both were confirmed
 to fail entirely on real content, `decisions/diagram-study-real-fixtures.md`; Phase 1's own
-survey, `decisions/diagram-survey.md`, caught the gap). **Never use the OMG pilot or
+survey, `decisions/diagram-survey.md`, caught the gap). **Never use the pilot or
 SysMLD/sysml2d for real chapter content.** Run from the tutorial repository root. `$SYSML`
-is the pinned OpenSysML CLI; `model.sysml` is the chapter-generated snapshot. Replace example
+is the pinned OpenSysML runtime CLI; `model.sysml` is the chapter-generated snapshot. Replace example
 qualified names with the chosen subject. Write outputs to an ignored `build/figures/`
 directory.
 
@@ -71,7 +71,7 @@ java -Djava.awt.headless=true -jar "$PLANTUML_JAR" -tsvg build/figures/interconn
 
 Confirmed on every real fixture tested (`decisions/diagram-study-real-fixtures.md`): draws real
 port names (e.g. `durationIn`, `durationOut`) as their own boxes inside the owning part, not
-folded into one edge label the way OpenSysML's own interconnection export does. Otherwise, a
+folded into one edge label the way the OpenSysML runtime's own interconnection export does. Otherwise, a
 chapter using interconnection only to show a connection or an allocation — where port identity
 is not itself the point — does not need the extra external-binary dependency; default to
 `render_interconnection()`.
@@ -80,7 +80,7 @@ Before rendering, assert that selected relationships and endpoints match the mod
 parts, ports, and connections — never author a separate relationship model by hand for either
 pipeline.
 
-## Action flow — OpenSysML
+## Action flow — OpenSysML runtime
 
 ```sh
 "$SYSML" model.sysml \
@@ -97,7 +97,7 @@ every real chapter fixture tested so far exercises only a linear sequence.
 
 Distinguish a structural action-flow figure from an actual execution trace.
 
-## State transition — OpenSysML
+## State transition — OpenSysML runtime
 
 ```sh
 "$SYSML" model.sysml \
@@ -107,7 +107,7 @@ dot -Tsvg build/figures/states.dot -o build/figures/states.svg
 ```
 
 Confirmed directly against real chapter content (`decisions/diagram-study-real-fixtures.md`):
-100% success across both OpenSysML render forms on Ch7's real `Cycle` state machine, and the
+100% success across both OpenSysML runtime render forms on Ch7's real `Cycle` state machine, and the
 mutation-control test (retargeting a transition) correctly changes the rendered output. Show
 states and transitions for one behavioral question. Preserve initial entry and, when present,
 event triggers, guards, effects, and entry/do/exit compartments. Change orientation or split
@@ -116,7 +116,7 @@ nested behavior into another figure when labels become crowded.
 Check each transition's source and target against the real model, not an assumed shape — a
 changed target must change the corresponding arrow.
 
-## Sequence — OpenSysML and Mermaid
+## Sequence — OpenSysML runtime and Mermaid
 
 ```sh
 "$SYSML" model.sysml \
