@@ -76,6 +76,9 @@ def load_rules(path: Path = RULES_FILE) -> list[Rule]:
                 raise LintConfigError(f"rule {name!r}: missing field {f!r}")
             if not isinstance(raw[f], str):
                 raise LintConfigError(f"rule {name!r}: field {f!r} must be a string, got {type(raw[f]).__name__}")
+        unknown = sorted(set(raw) - set(FIELDS) - set(OPTIONAL_BOOL_FIELDS))
+        if unknown:
+            raise LintConfigError(f"rule {name!r}: unknown field(s) {unknown}")
         for f in OPTIONAL_BOOL_FIELDS:
             if f in raw and not isinstance(raw[f], bool):
                 raise LintConfigError(f"rule {name!r}: field {f!r} must be a boolean, got {type(raw[f]).__name__}")

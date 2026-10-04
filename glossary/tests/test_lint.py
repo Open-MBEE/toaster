@@ -419,6 +419,21 @@ def test_non_bool_ignore_code_is_exit_2(tmp_path: Path, value: str) -> None:
     assert r.exit_code == 2 and "field 'ignore_code' must be a boolean" in r.output and "Traceback" not in r.output
 
 
+def test_unknown_rule_field_is_exit_2(tmp_path: Path) -> None:
+    # a misspelled optional key must fail closed, not be silently ignored
+    p = tmp_path / "rules.toml"
+    p.write_text("[[rule]]\nid='r'\nregex='x'\nmessage='m'\nwhy='w'\nseverity='error'\nscope='learner'\n"
+                 "ignore_cod=true\n")
+    with pytest.raises(lint.LintConfigError, match=r"rule 'r': unknown field\(s\) \['ignore_cod'\]"):
+        lint.load_rules(p)
+    r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(p)])
+    assert r.exit_code == 2 and "unknown field(s) ['ignore_cod']" in r.output and "Traceback" not in r.output
+
+
+def test_shipped_rules_file_has_no_unknown_fields() -> None:
+    assert lint.load_rules(lint.RULES_FILE)
+
+
 def test_bool_ignore_code_accepted_and_default_false(tmp_path: Path) -> None:
     base = "message='m'\nwhy='w'\nseverity='error'\nscope='learner'\n"
     p = tmp_path / "rules.toml"
