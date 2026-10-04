@@ -1672,3 +1672,27 @@ Decision (intent, PENDING): in .claude/skills/sysml-diagrams/SKILL.md replace th
 Revert record: the commit preceding the first edit of this session; `git show <that commit>:.claude/skills/sysml-diagrams/SKILL.md` restores the file. Current text of the two cells is captured in the session report.
 Principles applied: P5 (a skill must not describe as working what the register records as dropping content); skill-editor Steps 1-4.
 Status: PENDING until the edit lands; the ACE or orchestrator sets COMPLETE with the commit.
+
+## DL-124 | 2026-10-03 | CONTRIBUTION-POLICY | Reviewer findings in the governed text ruled: runtime-binary pin and version re-probe rule added to "Keep current"; DEFERRED status wording, "AI model", "open an issue", library-commit fix; reviewer table placed in docs/contributor.md; recipes.md D-037 correction queued
+
+Path: Handled by ACE (amendments under the DL-122 pass; two items with a policy flavor ruled with Z's default stated)
+Decision: (F1) "Keep current" step 1 names the OpenSysML runtime binary pin (src/toaster/bootstrap.py version defaults and _CLI_SUMS, src/toaster/connect.py, the opensysml.connect(version=...) calls in scripts/check_conformance.py and scripts/check_construction.py) as separate from the opensysml package pin; step 5 adds the version re-check of chapters and DEFERRED.md with the rule that a re-probed statement takes the new version and an un-probed one keeps the version it was probed against. (F2) "status line" becomes "add a dated status line (or update the one it has)" at both sites. (F3) "open an issue first" loses "first"; AGENTS.md 1.12 gains no exception: what Z directs after an issue is a Z-initiated scope change under 1.11, not a pull-request path (Z may add an explicit exception; default none). (F4) "different model" becomes "different AI model" at three sites. (Q1) Not restated: 1.3 and 1.11 already govern Part 1, confirmed definitions and the ACE skills; a one-sentence form is recorded in the ACE report if Z wants it explicit. (Q2) The reviewer-facing test is a compact three-row table in docs/contributor.md after the "What we accept" bullets, with the pass rule; reviewer.md unchanged. (Q3) "the sysmlv2 binary, Z3 and the PlantUML jar with their sha256 hashes, and the standard-library commit". Extras: PR template Protections bullet gains "or learning outcome"; sysml-diagrams references/recipes.md L92-94 and L109-111 take the D-037 wording (CT-6). Exact texts: decisions/contribution-policy/final-texts-2.md. Contracts: CT-5 (builder: docs/contributor.md, .github template), CT-6 (ACE: sysml-diagrams/references/recipes.md).
+Principles applied: P5 (an incomplete bump instruction and an overstated render claim both describe as done what is not); DL-116 (1) and (3); P4 and Z-18 (no duplication of 1.3/1.11; smallest table; one-word edits); P6 (F3 and Q1 defaults stated for Z); DL-117 (dated-correction practice in DEFERRED.md); DL-122.
+Reasoning: The reviewer's line claims were verified by grep (bootstrap.py, connect.py, check_conformance.py, check_construction.py; 1 of 39 DEFERRED entries has a Status line; the library pin is a commit with no hash). "None is accepted by pull request" is a statement about unsolicited pull requests; Z deciding to add content is Z changing scope, which 1.11 already provides for, so dropping "first" removes the implication without a new clause. A human reviewer reads the published page, which is why 1.12 says the test is there; the table is the smallest form that makes "worse" checkable per priority.
+Determined: yes.
+Extension: no (DL-122's extensions applied as prior decisions).
+Provenance: the CT-2/CT-3 reviewer report; src/toaster/bootstrap.py, connect.py; scripts/check_conformance.py, check_construction.py; pyproject.toml; DEFERRED.md top note; .claude/agents/reviewer.md; recipes.md; D-037; AGENTS.md 1.3, 1.11, 1.12; DL-116, DL-117, DL-122.
+
+## DL-125 | 2026-10-03 | SKILL-EDIT | PENDING: sysml-diagrams/references/recipes.md corrected against D-037 (CT-6, ACE, separate session)
+
+Path: Handled by ACE (P5 correction within the ACE's unilateral skill authority; not a Z-directed edit)
+Decision (intent, PENDING): in .claude/skills/sysml-diagrams/references/recipes.md replace the two paragraphs at ~L92-94 (action-flow) and ~L109-111 (state-transition) with the D-037-accurate wording in decisions/contribution-policy/final-texts-2.md section EXTRA (b). One logical change, one session; no fence, no other line.
+Revert record: the commit preceding the first edit of this session; `git show <that commit>:.claude/skills/sysml-diagrams/references/recipes.md` restores the file.
+Principles applied: P5; skill-editor Steps 1-4.
+Status: PENDING until the edit lands; the ACE or orchestrator records COMPLETE with the commit.
+
+## DL-126 | 2026-10-03 | SKILL-EDIT | COMPLETE: CT-3 and CT-3b skill edits (DL-122, DL-123)
+
+Path: Orchestrator-run; edits by the ACE
+Decision: CT-3 (tutorial-supporting-pages: inventory row, template item 5, contributor-guide scenarios 1-2 renamed with the "What we accept" lead, new never-do bullet; commit 02d8e9c, merged daf06b1) and CT-3b (sysml-diagrams SKILL.md L18-19 corrected against D-037; commit 4f775d5, merged) are complete. Revert records: cfb3672 for both. DL-123 is COMPLETE. The pinned guard reports exactly one authorized fenced-block change (rule (e), tutorial-supporting-pages template item 5), all other rules PASS.
+Provenance: DL-122, DL-123; guard output; tests/test_skill_snippets.py 4 passed.
