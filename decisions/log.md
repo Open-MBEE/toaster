@@ -1621,3 +1621,15 @@ Reasoning: (1) DL-117 (1) states the rule for field lines and its reason; keepin
 Determined: yes.
 Extension: yes, two small ones for Z to skim: DL-117 (10)'s scope rule extended from code cells to inline code spans and fences (per-rule `ignore_code`), and DL-116 (6)'s "docs/superpowers left" applied to the lint's scanning scope (prefix exclusion).
 Provenance: DL-116, DL-117, DL-028; decisions/opensysml-terminology/final-texts.md, final-texts-2.md, inventory-b.md rows B-056/B-057; DEFERRED.md D-017, D-019, D-020, D-023, D-024, D-030, D-031, D-032, D-034, D-035, D-036; glossary/lint.py, lint_rules.toml, glossary/tests/test_lint.py; myst.yml; decisions/pass4-phase0-close.md:20; chapters ch05 nb03 and ch10 nb01 code cells; src/toaster/render.py.
+
+## DL-119 | 2026-10-03 | OPENSYSML-TERMINOLOGY | Z decides the Pilot Implementation is outside "OpenSysML"; the contribution-policy contract starts autonomously; the validation push is authorized after it
+
+Path: Z's decision (answers DL-116 item 2; no ACE ruling needed)
+Decision: mzargham (Z) ruled, in chat 2026-10-03: the OMG SysML v2 Pilot Implementation is lumped with the OMG published specifications that OpenSysML builds on; it is not part of "OpenSysML". This is option A of the DL-116 brief. The convention already written (AGENTS.md 1.2 and the other definition sites: the Pilot is "the OMG SysML v2 Pilot Implementation", the conformance baseline, never counted among the tools) holds as written; no text changes. Z also directed: (a) the queued contribution-policy contract starts autonomously once the terminology pass has cleared; (b) the orchestrator may push `pages-publishing` for the CI validation run after the contribution-policy contract, and may remediate errors the run shows; this authorizes the branch push and the validation runs only, not opening the pull request, enabling Pages, or merging (those remain Z's).
+Principles applied: P6 (licensing/category question goes to Z; Z ruled); Z-12 (the toolchain is cited only to flag spec gaps; the Pilot sits with the specs side); DL-116 item 2.
+Reasoning: Z's classification matches the written default and the definition sentences, which say the Pilot is the conformance baseline and not one of the two tools the chapters run, so nothing in the pass depends on revisiting wording.
+Determined: yes (Z).
+Extension: no.
+Provenance: DL-116 (item 2 brief, "Z's decision: [pending]" now answered here), DL-117, DL-118; decisions/opensysml-terminology/website-review.md; AGENTS.md 1.2.
+    Z's decision: A (Pilot out of OpenSysML; lumped with the OMG published specs OpenSysML builds on)
+    Z's rationale: the Pilot Implementation is the OMG-side reference, grouped with the published specs, while OpenSysML is the permissively licensed tool stack built on them.
