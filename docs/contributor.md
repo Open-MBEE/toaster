@@ -25,7 +25,7 @@ touch anything, even if you never run an agent yourself:
   used to own each file. It's the harness's own foundational reference, read first by every
   agent role before it does anything else.
 - **[`CLAUDE.md`](https://github.com/Open-MBEE/toaster/blob/main/CLAUDE.md)** is the entry point: read order, the glossary CLI, and the skill index below.
-- **[`DEFERRED.md`](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md)** tracks known gaps in the toolchain (OpenSysML, sysml-toolkit) that the
+- **[`DEFERRED.md`](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md)** tracks known gaps in the toolchain (the OpenSysML runtime, sysml-toolkit) that the
   tutorial works around — what the workaround is, why it's needed, and the condition under
   which it comes out once the upstream gap closes.
 - **[`.claude/agents/`](https://github.com/Open-MBEE/toaster/tree/main/.claude/agents)** defines the roles that do the work: an `orchestrator` that turns a

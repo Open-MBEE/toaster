@@ -62,9 +62,15 @@ The normative specification for all SysML v2 constructs used in this tutorial. C
 
 ## OpenSysML
 
-Open-MBEE/OpenSysML. <https://github.com/Open-MBEE/OpenSysML>
+OpenSysML ([opensysml.org](https://opensysml.org/)) is the open-source SysML v2 tool stack. This tutorial uses two of its components and names them by role: the OpenSysML runtime (Go; repository `Open-MBEE/OpenSysML`; Python package `opensysml`; pinned v0.9.0) and sysml-toolkit (Rust; `sysmlv2` binary; pinned v0.9.1). The OMG SysML v2 Pilot Implementation (EPL-2.0) is the conformance baseline and is always named as such.
 
-The Python library (`opensysml==0.9.0`) used to load, validate, evaluate, and query SysML v2 models in this tutorial. All model loading uses `conn.load_from_content(content, strict=False)`. Gaps between the library's current API and the SysML v2 specification are tracked in [DEFERRED.md](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md) and as issues in this repository and upstream.
+The OpenSysML runtime: Open-MBEE/OpenSysML. <https://github.com/Open-MBEE/OpenSysML>
+
+The OpenSysML runtime's Python package (`opensysml==0.9.0`), used to load, validate, evaluate, and query SysML v2 models in this tutorial. All model loading uses `conn.load_from_content(content, strict=False)`. Gaps between the runtime's current API and the SysML v2 specification are tracked in [DEFERRED.md](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md) and as issues in this repository and upstream.
+
+sysml-toolkit: Open-MBEE/sysml-toolkit. <https://github.com/Open-MBEE/sysml-toolkit>
+
+The Rust toolkit (`sysmlv2` binary, pinned v0.9.1), used in Chapter 8 for `sysmlv2 verify --solve` through `toaster.modelcheck`, and for the cross-checks recorded in DEFERRED.md.
 
 ---
 
