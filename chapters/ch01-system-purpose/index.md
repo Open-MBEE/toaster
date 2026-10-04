@@ -19,7 +19,7 @@ Chapter 1 asks: how do we describe a system in SysML v2 before we know how it is
 
 ## Equipment
 
-See [setup](../../docs/setup.md) to provision Python and the OpenSysML binary before running any notebook.
+See [setup](../../docs/setup.md) to provision Python and the OpenSysML runtime binary before running any notebook.
 
 ## Method
 

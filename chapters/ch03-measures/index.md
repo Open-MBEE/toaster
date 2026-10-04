@@ -19,7 +19,7 @@ Chapter 3 asks: how do we record and check a satisfaction claim against a requir
 
 ## Equipment
 
-See [setup](../../docs/setup.md) to provision Python and the OpenSysML binary before running any notebook. Node.js is only needed if you also want to build the rendered book locally, not for running notebooks.
+See [setup](../../docs/setup.md) to provision Python and the OpenSysML runtime binary before running any notebook. Node.js is only needed if you also want to build the rendered book locally, not for running notebooks.
 
 ## Method
 
