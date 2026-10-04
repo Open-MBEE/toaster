@@ -1,9 +1,9 @@
 ---
 name: opensysml-query
-description: Tested cookbook for interrogating a loaded SysML v2 model with OpenSysML v0.9.0 (three surfaces, what each sees, id formats, recipes, what does not work and the workaround). Snippets are executed by tests/test_skill_snippets.py.
+description: Tested cookbook for interrogating a loaded SysML v2 model with the OpenSysML runtime v0.9.0 (three surfaces, what each sees, id formats, recipes, what does not work and the workaround). Snippets are executed by tests/test_skill_snippets.py.
 ---
 
-# Querying a model (OpenSysML v0.9.0)
+# Querying a model (the OpenSysML runtime v0.9.0)
 
 SysML v2 is declarative and database-like (AGENTS.md 1.4): we build a model, then ask it questions. There are three surfaces, and none of them sees everything. Pick by what you need to see. Results and dates are in `decisions/probes.md`; gap ids (G1 to G7) are in `decisions/log.md` DL-015.
 
@@ -129,7 +129,7 @@ assert satisfies()
 
 ## Recipe 5: a staged conformance check (port types on connected ends)
 
-OpenSysML accepts a connection between ports of unrelated types with no diagnostic (gap G4, `decisions/probes.md`), and the KerML text searched has no validation constraint for it. So this is a **project conformance check**, not a language one (AGENTS.md 1.9): apply it from the chapter and section where the connection is declared complete, keep a negative control that shows it catching a fault, and report it as *open* before then.
+The OpenSysML runtime v0.9.0 and sysml-toolkit v0.9.1 both accept a connection between ports of unrelated types with no diagnostic (gap G4, `decisions/probes.md`), and the KerML text searched has no validation constraint for it. So this is a **project conformance check**, not a language one (AGENTS.md 1.9): apply it from the chapter and section where the connection is declared complete, keep a negative control that shows it catching a fault, and report it as *open* before then.
 
 ```python
 def feature_type_names(feature_qn):
@@ -174,7 +174,7 @@ The API JSON `@id` uses `__` for `::` and escapes `_` (`named_flow` becomes `nam
 | `conn.load(path)` exists but does not resolve imports either | Same workaround. |
 | Writing these joins by hand in a notebook | Import the tested helpers from `toaster.query`: `find_connectors`, `find_allocations`, `allocations_for`, `satisfy_relationships`, `perform_relationships`, `requirement_coverage`, `specializes_transitively`, `port_type_mismatches`. The recipes above show what they do; `tests/test_query.py` covers them against `models/ch08-cumulative.sysml`. |
 
-The sysml-toolkit Python binding (`sysmlv2.Session.from_files`) does resolve imports across files and sees unnamed elements through `elements_of_metaclass`. It is toolchain, not a chapter dependency (see `decisions/probes.md`).
+The sysml-toolkit Python binding (`sysmlv2.Session.from_files`) does resolve imports across files and sees unnamed elements through `elements_of_metaclass`. It is toolchain, not a chapter dependency: every notebook loads its model through the OpenSysML runtime, and Chapters 5, 8 and 10 use sysml-toolkit only through its `sysmlv2` binary (`viz` in Chapter 5, `verify --solve` in Chapters 8 and 10; DL-118 B3/B4), not through this binding (see `decisions/probes.md`).
 
 ## Before you assert something works
 

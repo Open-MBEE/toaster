@@ -26,7 +26,7 @@ description: SysML v2 construct subset for the toaster tutorial — confirmed co
 
 No other constructs. `port def`, `interface def`, `connection def`, parametric diagrams, and `metadata` are out of scope for v0.1.
 
-**Gap — VerificationMethodKind metadata (toaster#19 / OpenSysML#608):** The spec-defined way to annotate the verification method kind is `#verificationMethod = VerificationMethodKind::test` (SysML v2 §7.24 Table 22). This metadata construct does not parse in OpenSysML v0.9.0 (`ok=False`, error: "expected a body member"). Until fixed, document the method kind as text in the `doc` comment of the verification case definition.
+**Gap — VerificationMethodKind metadata (toaster#19 / OpenSysML#608):** The spec-defined way to annotate the verification method kind is `#verificationMethod = VerificationMethodKind::test` (SysML v2 §7.24 Table 22). This metadata construct does not parse in the OpenSysML runtime v0.9.0 (`ok=False`, error: "expected a body member"). Until fixed, document the method kind as text in the `doc` comment of the verification case definition.
 
 ## Ch9–10: analysis operations (not new constructs)
 
