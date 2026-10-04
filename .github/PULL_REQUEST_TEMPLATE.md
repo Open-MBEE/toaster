@@ -13,7 +13,7 @@ Better on (name it, with evidence):
 - [ ] (2) Didactic clarity — what gets harder for the learner without this change: ___ ; pacing check: ___
 - [ ] (3) Tool use — construct or operation run under the pinned versions: ___
 
-Not worse on each of the others (one line each, with how you checked):
+Not worse on any priority (one line each, with how you checked):
 - (1) ___
 - (2) ___
 - (3) ___
@@ -22,4 +22,4 @@ Not worse on each of the others (one line each, with how you checked):
 
 - [ ] No new chapter, notebook, exercise, construct or analysis operation, model element, judgment record, glossary term or learning outcome
 - [ ] `models/`, judgment records, stored outputs and `DEFERRED.md` headings unchanged, or the change says why and recomputes `content_hash`
-- [ ] `TOASTER_REQUIRE_TOOLS=1 uv run pytest tests/ glossary/tests/` and `uv run python -m glossary lint` pass locally
+- [ ] `TOASTER_REQUIRE_TOOLS=1 uv run pytest tests/ glossary/tests/` passes locally, and `uv run python -m glossary lint` reports no hit the base branch does not (it is not a CI gate; see the contributor guide)
