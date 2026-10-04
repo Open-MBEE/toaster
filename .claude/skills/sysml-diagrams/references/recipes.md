@@ -89,9 +89,12 @@ pipeline.
 dot -Tsvg build/figures/actions.dot -o build/figures/actions.svg
 ```
 
-Confirmed directly against real chapter content (`decisions/diagram-study-real-fixtures.md`;
-Ch6's `ApplyHeat` action, exit 0, real action-flow notation). No in-house action-flow renderer
-exists yet. Expected output: the declared actions, initial/final nodes, and successions. Check
+Confirmed against real chapter content (Ch4's `ToastBread` and Ch6's `ApplyHeat` actions, exit 0:
+`figures/ch04-toastbread-flow.svg`, `figures/ch06-applyheat-flow.svg`, DEFERRED.md D-037; the
+real-fixture study, `decisions/diagram-study-real-fixtures.md`, did not rerun the action-flow view,
+the DL-057 probe did): the control sequence is drawn, but the CLI's DOT omits the actions' declared
+typed flows (D-037); the caption must say so. No in-house action-flow renderer exists yet. Expected
+output: the declared actions, initial/final nodes, and successions, without flow pins. Check
 decisions, guards, forks, joins, and object flows whenever the selected model contains them —
 every real chapter fixture tested so far exercises only a linear sequence.
 
@@ -106,12 +109,13 @@ Distinguish a structural action-flow figure from an actual execution trace.
 dot -Tsvg build/figures/states.dot -o build/figures/states.svg
 ```
 
-Confirmed directly against real chapter content (`decisions/diagram-study-real-fixtures.md`):
-100% success across both OpenSysML runtime render forms on Ch7's real `Cycle` state machine, and the
-mutation-control test (retargeting a transition) correctly changes the rendered output. Show
-states and transitions for one behavioral question. Preserve initial entry and, when present,
-event triggers, guards, effects, and entry/do/exit compartments. Change orientation or split
-nested behavior into another figure when labels become crowded.
+Run against real chapter content (`decisions/diagram-study-real-fixtures.md`): both OpenSysML
+runtime render forms exit 0 on Ch7's real `Cycle` state machine and draw its states and
+transitions, but the `do` activity label omits the performed action's name (D-037); the caption
+must say so. The mutation-control test (retargeting a transition) correctly changes the rendered
+output. Show states and transitions for one behavioral question. Preserve initial entry and, when
+present, event triggers, guards, effects, and entry/do/exit compartments. Change orientation or
+split nested behavior into another figure when labels become crowded.
 
 Check each transition's source and target against the real model, not an assumed shape — a
 changed target must change the corresponding arrow.
