@@ -49,7 +49,7 @@ src/toaster/— Python package (bootstrap, connect, query, check, conformance, e
 tests/      — pytest suite
 docs/       — setup, glossary, references, reproducibility statement
 scripts/    — pre-flight and build utilities
-decisions/  — ACE decision log
+decisions/  — decision log (rulings and escalations)
 ```
 
 [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md), and [`DEFERRED.md`](DEFERRED.md) at the repo root are not learner material — they're
