@@ -43,7 +43,7 @@ including what `uv` and `mystmd` are and why the quick start above uses them.
 
 ```
 chapters/   — worked example notebooks (10 chapters, read-only for exercises)
-exercises/  — parallel exercise notebooks (fork and work here)
+exercises/  — parallel exercise notebooks (work them in your own fork)
 models/     — SysML stage model snapshots
 src/toaster/— Python package (bootstrap, connect, query, check, conformance, evidence, modelcheck, simulate, render, report)
 tests/      — pytest suite
@@ -54,5 +54,7 @@ decisions/  — ACE decision log
 
 [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md), and [`DEFERRED.md`](DEFERRED.md) at the repo root are not learner material — they're
 this project's own working contract, for the AI agents and maintainers who build and review the
-tutorial's content. See [docs/contributor.md](docs/contributor.md) if you want to understand how
-the tutorial is actually built, tested, and reviewed, or to contribute to it yourself.
+tutorial's content. See [docs/contributor.md](docs/contributor.md) to understand how the tutorial
+is built, tested and reviewed, and what contributions it wants: keeping it current to its
+toolchain (the OpenSysML runtime, sysml-toolkit and the other pinned tools) and to the OMG SysML
+v2 specifications, not adding new content.

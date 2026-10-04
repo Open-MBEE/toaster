@@ -4,6 +4,15 @@ This page is for maintainers working on the tutorial itself, not learners workin
 It assumes you can read Python and SysML and that you have the environment from
 [Getting Started](setup.md) already set up.
 
+(what-we-accept)=
+## What we accept
+
+The contributions we want keep this tutorial current to its toolchain (the OpenSysML runtime, sysml-toolkit and the other pinned tools) and to the OMG SysML v2 specifications; we are not adding new content. Existing content may be refined, clarified or otherwise improved against three priorities: (1) conformance with the SysML v2 specifications (the OMG SysML v2 language, API and Services, and KerML specifications); (2) didactic clarity; (3) effective, demonstrative use of tools from the OpenSysML stack (the OpenSysML runtime and sysml-toolkit). An improvement is accepted only if it is strictly dominant: better on at least one of these and worse on none. The binding statement is [`AGENTS.md`](https://github.com/Open-MBEE/toaster/blob/main/AGENTS.md) §1.12.
+
+- **Keep current.** Bump a pin in `pyproject.toml`/`uv.lock`, `package.json`/`package-lock.json` or [`scripts/tool-pins.json`](https://github.com/Open-MBEE/toaster/blob/main/scripts/tool-pins.json) and regenerate the outputs ([below](#keep-current)); retire a workaround whose [`DEFERRED.md`](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md) resolution condition a new release meets, updating that entry's status line and the comment cell at the workaround (headings stay: they are linked anchors); re-check a clause that a new edition of one of the three OMG specifications changed. Reporting drift is a contribution too: open an issue naming the tool and version (or the specification edition), the chapter and cell, and the spec clause. Upstream issues are filed by the project itself, after mzargham (Z) has reviewed the text (`AGENTS.md` §1.9).
+- **Improve what is here.** State in the pull request which priority improves and the evidence, and for each of the other two why it is not worse; the pull-request template asks for exactly this. Adding text or a cell counts as improving only if the learner's task gets harder without it, and the pacing rule and the one-construct-per-notebook rule still apply. An independent reviewer on a different model checks the statement; what the reviewer cannot tell goes to the ACE. A trade-off (better on one priority, worse on another) is not an improvement under this policy: open an issue and Z decides.
+- **Not accepted by pull request.** A new chapter, notebook, exercise, construct or analysis operation, model element, judgment record or glossary term, or a new learning outcome. Replacing a recorded workaround with the spec-anchored construct a newer tool release accepts is keeping current, not new content. If you think the tutorial needs something new, open an issue first; only Z decides that, and a glossary term is confirmed only by Z.
+
 ## Who is Z
 
 "Z" is the contributor identity `mzargham` (Michael Zargham, GitHub user
@@ -45,11 +54,12 @@ touch anything, even if you never run an agent yourself:
   of a task handed to a builder or reviewer), and `task-states.md` (what state a task is in and
   what moves it to the next one).
 
-If you want to extend a chapter, clarify a definition, or review didactic content, the harness
+If you want to keep a chapter current, clarify a definition, or review didactic content, the harness
 tools above are built for exactly that — start at `CLAUDE.md`'s own read order rather than
-improvising a workflow from scratch. The sections below cover specific maintenance tasks
-directly; none of them require running an agent, but all of them follow conventions the harness
-itself enforces (the recipe's pacing rule, the layer boundary tests, the review gate).
+improvising a workflow from scratch. The sections below cover the maintenance tasks directly; none
+of them require running an agent, but all of them follow conventions the harness itself enforces
+(the recipe's pacing rule, the layer boundary tests, the review gate), and every change passes the
+test in [What we accept](#what-we-accept).
 
 (deployment-status)=
 ## Deployment status
@@ -85,31 +95,49 @@ uv run python scripts/check-site.py --site _build/html --content _build/site/con
     --log build.log --base-url /toaster
 ```
 
-## Update a dependency and regenerate outputs
+(keep-current)=
+## Keep current: update a dependency or tool pin and regenerate outputs
 
-1. Change the version in `pyproject.toml` (Python) or `package.json` (Node), then
-   `uv lock` / `npm install` to update the lockfile.
-2. Run `uv run pytest tests/ glossary/tests/` and `uv run python scripts/check-tools.py`
+1. Change the version in `pyproject.toml` (Python), `package.json` (Node) or
+   [`scripts/tool-pins.json`](https://github.com/Open-MBEE/toaster/blob/main/scripts/tool-pins.json)
+   (the `sysmlv2` binary, Z3, the PlantUML jar and the standard-library commit, with their sha256
+   hashes), then `uv lock` / `npm install` to update the lockfile, or
+   `uv run python scripts/provision-tools.py` to re-provision `.tools/`.
+2. Run `TOASTER_REQUIRE_TOOLS=1 uv run pytest tests/ glossary/tests/` and
+   `uv run python scripts/check-tools.py`
    ([`check-tools.py` on GitHub](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py)).
 3. Rebuild the local preview (`uv run npx mystmd start --execute`) and spot-check a chapter that
    exercises the changed dependency; a version bump in `opensysml` or `sympy` can change
    printed output even when no test fails.
-4. Commit the lockfile alongside the version change; never bump a version without
-   regenerating and committing the matching lockfile.
+4. Re-read the `DEFERRED.md` entries that name the bumped tool. If the new release meets an
+   entry's resolution condition, retire the workaround, update the entry's status line and the
+   comment cell at the workaround (do not rename the heading), and recompute the `content_hash`
+   of any judgment record the model change touches ([below](#change-a-model-element)). A release
+   that breaks something gets a new entry, not a silently dropped demonstration.
+5. Commit the lockfile or the pins alongside the version change; never bump a version without
+   regenerating and committing what matches it. Update the version strings in
+   `docs/setup.md`, `docs/reproducibility.md` and `AGENTS.md` §1.2 in the same change.
 
-## Add a new chapter
+## How a change is built and reviewed
 
-1. Follow `toaster-recipe`'s sub-notebook skeleton and `architecture-layers`' boundary tests
-   for every new model element; both are binding, not stylistic suggestions.
-2. Add the chapter's cumulative fixture (`models/chNN-cumulative.sysml`), authored to contain
-   everything the previous chapter's fixture has plus the new chapter's own additions; see
+New chapters are not accepted ([What we accept](#what-we-accept)); the rules that governed
+building the existing ones govern every change to them:
+
+1. `toaster-recipe`'s sub-notebook skeleton and `architecture-layers`' boundary tests bind any
+   model element a change touches; both are binding, not stylistic suggestions.
+2. Each cumulative fixture (`models/chNN-cumulative.sysml`) must keep containing everything the
+   previous chapter's fixture has; see
    [`tests/test_predecessor_containment.py`](https://github.com/Open-MBEE/toaster/blob/main/tests/test_predecessor_containment.py) for how that invariant is checked.
-3. Register the new notebooks in [`scripts/check_construction.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check_construction.py)'s `CONSTRUCTION_NOTEBOOKS`
-   and in `myst.yml`'s table of contents.
-4. Run `uv run python -m glossary lint` before committing prose; run the pacing check in
-   `tutorial-style-guide` (consecutive code cells with no markdown between them) on every new
-   notebook.
-5. Get an independent review on a different model than whoever authored the chapter, per
+   After changing a notebook's construction cells or a fixture, run
+   `uv run python scripts/check_construction.py --check --chapter=N`
+   ([`scripts/check_construction.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check_construction.py)):
+   it executes the registered construction zones and loads each `TOASTER_INCREMENT` and the
+   cumulative fixture. Update a notebook's existing `CONSTRUCTION_NOTEBOOKS` entry only if its
+   stubs change; new entries are for new notebooks, which are not accepted.
+3. Run `uv run python -m glossary lint` before committing prose; run the pacing check in
+   `tutorial-style-guide` (consecutive code cells with no markdown between them) on every
+   notebook you touched.
+4. Get an independent review on a different model than whoever authored the change, per
    `decisions/task-states.md`'s merge gate.
 
 (change-a-model-element)=
@@ -117,6 +145,9 @@ uv run python scripts/check-site.py --site _build/html --content _build/site/con
 
 A `ReviewRecord`'s `content_hash` is computed from the model source it was written against.
 Changing that source without updating the record leaves it silently stale.
+
+A model change is accepted only as keeping current (a workaround retired) or as a strictly
+dominant improvement ([What we accept](#what-we-accept)); either way:
 
 1. Find every `ReviewRecord` whose `model_ref` touches the element you are changing
    (`grep -rl model_ref= chapters/`).

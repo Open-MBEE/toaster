@@ -146,7 +146,7 @@ render-capable CLI (distinct from the service binary the Python package
 itself talks to) — chapters that render an action-flow or state-transition
 diagram need it; nothing else does.
 
-**sysml-toolkit** does what the OpenSysML runtime cannot yet: prove that a constraint holds for every
+**sysml-toolkit** does what the OpenSysML runtime's Python binding cannot yet: prove that a constraint holds for every
 value of an unbound quantity, not just check it against one fixed value, using the Z3 solver.
 Chapter 8 uses it directly (`toaster.modelcheck.verify_holds`, wrapping its `sysmlv2 verify
 --solve` CLI) to prove `deliveredEnergyBoundedBySupply` for every value its unbound features
@@ -181,6 +181,11 @@ Fork the repository, provision the environment (above), then:
 
 The [`exercises/`](https://github.com/Open-MBEE/toaster/tree/main/exercises) notebooks are blank workspaces. They are not pre-executed and not part of the
 CI pipeline. Work in them directly; do not modify the chapter notebooks while doing an exercise.
+
+Your fork is where your exercise work lives; it is not a contribution path. If, while working, you
+find the tutorial out of date against a newer release of the OpenSysML runtime, sysml-toolkit or the
+OMG specifications, that is the contribution this tutorial wants: see the
+[contributor guide](#what-we-accept).
 
 **Keep your model between chapters.** Each exercise's first cell asks you to paste in your own
 completed model from the previous chapter's exercise — there is no committed solution file to
