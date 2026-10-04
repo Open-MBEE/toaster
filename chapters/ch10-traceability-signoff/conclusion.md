@@ -20,7 +20,7 @@ The synthesis record, `AI-C10`, brings both together honestly, within its own st
 
 ## What comes next
 
-This is the tutorial's last chapter. What continues from here is not another chapter but the reader's own accountable engineering: taking the traceable, honestly-scoped case this tutorial teaches how to build, and exercising, on a real design, the judgment this tutorial has shown but never made for them.
+This is the tutorial's last chapter. What continues from here is not another chapter but the reader's own accountable engineering: taking the traceable, honestly-scoped case this tutorial teaches how to build, and exercising, on a real design, the judgment this tutorial has shown but never made for them. If you come back to this repository, the contribution it wants is keeping it current to its toolchain and to the SysML v2 specifications, not extending it; the [contributor guide](#what-we-accept) says what that means.
 
 ## Exercise
 

@@ -162,6 +162,12 @@ Learner-facing vocabulary from these lenses is allowed only where it makes a ter
 
 Alignment passes (changes to this Part 1, the glossary's confirmed definitions, or the ACE skills) are Z-initiated. The ACE triages what needs Z: it rules and logs where Z's frameworks and principles determine the answer (and shows the reasoning), and escalates to Z with a concise request where they do not. Decisions are logged in `decisions/log.md` (§7 below). To reach the ACE, route the question through the orchestrator; if there is no orchestrator in your session, state the question and your recommended default in your report and it will be triaged. Proposals to the glossary (new terms, sources or edges) go to the ACE the same way; only Z confirms.
 
+## 1.12 What contributions we want
+
+The contributions we want keep this tutorial current to its toolchain (the OpenSysML runtime, sysml-toolkit and the other pinned tools) and to the OMG SysML v2 specifications; we are not adding new content. Existing content may be refined, clarified or otherwise improved against three priorities: (1) conformance with the SysML v2 specifications (the OMG SysML v2 language, API and Services, and KerML specifications, §1.2); (2) didactic clarity; (3) effective, demonstrative use of tools from the OpenSysML stack (the OpenSysML runtime and sysml-toolkit). An improvement is accepted only if it is strictly dominant: better on at least one of these and worse on none. A trade-off is not an improvement under this rule; it is proposed in an issue and Z decides.
+
+New content is a new chapter, notebook, exercise, construct or analysis operation, model element, judgment record or glossary term, or a new learning outcome; none is accepted by pull request. Replacing a recorded workaround with the spec-anchored construct a newer tool release accepts is keeping current (§1.9), not new content. Added text or cells count as improvement only where the learner's task gets harder without them (the earn-its-place test, `.claude/skills/ace-protocol/z-principles.md` P4; the pacing rule in `tutorial-style-guide`; SA-8). The reviewer-facing test is in `docs/contributor.md`, and the pull-request template asks for it.
+
 ---
 
 # Part 2 — Roster and authority (partially rebuilt; content archetypes legacy, pending Pass 4)
