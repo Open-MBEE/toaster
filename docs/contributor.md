@@ -10,7 +10,7 @@ It assumes you can read Python and SysML and that you have the environment from
 The contributions we want keep this tutorial current to its toolchain (the OpenSysML runtime, sysml-toolkit and the other pinned tools) and to the OMG SysML v2 specifications; we are not adding new content. Existing content may be refined, clarified or otherwise improved against three priorities: (1) conformance with the SysML v2 specifications (the OMG SysML v2 language, API and Services, and KerML specifications); (2) didactic clarity; (3) effective, demonstrative use of tools from the OpenSysML stack (the OpenSysML runtime and sysml-toolkit). An improvement is accepted only if it is strictly dominant: better on at least one of these and worse on none. The binding statement is [`AGENTS.md`](https://github.com/Open-MBEE/toaster/blob/main/AGENTS.md) §1.12.
 
 - **Keep current.** Bump a pin in `pyproject.toml`/`uv.lock`, `package.json`/`package-lock.json` or [`scripts/tool-pins.json`](https://github.com/Open-MBEE/toaster/blob/main/scripts/tool-pins.json) and regenerate the outputs ([below](#keep-current)); retire a workaround whose [`DEFERRED.md`](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md) resolution condition a new release meets, adding a dated status line to that entry (or updating the one it has), updating the comment cell at the workaround, and leaving the heading as it is (headings are linked anchors); re-check a clause that a new edition of one of the three OMG specifications changed. Reporting drift is a contribution too: open an issue naming the tool and version (or the specification edition), the chapter and cell, and the spec clause. Upstream issues are filed by the project itself, after mzargham (Z) has reviewed the text (`AGENTS.md` §1.9).
-- **Improve what is here.** State in the pull request which priority improves and the evidence, and for each of the other two why it is not worse; the pull-request template asks for exactly this. Adding text or a cell counts as improving only if the learner's task gets harder without it, and the pacing rule and the one-construct-per-notebook rule still apply. An independent reviewer on a different AI model checks the statement; what the reviewer cannot tell goes to the ACE (the project's triage role, described below). A trade-off (better on one priority, worse on another) is not an improvement under this policy: open an issue and Z decides.
+- **Improve what is here.** State in the pull request which priority improves and the evidence, and why the change is worse on none of the three; the pull-request template asks for exactly this. Adding text or a cell counts as improving only if the learner's task gets harder without it, and the pacing rule and the one-construct-per-notebook rule still apply. An independent reviewer on a different AI model checks the statement; what the reviewer cannot tell goes to the ACE (the project's triage role, described below). A trade-off (better on one priority, worse on another) is not an improvement under this policy: open an issue and Z decides.
 - **Not accepted by pull request.** A new chapter, notebook, exercise, construct or analysis operation, model element, judgment record or glossary term, or a new learning outcome. Replacing a recorded workaround with the spec-anchored construct a newer tool release accepts is keeping current, not new content. If you think the tutorial needs something new, open an issue; only Z decides that, and a glossary term is confirmed only by Z.
 
 The reviewer applies this test. A pull request passes when one "better" line (or, for keeping
@@ -115,8 +115,12 @@ uv run python scripts/check-site.py --site _build/html --content _build/site/con
    `uv run python scripts/provision-tools.py` to re-provision `.tools/`. The OpenSysML runtime
    binary is pinned separately from the `opensysml` package: change the `version="v0.9.0"`
    defaults in `src/toaster/bootstrap.py` (and its `_CLI_SUMS` hashes) and
-   `src/toaster/connect.py`, and the `opensysml.connect(version=...)` calls in
-   `scripts/check_conformance.py` and `scripts/check_construction.py`, together.
+   `src/toaster/connect.py`, and every `opensysml.connect(version=...)` call in
+   `scripts/check_conformance.py`, `scripts/check_construction.py`, `chapters/`, `exercises/` and
+   `tests/` (`git grep -n 'connect(version=' -- src scripts chapters exercises tests`), together.
+   Code cells, stored outputs and `models/` are protected during editorial passes, not during a
+   bump: the notebooks are re-executed and their outputs regenerate (step 3). `scripts/probes/` and
+   `scripts/diagram_study/` are dated probes and keep the version they probed.
 2. Run `TOASTER_REQUIRE_TOOLS=1 uv run pytest tests/ glossary/tests/` and
    `uv run python scripts/check-tools.py`
    ([`check-tools.py` on GitHub](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py)).
@@ -132,9 +136,10 @@ uv run python scripts/check-site.py --site _build/html --content _build/site/con
 5. Commit the lockfile or the pins alongside the version change; never bump a version without
    regenerating and committing what matches it. Update the version strings in
    `docs/setup.md`, `docs/reproducibility.md` and `AGENTS.md` §1.2 in the same change, and
-   re-check chapter prose and `DEFERRED.md` entries that state a version
-   (`git grep -n 'v0\.9\.[01]' -- chapters DEFERRED.md`): a statement re-probed under the new
-   release takes the new version; one not re-probed keeps the version it was probed against.
+   re-check the prose, tests and `DEFERRED.md` entries that state a version
+   (`git grep -n 'v0\.9\.[01]' -- chapters exercises tests DEFERRED.md`): a test or fixture that pins
+   the version moves with it; a statement re-probed under the new release takes the new version;
+   one not re-probed keeps the version it was probed against.
 
 ## How a change is built and reviewed
 
@@ -152,7 +157,10 @@ building the existing ones govern every change to them:
    it executes the registered construction zones and loads each `TOASTER_INCREMENT` and the
    cumulative fixture. Update a notebook's existing `CONSTRUCTION_NOTEBOOKS` entry only if its
    stubs change; new entries are for new notebooks, which are not accepted.
-3. Run `uv run python -m glossary lint` before committing prose; run the pacing check in
+3. Before committing prose, check that `uv run python -m glossary lint` reports no hit the base
+   branch does not (it is not a CI gate and exits 1 on pre-existing hits: run
+   `--write-baseline base.json` on the base, then `--baseline base.json` on your branch, which
+   exits 1 only on a new error); run the pacing check in
    `tutorial-style-guide` (consecutive code cells with no markdown between them) on every
    notebook you touched.
 4. Get an independent review on a different AI model than whoever authored the change, per
