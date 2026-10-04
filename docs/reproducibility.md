@@ -19,7 +19,7 @@ OpenSysML ([opensysml.org](https://opensysml.org/)) is the open-source SysML v2 
 - **The OpenSysML runtime binary** is pinned by version string (`v0.9.0` as of this tutorial), downloaded
   by [`scripts/check-tools.py`](https://github.com/Open-MBEE/toaster/blob/main/scripts/check-tools.py) rather than resolved from a floating "latest." Every model-loading
   call in every notebook goes through this one pinned binary; there's no code path that reaches a
-  different version.
+  different version of the runtime. Chapters 5, 8 and 10 also hand model text to sysml-toolkit's `sysmlv2`, pinned by the next item.
 - **The external tools** that chapters 5, 8 and 10 call (the `sysmlv2` command-line tool, Z3, the
   PlantUML jar and the SysML v2 standard library) are pinned in
   [`scripts/tool-pins.json`](https://github.com/Open-MBEE/toaster/blob/main/scripts/tool-pins.json) and installed by

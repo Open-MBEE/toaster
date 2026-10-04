@@ -146,7 +146,7 @@ render-capable CLI (distinct from the service binary the Python package
 itself talks to) — chapters that render an action-flow or state-transition
 diagram need it; nothing else does.
 
-**sysml-toolkit** does one thing the OpenSysML runtime cannot yet: prove that a constraint holds for every
+**sysml-toolkit** does what the OpenSysML runtime cannot yet: prove that a constraint holds for every
 value of an unbound quantity, not just check it against one fixed value, using the Z3 solver.
 Chapter 8 uses it directly (`toaster.modelcheck.verify_holds`, wrapping its `sysmlv2 verify
 --solve` CLI) to prove `deliveredEnergyBoundedBySupply` for every value its unbound features

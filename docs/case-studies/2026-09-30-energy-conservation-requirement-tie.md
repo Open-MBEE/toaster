@@ -66,7 +66,7 @@ pilot actually flagged — confirmed directly against that commit's own model. B
 two commits later by dropping the subject declaration. So two different defects, in two
 different places, were each found a different way: Approach A's (a declared-but-unused subject,
 no live binding) by direct spec reading; Approach B's own first draft's (a typed subject *plus* a
-real, type-inconsistent binding) by the pilot's own mechanical check. Neither tool nor either
+real, type-inconsistent binding) by the pilot's own mechanical check. No tool diagnostic and neither
 review process caught Approach A's own defect; it took re-reading §7.21.1 directly, later, to
 name it.
 
@@ -186,7 +186,7 @@ a second, quieter instance of the same failure mode in reverse.
 
 **Empirical confirmation, not just argument.** Z was not convinced by the argument above on its
 own — correctly: an abstract claim that a construct "does no evaluative work" deserves to be
-checked against the tool, not just read off the spec text. Two things were verified directly
+checked against the OpenSysML runtime, not just read off the spec text. Two things were verified directly
 rather than asserted.
 
 First, the base library itself settles where subject-dependence actually comes from.
@@ -198,7 +198,7 @@ reference the subject's own features (exactly what the spec's worked example, `m
 via `:>> mass = massActual`, and exactly what `EnergyConservationReq`'s own `require constraint c
 :> deliveredEnergyBoundedBySupply` does not do).
 
-Second, this was tested directly against `model.verify_satisfaction()` — the tool's own
+Second, this was tested directly against `model.verify_satisfaction()` — the runtime's own
 point-evaluation engine, the same one a reader would reach for expecting confirmation, the same
 way `heatGenerationReq`'s own real `assert satisfy ... by rated` / `by weak` claims are confirmed
 elsewhere in this model. Three variants of `assert satisfy energyConservationReq by X;` were built
