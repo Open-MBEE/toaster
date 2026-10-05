@@ -19,7 +19,7 @@ Chapter 1 asks: how do we describe a system in SysML v2 before we know how it is
 
 ## Equipment
 
-See [setup](../../docs/setup.md) to provision Python and the OpenSysML binary before running any notebook.
+See [setup](../../docs/setup.md) to provision Python and the OpenSysML runtime binary before running any notebook.
 
 ## Method
 
@@ -41,4 +41,4 @@ The Ch1 cumulative model contains:
 
 ## Experiment
 
-The [chapter exercise](../../exercises/ch01/exercise.ipynb) asks you to model a coffee maker using the same constructs. Work through it after completing all four notebooks.
+The [chapter exercise](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch01/exercise.ipynb) asks you to model a coffee maker using the same constructs. Work through it after completing all four notebooks.

@@ -2,35 +2,79 @@
 + PlantUML, used specifically when port identity itself is the pedagogical point (Ch5's
 conjugated port). This is a real external-tool pipeline (sysmlv2 binary, sysml.library, the
 PlantUML jar, a working `java`), not a packaged dependency -- every test here is skipped, with
-a clear reason, if any of the four real paths below is missing on the machine running it.
+a clear reason, if any of the four is not resolvable by toaster.tools on the machine running it.
 """
 
+import os
+import subprocess
 from pathlib import Path
 
 import pytest
 
 from toaster.render import ToolkitRenderError, render_toolkit_interconnection
-
-BINARY = Path.home() / "Documents/GitHub/sysml-toolkit/target/release/sysmlv2"
-LIB = (
-    Path.home()
-    / "Documents/GitHub/sysml-toolkit/spec-refs/SysML-v2-Release/sysml.library"
-)
-PLANTUML_JAR = Path("/opt/homebrew/opt/plantuml/libexec/plantuml.jar")
-JAVA = Path(
-    "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home/bin/java"
+from toaster.tools import (
+    ToolNotFoundError,
+    resolve_java,
+    resolve_library,
+    resolve_plantuml_jar,
+    resolve_sysmlv2,
 )
 
 MODEL = Path("models/ch05-cumulative.sysml")
 
-pytestmark = pytest.mark.skipif(
-    not (BINARY.exists() and LIB.exists() and PLANTUML_JAR.exists() and JAVA.exists()),
-    reason=(
-        "sysml-toolkit binary, sysml.library, PlantUML jar or java not found at the real "
-        f"paths this test requires (binary={BINARY}, lib={LIB}, plantuml_jar={PLANTUML_JAR}, "
-        f"java={JAVA}); see work contract CH05-TOOLKIT-VIZ"
-    ),
+_PROVISION_HINT = "uv run python scripts/provision-tools.py"
+
+
+def _skip_reason(exc: ToolNotFoundError) -> str:
+    return str(exc) if _PROVISION_HINT in str(exc) else f"{exc}; provision with `{_PROVISION_HINT}`"
+
+
+def _require_tools() -> bool:
+    """TOASTER_REQUIRE_TOOLS=1 turns "tool missing, skip" into "tool missing, fail" (for CI)."""
+    return os.environ.get("TOASTER_REQUIRE_TOOLS") == "1"
+
+
+def _working_java() -> Path:
+    """The resolved java, proven to run: a PATH `java` can be a macOS stub that resolves but fails."""
+    java = resolve_java()
+    try:
+        proc = subprocess.run([str(java), "-version"], capture_output=True, text=True, timeout=15, check=False)
+        failure = None if proc.returncode == 0 else f"exited {proc.returncode}"
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        failure = str(exc)
+    if failure:
+        raise ToolNotFoundError(
+            f"java at {str(java)!r} does not run (`java -version`: {failure}); "
+            "set the JAVA environment variable to a working java"
+        )
+    return java
+
+
+def _resolve_tools(resolvers, require=None):
+    """Call each resolver; return (their results, None), or (None, the actionable skip reason).
+
+    With `require` true (default: TOASTER_REQUIRE_TOOLS=1) an unresolved tool raises instead, so the
+    module fails to collect and CI cannot go green on silent skips.
+    """
+    if require is None:
+        require = _require_tools()
+    try:
+        return tuple(resolver() for resolver in resolvers), None
+    except ToolNotFoundError as exc:
+        reason = _skip_reason(exc)
+        if require:
+            raise ToolNotFoundError(
+                f"{reason} (TOASTER_REQUIRE_TOOLS=1: a missing tool is a failure, not a skip)"
+            ) from exc
+        return None, reason
+
+
+_TOOLS, _SKIP_REASON = _resolve_tools(
+    (resolve_sysmlv2, resolve_library, resolve_plantuml_jar, _working_java)
 )
+BINARY, LIB, PLANTUML_JAR, JAVA = _TOOLS if _TOOLS else (None, None, None, None)
+
+pytestmark = pytest.mark.skipif(_TOOLS is None, reason=_SKIP_REASON or "")
 
 
 def test_renders_real_svg(tmp_path):

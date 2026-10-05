@@ -8,7 +8,7 @@ title: Overview
 
 This chapter asks whether the model's own requirements have actually been checked, not just declared: for every requirement usage, has any candidate really been claimed to satisfy it, and of what polarity? It also applies Hawkins' sufficiency idea to two real judgment records this tutorial already built, and extends Chapter 8's staleness check from one record to several tracked at once.
 
-This chapter adds no new model element. `models/ch08-cumulative.sysml`, the real, current model Chapter 8 committed, already has everything these notebooks query: two requirement usages (`timely`, `heatGenerationReq`) and four real satisfy relationships. Rather than growing a `models/ch09-cumulative.sysml` that would carry nothing new, every notebook in this chapter queries `models/ch08-cumulative.sysml` directly, and says so. This is a deliberate design choice, not an oversight: the chapter's own coverage-gap finding needs no new element, and the tutorial's own non-goal discipline (Chapter 6 and Chapter 7's own precedent of stating scope honestly) argues against adding one only to keep a file-per-chapter convention.
+This chapter adds no new model element. [`models/ch08-cumulative.sysml`](https://github.com/Open-MBEE/toaster/blob/main/models/ch08-cumulative.sysml), the real, current model Chapter 8 committed, already has everything these notebooks query: two requirement usages (`timely`, `heatGenerationReq`) and four real satisfy relationships. Rather than growing a `models/ch09-cumulative.sysml` that would carry nothing new, every notebook in this chapter queries [`models/ch08-cumulative.sysml`](https://github.com/Open-MBEE/toaster/blob/main/models/ch08-cumulative.sysml) directly, and says so. This is a deliberate design choice, not an oversight: the chapter's own coverage-gap finding needs no new element, and the tutorial's own non-goal discipline (Chapter 6 and Chapter 7's own precedent of stating scope honestly) argues against adding one only to keep a file-per-chapter convention.
 
 ## Ingredients
 
@@ -20,7 +20,7 @@ This chapter adds no new model element. `models/ch08-cumulative.sysml`, the real
 
 ## Equipment
 
-See [docs/setup.md](../../docs/setup.md) for environment setup. No additional tooling beyond earlier chapters.
+See [Getting Started](../../docs/setup.md) for environment setup. No additional tooling beyond earlier chapters.
 
 ## Method
 
@@ -32,4 +32,4 @@ After running all three notebooks: notebook 01's coverage report shows `heatGene
 
 ## Experiment
 
-See `exercises/ch09/exercise.ipynb`.
+See [`exercises/ch09/exercise.ipynb`](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch09/exercise.ipynb).

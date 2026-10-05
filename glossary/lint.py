@@ -1,7 +1,9 @@
 """Lint learner-facing content against rules kept in data (lint_rules.toml).
 
 Scope: markdown cells of chapters/**/*.ipynb, chapters/**/*.md and docs/**/*.md,
-except docs/glossary.md (generated). Nothing else is scanned.
+except docs/glossary.md (generated) and everything under docs/superpowers/. Nothing else is
+scanned. A rule with ignore_code = true is matched against a copy of each unit in which fenced
+blocks and inline code spans are replaced by spaces (same length, newlines kept).
 """
 
 from __future__ import annotations
@@ -19,7 +21,12 @@ RULES_FILE = PACKAGE_DIR / "lint_rules.toml"
 FIELDS = ("id", "regex", "message", "why", "severity", "scope")
 SEVERITIES = ("error", "warn")
 SCOPES = ("learner",)
+OPTIONAL_BOOL_FIELDS = ("ignore_code",)
 EXCLUDED = ("docs/glossary.md",)
+EXCLUDED_PREFIXES = ("docs/superpowers/",)
+
+_FENCE_OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+_CODE_SPAN = re.compile(r"(?<!`)(`+)(?!`)((?:(?!\r?\n[ \t]*\r?\n).)+?)(?<!`)\1(?!`)", re.DOTALL)
 
 
 class LintConfigError(Exception):
@@ -34,6 +41,7 @@ class Rule:
     why: str
     severity: str
     scope: str
+    ignore_code: bool = False
 
 
 @dataclass(frozen=True)
@@ -68,6 +76,12 @@ def load_rules(path: Path = RULES_FILE) -> list[Rule]:
                 raise LintConfigError(f"rule {name!r}: missing field {f!r}")
             if not isinstance(raw[f], str):
                 raise LintConfigError(f"rule {name!r}: field {f!r} must be a string, got {type(raw[f]).__name__}")
+        unknown = sorted(set(raw) - set(FIELDS) - set(OPTIONAL_BOOL_FIELDS))
+        if unknown:
+            raise LintConfigError(f"rule {name!r}: unknown field(s) {unknown}")
+        for f in OPTIONAL_BOOL_FIELDS:
+            if f in raw and not isinstance(raw[f], bool):
+                raise LintConfigError(f"rule {name!r}: field {f!r} must be a boolean, got {type(raw[f]).__name__}")
         if not raw["id"]:
             raise LintConfigError(f"rule {name!r}: id must not be empty")
         if raw["id"] in seen:
@@ -83,7 +97,7 @@ def load_rules(path: Path = RULES_FILE) -> list[Rule]:
             pattern = re.compile(raw["regex"], re.IGNORECASE)
         except re.error as e:
             raise LintConfigError(f"rule {name!r}: regex does not compile: {e}") from e
-        rules.append(Rule(raw["id"], pattern, raw["message"], raw["why"], raw["severity"], raw["scope"]))
+        rules.append(Rule(raw["id"], pattern, raw["message"], raw["why"], raw["severity"], raw["scope"], raw.get("ignore_code", False)))
     return rules
 
 
@@ -92,7 +106,7 @@ def _units(repo: Path):
     files = [p for pat in ("chapters/**/*.ipynb", "chapters/**/*.md", "docs/**/*.md") for p in repo.glob(pat)]
     for p in sorted(set(files)):
         rel = p.relative_to(repo).as_posix()
-        if rel in EXCLUDED or ".ipynb_checkpoints" in p.parts:
+        if rel in EXCLUDED or rel.startswith(EXCLUDED_PREFIXES) or ".ipynb_checkpoints" in p.parts:
             continue
         try:
             if p.suffix == ".ipynb":
@@ -107,13 +121,41 @@ def _units(repo: Path):
             raise LintConfigError(f"cannot read {rel}: {e}") from e
 
 
+def _blank(s: str) -> str:
+    """Replace every character except line breaks with a space (same length)."""
+    return re.sub(r"[^\r\n]", " ", s)
+
+
+def mask_code(text: str) -> str:
+    """Blank out fenced blocks (``` and ~~~) and inline code spans; length and line breaks are preserved."""
+    out: list[str] = []
+    fence: tuple[str, int] | None = None
+    for line in text.splitlines(keepends=True):
+        body = line.rstrip("\r\n")
+        if fence is None:
+            m = _FENCE_OPEN.match(body)
+            if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
+                fence = (m.group(1)[0], len(m.group(1)))
+                out.append(_blank(line))
+            else:
+                out.append(line)
+        else:
+            out.append(_blank(line))
+            c, n = fence
+            if re.fullmatch(rf" {{0,3}}{re.escape(c)}{{{n},}}[ \t]*", body):
+                fence = None
+    return _CODE_SPAN.sub(lambda m: _blank(m.group(0)), "".join(out))
+
+
 def scan(repo: Path, rules: list[Rule]) -> list[Hit]:
     hits = []
     for rel, cell, text in _units(repo):
+        masked = mask_code(text) if any(r.ignore_code for r in rules) else text
         for r in rules:
-            for m in r.pattern.finditer(text):
+            subject = masked if r.ignore_code else text
+            for m in r.pattern.finditer(subject):
                 line = text.count("\n", 0, m.start()) + 1
-                hits.append(Hit(rel, cell, line, r.id, m.group(0), r.severity))
+                hits.append(Hit(rel, cell, line, r.id, text[m.start():m.end()], r.severity))
     return hits
 
 

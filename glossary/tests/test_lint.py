@@ -66,6 +66,20 @@ CASES = [
     ("stale-partition", "was partitioned into implementation-agnostic", "departitioned into implementation-agnostic"),
     ("accepted-disposition", "The disposition is accepted here.", "The reviewer accepted the invoice; a disposition is recorded."),
     ("accepted-disposition", "an accepted disposition", "accepted practice, and a disposition. One two three four five six accepted"),
+    # OT-7 guard rules: hit, and the sanctioned rewrite as the near miss
+    ("opensysml-contrast-or-and", "OpenSysML or sysml-toolkit accepts it", "The OpenSysML runtime or sysml-toolkit accepts it"),
+    ("opensysml-contrast-or-and", "OpenSysML and sysml-toolkit agree; also OpenSysML vs. sysml-toolkit", "the OpenSysML runtime and sysml-toolkit agree"),
+    ("opensysml-contrast-or-and", "OpenSysML versus sysml-toolkit", "OpenSysML, the stack, includes sysml-toolkit"),
+    ("opensysml-contrast-or-and", "neither OpenSysML nor sysml-toolkit; OpenSysML nor sysml-toolkit", "the OpenSysML runtime nor sysml-toolkit"),
+    ("toolkit-and-opensysml", "sysml-toolkit or OpenSysML does it", "sysml-toolkit or the OpenSysML runtime does it"),
+    ("toolkit-and-opensysml", "sysml-toolkit and OpenSysML agree", "sysml-toolkit and the OpenSysML runtime agree"),
+    ("neither-opensysml", "Neither OpenSysML nor the pilot flags it", "Neither the OpenSysML runtime nor the pilot flags it"),
+    ("not-opensysml", "this is not OpenSysML behavior", "this is not the OpenSysML runtime's behavior"),
+    ("opensysml-capability", "OpenSysML cannot prove it", "the OpenSysML runtime cannot prove it"),
+    ("opensysml-capability", "OpenSysML itself, OpenSysML alone, OpenSysML only, OpenSysML can't", "the OpenSysML runtime itself, alone, or only"),
+    ("opensysml-capability", "OpenSysML does  not accept it; OpenSysML doesn't either", "the OpenSysML runtime does not accept it; sysml-toolkit doesn't"),
+    ("opensysml-version", "OpenSysML v0.9.0 loads it", "the OpenSysML runtime accepts X; sysml-toolkit v0.9.1 rejects it"),
+    ("opensysml-version", "OpenSysML v0.9.1", "OpenSysML runtime v0.9.0 and the stack OpenSysML v1"),
 ]
 
 
@@ -277,3 +291,174 @@ def test_non_utf8_rules_file_is_exit_2(tmp_path: Path) -> None:
     p.write_bytes(b"[[rule]]\nid='r'\nmessage='caf\xe9'\n")
     r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(p)])
     assert r.exit_code == 2 and "rules.toml" in r.output and "Traceback" not in r.output
+
+
+# --- ignore_code (OT-7) ---------------------------------------------------------------------
+
+PLAIN = "plain-sub"
+MASKED = "masked-sub"
+
+
+def two_rule_file(tmp: Path) -> Path:
+    base = "message = 'm'\nwhy = 'w'\nseverity = 'error'\nscope = 'learner'\n"
+    p = tmp / "two.toml"
+    p.write_text(
+        f"[[rule]]\nid = '{PLAIN}'\nregex = 'foo'\n{base}\n"
+        f"[[rule]]\nid = '{MASKED}'\nregex = 'foo'\nignore_code = true\n{base}")
+    return p
+
+
+def scan_two(tmp: Path, text: str, rel: str = "docs/x.md") -> list[lint.Hit]:
+    make_repo(tmp, {rel: text})
+    return lint.scan(tmp, lint.load_rules(two_rule_file(tmp)))
+
+
+def test_ignore_code_skips_inline_span_for_masked_rule_only(tmp_path: Path) -> None:
+    hs = scan_two(tmp_path, "see `foo` here\n")
+    assert ids(hs) == [PLAIN]
+
+
+@pytest.mark.parametrize("text", [
+    "a ``foo`` b\n",
+    "a ``x ` foo`` b\n",
+    "a `foo\nbar` b\n",
+    "```\nfoo\n```\n",
+    "```python\nfoo\n```\n",
+    "~~~\nfoo\n~~~\n",
+    "   ```\nfoo\n   ```\n",
+    "````\n```\nfoo\n```\n````\n",
+    "```\nfoo\n",  # unclosed fence runs to the end
+])
+def test_ignore_code_masks_fences_and_spans(tmp_path: Path, text: str) -> None:
+    assert ids(scan_two(tmp_path, text)) == [PLAIN]
+
+
+@pytest.mark.parametrize("text", [
+    "foo outside `code` foo\n",
+    "a `foo\n\nbar` b\n",  # a span cannot cross a blank line
+    "a `foo`` b\n",  # unequal backtick runs do not close
+    "a `foo b\n",  # unclosed span is literal
+    "~~~\ncode\n```\n~~~\nfoo\n",  # a ``` line does not close a ~~~ fence; the fence ended at ~~~
+    "``` `\nfoo\n",  # backtick fence info string may not contain a backtick: not a fence
+])
+def test_ignore_code_does_not_over_mask(tmp_path: Path, text: str) -> None:
+    got = ids(scan_two(tmp_path, text))
+    assert MASKED in got
+
+
+@pytest.mark.parametrize(("text", "visible"), [
+    ("a `foo\r\n\r\nbar` b\r\n", "foo"),  # a span cannot cross a CRLF blank line
+    ("a `x\r\n\r\nOpenSysML cannot` b\r\n", "OpenSysML cannot"),  # the probe: second paragraph stays visible
+    ("a `x\r\n \t\r\nfoo` b\r\n", "foo"),  # whitespace-only CRLF blank line
+])
+def test_crlf_blank_line_stops_code_span(text: str, visible: str) -> None:
+    masked = lint.mask_code(text)
+    assert len(masked) == len(text) and visible in masked
+    assert lint.mask_code(text.replace("\r\n", "\n")).count(visible) == 1  # same answer as LF
+
+
+def test_crlf_notebook_cell_hit_after_paragraph_break_is_reported(tmp_path: Path) -> None:
+    # Path.read_text() normalizes CRLF in .md files, but a notebook cell string keeps its \r\n
+    text = "a `x\r\n\r\nOpenSysML cannot` b\r\n"
+    make_repo(tmp_path, {"chapters/ch/a.ipynb": json.dumps({"cells": [{"cell_type": "markdown", "source": text}]})})
+    hs = lint.scan(tmp_path, lint.load_rules())
+    assert [(h.rule, h.cell, h.line) for h in hs] == [("opensysml-capability", 0, 3)]
+    crlf_fence = "```\r\nfoo\r\n```\r\nfoo\r\n"
+    make_repo(tmp_path, {"chapters/ch/a.ipynb": json.dumps({"cells": [{"cell_type": "markdown", "source": crlf_fence}]})})
+    hs = lint.scan(tmp_path, lint.load_rules(two_rule_file(tmp_path)))
+    assert [(h.rule, h.line) for h in hs if h.rule == MASKED] == [(MASKED, 4)]
+
+
+def test_mask_preserves_length_and_line_structure() -> None:
+    text = "a `x`\n```\ny\nz\n```\n~~~\nw\n~~~\nlast ``q `r`` end\r\nfoo\n"
+    masked = lint.mask_code(text)
+    assert len(masked) == len(text)
+    assert [i for i, c in enumerate(masked) if c in "\r\n"] == [i for i, c in enumerate(text) if c in "\r\n"]
+    assert "x" not in masked and "y" not in masked and "w" not in masked and "q" not in masked and "r" not in masked
+    assert masked.endswith("foo\n") and masked.startswith("a ")
+
+
+def test_masking_leaves_line_numbers_and_text_unchanged(tmp_path: Path) -> None:
+    text = "line1 `foo`\n```\nfoo\nfoo\n```\nline6 foo and `x`\n"
+    hs = scan_two(tmp_path, text)
+    plain = [h.line for h in hs if h.rule == PLAIN]
+    masked = [h for h in hs if h.rule == MASKED]
+    assert plain == [1, 3, 4, 6]
+    assert [(h.line, h.text) for h in masked] == [(6, "foo")]
+
+
+def test_masked_rule_in_notebook_markdown_cell(tmp_path: Path) -> None:
+    make_repo(tmp_path, {"chapters/ch/a.ipynb": nb(("markdown", "intro\n\nuse `foo` then foo\n"))})
+    hs = lint.scan(tmp_path, lint.load_rules(two_rule_file(tmp_path)))
+    assert [(h.rule, h.cell, h.line) for h in hs if h.rule == MASKED] == [(MASKED, 0, 3)]
+    assert [h.line for h in hs if h.rule == PLAIN] == [3, 3]
+
+
+def test_default_rules_hit_sets_ignore_code_false_for_existing_rules() -> None:
+    flags = {r.id: r.ignore_code for r in lint.load_rules()}
+    existing = ("tall-named", "no-em-dash", "concept-selection", "sub-behavior",
+                "stale-physical-layer", "stale-partition", "accepted-disposition")
+    assert all(flags[i] is False for i in existing)
+    new = [i for i in flags if i not in existing]
+    assert len(new) == 6 and all(flags[i] for i in new)
+    assert all(r.severity == "error" and "AGENTS.md 1.2" in r.why and "DL-116" in r.why
+               for r in lint.load_rules() if r.id in new)
+
+
+def test_existing_rule_still_sees_code_text(tmp_path: Path) -> None:
+    # existing rules are not masked: an em-dash inside backticks is still reported
+    assert "no-em-dash" in ids(hits_for(tmp_path, "see `a\u2014b` here\n"))
+
+
+@pytest.mark.parametrize("value", ["'yes'", "1", "[true]", "'true'"])
+def test_non_bool_ignore_code_is_exit_2(tmp_path: Path, value: str) -> None:
+    p = tmp_path / "rules.toml"
+    p.write_text("[[rule]]\nid='r'\nregex='x'\nmessage='m'\nwhy='w'\nseverity='error'\nscope='learner'\n"
+                 f"ignore_code={value}\n")
+    r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(p)])
+    assert r.exit_code == 2 and "field 'ignore_code' must be a boolean" in r.output and "Traceback" not in r.output
+
+
+def test_unknown_rule_field_is_exit_2(tmp_path: Path) -> None:
+    # a misspelled optional key must fail closed, not be silently ignored
+    p = tmp_path / "rules.toml"
+    p.write_text("[[rule]]\nid='r'\nregex='x'\nmessage='m'\nwhy='w'\nseverity='error'\nscope='learner'\n"
+                 "ignore_cod=true\n")
+    with pytest.raises(lint.LintConfigError, match=r"rule 'r': unknown field\(s\) \['ignore_cod'\]"):
+        lint.load_rules(p)
+    r = runner.invoke(app, ["lint", "--repo", str(tmp_path), "--rules", str(p)])
+    assert r.exit_code == 2 and "unknown field(s) ['ignore_cod']" in r.output and "Traceback" not in r.output
+
+
+def test_shipped_rules_file_has_no_unknown_fields() -> None:
+    assert lint.load_rules(lint.RULES_FILE)
+
+
+def test_bool_ignore_code_accepted_and_default_false(tmp_path: Path) -> None:
+    base = "message='m'\nwhy='w'\nseverity='error'\nscope='learner'\n"
+    p = tmp_path / "rules.toml"
+    p.write_text(f"[[rule]]\nid='a'\nregex='x'\n{base}\n[[rule]]\nid='b'\nregex='x'\nignore_code=false\n{base}\n"
+                 f"[[rule]]\nid='c'\nregex='x'\nignore_code=true\n{base}")
+    assert [r.ignore_code for r in lint.load_rules(p)] == [False, False, True]
+
+
+def test_docs_superpowers_is_not_scanned(tmp_path: Path) -> None:
+    bad = "sub-behavior and concept selection\n"
+    make_repo(tmp_path, {"docs/superpowers/specs/s.md": bad, "docs/superpowers/plans/deep/p.md": bad})
+    assert lint.scan(tmp_path, lint.load_rules()) == []
+    make_repo(tmp_path, {"docs/superpowers.md": bad, "docs/superpowersx/y.md": bad, "chapters/superpowers/z.md": bad})
+    assert {h.file for h in lint.scan(tmp_path, lint.load_rules())} == {
+        "docs/superpowers.md", "docs/superpowersx/y.md", "chapters/superpowers/z.md"}
+
+
+def test_guard_rules_ignore_code_in_markdown_but_not_prose(tmp_path: Path) -> None:
+    # the protected stored-output pattern: a code span quoting a bare name is not reported
+    make_repo(tmp_path, {"docs/a.md": "The output reads `OpenSysML cannot do it` verbatim.\n```\nOpenSysML v0.9.0\n```\n"})
+    assert lint.scan(tmp_path, lint.load_rules()) == []
+    make_repo(tmp_path, {"docs/a.md": "OpenSysML cannot do it, and OpenSysML v0.9.0 is old.\n"})
+    assert ids(lint.scan(tmp_path, lint.load_rules())) == ["opensysml-capability", "opensysml-version"]
+
+
+def test_guard_rules_sanctioned_sentence_passes(tmp_path: Path) -> None:
+    ok = "the OpenSysML runtime accepts X; sysml-toolkit v0.9.1 rejects it\n"
+    assert hits_for(tmp_path, ok) == []

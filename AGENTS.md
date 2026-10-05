@@ -11,6 +11,8 @@ A cold session should reach working alignment from `CLAUDE.md`, this Part 1, the
 
 # Part 1 — Foundations
 
+"Z" in this repository is the contributor identity `mzargham` (Michael Zargham, GitHub user `mzargham`), the project's author and chief engineer. Internal files keep saying "Z"; published pages name the handle at first mention, as "mzargham (Z)". Other contributors are named by their own handles, and "Z" is never reused for another person (`decisions/log.md` DL-112).
+
 ## 1.1 What the tutorial teaches
 
 A learner recursively breaks a system down until the leaves are concrete component definitions that perform the intended behavior, connect through the specified interfaces, and are verified. The worked example is a toaster. The tutorial teaches, in this order of emphasis:
@@ -38,7 +40,7 @@ The sources are not rivals. Each supplies a different **kind** of definition, an
 | Story (didactic) | Brian Douglas, *Systems Engineering* playlist, Parts 3 and 4 | Analogy, example, and the toaster case; how we convey the material, aligned with as far as possible to lower the learner's cost |
 | Bridge | This tutorial | Contextual refinements that tie the kinds together for the learner |
 
-**Toolchain, not sources.** OpenSysML, sysml-toolkit, the Pilot Implementation and the like execute the specs. They are cited only to flag a spec gap (§1.9), never to define a term.
+**Toolchain, not sources.** OpenSysML (opensysml.org) is the open-source SysML v2 tool stack; this tutorial uses two of its components and names them by role, **the OpenSysML runtime** (Go; `Open-MBEE/OpenSysML`; Python package `opensysml`; pinned v0.9.0) and **sysml-toolkit** (Rust; `sysmlv2` binary; pinned v0.9.1). A bare "OpenSysML" is a statement about the stack; a claim that is true of, or was probed against, one component names that component, and a version number attaches to a component name. The OMG SysML v2 Pilot Implementation (EPL-2.0) is the conformance baseline and is always named as such; it is not one of the two tools the chapters run. All of these execute the specs. They are cited only to flag a spec gap (§1.9), never to define a term.
 
 **Refinement rule.** Canonical definitions come first. Our own definitions appear only as contextual refinements where needed to make learning easier, and each records the canonical edge it refines. A refinement narrows or clarifies; it never contradicts a source and never invents. One departure is approved: SEBoK's *logical architecture* contains the functional view, whereas the tutorial separates a functional layer from a logical one, so "logical" is a recorded `differsFrom` edge approved by Z (DL-015). Learners are told the word is used more narrowly than SEBoK uses it, and that Douglas's "who" is this tutorial's "how".
 
@@ -122,7 +124,7 @@ These are tendencies, not rules. The stable distinction is *computed versus expl
 - Implicit parts obey the same layer rules and the glossary as everything else, and their provenance is never hidden.
 - Legibility comes through diagrams: every chapter shows the assembled model so that explicit and implicit parts are distinguishable without reading the Python.
 - Implicit parts are authored and verified before the notebooks that import them.
-- OpenSysML v0.9.0 does not resolve `import` across separately loaded sources. A notebook therefore assembles the SysML text from the imported modules plus its explicit increment into one source and loads that (gap G7, §1.9).
+- The OpenSysML runtime v0.9.0 does not resolve `import` across separately loaded sources (sysml-toolkit v0.9.1 does, D-017). A notebook therefore assembles the SysML text from the imported modules plus its explicit increment into one source and loads that (gap G7, §1.9).
 
 **Diagrams are views of the model, drawn like scientific plots.** The model is the data; a diagram is a selected, purpose-specific view of it, produced by query and encoding, never hand-drawn and never a second source of engineering facts. The tools supply methods. They do not decide the figure. We judge what to include and exclude and how to present it, according to what the diagram must communicate in its notebook, and record that in the figure's recipe and caption. Presentation settings (layout, orientation, short labels) never carry engineering content. A diagram of a modeled assertion is not evidence that the assertion holds: evidence comes from its own analysis. A structural diagram shows prescriptions; a plot of simulation output shows derived behavior, with units and relations read from the model. See the `sysml-diagrams` skill.
 
@@ -134,13 +136,13 @@ Decompose until every leaf is a concrete component def that **performs** its spe
 
 Three surfaces, in order of preference for a chapter notebook (recipes and limits are in the `opensysml-query` skill):
 
-1. `model.query()` in OpenSysML: the API Query (select, where, scope, inverse; no traversal). It sees named elements only. Name your allocations, connections and flows and it sees those too.
+1. `model.query()` in the OpenSysML runtime: the API Query (select, where, scope, inverse; no traversal). It sees named elements only. Name your allocations, connections and flows and it sees those too.
 2. `json.loads(model.to_api_json().content)`: the full export, including unnamed `satisfy`, `perform` and connector elements. Use it through the helpers in `src/toaster/query.py`, never ad hoc.
 3. `Symbol` navigation (`model.find`, `.specializations`, `.children`).
 
 The sysml-toolkit Python binding (`Session.from_files`) is a fourth surface that reads several files at once and sees unnamed elements. It is toolchain, not part of the chapter dependencies.
 
-**Conformance has two tiers.** *Language conformance* (parse, name resolution, typing) is always on: a declaration that violates it breaks the load. *Project conformance checks* (interface compatibility, port types, flows accounted, coverage) are **staged**, because the model emerges iteratively and is not born complete: each check is declared as applied from a chapter and section onward, has a negative control that shows it catching a fault, and is reported as **open**, not passed, until it is applied. A check has five statuses: `open` (not yet applied), `passed`, `failed`, `blocked` (cannot be applied until a stated condition holds; the result records the `unblock_when` criterion, for example a model that fails language conformance), and `wont-do` (dropped because something changed; the result records the reason and the change). The same vocabulary is used for coordination (`decisions/task-states.md`). Discovering non-conformance early and flagging it to the user is what executable specifications are for. Tools may not diagnose a fault themselves (OpenSysML v0.9.0 accepts a power port connected to a fuel port; the KerML 1.1 spec searched has no validation constraint for it), so the tutorial supplies the check (recipe 5 in `opensysml-query`).
+**Conformance has two tiers.** *Language conformance* (parse, name resolution, typing) is always on: a declaration that violates it breaks the load. *Project conformance checks* (interface compatibility, port types, flows accounted, coverage) are **staged**, because the model emerges iteratively and is not born complete: each check is declared as applied from a chapter and section onward, has a negative control that shows it catching a fault, and is reported as **open**, not passed, until it is applied. A check has five statuses: `open` (not yet applied), `passed`, `failed`, `blocked` (cannot be applied until a stated condition holds; the result records the `unblock_when` criterion, for example a model that fails language conformance), and `wont-do` (dropped because something changed; the result records the reason and the change). The same vocabulary is used for coordination (`decisions/task-states.md`). Discovering non-conformance early and flagging it to the user is what executable specifications are for. Tools may not diagnose a fault themselves (the OpenSysML runtime v0.9.0 and sysml-toolkit v0.9.1 both accept a power port connected to a fuel port; the KerML 1.1 spec searched has no validation constraint for it), so the tutorial supplies the check (recipe 5 in `opensysml-query`).
 
 **Gap-tracking rule.** Use the spec-anchored construct. If a tool cannot express it, use a bare SysML fragment or custom Python. Every gap gets (a) a `DEFERRED.md` entry, (b) a toaster issue and, where the tool is at fault, an upstream issue, each citing the exact spec section and asking only for what the spec says, and (c) a comment cell wherever the workaround appears. Never work around a gap silently. Nothing is filed on a public repository until Z has reviewed the text.
 
@@ -159,6 +161,12 @@ Learner-facing vocabulary from these lenses is allowed only where it makes a ter
 ## 1.11 How alignment changes
 
 Alignment passes (changes to this Part 1, the glossary's confirmed definitions, or the ACE skills) are Z-initiated. The ACE triages what needs Z: it rules and logs where Z's frameworks and principles determine the answer (and shows the reasoning), and escalates to Z with a concise request where they do not. Decisions are logged in `decisions/log.md` (§7 below). To reach the ACE, route the question through the orchestrator; if there is no orchestrator in your session, state the question and your recommended default in your report and it will be triaged. Proposals to the glossary (new terms, sources or edges) go to the ACE the same way; only Z confirms.
+
+## 1.12 What contributions we want
+
+The contributions we want keep this tutorial current to its toolchain (the OpenSysML runtime, sysml-toolkit and the other pinned tools) and to the OMG SysML v2 specifications; we are not adding new content. Existing content may be refined, clarified or otherwise improved against three priorities: (1) conformance with the SysML v2 specifications (the OMG SysML v2 language, API and Services, and KerML specifications, §1.2); (2) didactic clarity; (3) effective, demonstrative use of tools from the OpenSysML stack (the OpenSysML runtime and sysml-toolkit). An improvement is accepted only if it is strictly dominant: better on at least one of these and worse on none. A trade-off is not an improvement under this rule; it is proposed in an issue and Z decides.
+
+New content is a new chapter, notebook, exercise, construct or analysis operation, model element, judgment record or glossary term, or a new learning outcome; none is accepted by pull request. Replacing a recorded workaround with the spec-anchored construct a newer tool release accepts is keeping current (§1.9), not new content. Added text or cells count as improvement only where the learner's task gets harder without them (the earn-its-place test, `.claude/skills/ace-protocol/z-principles.md` P4; the pacing rule in `tutorial-style-guide`; SA-8). The reviewer-facing test is in `docs/contributor.md`, and the pull-request template asks for it.
 
 ---
 

@@ -20,7 +20,7 @@ After completing this chapter, the cumulative model has `deliveredEnergy`, a cal
 
 ## Equipment
 
-See [docs/setup.md](../../docs/setup.md) for environment setup. Chapter 7 requires `numpy` and `matplotlib` (both in `pyproject.toml`).
+See [Getting Started](../../docs/setup.md) for environment setup. Chapter 7 requires `numpy` and `matplotlib` (both in [`pyproject.toml`](https://github.com/Open-MBEE/toaster/blob/main/pyproject.toml)).
 
 ## Method
 
@@ -28,8 +28,8 @@ Notebook 01 builds `HeatGenerator` a bounded `efficiency` slot and a `calc deliv
 
 ## Expected result
 
-After running all three notebooks, `model.eval("ToasterDemo::rated.deliveredEnergy(ToasterDemo::rated.power, 120.0 [SI::s])")` returns 67200 J (printed by OpenSysML as `67200 [MeasurementReferences::one*SI::'kg⋅m²⋅s⁻²']`, an unsimplified but dimensionally equivalent unit expression rather than the clean `SI::J` symbol — a display quirk, DEFERRED.md D-033); `model.find("ToasterDemo::ToastingSystem::cycle")` returns a `stateUsage`, the usage `ToastingSystem` exhibits and `Toaster` inherits; `model.execute_state("ToasterDemo::Cycle", events=["Start", "Finish"], performer="ToasterDemo::nominal")` returns `states_visited=['idle', 'heating', 'ready', 'idle']`; and the parameter sweep's figure marks `HeatGenerationReq`'s own 600 W threshold, read from the model rather than invented in Python.
+After running all three notebooks, `model.eval("ToasterDemo::rated.deliveredEnergy(ToasterDemo::rated.power, 120.0 [SI::s])")` returns 67200 J (printed by the OpenSysML runtime as `67200 [MeasurementReferences::one*SI::'kg⋅m²⋅s⁻²']`, an unsimplified but dimensionally equivalent unit expression rather than the clean `SI::J` symbol — a display quirk, DEFERRED.md [D-033](https://github.com/Open-MBEE/toaster/blob/main/DEFERRED.md#d-033-opensysmls-eval-does-not-simplify-a-product-against-a-dimensiononeunit-factor-or-fold-an-si-base-unit-expansion-back-into-its-derived-unit-symbol)); `model.find("ToasterDemo::ToastingSystem::cycle")` returns a `stateUsage`, the usage `ToastingSystem` exhibits and `Toaster` inherits; `model.execute_state("ToasterDemo::Cycle", events=["Start", "Finish"], performer="ToasterDemo::nominal")` returns `states_visited=['idle', 'heating', 'ready', 'idle']`; and the parameter sweep's figure marks `HeatGenerationReq`'s own 600 W threshold, read from the model rather than invented in Python.
 
 ## Experiment
 
-Try the [Chapter 7 exercise](../../exercises/ch07/exercise.ipynb): add a bounded `transferEfficiency` slot and `deliveredMass` calc to the coffee maker's `WaterMover`, add a `BrewCycle` state machine, and sweep `deliveredMass`'s `throughput` argument against `BrewReq`'s own threshold, read from the model.
+Try the [Chapter 7 exercise](https://github.com/Open-MBEE/toaster/blob/main/exercises/ch07/exercise.ipynb): add a bounded `transferEfficiency` slot and `deliveredMass` calc to the coffee maker's `WaterMover`, add a `BrewCycle` state machine, and sweep `deliveredMass`'s `throughput` argument against `BrewReq`'s own threshold, read from the model.

@@ -12,9 +12,9 @@ description: docs/ page inventory, reproducibility statement structure, fork-and
 | `docs/index.md` | Opening navigation + didactic purpose statement |
 | `docs/setup.md` | Provisioning steps + fork-and-exercise workflow |
 | `docs/glossary.md` | Generated glossary of every confirmed load-bearing term (`uv run python -m glossary render`); never edited by hand |
-| `docs/references.md` | Citations: Brian Douglas video, Hawkins 2011, opensysml, mystmd |
+| `docs/references.md` | Citations: Brian Douglas video, Hawkins 2011, OpenSysML (the stack definition and its two components' links), mystmd |
 | `docs/reproducibility.md` | Closing reproducibility statement (populated from build manifest) |
-| `docs/contributor.md` | Maintainer guide (4 update scenarios) |
+| `docs/contributor.md` | Maintainer guide ("What we accept" policy, then 4 maintenance scenarios) |
 
 ## docs/setup.md — fork-and-exercise section
 
@@ -29,6 +29,7 @@ Fork the repo, provision the environment (see above), then:
    The only tools you need are the ones introduced up to that chapter.
 4. The `exercises/` notebooks are blank workspaces — they are not pre-executed
    and not part of the CI pipeline.
+5. Your fork is where your exercise work lives; it is not a contribution path (see the contributor guide).
 ```
 
 Cells 0–5 of any sub-notebook are the worked example (read-only reference). The exercise lives in `exercises/` as a separate file. Do not modify chapter notebooks while doing exercises.
@@ -47,8 +48,11 @@ Author these sections with `{{manifest_field}}` template markers. A2 fills them 
 
 ## Contributor guide — 4 required scenarios
 
-1. Update a dependency and regenerate outputs
-2. Add a new chapter
+The guide opens with "What we accept" (AGENTS.md §1.12: keep current to the toolchain and the
+specifications; strictly dominant improvements; no new content), then:
+
+1. Keep current: update a dependency or tool pin and regenerate outputs
+2. How a change is built and reviewed
 3. Change a model element and review stale judgment records
 4. Run the full CI pipeline locally
 
@@ -62,3 +66,4 @@ Practitioner prose, not tutorial. The reader is a maintainer. Assume they can re
 - Write contributor instructions that require unavailable tooling
 - Write setup instructions inside chapter narration (they go in `docs/setup.md`)
 - Include exercise instructions inside chapter notebooks (exercises live in `exercises/`)
+- Write a contributor scenario that invites a new chapter, notebook, exercise, model element or glossary term (AGENTS.md §1.12)

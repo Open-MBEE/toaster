@@ -1,0 +1,51 @@
+{
+  "sysmlv2": {
+    "version": "v0.9.1",
+    "assets": {
+      "linux-x86_64": {
+        "url": "https://github.com/Open-MBEE/sysml-toolkit/releases/download/v0.9.1/sysmlv2-0.9.1-x86_64-unknown-linux-gnu.tar.gz",
+        "sha256": "76b4a1e4f159bdf72bde8857bf25e60f59b4ffe4c7c48eeb8c419d856f4ff570",
+        "member": "sysmlv2-0.9.1-x86_64-unknown-linux-gnu/sysmlv2"
+      },
+      "darwin-arm64": {
+        "url": "https://github.com/Open-MBEE/sysml-toolkit/releases/download/v0.9.1/sysmlv2-0.9.1-aarch64-apple-darwin.tar.gz",
+        "sha256": "ad0204041c95ce9817d398420e5057132a1378d53a812172cbd207cc40100c4a",
+        "member": "sysmlv2-0.9.1-aarch64-apple-darwin/sysmlv2"
+      },
+      "darwin-x86_64": {
+        "url": "https://github.com/Open-MBEE/sysml-toolkit/releases/download/v0.9.1/sysmlv2-0.9.1-x86_64-apple-darwin.tar.gz",
+        "sha256": "5c022525e5c2253761b31be8f1e77a896649169fe7c7dd260a3357398e7abf6f",
+        "member": "sysmlv2-0.9.1-x86_64-apple-darwin/sysmlv2"
+      }
+    }
+  },
+  "z3": {
+    "version": "z3-5.1.0",
+    "assets": {
+      "linux-x86_64": {
+        "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.1.0/z3-5.1.0-x64-glibc-2.39.zip",
+        "sha256": "f47be8d27d3230e823bf1eeede2fe0abaca55bb78d0b59974370e6689a92284a",
+        "member": "z3-5.1.0-x64-glibc-2.39/bin/z3"
+      },
+      "darwin-arm64": {
+        "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.1.0/z3-5.1.0-arm64-osx-13.3.zip",
+        "sha256": "81d29e934fd863079a74af35eecaeaef8047e0e12414d33ca322b358d68383db",
+        "member": "z3-5.1.0-arm64-osx-13.3/bin/z3"
+      },
+      "darwin-x86_64": {
+        "url": "https://github.com/Z3Prover/z3/releases/download/z3-5.1.0/z3-5.1.0-x64-osx-13.3.zip",
+        "sha256": "f25cabdb01a32942a42227c36902c0846c759dcaabef4aca3b2e86331447f6ff",
+        "member": "z3-5.1.0-x64-osx-13.3/bin/z3"
+      }
+    }
+  },
+  "plantuml": {
+    "version": "v1.2026.8",
+    "url": "https://github.com/plantuml/plantuml/releases/download/v1.2026.8/plantuml-1.2026.8.jar",
+    "sha256": "5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462"
+  },
+  "library": {
+    "repo": "https://github.com/Systems-Modeling/SysML-v2-Release",
+    "commit": "de1070ae8e79c21532b8004fc663d47b35d0e9fa"
+  }
+}

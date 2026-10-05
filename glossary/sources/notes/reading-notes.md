@@ -32,6 +32,6 @@ Notes made while seeding the glossary (2026-09-26). They record what was read, w
 - The playlist lists five videos; `docs/references.md` says a six-part series.
 
 ## Left out on purpose
-- OpenSysML, sysml-toolkit and the Pilot Implementation are toolchain, cited only to flag spec gaps. They define no terms.
+- The OpenSysML runtime and sysml-toolkit (components of the OpenSysML stack) and the Pilot Implementation are toolchain, cited only to flag spec gaps. They define no terms.
 - Tall's three worlds and the optimization and control lens are builder-facing and never appear in learner content, so they are neither sources nor terms.
 - *Declarative*, *executable specification* and *model checking* have no canonical definition in the sources read, so they are not seeded. They can join if a source is chosen for them.
